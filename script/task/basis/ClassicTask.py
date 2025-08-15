@@ -183,6 +183,7 @@ class ClassicTask(BasisTask, ABC):
             无返回值
         """
         self.logs("返回主界面")
+        self.keyClick("TAB")
         # 循环关闭当前界面直到返回主界面或任务完成
         while not self.finished.is_set():
             # 检查是否已经回到主界面（通过检测"按钮世界挂机"是否存在）
@@ -338,6 +339,7 @@ class ClassicTask(BasisTask, ABC):
             无返回值
         """
         __count = 0
+        self.logs("等待寻路结束")
         while not self.finished.is_set():
             # 检查是否正在寻路中，如果是则继续等待
             if self.exits("标志寻路中") is not None:
@@ -349,6 +351,7 @@ class ClassicTask(BasisTask, ABC):
             if __count > 3:
                 break
             __count += 1
+        self.logs("寻路结束")
 
     def switchCharacterDefault(self):
         """

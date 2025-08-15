@@ -63,7 +63,6 @@ class BasisTask(ABC):
         with self.stopped:
             self.windowConsole.input(text)
 
-
     def mouseClick(self, pos, x=0, y=0, timeout=Config.TIMEOUT, count=1, delay=0):
         """
         在指定位置执行鼠标点击操作

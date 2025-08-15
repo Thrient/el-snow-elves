@@ -1,3 +1,4 @@
+from script.task.classic.FactionTask import FactionTask
 from script.task.classic.LessonTask import LessonTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
 
@@ -33,6 +34,7 @@ class TaskFactory:
         """
         # 注册经典课业任务类型
         self.register("classic", "课业任务", LessonTask)
+        self.register("classic", "帮派任务", FactionTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

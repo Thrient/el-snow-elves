@@ -1,13 +1,13 @@
 import time
 
-from script.task.basis.ClassisTask import ClassicTask
+from script.task.basis.ClassicTask import ClassicTask
 
 
 class LessonTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
-        self.event = [time.time()]
+        self.event = [time.time() - 60]
 
     def execute(self):
         self.setup = 1

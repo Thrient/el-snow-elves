@@ -1,5 +1,5 @@
 from script.config.Config import Config
-from script.task.basis.ClassisTask import ClassicTask
+from script.task.basis.ClassicTask import ClassicTask
 
 
 class SwitchCharacterTask(ClassicTask):
