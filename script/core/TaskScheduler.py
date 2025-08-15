@@ -46,7 +46,7 @@ class TaskScheduler:
             self.taskConfig.switchCharacterThree and Config.SWITCH_CHARACTER_STATE[self.hwnd][2],
             self.taskConfig.switchCharacterFour and Config.SWITCH_CHARACTER_STATE[self.hwnd][3],
             self.taskConfig.switchCharacterFive and Config.SWITCH_CHARACTER_STATE[self.hwnd][4],
-            all(Config.SWITCH_CHARACTER_STATE[self.hwnd][5])
+            all(Config.SWITCH_CHARACTER_STATE[self.hwnd])
         ]
 
         if any(characterState):

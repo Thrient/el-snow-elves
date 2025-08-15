@@ -11,7 +11,7 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self):
-        self.window = None
+        self.window = webview.create_window('Elves', 'http://localhost:5173', js_api=api)
         self.winList = {}
         self.init()
 
@@ -36,6 +36,25 @@ class Elves:
         api.on("API:SCRIPT:STOP", self.stop)
         # 注册脚本恢复事件监听器
         api.on("API:SCRIPT:RESUME", self.resume)
+
+        self.window.events.closed += self.on_closed
+
+    def on_closed(self):
+        """
+        窗口关闭时的回调函数
+
+        该函数在窗口关闭时被调用，用于清理相关的脚本资源。
+        遍历所有窗口列表中的脚本对象，并调用它们的解绑方法。
+
+        参数:
+            self: 类实例本身
+
+        返回值:
+            无
+        """
+        # 遍历所有脚本对象并执行解绑操作
+        for script in self.winList.values():
+            script.unbind()
 
     def unbind(self, hwnd):
         """
@@ -124,7 +143,8 @@ class Elves:
         # 运行脚本
         script.run()
 
-    def run(self):
+    @staticmethod
+    def run():
         """
         运行webview窗口应用程序
 
@@ -138,7 +158,6 @@ class Elves:
             无
         """
         # 创建webview窗口，标题为'Elves'，加载本地服务器地址http://localhost:5173，并绑定js_api接口
-        self.window = webview.create_window('Elves', 'http://localhost:5173', js_api=api)
         # 启动webview应用程序
         webview.start(debug=True)
 

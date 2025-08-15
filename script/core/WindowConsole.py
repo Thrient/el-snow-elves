@@ -1,5 +1,7 @@
 import ctypes
+import time
 
+import win32api
 import win32con
 import win32gui
 import win32ui
@@ -12,6 +14,115 @@ class WindowConsole:
     def __init__(self, hwnd):
         self.hwnd = hwnd
         self.style = None
+        self.vkCode = {
+            "back": 0x08,
+        }
+
+    def input(self, text):
+        """
+        向指定窗口发送文本输入消息
+
+        参数:
+            text (str): 需要输入的文本内容
+
+        返回值:
+            无返回值
+        """
+        wideText = text.encode('utf-16-le')
+
+        # 逐个处理每个宽字符
+        for i in range(0, len(wideText), 2):
+            # 从字节中解析出宽字符值
+            char_code = (wideText[i + 1] << 8) | wideText[i]
+
+            # 发送WM_CHAR消息 (WM_CHAR的值为0x0102)
+            ctypes.windll.user32.PostMessageW(self.hwnd, 0x0102, char_code, 0)
+
+            # 模拟键入延迟
+            time.sleep(0.01)
+
+    def getVkCode(self, key):
+        """
+        获取指定按键的虚拟键码
+
+        参数:
+            key (str): 要获取虚拟键码的按键，可以是单个字符或按键名称字符串
+
+        返回:
+            int: 对应的虚拟键码值
+
+        异常:
+            KeyError: 当key为字符串且不在vkCode字典中时抛出
+        """
+        # 如果key是单个字符，通过系统API获取虚拟键码
+        if len(key) == 1:
+            return ctypes.windll.user32.VkKeyScanA(ord(key)) & 0xFF
+        # 如果key是字符串，则从vkCode字典中获取对应的虚拟键码
+        else:
+            return self.vkCode[key]
+
+    def keyDownUp(self, key, delay):
+        """
+        模拟按键按下和释放的操作
+
+        参数:
+            key: 要按下的键值，可以是字符串或虚拟键码
+            delay: 按键按下和释放之间的时间延迟（秒）
+
+        返回值:
+            无
+        """
+        # 获取虚拟键码
+        wparam = self.getVkCode(key)
+        # 构造lparam参数，包含扫描码和按键状态信息
+        lparam = (ctypes.windll.user32.MapVirtualKeyW(wparam, 0) << 16) | 1
+        # 发送按键按下消息
+        ctypes.windll.user32.PostMessageW(self.hwnd, win32con.WM_KEYDOWN, wparam, lparam)
+        # 延迟指定时间
+        time.sleep(delay)
+        # 发送按键释放消息
+        ctypes.windll.user32.PostMessageW(self.hwnd, win32con.WM_KEYUP, wparam, lparam)
+
+    def mouseDownUp(self, pos, delay):
+        """
+        模拟鼠标在指定位置按下并释放左键的操作
+
+        参数:
+            pos: 包含x、y坐标的元组，表示鼠标点击的位置
+            delay: 表示鼠标按下和释放之间的时间延迟（秒）
+
+        返回值:
+            无
+        """
+        position = win32api.MAKELONG(pos[0], pos[1])
+        # 模拟鼠标按下
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, position)
+        time.sleep(delay)
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, position)
+
+    def restStyle(self):
+        """
+        恢复窗口的原始样式设置
+
+        该函数将窗口样式重置为初始化时保存的原始样式，并触发窗口重绘以应用样式更改。
+
+        参数:
+            self: 类实例，包含以下属性：
+                - hwnd: 窗口句柄，用于标识目标窗口
+                - style: 原始窗口样式值，用于恢复窗口样式
+
+        返回值:
+            无返回值
+
+        异常:
+            AssertionError: 当窗口句柄无效时抛出异常
+        """
+        assert win32gui.IsWindow(self.hwnd), "无效窗口"
+        # 重新设置原始窗口样式
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, self.style)
+        # 触发窗口重绘以应用样式
+        win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
+                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED)
 
     def setWindowNoMenu(self):
         """

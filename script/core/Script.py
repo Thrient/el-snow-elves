@@ -32,26 +32,39 @@ class Script(Thread):
         返回值:
             无
         """
-        Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state='初始化', hwnd=self.hwnd)
-        self.windowConsole.setWindowNoMenu()
-        # self.windowConsole.setWinEnableClickThrough()
+        try:
+            Utils.sendEmit(self.window, 'API:ADD:CHARACTER', state='初始化', hwnd=self.hwnd)
+            self.windowConsole.setWindowNoMenu()
+            # self.windowConsole.setWinEnableClickThrough()
 
-        # 主任务处理循环，当finished标志未设置时持续运行
-        while not self.finished.is_set():
-            # 从任务调度器获取下一个待执行任务
-            task = self.taskScheduler.pop()
-            if task is None:
-                Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state='无任务', hwnd=self.hwnd)
-                continue
+            # 主任务处理循环，当finished标志未设置时持续运行
+            while not self.finished.is_set():
+                try:
+                    # 从任务调度器获取下一个待执行任务
+                    task = self.taskScheduler.pop()
+                    if task is None:
+                        Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state='无任务', hwnd=self.hwnd)
+                        continue
 
-            # 发送任务状态更新信息
-            Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state=task, hwnd=self.hwnd)
+                    # 发送任务状态更新信息
+                    Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state=task, hwnd=self.hwnd)
 
-            # 根据任务配置创建对应的任务对象实例
-            cls = TaskFactory.instance().create(self.taskConfig.model, task)
-            if cls is None:
-                continue
-            obj = cls(hwnd=self.hwnd, stopped=self.stopped, finished=self.finished)
+                    # 发送日志事件，记录任务开始信息
+                    Utils.sendEmit(self.window, 'API:ADD:LOGS',
+                                   time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                                   info="信息", data=f"{task}开始")
+
+                    # 根据任务配置创建对应的任务对象实例
+                    cls = TaskFactory.instance().create(self.taskConfig.model, task)
+                    if cls is None:
+                        continue
+                    obj = cls(hwnd=self.hwnd, stopped=self.stopped, finished=self.finished, window=self.window,
+                              taskConfig=self.taskConfig, windowConsole=self.windowConsole)
+                    obj.execute()
+                except Exception as e:
+                    print(e)
+        except Exception as e:
+            print(e)
 
     def unbind(self):
         """
@@ -67,6 +80,8 @@ class Script(Thread):
             无
         """
         self.finished.set()
+        self.windowConsole.restStyle()
+        self.windowConsole.setWinUnEnableClickThrough()
 
     def stop(self):
         """
