@@ -6,12 +6,16 @@ from script.config.Config import Config
 class TaskScheduler:
 
     def __init__(self, hwnd, taskConfig):
+        self.counter = 0
         self.hwnd = hwnd
         self.taskConfig = taskConfig
         self.queue = queue.PriorityQueue()
         self.tasks = set()
 
     def init(self):
+        self.queue = queue.PriorityQueue()
+        self.tasks.clear()
+        self.counter = 0
         for task in self.taskConfig.executeList:
             self.add(0, task["data"])
 
@@ -31,12 +35,13 @@ class TaskScheduler:
         """
         # 只有当任务不存在时才进行添加操作
         if task not in self.tasks:
-            self.queue.put((index, task))
+            self.queue.put((index, self.counter, task))
             self.tasks.add(task)
+            self.counter += 1
 
     def pop(self):
         if not self.queue.empty():
-            index, task = self.queue.get()
+            _, _, task = self.queue.get()
             self.tasks.remove(task)
             return task
 

@@ -14,6 +14,30 @@ class ClassicTask(BasisTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def waitMapLoading(self):
+        """
+        等待地图加载完成
+
+        该函数通过检查特定标志来判断地图是否加载完成，最多等待3次循环
+
+        参数:
+            self: 类实例对象
+
+        返回值:
+            无返回值
+        """
+        __count = 0
+        self.logs("等待地图加载")
+        while not self.finished.is_set():
+            # 检查是否正在加载地图，如果是则继续等待
+            if self.exits("标志地图加载", "标志地图加载_1") is not None:
+                continue
+            # 限制循环次数，防止无限等待
+            if __count > 3:
+                break
+            __count += 1
+        self.logs("地图加载结束")
+
     def locationDetection(self):
         """
         位置检测函数
@@ -111,10 +135,10 @@ class ClassicTask(BasisTask, ABC):
         """
         执行购买操作
 
-        :param model: 购买模式，可选值为"交易"或"商城"
+        :param model: 购买模式，可选值为"摆摊购买"或"商城购买"或"帮派仓库"
         :return: 无返回值
         """
-        if model == "摆摊":
+        if model == "摆摊购买":
             __event = True
             # 交易购买循环逻辑
             while not self.finished.is_set():
@@ -129,13 +153,12 @@ class ClassicTask(BasisTask, ABC):
 
                 # 点击交易需求按钮并执行购买流程
                 self.touch("按钮交易需求", x=130, y=35)
-                if self.touch("按钮交易购买") is None:
-                    self.closeStalls()
-                    return
+                if self.touch("按钮交易购买") is not None:
+                    self.touch("按钮交易确定")
 
-                self.touch("按钮交易确定")
+                self.closeStalls()
 
-        if model == "商城":
+        if model == "商城购买":
             # 检查商城界面是否存在
             if self.exits("界面珍宝阁") is None:
                 return
@@ -145,6 +168,13 @@ class ClassicTask(BasisTask, ABC):
 
             # 关闭商城界面
             self.closeMall()
+
+        if model == "帮派仓库":
+            if self.exits("界面帮派仓库") is None:
+                return
+            self.logs("帮派仓库提交")
+            self.touch("按钮帮派仓库提交")
+            self.closeBanStore()
 
     def closeRewardUi(self, count=1):
         """
@@ -183,14 +213,33 @@ class ClassicTask(BasisTask, ABC):
             无返回值
         """
         self.logs("返回主界面")
-        self.keyClick("TAB")
         # 循环关闭当前界面直到返回主界面或任务完成
         while not self.finished.is_set():
             # 检查是否已经回到主界面（通过检测"按钮世界挂机"是否存在）
-            if self.exits("按钮世界挂机", timeout=0) is not None:
+            if self.exits("按钮世界挂机") is not None:
                 break
+            self.keyClick("TAB")
             # 关闭当前打开的界面
             self.closeCurrentUi()
+
+    def closeBanStore(self):
+        """
+        关闭帮派仓库界面
+
+        该函数用于关闭当前打开的帮派仓库界面
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+        self.logs("关闭帮派仓库")
+        # 检查帮派仓库界面是否存在，不存在则直接返回
+        if self.exits("界面帮派仓库") is None:
+            return
+        # 关闭当前界面
+        self.closeCurrentUi()
 
     def closeStalls(self):
         """
@@ -345,7 +394,7 @@ class ClassicTask(BasisTask, ABC):
             if self.exits("标志寻路中") is not None:
                 continue
             # 检查是否正在加载地图，如果是则继续等待
-            if self.exits("标志地图加载") is not None:
+            if self.exits("标志地图加载", "标志地图加载_1") is not None:
                 continue
             # 限制循环次数，防止无限等待
             if __count > 3:

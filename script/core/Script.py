@@ -122,3 +122,21 @@ class Script(Thread):
             self.stopped.release()
         # 设置窗口控制台为可点击穿透状态
         self.windowConsole.setWinEnableClickThrough()
+
+    def screenshot(self):
+        """
+        截取当前窗口的屏幕截图并保存为图片文件
+
+        参数:
+            self: 类实例对象，包含windowConsole属性用于窗口操作
+
+        返回值:
+            无返回值
+
+        功能说明:
+            1. 调用windowConsole的captureWindow方法获取窗口截图
+            2. 将截图保存到临时图片目录，文件名为时间戳.bmp格式
+        """
+        image = self.windowConsole.captureWindow()
+        # 保存截图到临时目录，使用时间戳作为文件名
+        image.save(f"temp/images/{time.time()}.bmp")

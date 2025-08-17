@@ -11,7 +11,7 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self):
-        self.window = webview.create_window('Elves', 'http://localhost:5173', js_api=api)
+        self.window = webview.create_window('Elves', 'dist/index.html', js_api=api)
         self.winList = {}
         self.init()
 
@@ -36,6 +36,8 @@ class Elves:
         api.on("API:SCRIPT:STOP", self.stop)
         # 注册脚本恢复事件监听器
         api.on("API:SCRIPT:RESUME", self.resume)
+        # 注册脚本截图事件监听器
+        api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
 
         self.window.events.closed += self.on_closed
 
@@ -113,6 +115,22 @@ class Elves:
         # 获取窗口对应的脚本并恢复执行
         script = self.winList.get(hwnd)
         script.resume()
+
+    def screenshot(self, hwnd):
+        """
+        对指定窗口进行截图操作
+
+        参数:
+            hwnd: 窗口句柄，用于标识要截图的窗口
+
+        返回值:
+            无返回值
+        """
+        # 检查窗口是否在窗口列表中
+        if hwnd not in self.winList:
+            return
+        script = self.winList.get(hwnd)
+        script.screenshot()
 
     def start(self, **kwargs):
         """

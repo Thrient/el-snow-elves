@@ -68,8 +68,8 @@ class LessonTask(ClassicTask):
                         self.touch("按钮摆摊购买", y=-75)
 
                     # 检查商城购买
-                    self.buy("摆摊")
-                    self.buy("商城")
+                    self.buy("摆摊购买")
+                    self.buy("商城购买")
 
                     # 杂货商人
                     if self.exits("界面杂货商人") is not None:

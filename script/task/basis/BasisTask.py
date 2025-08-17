@@ -176,6 +176,37 @@ class BasisTask(ABC):
             time.sleep(timeout)
         return None
 
+    def exitsAll(self, *args, **kwargs):
+        """
+        在指定区域内循环查找多个图像模板，返回第一个匹配到的结果
+
+        参数:
+            *args: 可变参数，包含待查找的图像模板路径
+            **kwargs: 关键字参数
+                match: 匹配次数，默认为1次
+                threshold: 匹配阈值，默认使用Config.THRESHOLD
+                box: 查找区域，默认使用Config.BOX
+                timeout: 超时时间，默认使用Config.TIMEOUT
+
+        返回值:
+            如果找到匹配的图像模板，返回匹配结果；否则返回None
+        """
+        match = kwargs.get('match', 1)
+        threshold = kwargs.get('threshold', Config.THRESHOLD)
+        box = kwargs.get('box', Config.BOX)
+        timeout = kwargs.get('timeout', Config.TIMEOUT)
+
+        # 循环进行多次匹配查找
+        for _ in range(match):
+            # 遍历所有待查找的图像模板
+            for image in args:
+                results = self.imageTemplateAll(image, threshold, box)
+                if results is not None:
+                    return results
+            time.sleep(timeout)
+        return None
+
+
     def imageTemplate(self, image, threshold, box):
         """
         在指定窗口区域中查找模板图像的位置

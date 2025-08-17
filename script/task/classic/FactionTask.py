@@ -57,9 +57,8 @@ class FactionTask(ClassicTask):
                     if self.exits("按钮摆摊购买") is not None:
                         self.touch("按钮摆摊购买", y=-75)
 
-                    # 检查商城购买
-                    self.buy("摆摊")
-                    self.buy("商城")
+                    self.buy("摆摊购买")
+                    self.buy("商城购买")
 
                     self.closeRewardUi()
 

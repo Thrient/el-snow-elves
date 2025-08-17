@@ -1,6 +1,9 @@
+from script.task.classic.BreakBanTask import BreakBanTask
+from script.task.classic.DoorBanTask import DoorBanTask
 from script.task.classic.FactionTask import FactionTask
 from script.task.classic.LessonTask import LessonTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
+from script.task.classic.SwordTask import SwordTask
 
 
 class TaskFactory:
@@ -35,6 +38,9 @@ class TaskFactory:
         # 注册经典课业任务类型
         self.register("classic", "课业任务", LessonTask)
         self.register("classic", "帮派任务", FactionTask)
+        self.register("classic", "门客设宴", DoorBanTask)
+        self.register("classic", "破阵设宴", BreakBanTask)
+        self.register("classic", "单人论剑", SwordTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):
