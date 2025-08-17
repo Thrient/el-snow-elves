@@ -13,6 +13,11 @@ pyinstaller Elves.spec --distpath E:\Desktop\
 ```
 
 ```bash
+Remove-Item script.pyd -Force
+Remove-Item script.pyi -Force
+```
+
+```bash
 robocopy "resources" "E:\Desktop\Elves\resources" /E
 ```
 

@@ -6,10 +6,8 @@ temp/
 
 __pycache__/
 
-dist/
-
 build/
 
-script.pyi
+*.pyi
 
-script.pyd
+*.pyd
