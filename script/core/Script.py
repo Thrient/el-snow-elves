@@ -15,9 +15,9 @@ class Script(Thread):
         self.taskConfig = taskConfig
         self.taskScheduler = TaskScheduler(hwnd, taskConfig)
         self.windowConsole = WindowConsole(hwnd)
-        self.stopped = Lock()
-        self.finished = Event()
-        self.stop = Event()
+        self.__stopped = Lock()
+        self.__finished = Event()
+        self.__stop = Event()
 
     def run(self):
         """
@@ -38,7 +38,7 @@ class Script(Thread):
             # self.windowConsole.setWinEnableClickThrough()
 
             # 主任务处理循环，当finished标志未设置时持续运行
-            while not self.finished.is_set():
+            while not self.__finished.is_set():
                 try:
                     # 从任务调度器获取下一个待执行任务
                     task = self.taskScheduler.pop()
@@ -58,7 +58,7 @@ class Script(Thread):
                     cls = TaskFactory.instance().create(self.taskConfig.model, task)
                     if cls is None:
                         continue
-                    obj = cls(hwnd=self.hwnd, stopped=self.stopped, finished=self.finished, window=self.window,
+                    obj = cls(hwnd=self.hwnd, stopped=self.__stopped, finished=self.__finished, window=self.window,
                               taskConfig=self.taskConfig, windowConsole=self.windowConsole)
                     obj.execute()
                 except Exception as e:
@@ -79,7 +79,7 @@ class Script(Thread):
         返回值:
             无
         """
-        self.finished.set()
+        self.__finished.set()
         self.windowConsole.restStyle()
         self.windowConsole.setWinUnEnableClickThrough()
 
@@ -97,9 +97,9 @@ class Script(Thread):
             无
         """
         # 如果停止标志位未被设置，则执行停止流程
-        if not self.stop.is_set():
-            self.stop.set()
-            self.stopped.acquire()
+        if not self.__stop.is_set():
+            self.__stop.set()
+            self.__stopped.acquire()
         # 取消窗口的点击穿透功能
         self.windowConsole.setWinUnEnableClickThrough()
 
@@ -117,9 +117,9 @@ class Script(Thread):
             无
         """
         # 如果停止标志已设置，则清除停止标志并释放停止信号量
-        if self.stop.is_set():
-            self.stop.clear()
-            self.stopped.release()
+        if self.__stop.is_set():
+            self.__stop.clear()
+            self.__stopped.release()
         # 设置窗口控制台为可点击穿透状态
         self.windowConsole.setWinEnableClickThrough()
 

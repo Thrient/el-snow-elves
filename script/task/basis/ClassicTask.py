@@ -125,10 +125,9 @@ class ClassicTask(BasisTask, ABC):
         self.logs("队伍检测")
         self.openTeam()
         # 检查队伍是否已创建，如果已创建则直接返回
-        if self.exits("标志队伍未创建") is not None:
-            return
-        self.touch("按钮队伍退出")
-        self.touch("按钮队伍确定")
+        if self.exits("标志队伍未创建") is None:
+            self.touch("按钮队伍退出")
+            self.touch("按钮队伍确定")
         self.closeTeam()
 
     def buy(self, model):
@@ -278,6 +277,42 @@ class ClassicTask(BasisTask, ABC):
             return
         # 执行关闭当前界面的操作
         self.closeCurrentUi()
+
+    def closeBuddy(self):
+        """
+        关闭好友界面功能函数
+
+        该函数用于关闭当前打开的好友界面，如果当前不在好友界面则不执行任何操作
+
+        参数:
+            self: 类实例本身
+
+        返回值:
+            无返回值
+        """
+        self.logs("关闭好友")
+        # 检查当前是否已处于物品界面，如果不是则按键打开背包
+        if self.exits("界面好友") is None:
+            return
+        self.closeCurrentUi()
+
+    def openBuddy(self):
+        """
+        打开好友界面功能函数
+
+        该函数用于打开游戏副本中的好友界面，首先会检查好友界面是否已经打开，
+        如果未打开则通过按键操作来打开界面。
+
+        参数:
+            self: 类实例对象，包含游戏相关的操作方法和属性
+
+        返回值:
+            无返回值
+        """
+        self.logs("打开好友")
+        # 检查队伍界面是否已存在，如果不存在则按下T键打开
+        if self.exits("界面好友") is None:
+            self.keyClick("H")
 
     def closeMap(self):
         """

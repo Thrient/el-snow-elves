@@ -11,7 +11,8 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self):
-        self.window = webview.create_window('Elves', 'dist/index.html', js_api=api)
+        # self.window = webview.create_window('Elves', 'dist/index.html', js_api=api)
+        self.window = webview.create_window('Elves', 'http://localhost:5173', js_api=api)
         self.winList = {}
         self.init()
 

@@ -33,6 +33,21 @@ class BasisTask(ABC):
         """
         pass
 
+    def defer(self, count):
+        """
+        延迟执行指定的秒数
+
+        参数:
+            count (int): 延迟的秒数
+
+        返回值:
+            None
+        """
+        # 循环等待指定的秒数
+        for _ in range(count):
+            self.keyClick("TAB", timeout=0)
+            time.sleep(1)
+
     def logs(self, message):
         """
         发送日志消息到指定窗口
@@ -205,7 +220,6 @@ class BasisTask(ABC):
                     return results
             time.sleep(timeout)
         return None
-
 
     def imageTemplate(self, image, threshold, box):
         """
