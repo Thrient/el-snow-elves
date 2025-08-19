@@ -74,4 +74,4 @@ class Utils:
         # 构造事件数据对象
         data = {**kwargs}
         # 执行JavaScript代码，在window对象上触发指定事件
-        window.evaluate_js(f"window.$mitt.emit('{event}', {data})")
+        return window.evaluate_js(f"window.$mitt.emit('{event}', {data})")

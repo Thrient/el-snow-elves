@@ -38,6 +38,8 @@ class SwordTask(ClassicTask):
                 case 4:
                     if self.exits("界面单人论剑") is None:
                         if self.exits("标志单人论剑匹配成功") is not None:
+                            self.logs(f"华山论剑第 {self.event[0]} 次")
+                            self.event[0] += 1
                             self.waitMapLoading()
                             self.setup = 5
                         continue
@@ -49,10 +51,6 @@ class SwordTask(ClassicTask):
                         self.touch("按钮确认", match=1)
 
                 case 5:
-                    self.logs(f"华山论剑第 {self.event[0]} 次")
-
-                    self.event[0] += 1
-
                     self.keyClick("W", delay=3)
 
                     self.touch("按钮华山论剑准备")
@@ -64,10 +62,9 @@ class SwordTask(ClassicTask):
 
                     self.touch("按钮华山论剑离开")
 
-                    if self.event[0] > 10:
+                    if self.event[0] >= 10:
                         self.setup = 0
                         continue
 
                     self.waitMapLoading()
-                    self.event[0] += 1
                     self.setup = 4

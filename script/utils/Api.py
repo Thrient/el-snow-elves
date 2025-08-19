@@ -40,11 +40,11 @@ class Api:
                 if args:
                     # 如果第一个参数是字典，则将其作为关键字参数传递
                     if len(args) == 1 and isinstance(args[0], dict):
-                        callback(**args[0])
+                        return callback(**args[0])
                     else:
-                        callback(*args)
+                        return callback(*args)
                 else:
-                    callback()
+                    return callback()
 
 
 api = Api()

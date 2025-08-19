@@ -33,7 +33,7 @@ class ClassicTask(BasisTask, ABC):
             if self.exits("标志地图加载", "标志地图加载_1") is not None:
                 continue
             # 限制循环次数，防止无限等待
-            if __count > 3:
+            if __count > 1:
                 break
             __count += 1
         self.logs("地图加载结束")
