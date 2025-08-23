@@ -30,7 +30,7 @@ class ChivalryShoutTask(ClassicTask):
                     self.openBuddy()
                     self.touch("按钮好友联系人")
                     self.touch("标志好友输入编号或昵称")
-                    self.input("新书")
+                    self.input(self.taskConfig.chivalryNameOrNumber)
                     self.touch("按钮好友搜索")
                     self.mouseClick((290, 333))
                     self.setup = 4
@@ -41,8 +41,8 @@ class ChivalryShoutTask(ClassicTask):
                     self.logs(f"侠缘喊话 {self.event[0]} 次")
                     self.event[0] += 1
 
-                    if self.event[0] >= 200:
+                    if self.event[0] > self.taskConfig.chivalryShoutCount:
                         self.closeBuddy()
                         self.setup = 0
                         continue
-                    self.defer(3)
+                    self.defer(2)

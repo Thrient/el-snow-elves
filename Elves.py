@@ -11,7 +11,7 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self):
-        # self.window = webview.create_window('Elves', 'dist/index.html', js_api=api)
+        # self.window = webview.create_window('Elves', 'dist/index.html', js_api=api, confirm_close=True)
         self.window = webview.create_window('Elves', 'http://localhost:5173', js_api=api)
         self.winList = {}
         self.init()
@@ -39,6 +39,10 @@ class Elves:
         api.on("API:SCRIPT:RESUME", self.resume)
         # 注册脚本截图事件监听器
         api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
+
+        api.on("API:CONFIG:SAVE", TaskConfig.saveConfig)
+
+        api.on("API:CONFIG:LIST", TaskConfig.getTaskList)
 
         self.window.events.closed += self.on_closed
 

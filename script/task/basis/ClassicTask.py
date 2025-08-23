@@ -31,9 +31,10 @@ class ClassicTask(BasisTask, ABC):
         while not self.finished.is_set():
             # 检查是否正在加载地图，如果是则继续等待
             if self.exits("标志地图加载", "标志地图加载_1") is not None:
+                __count = 0
                 continue
             # 限制循环次数，防止无限等待
-            if __count > 1:
+            if __count >= 3:
                 break
             __count += 1
         self.logs("地图加载结束")
@@ -426,13 +427,12 @@ class ClassicTask(BasisTask, ABC):
         self.logs("等待寻路结束")
         while not self.finished.is_set():
             # 检查是否正在寻路中，如果是则继续等待
-            if self.exits("标志寻路中") is not None:
-                continue
             # 检查是否正在加载地图，如果是则继续等待
-            if self.exits("标志地图加载", "标志地图加载_1") is not None:
+            if self.exits("标志寻路中") is not None or self.exits("标志地图加载", "标志地图加载_1") is not None:
+                __count = 0
                 continue
             # 限制循环次数，防止无限等待
-            if __count > 3:
+            if __count >= 3:
                 break
             __count += 1
         self.logs("寻路结束")

@@ -81,6 +81,7 @@ class LessonTask(ClassicTask):
 
                     if self.exits("按钮课业一键提交") is not None:
                         self.touch("按钮课业一键提交")
+                        self.mouseClick(1335, 750)
 
                         if self.exits("标志课业完成") is not None:
                             self.touch("按钮课业确定")
