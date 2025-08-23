@@ -11,8 +11,20 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self):
-        # self.window = webview.create_window('Elves', 'dist/index.html', js_api=api, confirm_close=True)
-        self.window = webview.create_window('Elves', 'http://localhost:5173', js_api=api)
+        self.window = webview.create_window('Elves',
+                                            'dist/index.html',
+                                            js_api=api,
+                                            confirm_close=True,
+                                            width=1335,
+                                            height=750
+                                            )
+        # self.window = webview.create_window('Elves',
+        #                                     'http://localhost:5173',
+        #                                     js_api=api,
+        #                                     confirm_close=True,
+        #                                     width=1335,
+        #                                     height=750
+        #                                     )
         self.winList = {}
         self.init()
 
@@ -41,6 +53,8 @@ class Elves:
         api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
 
         api.on("API:CONFIG:SAVE", TaskConfig.saveConfig)
+
+        api.on("API:TASK:CONFIG:lOAD", TaskConfig.loadConfig)
 
         api.on("API:CONFIG:LIST", TaskConfig.getTaskList)
 
@@ -182,7 +196,8 @@ class Elves:
         """
         # 创建webview窗口，标题为'Elves'，加载本地服务器地址http://localhost:5173，并绑定js_api接口
         # 启动webview应用程序
-        webview.start(http_server=True, ssl=True)
+        webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH)
+        # webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH, debug=True)
 
 
 if __name__ == '__main__':

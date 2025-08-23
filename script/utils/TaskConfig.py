@@ -20,6 +20,27 @@ class TaskConfig:
         self.switchCharacterFive = kwargs.get('switchCharacterFive', False)
 
     @staticmethod
+    def loadConfig(*args):
+        """
+        加载任务配置信息
+
+        参数:
+            *args: 可变参数，第一个参数为任务配置名称
+
+        返回值:
+            dict: 配置信息字典，如果加载默认配置则返回默认配置，否则返回从JSON文件读取的配置数据
+        """
+        taskConfigName = args[0]
+        if taskConfigName == "":
+            return {}
+        if taskConfigName == "默认配置":
+            return TaskConfig().__dict__
+        # 从用户配置路径下读取指定的JSON配置文件
+        with open(fr"{Config.USER_CONFIG_PATH}\{taskConfigName}.json", 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+
+    @staticmethod
     def saveConfig(*args):
         """
         保存任务配置到JSON文件
@@ -63,11 +84,10 @@ class TaskConfig:
         Returns:
             list: 包含所有任务名的列表，任务名来源于JSON文件的文件名（去除.json后缀）
         """
-        taskList = []
+        taskList = ["默认配置"]
+        Path(Config.USER_CONFIG_PATH).mkdir(parents=True, exist_ok=True)
         # 遍历用户配置路径下的所有文件，筛选出JSON文件
         for file in os.listdir(Config.USER_CONFIG_PATH):
             if file.endswith(".json"):
                 taskList.append(file[:-5])
-        print(taskList)
         return taskList
-

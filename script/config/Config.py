@@ -6,6 +6,7 @@ class Config:
     APP_DATA = os.getenv("LOCALAPPDATA") + fr"\{APP_NAME}"
     USER_CONFIG_PATH = APP_DATA + r"\Config\User"
     SYS_CONFIG_PATH = APP_DATA + r"\Config\Sys"
+    STORAGE_PATH = APP_DATA + r"\pywebview"
     THRESHOLD = 0.85
     BOX = (0, 0, 1335, 750)
     TIMEOUT = 1
