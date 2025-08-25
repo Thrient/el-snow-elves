@@ -43,15 +43,33 @@ class LessonTask(ClassicTask):
                     self.touch("按钮课业前往", box=(178, 443, 399, 582))
                     self.arrive()
                     self.touch("按钮课业课业", "按钮课业悟禅", threshold=0.9)
-
-                    if self.exits("标志课业已接取") is None:
-                        self.touch("按钮课业确定")
-                        self.touch("按钮课业困难")
-
-                    self.backToMain()
+                    self.touch("按钮课业确定")
 
                     self.setup = 4
                 case 4:
+
+                    if self.exits("界面止杀", "界面锻心", "界面问卜", "界面漱尘", "界面归义",
+                                  "界面濯剑", "界面吟风", "界面悟禅", "界面含灵", "界面寻道",
+                                  "界面观梦", "界面起茶") is None:
+                        self.logs("当前未处于课业接取界面 >>> 前往接取课业")
+                        self.setup = 3
+                        continue
+
+                    if self.exits("标志课业已接取") is not None:
+                        self.logs("课业任务已接取")
+                        self.setup = 5
+                        self.backToMain()
+                        continue
+                    if self.exits("按钮课业困难") is not None:
+                        self.logs("选择困难课业")
+                        self.touch("按钮课业困难")
+                        self.setup = 5
+                        self.backToMain()
+                        continue
+                    self.logs("刷新课业")
+                    self.touch("按钮课业刷新", x=-50)
+                    self.touch("按钮确定")
+                case 5:
                     # 　定时激活任务
                     if time.time() - self.event[0] > 90:
                         self.event[0] = time.time()
@@ -68,8 +86,8 @@ class LessonTask(ClassicTask):
                         self.touch("按钮摆摊购买", y=-75)
 
                     # 检查商城购买
-                    self.buy("摆摊购买")
-                    self.buy("商城购买")
+                    if self.buy("摆摊购买") or self.buy("商城购买"):
+                        self.event[0] = time.time() - 90
 
                     # 杂货商人
                     if self.exits("界面杂货商人") is not None:
@@ -81,9 +99,8 @@ class LessonTask(ClassicTask):
 
                     if self.exits("按钮课业一键提交") is not None:
                         self.touch("按钮课业一键提交")
-                        self.mouseClick((1335, 750))
 
-                        if self.exits("标志课业完成") is not None:
-                            self.touch("按钮课业确定")
-                            self.closeRewardUi(5)
-                            self.setup = 0
+                    if self.exits("标志课业完成") is not None:
+                        self.touch("按钮课业确定")
+                        self.closeRewardUi(5)
+                        self.setup = 0

@@ -144,8 +144,7 @@ class ClassicTask(BasisTask, ABC):
             while not self.finished.is_set():
                 # 检查交易界面是否存在
                 if self.exits("界面交易") is None:
-                    return
-
+                    return False
                 # 记录交易购买日志
                 if __event is True:
                     __event = False
@@ -157,11 +156,12 @@ class ClassicTask(BasisTask, ABC):
                     self.touch("按钮交易确定")
 
                 self.closeStalls()
+                return True
 
         if model == "商城购买":
             # 检查商城界面是否存在
             if self.exits("界面珍宝阁") is None:
-                return
+                return False
             # 记录商城购买日志并执行购买操作
             self.logs("商城购买")
             self.mouseClick((990, 690), count=8)
@@ -169,12 +169,16 @@ class ClassicTask(BasisTask, ABC):
             # 关闭商城界面
             self.closeMall()
 
+            return True
+
         if model == "帮派仓库":
             if self.exits("界面帮派仓库") is None:
-                return
+                return False
             self.logs("帮派仓库提交")
             self.touch("按钮帮派仓库提交")
             self.closeBanStore()
+
+            return True
 
     def closeRewardUi(self, count=1):
         """

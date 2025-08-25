@@ -18,6 +18,10 @@ class TaskConfig:
         self.switchCharacterThree = kwargs.get('switchCharacterThree', False)
         self.switchCharacterFour = kwargs.get('switchCharacterFour', False)
         self.switchCharacterFive = kwargs.get('switchCharacterFive', False)
+        # 每日兑换
+        self.silverNoteGiftBox = kwargs.get('silverNoteGiftBox', False)
+        self.wuYueSwordBlank = kwargs.get('wuYueSwordBlank', False)
+        self.baiGongDingBlank = kwargs.get('baiGongDingBlank', False)
 
     @staticmethod
     def loadConfig(*args):
