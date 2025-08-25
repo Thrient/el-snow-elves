@@ -1,3 +1,4 @@
+import argparse
 import time
 
 import webview
@@ -10,16 +11,9 @@ from script.utils.Utils import Utils
 
 
 class Elves:
-    def __init__(self):
-        # self.window = webview.create_window('Elves',
-        #                                     'dist/index.html',
-        #                                     js_api=api,
-        #                                     confirm_close=True,
-        #                                     width=1335,
-        #                                     height=750
-        #                                     )
+    def __init__(self, url='dist/index.html'):
         self.window = webview.create_window('Elves',
-                                            'http://localhost:5173',
+                                            url=url,
                                             js_api=api,
                                             confirm_close=True,
                                             width=1335,
@@ -203,5 +197,8 @@ class Elves:
 
 
 if __name__ == '__main__':
-    Elves = Elves()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--url', type=str, default='dist/index.html')
+
+    Elves = Elves(url=parser.parse_args().url)
     Elves.run()

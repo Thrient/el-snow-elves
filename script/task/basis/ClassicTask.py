@@ -14,6 +14,31 @@ class ClassicTask(BasisTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def activatedTask(self, *args):
+        """
+        激活江湖任务栏功能
+
+        参数:
+            *args: 可变参数，传递给touch方法的额外参数
+
+        返回值:
+            无返回值
+        """
+        self.logs("激活江湖任务栏")
+        # 检查任务栏是否已经激活
+        if self.exits("按钮主界面江湖-激活") is not None:
+            self.touch(*args, threshold=0.8)
+            return
+        # 检查任务图标是否激活，如果激活则点击江湖按钮
+        if self.exits("按钮主界面任务图标-激活") is not None:
+            self.touch("按钮主界面江湖-未激活")
+            self.touch(*args, threshold=0.8)
+            return
+        # 任务图标未激活时的处理流程
+        self.touch("按钮主界面任务图标-未激活")
+        self.touch("按钮主界面江湖-未激活")
+        self.touch(*args, threshold=0.8)
+
     def waitMapLoading(self):
         """
         等待地图加载完成
@@ -201,7 +226,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("关闭当前界面")
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            if self.touch("按钮关闭", box=box) is None:
+            if self.touch("按钮关闭_1", "按钮关闭", box=box) is None:
                 return
 
     def backToMain(self):
@@ -282,6 +307,42 @@ class ClassicTask(BasisTask, ABC):
             return
         # 执行关闭当前界面的操作
         self.closeCurrentUi()
+
+    def closeFaction(self):
+        """
+        关闭帮派界面
+
+        该函数用于关闭当前打开的帮派界面。如果当前不在帮派界面，则直接返回。
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+        self.logs("关闭帮派")
+        # 检查当前是否已处于帮派界面，如果不是则直接返回
+        if self.exits("界面帮派") is None:
+            return
+        self.closeCurrentUi()
+
+    def openFaction(self):
+        """
+        打开帮派界面功能函数
+
+        该函数用于打开游戏中的帮派界面，首先会检查帮派界面是否已经存在，
+        如果不存在则通过按键操作来打开界面。
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+        self.logs("打开帮派")
+        # 检查队伍界面是否已存在，如果不存在则按下T键打开
+        if self.exits("界面帮派") is None:
+            self.keyClick("O")
 
     def closeBuddy(self):
         """

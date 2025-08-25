@@ -60,7 +60,7 @@ class DailyRedemptionTask(ClassicTask):
                         if self.exits("标志珍宝阁吴越剑坯", box=(910, 170, 1190, 285)):
                             self.mouseClick((988, 694), count=5)
                         self.touch("按钮珍宝阁搜索返回")
-                        self.closeRewardUi(5)
+                        self.closeRewardUi(count=5)
 
                     if self.taskConfig.baiGongDingBlank:
                         self.touch("按钮珍宝阁搜索")
@@ -70,6 +70,6 @@ class DailyRedemptionTask(ClassicTask):
                         if self.exits("标志珍宝阁白公鼎坯", box=(910, 170, 1190, 285)):
                             self.mouseClick((988, 694), count=5)
                         self.touch("按钮珍宝阁搜索返回")
-                        self.closeRewardUi(2)
+                        self.closeRewardUi(count=2)
 
                     self.backToMain()

@@ -1,8 +1,5 @@
 ```bash
 python -m nuitka --python-flag=no_warnings,-O,no_docstrings --remove-output --module script --include-package=script
-````
-
-```bash
 ren script.cp312-win_amd64.pyd script.pyd
 ````
 
@@ -13,12 +10,6 @@ pyinstaller Elves.spec --distpath E:\Desktop\
 ```bash
 Remove-Item script.pyd -Force
 Remove-Item script.pyi -Force
-```
-
-```bash
 robocopy "resources" "E:\Desktop\Elves\resources" /E
-```
-
-```bash
 robocopy "dist" "E:\Desktop\Elves\_internal\dist" /E
 ```

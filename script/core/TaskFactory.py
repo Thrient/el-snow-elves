@@ -6,6 +6,7 @@ from script.task.classic.FactionTask import FactionTask
 from script.task.classic.LessonTask import LessonTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
 from script.task.classic.SwordTask import SwordTask
+from script.task.classic.UrgentDeliveryTask import UrgentDeliveryTask
 
 
 class TaskFactory:
@@ -45,6 +46,7 @@ class TaskFactory:
         self.register("classic", "单人论剑", SwordTask)
         self.register("classic", "侠缘喊话", ChivalryShoutTask)
         self.register("classic", "每日兑换", DailyRedemptionTask)
+        self.register("classic", "江湖急送", UrgentDeliveryTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):
