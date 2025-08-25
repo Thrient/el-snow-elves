@@ -75,6 +75,23 @@ class TaskConfig:
             json.dump(taskConfig.__dict__, file, ensure_ascii=False, indent=4)
 
     @staticmethod
+    def deleteConfig(*args):
+        """
+        删除指定的配置文件
+
+        参数:
+            *args: 可变参数，第一个参数为配置文件名（不含扩展名）
+
+        返回值:
+            无返回值
+
+        功能说明:
+            根据传入的文件名参数，删除对应的JSON配置文件
+        """
+        # 构造配置文件路径并删除文件，如果文件不存在则忽略错误
+        Path(f"{Config.USER_CONFIG_PATH}\\{args[0]}.json").unlink(missing_ok=True)
+
+    @staticmethod
     def getTaskList():
         """
         获取任务列表

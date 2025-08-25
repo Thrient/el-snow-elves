@@ -11,20 +11,20 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self):
-        self.window = webview.create_window('Elves',
-                                            'dist/index.html',
-                                            js_api=api,
-                                            confirm_close=True,
-                                            width=1335,
-                                            height=750
-                                            )
         # self.window = webview.create_window('Elves',
-        #                                     'http://localhost:5173',
+        #                                     'dist/index.html',
         #                                     js_api=api,
         #                                     confirm_close=True,
         #                                     width=1335,
         #                                     height=750
         #                                     )
+        self.window = webview.create_window('Elves',
+                                            'http://localhost:5173',
+                                            js_api=api,
+                                            confirm_close=True,
+                                            width=1335,
+                                            height=750
+                                            )
         self.winList = {}
         self.init()
 
@@ -51,12 +51,14 @@ class Elves:
         api.on("API:SCRIPT:RESUME", self.resume)
         # 注册脚本截图事件监听器
         api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
+        # 注册配置保存事件处理函数
+        api.on("API:TASK:CONFIG:SAVE", TaskConfig.saveConfig)
 
-        api.on("API:CONFIG:SAVE", TaskConfig.saveConfig)
-
+        api.on("API:TASK:CONFIG:DELETE", TaskConfig.deleteConfig)
+        # 注册任务配置加载事件处理函数
         api.on("API:TASK:CONFIG:lOAD", TaskConfig.loadConfig)
-
-        api.on("API:CONFIG:LIST", TaskConfig.getTaskList)
+        # 注册配置列表获取事件处理函数
+        api.on("API:TASK:CONFIG:LIST", TaskConfig.getTaskList)
 
         self.window.events.closed += self.on_closed
 
