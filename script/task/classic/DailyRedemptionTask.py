@@ -73,3 +73,4 @@ class DailyRedemptionTask(ClassicTask):
                         self.closeRewardUi(count=2)
 
                     self.backToMain()
+                    self.setup = 0

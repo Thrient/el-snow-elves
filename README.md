@@ -12,4 +12,5 @@ Remove-Item script.pyd -Force
 Remove-Item script.pyi -Force
 robocopy "resources" "E:\Desktop\Elves\resources" /E
 robocopy "dist" "E:\Desktop\Elves\_internal\dist" /E
+Remove-Item E:\Desktop\Elves.zip  -Force
 ```

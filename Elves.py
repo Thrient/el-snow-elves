@@ -12,13 +12,7 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self, url='dist/index.html'):
-        self.window = webview.create_window('Elves',
-                                            url=url,
-                                            js_api=api,
-                                            confirm_close=True,
-                                            width=1335,
-                                            height=750
-                                            )
+        self.window = webview.create_window('Elves', url=url, js_api=api, confirm_close=True, width=1335, height=750)
         self.winList = {}
         self.init()
 

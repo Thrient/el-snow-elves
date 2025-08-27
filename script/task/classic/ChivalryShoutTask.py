@@ -45,4 +45,4 @@ class ChivalryShoutTask(ClassicTask):
                         self.closeBuddy()
                         self.setup = 0
                         continue
-                    self.defer(2)
+                    self.defer(3)

@@ -63,7 +63,7 @@ class SwordTask(ClassicTask):
 
                     self.touch("按钮华山论剑离开")
 
-                    if self.event[0] >= 10:
+                    if self.event[0] > 10:
                         self.setup = 0
                         continue
 
