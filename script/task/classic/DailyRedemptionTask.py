@@ -8,6 +8,9 @@ class DailyRedemptionTask(ClassicTask):
         self.setup = 1
         self.event = [True]
 
+    def instance(self):
+        return self
+
     def execute(self):
         self.setup = 1
 

@@ -59,7 +59,7 @@ class Script(Thread):
                     if cls is None:
                         continue
                     obj = cls(hwnd=self.hwnd, stopped=self.__stopped, finished=self.__finished, window=self.window,
-                              taskConfig=self.taskConfig, windowConsole=self.windowConsole)
+                              taskConfig=self.taskConfig, windowConsole=self.windowConsole).instance()
                     obj.execute()
                 except Exception as e:
                     print(e)

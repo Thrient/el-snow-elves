@@ -7,6 +7,9 @@ class SwitchCharacterTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def instance(self):
+        return self
+
     def execute(self):
         if self.taskConfig.switchCharacterOne and Config.SWITCH_CHARACTER_STATE[self.hwnd][0]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][0] = False

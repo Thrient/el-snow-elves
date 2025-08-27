@@ -9,6 +9,9 @@ class LessonTask(ClassicTask):
         self.setup = 1
         self.event = [time.time() - 60]
 
+    def instance(self):
+        return self
+
     def execute(self):
         self.setup = 1
 

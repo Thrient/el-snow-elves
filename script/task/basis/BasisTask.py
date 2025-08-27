@@ -18,6 +18,19 @@ class BasisTask(ABC):
         self.windowConsole = windowConsole
 
     @abstractmethod
+    def instance(self):
+        """
+        抽象静态方法，用于获取类的实例对象
+
+        该方法是一个抽象方法，需要在子类中实现具体的实例化逻辑。
+        通常用于实现单例模式或其他实例管理机制。
+
+        Returns:
+            返回类的实例对象，具体类型取决于子类的实现
+        """
+        pass
+
+    @abstractmethod
     def execute(self):
         """
         执行方法的抽象定义
