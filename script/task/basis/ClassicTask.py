@@ -14,7 +14,34 @@ class ClassicTask(BasisTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def activatedTask(self, *args):
+    def worldShouts(self, text, common=True, interconnected=True):
+        """
+        在大世界中发送聊天消息
+
+        参数:
+            text (str): 要发送的聊天文本内容
+            common (bool): 是否在普通世界发送消息，默认为True
+            interconnected (bool): 是否在互联世界发送消息，默认为True
+
+        返回值:
+            无返回值
+        """
+
+        # 返回主界面并点击世界聊天入口
+        self.backToMain()
+        self.mouseClick((305, 600))
+
+        # 检查普通世界按钮是否存在，如果存在且允许在普通世界发送则执行发送操作
+        if self.exits("按钮大世界普通世界") and common:
+            self.touch("按钮大世界普通世界")
+            self.touch("标志点击输入文字")
+            self.input(text)
+            self.touch("按钮大世界发送")
+
+        # 退出聊天界面
+        self.touch("按钮聊天退出")
+
+    def activatedTask(self, *args, model):
         """
         激活江湖任务栏功能
 
@@ -24,20 +51,32 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        self.logs("激活江湖任务栏")
-        # 检查任务栏是否已经激活
-        if self.exits("按钮主界面江湖-激活") is not None:
-            self.touch(*args, threshold=0.8)
-            return
-        # 检查任务图标是否激活，如果激活则点击江湖按钮
-        if self.exits("按钮主界面任务图标-激活") is not None:
+        if model == "江湖":
+            self.logs("激活江湖栏")
+            # 检查任务栏是否已经激活
+            if self.exits("按钮主界面江湖-激活") is not None:
+                return self.touch(*args, threshold=0.8)
+            # 检查任务图标是否激活，如果激活则点击江湖按钮
+            if self.exits("按钮主界面任务图标-激活") is not None:
+                self.touch("按钮主界面江湖-未激活")
+                return self.touch(*args, threshold=0.8)
+            # 任务图标未激活时的处理流程
+            self.touch("按钮主界面任务图标-未激活")
             self.touch("按钮主界面江湖-未激活")
-            self.touch(*args, threshold=0.8)
-            return
-        # 任务图标未激活时的处理流程
-        self.touch("按钮主界面任务图标-未激活")
-        self.touch("按钮主界面江湖-未激活")
-        self.touch(*args, threshold=0.8)
+            return self.touch(*args, threshold=0.8)
+        if model == "任务":
+            self.logs("激活任务栏")
+            # 检查任务栏是否已经激活
+            if self.exits("按钮主界面任务-激活") is not None:
+                return self.touch(*args, threshold=0.8)
+            # 检查任务图标是否激活，如果激活则点击江湖按钮
+            if self.exits("按钮主界面任务图标-激活") is not None:
+                self.touch("按钮主界面任务-未激活")
+                return self.touch(*args, threshold=0.8)
+            # 任务图标未激活时的处理流程
+            self.touch("按钮主界面任务图标-未激活")
+            self.touch("按钮主界面任务-未激活")
+            return self.touch(*args, threshold=0.8)
 
     def waitMapLoading(self):
         """
@@ -155,6 +194,18 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮队伍退出")
             self.touch("按钮队伍确定")
         self.closeTeam()
+
+    def teamCreate(self):
+        self.logs("创建{}队伍")
+        self.openTeam()
+        self.touch("按钮队伍创建")
+        self.touch("按钮队伍下拉")
+        self.mouseMove((258, 307), (258, 607))
+        self.touch("按钮队伍无目标")
+        self.touch("按钮队伍江湖纪事")
+        self.touch("按钮队伍自动匹配")
+        self.touch("按钮队伍确定")
+        self.touch("按钮队伍确定")
 
     def buy(self, model):
         """

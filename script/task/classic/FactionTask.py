@@ -50,7 +50,7 @@ class FactionTask(ClassicTask):
                     # 　定时激活任务
                     if time.time() - self.event[0] > 90:
                         self.event[0] = time.time()
-                        self.activatedTask("按钮任务帮派")
+                        self.activatedTask("按钮任务帮派", model="江湖")
 
                     # 商城购买
                     if self.exits("按钮商城购买") is not None:

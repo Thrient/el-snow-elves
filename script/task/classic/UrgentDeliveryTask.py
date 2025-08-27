@@ -41,7 +41,7 @@ class UrgentDeliveryTask(ClassicTask):
                     self.backToMain()
                     self.setup = 4
                 case 4:
-                    self.activatedTask("按钮任务外卖")
+                    self.activatedTask("按钮任务外卖", model="江湖")
 
                     if self.exits("按钮江湖急送菜品送达") is not None:
                         self.touch("按钮江湖急送菜品送达")

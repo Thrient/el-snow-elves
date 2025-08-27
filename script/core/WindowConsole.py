@@ -1,4 +1,5 @@
 import ctypes
+import math
 import time
 
 import win32api
@@ -82,6 +83,65 @@ class WindowConsole:
         time.sleep(delay)
         # 发送按键释放消息
         ctypes.windll.user32.PostMessageW(self.hwnd, win32con.WM_KEYUP, wparam, lparam)
+
+    def mouseMove(self, start, end):
+        """
+        模拟鼠标从起点拖拽到终点的过程。
+
+        参数:
+            start (tuple): 起始坐标，格式为 (x, y)。
+            end (tuple): 结束坐标，格式为 (x, y)。
+
+        返回值:
+            无返回值。
+        """
+        start_x, start_y = start
+        end_x, end_y = end
+        position = win32api.MAKELONG(start_x, start_y)
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, position)
+        time.sleep(0.1)
+
+        # 计算总位移
+        dx = end_x - start_x
+        dy = end_y - start_y
+
+        # 设置移动持续时间并计算步数
+        duration = 0.5
+        steps = int(duration * 100)
+        if steps <= 0:
+            steps = 1
+
+        # 记录开始时间用于控制移动速度
+        start_time = time.time()
+
+        # 逐步移动鼠标（拖动过程）
+        for step in range(steps + 1):
+
+            # 计算当前进度（0到1之间）
+            progress = step / steps
+
+            # 使用缓动函数使移动更自然（先慢后快再慢）
+            t = progress
+            t = 0.5 - math.cos(t * math.pi) / 2
+
+            # 计算当前位置
+            current_x = start_x + dx * t
+            current_y = start_y + dy * t
+
+            # 发送鼠标移动消息
+            position = win32api.MAKELONG(int(current_x), int(current_y))
+            win32api.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, position)
+
+            # 控制移动速度
+            elapsed = time.time() - start_time
+            expected_elapsed = step * duration / steps
+            sleep_time = expected_elapsed - elapsed
+
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+        position = win32api.MAKELONG(end_x, end_y)
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, position)
+
 
     def mouseDownUp(self, pos, delay):
         """
