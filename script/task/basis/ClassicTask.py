@@ -32,8 +32,8 @@ class ClassicTask(BasisTask, ABC):
         self.mouseClick((305, 600))
 
         # 检查普通世界按钮是否存在，如果存在且允许在普通世界发送则执行发送操作
-        if self.exits("按钮大世界普通世界") and common:
-            self.touch("按钮大世界普通世界")
+        if common:
+            self.touch("按钮大世界普通世界", box=(0, 0, 150, 750))
             self.touch("标志点击输入文字")
             self.input(text)
             self.touch("按钮大世界发送")
@@ -277,7 +277,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("关闭当前界面")
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            if self.touch("按钮关闭_1", "按钮关闭", box=box) is None:
+            if self.touch("按钮关闭_1", "按钮关闭", box=box, match=1) is None:
                 return
 
     def backToMain(self):
@@ -298,8 +298,8 @@ class ClassicTask(BasisTask, ABC):
             # 检查是否已经回到主界面（通过检测"按钮世界挂机"是否存在）
             if self.exits("按钮世界挂机") is not None:
                 break
-            self.keyClick("TAB")
             # 关闭当前打开的界面
+            self.touch("按钮聊天退出", match=1)
             self.closeCurrentUi()
 
     def closeBanStore(self):

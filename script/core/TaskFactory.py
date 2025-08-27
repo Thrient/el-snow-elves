@@ -8,6 +8,7 @@ from script.task.classic.LessonTask import LessonTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
 from script.task.classic.SwordTask import SwordTask
 from script.task.classic.UrgentDeliveryTask import UrgentDeliveryTask
+from script.task.classic.WorldShoutsTask import WorldShoutsTask
 
 
 class TaskFactory:
@@ -49,6 +50,7 @@ class TaskFactory:
         self.register("classic", "每日兑换", DailyRedemptionTask)
         self.register("classic", "江湖急送", UrgentDeliveryTask)
         self.register("classic", "日常副本", DailyCopiesTask)
+        self.register("classic", "世界喊话", WorldShoutsTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

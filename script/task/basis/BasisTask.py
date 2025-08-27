@@ -46,6 +46,21 @@ class BasisTask(ABC):
         """
         pass
 
+    def keepAlive(self):
+        """
+        保持程序活跃状态
+
+        通过模拟鼠标点击操作来防止程序被系统休眠或超时退出。
+        点击屏幕右下角位置(1350, 750)来维持活跃状态。
+
+        参数:
+            self: 类实例对象
+
+        返回值:
+            无
+        """
+        self.mouseClick((1350, 750), timeout=0, delay=0)
+
     def defer(self, count):
         """
         延迟执行指定的秒数
@@ -58,7 +73,7 @@ class BasisTask(ABC):
         """
         # 循环等待指定的秒数
         for _ in range(count):
-            self.mouseClick((1335, 750), timeout=0)
+            self.keyClick("TAB", timeout=0)
             time.sleep(1)
 
     def logs(self, message):
@@ -111,7 +126,7 @@ class BasisTask(ABC):
             # 执行窗口控制台的鼠标移动操作
             self.windowConsole.mouseMove(start, end)
             # 等待指定的超时时间
-            self.defer(timeout)
+            time.sleep(timeout)
 
     def mouseClick(self, pos, x=0, y=0, timeout=Config.TIMEOUT, count=1, delay=0):
         """
@@ -137,7 +152,7 @@ class BasisTask(ABC):
             for _ in range(count):
                 print(f"pos: {pos[0]}, {pos[1]}")
                 self.windowConsole.mouseDownUp((pos[0] + x, pos[1] + y), delay=delay)
-                self.defer(timeout)
+                time.sleep(timeout)
 
     def keyClick(self, key, timeout=Config.TIMEOUT, delay=0):
         """
@@ -157,7 +172,7 @@ class BasisTask(ABC):
         with self.stopped:
             self.windowConsole.keyDownUp(key, delay=delay)
             print(f"key: {key}")
-            self.defer(timeout)
+            time.sleep(timeout)
 
     def touch(self, *args, **kwargs):
         """
@@ -193,7 +208,7 @@ class BasisTask(ABC):
                     continue
                 self.mouseClick(result, x, y)
                 return result
-            self.defer(timeout)
+            time.sleep(timeout)
         return None
 
     def exits(self, *args, **kwargs):
@@ -223,7 +238,7 @@ class BasisTask(ABC):
                 result = self.imageTemplate(image, threshold, box)
                 if result is not None:
                     return result
-            self.defer(timeout)
+            time.sleep(timeout)
         return None
 
     def exitsAll(self, *args, **kwargs):
@@ -253,7 +268,7 @@ class BasisTask(ABC):
                 results = self.imageTemplateAll(image, threshold, box)
                 if results is not None:
                     return results
-            self.defer(timeout)
+            time.sleep(timeout)
         return None
 
     def imageTemplate(self, image, threshold, box):
