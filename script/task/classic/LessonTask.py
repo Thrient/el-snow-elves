@@ -63,6 +63,7 @@ class LessonTask(ClassicTask):
                         self.setup = 5
                         self.backToMain()
                         continue
+
                     if self.exits("按钮课业困难") is not None:
                         self.logs("选择困难课业")
                         self.touch("按钮课业困难")
@@ -109,3 +110,5 @@ class LessonTask(ClassicTask):
                         self.touch("按钮课业确定")
                         self.closeRewardUi(5)
                         self.setup = 0
+
+                    self.defer(1)

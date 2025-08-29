@@ -13,26 +13,17 @@ from script.utils.Utils import Utils
 class ClassicTask(BasisTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # 世界喊话设置
+        self.WorldShoutsTextList = self.taskConfig.WorldShoutsText.split("\n")
+        self.WorldShoutsIndex = 0
 
-    def worldShouts(self, text, common=True, interconnected=True):
-        """
-        在大世界中发送聊天消息
-
-        参数:
-            text (str): 要发送的聊天文本内容
-            common (bool): 是否在普通世界发送消息，默认为True
-            interconnected (bool): 是否在互联世界发送消息，默认为True
-
-        返回值:
-            无返回值
-        """
-
+    def worldShouts(self, text, ordinary=True, connected=True):
         # 返回主界面并点击世界聊天入口
         self.backToMain()
         self.mouseClick((305, 600))
 
         # 检查普通世界按钮是否存在，如果存在且允许在普通世界发送则执行发送操作
-        if common:
+        if ordinary:
             self.touch("按钮大世界普通世界", box=(0, 0, 150, 750))
             self.touch("标志点击输入文字")
             self.input(text)
@@ -93,13 +84,13 @@ class ClassicTask(BasisTask, ABC):
         __count = 0
         self.logs("等待地图加载")
         while not self.finished.is_set():
+            # 限制循环次数，防止无限等待
+            if __count >= 2:
+                break
             # 检查是否正在加载地图，如果是则继续等待
             if self.exits("标志地图加载", "标志地图加载_1") is not None:
                 __count = 0
                 continue
-            # 限制循环次数，防止无限等待
-            if __count >= 3:
-                break
             __count += 1
         self.logs("地图加载结束")
 
@@ -195,17 +186,25 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮队伍确定")
         self.closeTeam()
 
-    def teamCreate(self):
-        self.logs("创建{}队伍")
-        self.openTeam()
-        self.touch("按钮队伍创建")
-        self.touch("按钮队伍下拉")
-        self.mouseMove((258, 307), (258, 607))
-        self.touch("按钮队伍无目标")
-        self.touch("按钮队伍江湖纪事")
-        self.touch("按钮队伍自动匹配")
-        self.touch("按钮队伍确定")
-        self.touch("按钮队伍确定")
+    def teamCreate(self, model="日常"):
+        self.logs(f"创建{model}队伍")
+
+        if model == "日常":
+            self.logs("刷新当天日常")
+            self.openBackpack()
+            self.touch("按钮物品综合入口")
+            self.touch("按钮物品活动")
+            self.touch("按钮活动江湖")
+            self.touch("按钮活动江湖纪事", y=45)
+            self.openTeam()
+            self.touch("按钮队伍创建")
+            self.touch("按钮队伍下拉")
+            self.mouseMove((258, 307), (258, 607))
+            self.touch("按钮队伍无目标")
+            self.touch("按钮队伍江湖纪事")
+            self.touch("按钮队伍自动匹配")
+            self.touch("按钮队伍确定")
+            self.touch("按钮队伍确定")
 
     def buy(self, model):
         """

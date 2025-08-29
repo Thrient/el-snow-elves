@@ -22,6 +22,10 @@ class TaskConfig:
         self.silverNoteGiftBox = kwargs.get('silverNoteGiftBox', False)
         self.wuYueSwordBlank = kwargs.get('wuYueSwordBlank', False)
         self.baiGongDingBlank = kwargs.get('baiGongDingBlank', False)
+        # 世界喊话
+        self.ordinaryWorldShouts = kwargs.get('ordinaryWorldShouts', False)
+        self.connectedWorldShouts = kwargs.get('connectedWorldShouts', False)
+        self.WorldShoutsText = kwargs.get('worldShoutsText', '')
 
     @staticmethod
     def loadConfig(*args):

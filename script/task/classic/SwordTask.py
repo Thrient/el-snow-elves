@@ -46,6 +46,8 @@ class SwordTask(ClassicTask):
                             self.event[0] += 1
                             self.waitMapLoading()
                             self.setup = 5
+                            continue
+                        self.setup = 3
                         continue
 
                     if self.exits("按钮单人论剑取消匹配") is None:

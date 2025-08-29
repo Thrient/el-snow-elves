@@ -34,9 +34,14 @@ class WorldShoutsTask(ClassicTask):
                     if time.time() - self.event[0] > 34:
                         self.event[0] = time.time()
 
+                        self.WorldShoutsIndex = 0 \
+                            if self.WorldShoutsIndex >= len(self.WorldShoutsTextList) \
+                            else self.WorldShoutsIndex
+
                         self.backToMain()
                         self.keepAlive()
-                        self.worldShouts("sxy")
+                        self.worldShouts(self.WorldShoutsTextList[self.WorldShoutsIndex],
+                                         self.taskConfig.WorldShouts)
                         self.logs(f"世界喊话 {self.event[1]} 次")
                         self.event[1] += 1
 

@@ -171,7 +171,7 @@ class Elves:
         script.run()
 
     @staticmethod
-    def run():
+    def run(debug=False):
         """
         运行webview窗口应用程序
 
@@ -186,13 +186,14 @@ class Elves:
         """
         # 创建webview窗口，标题为'Elves'，加载本地服务器地址http://localhost:5173，并绑定js_api接口
         # 启动webview应用程序
-        webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH)
-        # webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH, debug=True)
+        # webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH)
+        webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH, debug=debug)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', type=str, default='dist/index.html')
+    parser.add_argument('--debug', type=bool, default=False)
 
     Elves = Elves(url=parser.parse_args().url)
-    Elves.run()
+    Elves.run(debug=parser.parse_args().debug)

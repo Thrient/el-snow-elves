@@ -5,6 +5,7 @@ from airtest.aircv.utils import pil_2_cv2
 from airtest.core.cv import Template
 
 from script.config.Config import Config
+from script.core.Timer import Timer
 from script.utils.Utils import Utils
 
 
@@ -16,6 +17,7 @@ class BasisTask(ABC):
         self.window = window
         self.taskConfig = taskConfig
         self.windowConsole = windowConsole
+        self.timer = Timer()
 
     @abstractmethod
     def instance(self):
