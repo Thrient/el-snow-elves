@@ -194,7 +194,7 @@ class BasisTask(ABC):
             如果找到并点击了图像，返回匹配结果坐标；否则返回None
         """
 
-        match = kwargs.get('match', 2)
+        match = kwargs.get('match', 3)
         threshold = kwargs.get('threshold', Config.THRESHOLD)
         box = kwargs.get('box', Config.BOX)
         timeout = kwargs.get('timeout', Config.TIMEOUT)

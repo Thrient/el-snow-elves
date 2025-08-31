@@ -35,13 +35,15 @@ class WorldShoutsTask(ClassicTask):
                         self.event[0] = time.time()
 
                         self.WorldShoutsIndex = 0 \
-                            if self.WorldShoutsIndex >= len(self.WorldShoutsTextList) \
+                            if self.WorldShoutsIndex >= len(self.WorldShoutsTextList) + 1 \
                             else self.WorldShoutsIndex
 
                         self.backToMain()
                         self.keepAlive()
                         self.worldShouts(self.WorldShoutsTextList[self.WorldShoutsIndex],
-                                         self.taskConfig.WorldShouts)
+                                         ordinary=self.taskConfig.ordinaryWorldShouts,
+                                         connected=self.taskConfig.connectedWorldShouts)
+                        self.WorldShoutsIndex += 1
                         self.logs(f"世界喊话 {self.event[1]} 次")
                         self.event[1] += 1
 

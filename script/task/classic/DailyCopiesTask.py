@@ -65,3 +65,5 @@ class DailyCopiesTask(ClassicTask):
                             self.waitMapLoading()
                             self.setup = 0
                         self.event[2] += 1
+
+                    self.keepAlive()

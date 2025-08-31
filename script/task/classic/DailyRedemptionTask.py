@@ -51,7 +51,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.input("银票礼盒")
                         self.touch("按钮珍宝阁搜索")
                         if self.exits("标志珍宝阁银票礼盒", box=(910, 170, 1190, 285)):
-                            self.mouseClick((988, 694), count=30)
+                            self.mouseClick((988, 694), count=30, timeout=0.1)
                         self.touch("按钮珍宝阁搜索返回")
                         self.closeRewardUi()
 
@@ -61,7 +61,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.input("吴越剑坯")
                         self.touch("按钮珍宝阁搜索")
                         if self.exits("标志珍宝阁吴越剑坯", box=(910, 170, 1190, 285)):
-                            self.mouseClick((988, 694), count=5)
+                            self.mouseClick((988, 694), count=5, timeout=0.1)
                         self.touch("按钮珍宝阁搜索返回")
                         self.closeRewardUi(count=5)
 
@@ -71,7 +71,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.input("白公鼎坯")
                         self.touch("按钮珍宝阁搜索")
                         if self.exits("标志珍宝阁白公鼎坯", box=(910, 170, 1190, 285)):
-                            self.mouseClick((988, 694), count=5)
+                            self.mouseClick((988, 694), count=5, timeout=0.1)
                         self.touch("按钮珍宝阁搜索返回")
                         self.closeRewardUi(count=2)
 

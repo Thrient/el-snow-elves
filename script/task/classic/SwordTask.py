@@ -36,7 +36,7 @@ class SwordTask(ClassicTask):
                     self.touch("按钮物品综合入口")
                     self.touch("按钮物品活动")
                     self.touch("按钮活动纷争")
-                    self.touch("按钮活动华山论剑", x=-60, y=45)
+                    self.touch("按钮活动华山论剑", "按钮活动萌芽论剑", x=-60, y=45)
                     self.setup = 4
 
                 case 4:
