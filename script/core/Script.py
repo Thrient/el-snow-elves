@@ -80,6 +80,7 @@ class Script(Thread):
             无
         """
         self.__finished.set()
+        self.resume()
         self.windowConsole.restStyle()
         self.windowConsole.setWinUnEnableClickThrough()
 

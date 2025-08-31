@@ -29,6 +29,12 @@ class ClassicTask(BasisTask, ABC):
             self.input(text)
             self.touch("按钮大世界发送")
 
+        if connected:
+            self.touch("按钮大世界互联世界", box=(0, 0, 150, 750))
+            self.touch("标志点击输入文字")
+            self.input(text)
+            self.touch("按钮大世界发送")
+
         # 退出聊天界面
         self.touch("按钮聊天退出")
 
