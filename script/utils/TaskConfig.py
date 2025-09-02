@@ -1,6 +1,6 @@
 import json
 import os
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 
 from script.config.Config import Config
@@ -25,7 +25,8 @@ class TaskConfig:
         # 世界喊话
         self.ordinaryWorldShouts = kwargs.get('ordinaryWorldShouts', False)
         self.connectedWorldShouts = kwargs.get('connectedWorldShouts', False)
-        self.WorldShoutsText = kwargs.get('worldShoutsText', '')
+        self.worldShoutsText = kwargs.get('worldShoutsText', '')
+        self.keyList = kwargs.get('keyList', ['1', '2', '3', '4', '5', '6', '7', '8'])
 
     @staticmethod
     def loadConfig(*args):

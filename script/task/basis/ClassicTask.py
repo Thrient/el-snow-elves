@@ -1,4 +1,7 @@
 import base64
+import threading
+from collections import deque
+from threading import Event
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
@@ -13,9 +16,41 @@ from script.utils.Utils import Utils
 class ClassicTask(BasisTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # 自动战斗
+        self.autoFightEvent = Event()
         # 世界喊话设置
-        self.WorldShoutsTextList = self.taskConfig.WorldShoutsText.split("\n")
+        self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
+
+    def autoFight(self):
+        """
+        自动战斗循环函数，在后台线程中执行按键操作
+        该函数会持续循环执行，直到autoFightEvent事件被设置为止
+        循环中会按照taskConfig中配置的按键列表依次执行按键点击操作
+        """
+        __queue = deque([0, 1, 2, 3, 4, 5, 6, 7, 8])
+
+        while not self.autoFightEvent.is_set():
+            index = __queue.popleft()
+            __queue.append(index)
+            self.keyClick(self.taskConfig.autoFightKeys[index])
+
+    def autoFightStop(self):
+        """
+        停止自动战斗功能
+        通过设置autoFightEvent事件来通知自动战斗循环停止执行
+        """
+        self.autoFightEvent.set()
+
+    def autoFightStart(self):
+        """
+        启动自动战斗功能
+        清除autoFightEvent事件并创建新的后台线程来执行自动战斗循环
+        """
+        # 清除停止事件，确保自动战斗可以正常开始
+        self.autoFightEvent.clear()
+        # 创建并启动自动战斗的后台线程
+        threading.Thread(target=self.autoFight, daemon=True).start()
 
     def worldShouts(self, text, ordinary=True, connected=True):
         # 返回主界面并点击世界聊天入口
@@ -52,6 +87,7 @@ class ClassicTask(BasisTask, ABC):
             self.logs("激活江湖栏")
             # 检查任务栏是否已经激活
             if self.exits("按钮主界面江湖-激活") is not None:
+                self.mouseMove((118, 252), (118, 452))
                 return self.touch(*args, threshold=0.8)
             # 检查任务图标是否激活，如果激活则点击江湖按钮
             if self.exits("按钮主界面任务图标-激活") is not None:
@@ -60,6 +96,7 @@ class ClassicTask(BasisTask, ABC):
             # 任务图标未激活时的处理流程
             self.touch("按钮主界面任务图标-未激活")
             self.touch("按钮主界面江湖-未激活")
+            self.mouseMove((118, 252), (118, 452))
             return self.touch(*args, threshold=0.8)
         if model == "任务":
             self.logs("激活任务栏")
@@ -73,6 +110,7 @@ class ClassicTask(BasisTask, ABC):
             # 任务图标未激活时的处理流程
             self.touch("按钮主界面任务图标-未激活")
             self.touch("按钮主界面任务-未激活")
+            self.mouseMove((118, 252), (118, 452))
             return self.touch(*args, threshold=0.8)
 
     def waitMapLoading(self):
@@ -234,6 +272,7 @@ class ClassicTask(BasisTask, ABC):
                 # 点击交易需求按钮并执行购买流程
                 self.touch("按钮交易需求", x=130, y=35)
                 if self.touch("按钮交易购买") is not None:
+                    self.defer(count=3)
                     self.touch("按钮交易确定")
 
                 self.closeStalls()
@@ -245,7 +284,7 @@ class ClassicTask(BasisTask, ABC):
                 return False
             # 记录商城购买日志并执行购买操作
             self.logs("商城购买")
-            self.mouseClick((990, 690), count=8)
+            self.mouseClick((990, 690), count=8, timeout=0.1)
 
             # 关闭商城界面
             self.closeMall()

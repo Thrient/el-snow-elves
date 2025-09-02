@@ -61,10 +61,14 @@ class SwordTask(ClassicTask):
 
                     self.touch("按钮华山论剑准备")
 
+                    self.autoFightStart()
+
                     self.setup = 6
                 case 6:
                     if self.exits("标志单人论剑我方", "标志单人论剑敌方") is not None:
                         continue
+
+                    self.autoFightStop()
 
                     self.touch("按钮华山论剑离开")
 
