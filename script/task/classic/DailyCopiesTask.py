@@ -29,7 +29,7 @@ class DailyCopiesTask(ClassicTask):
                     self.setup = 2
                 # 队伍检测
                 case 2:
-                    self.teamCreate()
+                    self.teamCreate(model="日常")
                     self.setup = 3
                 case 3:
                     self.openTeam()

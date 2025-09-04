@@ -44,6 +44,7 @@ class SwordTask(ClassicTask):
                         if self.exits("标志单人论剑匹配成功") is not None:
                             self.logs(f"华山论剑第 {self.event[0]} 次")
                             self.event[0] += 1
+                            self.defer(3)
                             self.waitMapLoading()
                             self.setup = 5
                             continue

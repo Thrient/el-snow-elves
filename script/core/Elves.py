@@ -12,7 +12,7 @@ from script.utils.Utils import Utils
 
 class Elves:
     def __init__(self, url='dist/index.html'):
-        self.window = webview.create_window('Elves', url=url, js_api=api, confirm_close=True, width=1335, height=750)
+        self.window = webview.create_window('时雪', url=url, js_api=api, confirm_close=True, width=1335, height=750)
         self.winList = {}
         self.init()
 
@@ -190,10 +190,4 @@ class Elves:
         webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH, debug=debug)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--url', type=str, default='dist/index.html')
-    parser.add_argument('--debug', type=bool, default=False)
 
-    Elves = Elves(url=parser.parse_args().url)
-    Elves.run(debug=parser.parse_args().debug)

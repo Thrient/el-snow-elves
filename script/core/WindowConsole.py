@@ -29,7 +29,7 @@ class WindowConsole:
         返回值:
             无返回值
         """
-        wideText = text.encode('utf-16-le')
+        wideText = str(text).encode('utf-16-le')
 
         # 逐个处理每个宽字符
         for i in range(0, len(wideText), 2):
@@ -141,7 +141,6 @@ class WindowConsole:
                 time.sleep(sleep_time)
         position = win32api.MAKELONG(end_x, end_y)
         win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, position)
-
 
     def mouseDownUp(self, pos, delay):
         """

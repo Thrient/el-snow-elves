@@ -28,18 +28,19 @@ class ClassicTask(BasisTask, ABC):
         该函数会持续循环执行，直到autoFightEvent事件被设置为止
         循环中会按照taskConfig中配置的按键列表依次执行按键点击操作
         """
-        __queue = deque([0, 1, 2, 3, 4, 5, 6, 7, 8])
+        __queue = deque([0, 1, 2, 3, 4, 5, 6, 7])
 
         while not self.autoFightEvent.is_set():
             index = __queue.popleft()
             __queue.append(index)
-            self.keyClick(self.taskConfig.autoFightKeys[index])
+            self.keyClick(self.taskConfig.keyList[index])
 
     def autoFightStop(self):
         """
         停止自动战斗功能
         通过设置autoFightEvent事件来通知自动战斗循环停止执行
         """
+        self.logs("停止自动战斗")
         self.autoFightEvent.set()
 
     def autoFightStart(self):
@@ -47,6 +48,7 @@ class ClassicTask(BasisTask, ABC):
         启动自动战斗功能
         清除autoFightEvent事件并创建新的后台线程来执行自动战斗循环
         """
+        self.logs("启动自动战斗")
         # 清除停止事件，确保自动战斗可以正常开始
         self.autoFightEvent.clear()
         # 创建并启动自动战斗的后台线程
@@ -59,7 +61,7 @@ class ClassicTask(BasisTask, ABC):
 
         # 检查普通世界按钮是否存在，如果存在且允许在普通世界发送则执行发送操作
         if ordinary:
-            self.touch("按钮大世界普通世界", box=(0, 0, 150, 750))
+            self.touch("按钮大世界普通世界", "按钮大世界普通世界_V1", box=(0, 0, 150, 750))
             self.touch("标志点击输入文字")
             self.input(text)
             self.touch("按钮大世界发送")
@@ -83,6 +85,8 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
+        if self.exits("按钮世界挂机") is None:
+            return None
         if model == "江湖":
             self.logs("激活江湖栏")
             # 检查任务栏是否已经激活
@@ -129,7 +133,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("等待地图加载")
         while not self.finished.is_set():
             # 限制循环次数，防止无限等待
-            if __count >= 2:
+            if __count >= 3:
                 break
             # 检查是否正在加载地图，如果是则继续等待
             if self.exits("标志地图加载", "标志地图加载_1") is not None:
@@ -151,19 +155,20 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         self.logs("位置检测")
-        self.areaGo("金陵")
+        self.areaGo("金陵", exits=True)
 
-    def areaGo(self, area, x=None, y=None):
+    def areaGo(self, area, x=None, y=None, exits=False):
         """
         前往指定区域
 
+        :param exits: 是否检测当前区域
         :param area: 目标区域名称
         :param x: 目标区域的x坐标，如果为None则使用默认坐标
         :param y: 目标区域的y坐标，如果为None则使用默认坐标
         :return: 无返回值
         """
         __coordinate = {
-            "金陵": ("571", "484"),
+            "金陵": (571, 484),
         }
 
         # 如果未指定坐标，则使用默认坐标
@@ -174,7 +179,7 @@ class ClassicTask(BasisTask, ABC):
         self.openMap()
 
         # 检查是否已经处于目标区域
-        if self.exits(f"标志地图{area}坐标") is not None:
+        if exits and self.exits(f"标志地图{area}坐标") is not None:
             self.logs(f"当前已处于{area}区域")
             self.closeMap()
             return
@@ -230,7 +235,7 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮队伍确定")
         self.closeTeam()
 
-    def teamCreate(self, model="日常"):
+    def teamCreate(self, model):
         self.logs(f"创建{model}队伍")
 
         if model == "日常":
@@ -250,6 +255,19 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮队伍确定")
             self.touch("按钮队伍确定")
 
+        if model == "江湖行商":
+            self.openTeam()
+            self.touch("按钮队伍创建")
+            self.touch("按钮队伍下拉")
+            self.mouseMove((258, 307), (258, 607))
+            self.touch("按钮队伍无目标")
+            self.touch("按钮队伍行当玩法")
+            self.touch("按钮队伍江湖行商")
+            self.touch("按钮队伍自动匹配")
+            self.touch("按钮队伍确定")
+            self.touch("按钮队伍确定")
+        self.closeTeam()
+
     def buy(self, model):
         """
         执行购买操作
@@ -259,24 +277,23 @@ class ClassicTask(BasisTask, ABC):
         """
         if model == "摆摊购买":
             __event = True
-            # 交易购买循环逻辑
-            while not self.finished.is_set():
-                # 检查交易界面是否存在
-                if self.exits("界面交易") is None:
-                    return False
-                # 记录交易购买日志
-                if __event is True:
-                    __event = False
-                    self.logs("摆摊购买")
 
-                # 点击交易需求按钮并执行购买流程
-                self.touch("按钮交易需求", x=130, y=35)
-                if self.touch("按钮交易购买") is not None:
-                    self.defer(count=3)
-                    self.touch("按钮交易确定")
+            # 检查交易界面是否存在
+            if self.exits("界面交易") is None:
+                return False
+            # 记录交易购买日志
+            if __event is True:
+                __event = False
+                self.logs("摆摊购买")
 
-                self.closeStalls()
-                return True
+            # 点击交易需求按钮并执行购买流程
+            self.touch("按钮交易需求", x=130, y=35)
+            self.defer(count=3)
+            if self.touch("按钮交易购买") is not None:
+                self.touch("按钮交易确定")
+
+            self.closeStalls()
+            return True
 
         if model == "商城购买":
             # 检查商城界面是否存在

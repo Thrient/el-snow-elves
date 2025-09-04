@@ -31,6 +31,10 @@ class WorldShoutsTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
+                    if self.event[1] > 200:
+                        self.setup = 0
+                        continue
+
                     if time.time() - self.event[0] > 34:
                         self.event[0] = time.time()
 

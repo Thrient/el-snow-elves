@@ -107,7 +107,7 @@ class LessonTask(ClassicTask):
                         self.touch("按钮课业一键提交")
 
                     if self.exits("标志课业完成") is not None:
-                        self.touch("按钮课业确定")
+                        self.touch("按钮确定")
                         self.closeRewardUi(5)
                         self.setup = 0
 

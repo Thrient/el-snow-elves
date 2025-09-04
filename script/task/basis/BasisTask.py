@@ -200,6 +200,7 @@ class BasisTask(ABC):
         timeout = kwargs.get('timeout', Config.TIMEOUT)
         x = kwargs.get('x', 0)
         y = kwargs.get('y', 0)
+        count = kwargs.get('count', 1)
 
         # 循环进行多次匹配尝试
         for _ in range(match):
@@ -208,7 +209,7 @@ class BasisTask(ABC):
                 result = self.imageTemplate(image, threshold, box)
                 if result is None:
                     continue
-                self.mouseClick(result, x, y)
+                self.mouseClick(result, x=x, y=y, count=count)
                 return result
             time.sleep(timeout)
         return None

@@ -47,7 +47,7 @@ class TaskConfig:
         # 从用户配置路径下读取指定的JSON配置文件
         with open(fr"{Config.USER_CONFIG_PATH}\{taskConfigName}.json", 'r', encoding='utf-8') as f:
             data = json.load(f)
-        return data
+        return TaskConfig(**data).__dict__
 
     @staticmethod
     def saveConfig(*args):
