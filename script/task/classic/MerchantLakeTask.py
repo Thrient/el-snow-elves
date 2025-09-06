@@ -104,16 +104,15 @@ class MerchantLakeTask(ClassicTask):
                             self.touch("按钮江湖行商购买")
 
                         self.event[4] = True
-
-                        self.closeCurrentUi()
                         self.defer(count=5)
+                        self.closeCurrentUi()
+
                         continue
 
                     if self.exits("按钮江湖行商威逼行商交易") is not None and self.event[4]:
                         self.touch("按钮江湖行商威逼行商交易", y=85)
                         self.touch("按钮江湖行商出售", count=5)
                         self.event[4] = False
-
-                        self.closeCurrentUi()
                         self.defer(count=5)
+                        self.closeCurrentUi()
                         continue
