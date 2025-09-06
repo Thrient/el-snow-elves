@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['elves.py'],
     pathex=[],
     binaries=[('script.pyd', '.')],
     datas=[],
@@ -32,7 +32,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    uac_admin=True
+    uac_admin=True,
     icon="resources/favicon.ico"
 )
 coll = COLLECT(

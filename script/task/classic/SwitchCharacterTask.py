@@ -11,19 +11,20 @@ class SwitchCharacterTask(ClassicTask):
         return self
 
     def execute(self):
-        if self.taskConfig.switchCharacterOne and Config.SWITCH_CHARACTER_STATE[self.hwnd][0]:
+        if "characterOne" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][0]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][0] = False
             return
-        if self.taskConfig.switchCharacterTwo and Config.SWITCH_CHARACTER_STATE[self.hwnd][1]:
+        if "characterTwo" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][1]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][1] = False
             return
-        if self.taskConfig.switchCharacterThree and Config.SWITCH_CHARACTER_STATE[self.hwnd][2]:
+        if "characterThree" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][
+            2]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][2] = False
             return
-        if self.taskConfig.switchCharacterFour and Config.SWITCH_CHARACTER_STATE[self.hwnd][3]:
+        if "characterFour" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][3]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][3] = False
             return
-        if self.taskConfig.switchCharacterFive and Config.SWITCH_CHARACTER_STATE[self.hwnd][4]:
+        if "characterFive" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][4]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][4] = False
             return
         if all(Config.SWITCH_CHARACTER_STATE[self.hwnd]):

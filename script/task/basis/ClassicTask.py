@@ -54,7 +54,7 @@ class ClassicTask(BasisTask, ABC):
         # 创建并启动自动战斗的后台线程
         threading.Thread(target=self.autoFight, daemon=True).start()
 
-    def worldShouts(self, text, ordinary=True, connected=True):
+    def worldShouts(self, text, ordinary=True, connected=False):
         # 返回主界面并点击世界聊天入口
         self.backToMain()
         self.mouseClick((305, 600))
@@ -91,7 +91,7 @@ class ClassicTask(BasisTask, ABC):
             self.logs("激活江湖栏")
             # 检查任务栏是否已经激活
             if self.exits("按钮主界面江湖-激活") is not None:
-                self.mouseMove((118, 252), (118, 452))
+                self.mouseMove((118, 300), (118, 452))
                 return self.touch(*args, threshold=0.8)
             # 检查任务图标是否激活，如果激活则点击江湖按钮
             if self.exits("按钮主界面任务图标-激活") is not None:
@@ -100,7 +100,7 @@ class ClassicTask(BasisTask, ABC):
             # 任务图标未激活时的处理流程
             self.touch("按钮主界面任务图标-未激活")
             self.touch("按钮主界面江湖-未激活")
-            self.mouseMove((118, 252), (118, 452))
+            self.mouseMove((118, 300), (118, 452))
             return self.touch(*args, threshold=0.8)
         if model == "任务":
             self.logs("激活任务栏")
@@ -114,7 +114,7 @@ class ClassicTask(BasisTask, ABC):
             # 任务图标未激活时的处理流程
             self.touch("按钮主界面任务图标-未激活")
             self.touch("按钮主界面任务-未激活")
-            self.mouseMove((118, 252), (118, 452))
+            self.mouseMove((118, 300), (118, 452))
             return self.touch(*args, threshold=0.8)
 
     def waitMapLoading(self):
@@ -288,7 +288,6 @@ class ClassicTask(BasisTask, ABC):
 
             # 点击交易需求按钮并执行购买流程
             self.touch("按钮交易需求", x=130, y=35)
-            self.defer(count=3)
             if self.touch("按钮交易购买") is not None:
                 self.touch("按钮交易确定")
 
@@ -338,7 +337,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("关闭当前界面")
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            if self.touch("按钮关闭_1", "按钮关闭", box=box, match=1) is None:
+            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, match=1) is None:
                 return
 
     def backToMain(self):

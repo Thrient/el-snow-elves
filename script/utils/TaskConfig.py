@@ -13,11 +13,8 @@ class TaskConfig:
         self.chivalryShoutCount = kwargs.get('chivalryShoutCount', 1)
         self.chivalryNameOrNumber = kwargs.get('chivalryNameOrNumber', '')
         self.model = kwargs.get('model', 'classic')
-        self.switchCharacterOne = kwargs.get('switchCharacterOne', False)
-        self.switchCharacterTwo = kwargs.get('switchCharacterTwo', False)
-        self.switchCharacterThree = kwargs.get('switchCharacterThree', False)
-        self.switchCharacterFour = kwargs.get('switchCharacterFour', False)
-        self.switchCharacterFive = kwargs.get('switchCharacterFive', False)
+        # 切换角色
+        self.switchCharacterList = kwargs.get('switchCharacterList', [])
         # 每日兑换
         self.silverNoteGiftBox = kwargs.get('silverNoteGiftBox', False)
         self.wuYueSwordBlank = kwargs.get('wuYueSwordBlank', False)

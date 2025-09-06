@@ -178,32 +178,32 @@ class BasisTask(ABC):
 
     def touch(self, *args, **kwargs):
         """
-        在屏幕上查找并点击指定的图像模板
+        在指定时间内查找并点击屏幕上的图像模板
 
         参数:
-            *args: 可变参数，传入要查找的图像路径列表
+            *args: 可变参数，包含待查找的图像文件路径
             **kwargs: 关键字参数
-                match: 匹配次数，默认为2
-                threshold: 图像匹配阈值，默认使用Config.THRESHOLD
-                box: 查找区域，默认使用Config.BOX
-                timeout: 超时时间，默认使用Config.TIMEOUT
-                x: 点击位置的x偏移量，默认为0
-                y: 点击位置的y偏移量，默认为0
+                overTime: 超时时间，默认为Config.OVERTIME
+                threshold: 图像匹配阈值，默认为Config.THRESHOLD
+                box: 查找区域，默认为Config.BOX
+                x: 点击位置x坐标偏移量，默认为0
+                y: 点击位置y坐标偏移量，默认为0
+                count: 点击次数，默认为1
 
         返回值:
-            如果找到并点击了图像，返回匹配结果坐标；否则返回None
+            找到并点击的图像匹配结果，如果超时未找到则返回None
         """
+        __currentTIme = time.time()
 
-        match = kwargs.get('match', 3)
+        overTime = kwargs.get('overTime', Config.OVERTIME)
         threshold = kwargs.get('threshold', Config.THRESHOLD)
         box = kwargs.get('box', Config.BOX)
-        timeout = kwargs.get('timeout', Config.TIMEOUT)
         x = kwargs.get('x', 0)
         y = kwargs.get('y', 0)
         count = kwargs.get('count', 1)
 
-        # 循环进行多次匹配尝试
-        for _ in range(match):
+        # 在超时时间内循环查找图像
+        while time.time() - __currentTIme < overTime:
             # 遍历所有待查找的图像
             for image in args:
                 result = self.imageTemplate(image, threshold, box)
@@ -211,7 +211,38 @@ class BasisTask(ABC):
                     continue
                 self.mouseClick(result, x=x, y=y, count=count)
                 return result
-            time.sleep(timeout)
+        return None
+
+    def wait(self, *args, **kwargs):
+        """
+        等待指定图像出现在屏幕上，在超时时间内循环检测图像模板匹配结果
+
+        参数:
+            *args: 可变参数，传入需要等待的图像文件路径
+            **kwargs: 关键字参数
+                overTime: 超时时间，默认使用Config.OVERTIME配置
+                threshold: 匹配阈值，默认使用Config.THRESHOLD配置
+                box: 检测区域，默认使用Config.BOX配置
+
+        返回值:
+            如果在超时时间内找到匹配的图像，返回匹配结果坐标；否则返回None
+        """
+
+        __currentTIme = time.time()
+
+        # 从kwargs中获取配置参数，如果未提供则使用默认配置
+        overTime = kwargs.get('overTime', Config.OVERTIME)
+        threshold = kwargs.get('threshold', Config.THRESHOLD)
+        box = kwargs.get('box', Config.BOX)
+
+        # 在超时时间内循环检测图像匹配
+        while time.time() - __currentTIme < overTime:
+
+            # 遍历所有待检测的图像
+            for image in args:
+                result = self.imageTemplate(image, threshold, box)
+                if result is not None:
+                    return result
         return None
 
     def exits(self, *args, **kwargs):
@@ -221,27 +252,21 @@ class BasisTask(ABC):
         参数:
             *args: 可变参数，传入要查找的图像模板列表
             **kwargs: 关键字参数
-                match: 匹配次数，默认为1
                 threshold: 匹配阈值，默认使用Config.THRESHOLD
                 box: 查找区域，默认使用Config.BOX
-                timeout: 超时时间，默认使用Config.TIMEOUT
 
         返回值:
             如果找到匹配的图像模板，返回匹配结果坐标；否则返回None
         """
-        match = kwargs.get('match', 1)
         threshold = kwargs.get('threshold', Config.THRESHOLD)
         box = kwargs.get('box', Config.BOX)
-        timeout = kwargs.get('timeout', Config.TIMEOUT)
 
-        # 循环进行多次匹配查找
-        for _ in range(match):
-            # 遍历所有待查找的图像模板
-            for image in args:
-                result = self.imageTemplate(image, threshold, box)
-                if result is not None:
-                    return result
-            time.sleep(timeout)
+        # 遍历所有待查找的图像模板
+        for image in args:
+            result = self.imageTemplate(image, threshold, box)
+            if result is not None:
+                return result
+
         return None
 
     def exitsAll(self, *args, **kwargs):
@@ -251,27 +276,21 @@ class BasisTask(ABC):
         参数:
             *args: 可变参数，包含待查找的图像模板路径
             **kwargs: 关键字参数
-                match: 匹配次数，默认为1次
                 threshold: 匹配阈值，默认使用Config.THRESHOLD
                 box: 查找区域，默认使用Config.BOX
-                timeout: 超时时间，默认使用Config.TIMEOUT
 
         返回值:
             如果找到匹配的图像模板，返回匹配结果；否则返回None
         """
-        match = kwargs.get('match', 1)
         threshold = kwargs.get('threshold', Config.THRESHOLD)
         box = kwargs.get('box', Config.BOX)
-        timeout = kwargs.get('timeout', Config.TIMEOUT)
 
-        # 循环进行多次匹配查找
-        for _ in range(match):
-            # 遍历所有待查找的图像模板
-            for image in args:
-                results = self.imageTemplateAll(image, threshold, box)
-                if results is not None:
-                    return results
-            time.sleep(timeout)
+        # 遍历所有待查找的图像模板
+        for image in args:
+            results = self.imageTemplateAll(image, threshold, box)
+            if results is not None:
+                return results
+
         return None
 
     def imageTemplate(self, image, threshold, box):
@@ -313,6 +332,7 @@ class BasisTask(ABC):
         返回值:
             list: 匹配到的所有位置坐标列表，每个坐标为相对于原始窗口的绝对坐标
         """
+        threshold = Config.THRESHOLD_IMAGE[image] if Config.THRESHOLD_IMAGE.get(image) else threshold
         if self.finished.is_set():
             return
         with self.stopped:
