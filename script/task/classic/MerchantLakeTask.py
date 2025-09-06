@@ -8,9 +8,7 @@ class MerchantLakeTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
-        self.event = [time.time(), 0, (580, 355, 725, 480), (1020, 150, 1125, 255), False, (), (960, 25, 1020, 110),
-                      time.time()]
-        self.event = [0, False, (0, 0, 0, 0)]
+        self.event = [time.time(), 0, (580, 355, 725, 480), (1020, 150, 1125, 255), False, (), (960, 25, 1020, 110)]
 
     def instance(self):
         return self
@@ -27,14 +25,14 @@ class MerchantLakeTask(ClassicTask):
                     return 0
                 # 位置检测
                 case 1:
-                    # self.locationDetection()
+                    self.locationDetection()
                     self.setup = 2
                 # 队伍检测
                 case 2:
                     self.teamCreate(model="江湖行商")
                     self.setup = 3
                 case 3:
-                    # self.areaGo("江南", x=986, y=1190)
+                    self.areaGo("江南", x=986, y=1190)
                     self.setup = 4
                 case 4:
                     self.openTeam()
