@@ -10,7 +10,7 @@ class Config:
     THRESHOLD = 0.85
     BOX = (0, 0, 1335, 750)
     TIMEOUT = 1.8
-    OVERTIME = 3
+    OVERTIME = 2
     SWITCH_CHARACTER_STATE = {}
     THRESHOLD_IMAGE = {
         "按钮世界挂机": 0.75,
@@ -29,6 +29,6 @@ class Config:
         "标志本体位置": 0.8,
         "标志本体位置_V2": 0.8,
         "标志本体位置_V3": 0.8,
-        "标志江湖行商参与条件": 0.9,
+        "z`": 0.9,
         "按钮大世界对话": 0.8,
     }

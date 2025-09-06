@@ -586,6 +586,40 @@ class ClassicTask(BasisTask, ABC):
         if self.exits("界面物品") is None:
             self.keyClick("B")
 
+    def closeSetting(self):
+        """
+        关闭设置界面
+
+        该函数用于关闭当前打开的设置界面。如果当前不在设置界面，
+        则直接返回；如果在设置界面，则执行关闭操作。
+
+        Returns:
+            None
+        """
+        self.logs("关闭设置")
+        # 检查当前是否已处于物品界面，如果不是则按键打开背包
+        if self.exits("界面设置") is None:
+            return
+        self.closeCurrentUi()
+
+    def openSetting(self):
+        """
+        打开游戏设置界面
+
+        该函数通过按键操作打开游戏的设置界面。如果当前不在设置界面，
+        会先按ESC键打开主菜单，然后进入设置界面。
+
+        参数:
+            self: 类实例本身
+
+        返回值:
+            无
+        """
+        self.logs("打开设置")
+        # 检查当前是否已处于物品界面，如果不是则按键打开背包
+        if self.exits("界面设置") is None:
+            self.keyClick("ESC")
+
     def arrive(self):
         """
         等待到达目标位置的函数
@@ -613,12 +647,159 @@ class ClassicTask(BasisTask, ABC):
             __count += 1
         self.logs("寻路结束")
 
+    def switchCharacter(self):
+        """
+        切换游戏角色
+
+        该函数用于执行角色切换操作，包括打开设置、点击切换角色按钮、
+        确认切换并等待进入游戏界面
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+        self.openSetting()
+        self.touch("按钮设置切换角色")
+        self.touch("按钮设置确定")
+        # 等待登录进入游戏按钮出现，超时时间30秒
+        self.wait("按钮登录进入游戏", overTime=30)
+
+    def switchCharacterOne(self):
+        """
+        切换第一个角色并进入游戏
+
+        该函数执行以下操作：
+        1. 调用切换角色方法
+        2. 点击指定坐标位置
+        3. 触摸登录按钮进入游戏
+        4. 延迟等待游戏加载
+        5. 设置角色信息
+
+        无参数
+
+        无返回值
+        """
+        self.logs("切换角色一")
+        self.switchCharacter()
+        self.mouseClick((1245, 70))
+        self.touch("按钮登录进入游戏")
+        self.defer(count=30)
+        self.setCharacterInfo()
+
+    def switchCharacterTwo(self):
+        """
+        切换到第二个角色并进入游戏
+
+        该函数执行以下操作：
+        1. 调用切换角色方法
+        2. 点击屏幕指定坐标位置
+        3. 触摸登录按钮进入游戏
+        4. 延迟等待游戏加载
+        5. 设置角色信息
+
+        无参数
+
+        无返回值
+        """
+        self.logs("切换角色二")
+        self.switchCharacter()
+        self.mouseClick((1245, 170))
+        self.touch("按钮登录进入游戏")
+        self.defer(count=30)
+        self.setCharacterInfo()
+
+    def switchCharacterThree(self):
+        """
+        切换第三个角色并进入游戏
+
+        该函数执行以下操作：
+        1. 调用切换角色方法
+        2. 点击指定坐标位置
+        3. 触摸登录按钮进入游戏
+        4. 延迟等待游戏加载
+        5. 设置角色信息
+
+        无参数
+
+        无返回值
+        """
+        self.logs("切换角色三")
+        self.switchCharacter()
+        self.mouseClick((1245, 270))
+        self.touch("按钮登录进入游戏")
+        self.defer(count=30)
+        self.setCharacterInfo()
+
+    def switchCharacterFour(self):
+        """
+        切换到第四个角色并进入游戏
+
+        该函数执行以下操作：
+        1. 调用切换角色方法
+        2. 点击指定坐标位置
+        3. 触摸登录按钮进入游戏
+        4. 延迟等待30秒
+        5. 设置角色信息
+
+        无参数
+
+        无返回值
+        """
+        self.logs("切换角色四")
+        self.switchCharacter()
+        self.mouseClick((1245, 370))
+        self.touch("按钮登录进入游戏")
+        self.defer(count=30)
+        self.setCharacterInfo()
+
+    def switchCharacterFive(self):
+        """
+        切换到第五个角色并进入游戏
+
+        该函数执行以下操作：
+        1. 调用切换角色方法
+        2. 点击屏幕指定坐标位置
+        3. 触摸登录按钮进入游戏
+        4. 延迟等待30秒
+        5. 设置角色信息
+
+        无参数
+
+        无返回值
+        """
+        self.logs("切换角色五")
+        self.switchCharacter()
+        self.mouseClick((1245, 470))
+        self.touch("按钮登录进入游戏")
+        self.defer(count=30)
+        self.setCharacterInfo()
+
     def switchCharacterDefault(self):
         """
-        切换角色默认设置功能函数
+        切换角色默认设置
 
-        该函数用于执行切换角色默认设置的完整流程，包括返回主界面、打开背包、
-        访问物品属性界面并设置角色信息等操作。
+        该函数用于切换当前角色的默认配置信息
+
+        参数:
+            self: 类实例本身
+
+        返回值:
+            无
+        """
+        self.setCharacterInfo()
+
+    def setCharacterInfo(self):
+        """
+        设置并发送角色信息到前端界面
+
+        该函数通过以下步骤获取角色信息：
+        1. 返回游戏主界面
+        2. 打开背包界面
+        3. 点击物品属性按钮
+        4. 截取角色信息区域图像
+        5. 将图像转换为base64编码并发送到前端
 
         参数:
             无
@@ -630,21 +811,6 @@ class ClassicTask(BasisTask, ABC):
         self.backToMain()
         self.openBackpack()
         self.touch("按钮物品属性")
-        self.setCharacterInfo()
-        self.backToMain()
-
-    def setCharacterInfo(self):
-        """
-        设置并发送角色信息到前端界面
-        该函数截取游戏窗口中的角色信息区域，将其转换为base64编码的图片数据，
-        然后通过信号发射机制发送给前端界面进行显示更新
-
-        参数:
-            self: 类实例对象，包含windowConsole、window和hwnd等属性
-
-        返回值:
-            无返回值
-        """
         # 截取角色信息区域并转换图像格式
         character = pil_2_cv2(self.windowConsole.captureWindow().crop((742, 158, 892, 186)))
 
@@ -654,3 +820,4 @@ class ClassicTask(BasisTask, ABC):
         # 将图像数据转换为base64编码并发送到前端界面
         Utils.sendEmit(self.window, "API:UPDATE:CHARACTER",
                        character=f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}", hwnd=self.hwnd)
+        self.backToMain()

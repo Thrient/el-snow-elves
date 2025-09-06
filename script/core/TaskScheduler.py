@@ -46,11 +46,11 @@ class TaskScheduler:
             return task
 
         characterState = [
-            "CharacterOne" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][0],
-            "CharacterTwo" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][1],
-            "CharacterThree" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][2],
-            "CharacterFour" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][3],
-            "CharacterFive" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][4],
+            "characterOne" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][0],
+            "characterTwo" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][1],
+            "characterThree" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][2],
+            "characterFour" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][3],
+            "characterFive" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][4],
             all(Config.SWITCH_CHARACTER_STATE[self.hwnd])
         ]
 

@@ -8,7 +8,7 @@ class MerchantLakeTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
-        self.event = [time.time(), 0, (580, 355, 725, 480), (1020, 150, 1125, 255), False, (), (960, 25, 1020, 110)]
+        self.event = [0, False, (0, 0, 0, 0)]
 
     def instance(self):
         return self
@@ -67,7 +67,6 @@ class MerchantLakeTask(ClassicTask):
                     self.setup = 6
 
                 case 6:
-
                     if 3 <= self.event[0]:
                         self.teamDetection()
                         self.setup = 2

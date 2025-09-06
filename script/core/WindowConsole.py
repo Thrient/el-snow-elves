@@ -16,7 +16,8 @@ class WindowConsole:
         self.hwnd = hwnd
         self.style = None
         self.vkCode = {
-            "TAB": 0x09
+            "TAB": 0x09,
+            "ESC": 0x1B
         }
 
     def input(self, text):

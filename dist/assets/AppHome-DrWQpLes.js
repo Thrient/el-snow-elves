@@ -1,1 +1,0 @@
-import{_ as e,c as n,w as r,o as s,a as _}from"./index-GsB7Yp2N.js";import{E as a}from"./el-button-Cm60j2Em.js";import"./use-form-common-props-BUWgcdh-.js";const c={};function p(f,t){const o=a;return s(),n(o,null,{default:r(()=>t[0]||(t[0]=[_("你好")])),_:1,__:[0]})}const i=e(c,[["render",p]]);export{i as default};
