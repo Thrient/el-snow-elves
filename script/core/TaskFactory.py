@@ -4,6 +4,7 @@ from script.task.classic.DailyCopiesTask import DailyCopiesTask
 from script.task.classic.DailyRedemptionTask import DailyRedemptionTask
 from script.task.classic.DoorBanTask import DoorBanTask
 from script.task.classic.FactionTask import FactionTask
+from script.task.classic.HeroListTask import HeroListTask
 from script.task.classic.HexagramDayTask import HexagramDayTask
 from script.task.classic.LessonTask import LessonTask
 from script.task.classic.MerchantLakeTask import MerchantLakeTask
@@ -57,6 +58,7 @@ class TaskFactory:
         self.register("classic", "每日一卦", HexagramDayTask)
         self.register("classic", "茶馆说书", TeaStoryTask)
         self.register("classic", "江湖行商", MerchantLakeTask)
+        self.register("classic", "江湖英雄榜", HeroListTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

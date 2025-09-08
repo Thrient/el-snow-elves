@@ -23,7 +23,12 @@ class TaskConfig:
         self.ordinaryWorldShouts = kwargs.get('ordinaryWorldShouts', False)
         self.connectedWorldShouts = kwargs.get('connectedWorldShouts', False)
         self.worldShoutsText = kwargs.get('worldShoutsText', '')
+        self.worldShoutsCount = kwargs.get('worldShoutsCount', 1)
+        # 按键
         self.keyList = kwargs.get('keyList', ['1', '2', '3', '4', '5', '6', '7', '8'])
+        # 江湖英雄榜
+        self.heroListCount = kwargs.get('heroListCount', 1)
+        self.heroListInitiativeExit = kwargs.get('heroListInitiativeExit', False)
 
     @staticmethod
     def loadConfig(*args):

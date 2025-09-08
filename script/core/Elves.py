@@ -188,6 +188,3 @@ class Elves:
         # 启动webview应用程序
         # webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH)
         webview.start(http_server=True, ssl=True, private_mode=False, storage_path=Config.STORAGE_PATH, debug=debug)
-
-
-

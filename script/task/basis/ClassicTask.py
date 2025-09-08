@@ -22,6 +22,36 @@ class ClassicTask(BasisTask, ABC):
         self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
 
+    def unstuck(self):
+        """
+        执行脱离卡死操作的函数
+
+        该函数通过一系列操作来解决程序卡死的问题，包括返回主界面、
+        模拟按键、打开设置、执行特定设置操作等步骤。
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+        self.logs("脱离卡死")
+        # 返回主界面操作
+        self.backToMain()
+        # 模拟空格键点击
+        self.keyClick("SPACE")
+        # 打开设置界面
+        self.openSetting()
+        # 点击设置界面中的脱离卡死按钮
+        self.touch("按钮设置脱离卡死")
+        # 点击设置界面中的确定按钮
+        self.touch("按钮设置确定")
+        # 延迟等待操作
+        self.defer(count=8)
+        # 关闭设置界面
+        self.closeSetting()
+
+
     def autoFight(self):
         """
         自动战斗循环函数，在后台线程中执行按键操作

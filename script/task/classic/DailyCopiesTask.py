@@ -50,10 +50,17 @@ class DailyCopiesTask(ClassicTask):
                     self.setup = 5
 
                 case 5:
-                    if time.time() - self.event[0] > 90:
+                    if 3 < self.event[1]:
+                        self.teamDetection()
+                        self.setup = 2
+                        continue
+
+                    if time.time() - self.event[0] > 300:
                         self.event[0] = time.time()
+                        self.unstuck()
                         if self.activatedTask("按钮任务副本", model="任务") is None:
                             self.event[1] += 1
+                        continue
 
                     if self.exits("按钮副本跳过剧情") is not None:
                         self.touch("按钮副本跳过剧情")

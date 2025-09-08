@@ -31,7 +31,7 @@ class WorldShoutsTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if self.event[1] > 200:
+                    if self.event[1] > self.taskConfig.worldShoutsCount:
                         self.setup = 0
                         continue
 
