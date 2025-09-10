@@ -108,7 +108,7 @@ class BasisTask(ABC):
         with self.stopped:
             self.windowConsole.input(text)
 
-    def mouseMove(self, start, end, timeout=Config.TIMEOUT):
+    def mouseMove(self, start, end, timeout=Config.TIMEOUT, count=1):
         """
         执行鼠标移动操作，从起始位置移动到结束位置
 
@@ -123,10 +123,11 @@ class BasisTask(ABC):
         if self.finished.is_set():
             return
         with self.stopped:
-            # 打印鼠标移动的起始和结束坐标信息
-            print(f"start: {start[0]}:{start[1]} to end: {end[0]}:{end[1]}")
-            # 执行窗口控制台的鼠标移动操作
-            self.windowConsole.mouseMove(start, end)
+            for _ in range(count):
+                # 打印鼠标移动的起始和结束坐标信息
+                print(f"start: {start[0]}:{start[1]} to end: {end[0]}:{end[1]}")
+                # 执行窗口控制台的鼠标移动操作
+                self.windowConsole.mouseMove(start, end)
             # 等待指定的超时时间
             time.sleep(timeout)
 

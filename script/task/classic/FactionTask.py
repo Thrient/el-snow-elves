@@ -52,6 +52,12 @@ class FactionTask(ClassicTask):
                         self.event[0] = time.time()
                         self.activatedTask("按钮任务帮派", model="江湖")
 
+                    if self.exits("标志帮派任务下一轮") is not None:
+                        self.touch("按钮取消")
+                        self.mouseClick((0, 0))
+                        self.closeRewardUi(5)
+                        self.setup = 0
+
                     # 商城购买
                     if self.exits("按钮商城购买") is not None:
                         self.touch("按钮商城购买", y=-75)

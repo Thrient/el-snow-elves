@@ -51,7 +51,6 @@ class ClassicTask(BasisTask, ABC):
         # 关闭设置界面
         self.closeSetting()
 
-
     def autoFight(self):
         """
         自动战斗循环函数，在后台线程中执行按键操作

@@ -8,6 +8,10 @@ from script.config.Config import Config
 
 @dataclass
 class TaskConfig:
+    __chefIngredientsTags = ['山楂', '土鸡蛋', '番茄', '禽类', '大米', '火腿', '豆腐', '红豆', '精制面粉', '鲜笋',
+                             '橙子', '玉米', '牛肉', '糯米', '排骨', '猪肉']
+    __chefSeasoningTags = ['白糖', '葱姜蒜', '辣椒', '香料', '陈酒', '黄酒', '盐']
+
     def __init__(self, **kwargs):
         self.executeList = kwargs.get('executeList', [])
         self.chivalryShoutCount = kwargs.get('chivalryShoutCount', 1)
@@ -16,9 +20,10 @@ class TaskConfig:
         # 切换角色
         self.switchCharacterList = kwargs.get('switchCharacterList', [])
         # 每日兑换
-        self.silverNoteGiftBox = kwargs.get('silverNoteGiftBox', False)
-        self.wuYueSwordBlank = kwargs.get('wuYueSwordBlank', False)
-        self.baiGongDingBlank = kwargs.get('baiGongDingBlank', False)
+        self.dailyExchangeList = kwargs.get('dailyExchangeList', [])
+        self.moneyTreeSelect = kwargs.get('moneyTreeSelect', '轻轻摇')
+        self.chefIngredientsTags = kwargs.get('chefIngredientsTags', TaskConfig.__chefIngredientsTags)
+        self.chefSeasoningTags = kwargs.get('chefSeasoningTags', TaskConfig.__chefSeasoningTags)
         # 世界喊话
         self.ordinaryWorldShouts = kwargs.get('ordinaryWorldShouts', False)
         self.connectedWorldShouts = kwargs.get('connectedWorldShouts', False)

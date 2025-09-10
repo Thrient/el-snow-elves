@@ -12,8 +12,6 @@ class DailyRedemptionTask(ClassicTask):
         return self
 
     def execute(self):
-        self.setup = 1
-
         while not self.finished.is_set():
 
             match self.setup:
@@ -30,22 +28,12 @@ class DailyRedemptionTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    __event = not (self.taskConfig.silverNoteGiftBox or
-                                   self.taskConfig.wuYueSwordBlank or
-                                   self.taskConfig.baiGongDingBlank)
 
-                    if __event and self.event[0]:
-                        self.setup = 4
-                        continue
-
-                    self.event[0] = False
-
-                    self.openBackpack()
-                    self.touch("按钮物品综合入口")
-                    self.touch("按钮物品珍宝阁")
-                    self.touch("按钮珍宝阁绑元商城", y=-130)
-
-                    if self.taskConfig.silverNoteGiftBox:
+                    if "银票礼盒" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品珍宝阁")
+                        self.touch("按钮珍宝阁绑元商城", y=-130)
                         self.touch("按钮珍宝阁搜索")
                         self.touch("标志输入道具名称")
                         self.input("银票礼盒")
@@ -54,8 +42,13 @@ class DailyRedemptionTask(ClassicTask):
                             self.mouseClick((988, 694), count=30, timeout=0.1)
                         self.touch("按钮珍宝阁搜索返回")
                         self.closeRewardUi()
+                        self.backToMain()
 
-                    if self.taskConfig.wuYueSwordBlank:
+                    if "吴越剑坯" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品珍宝阁")
+                        self.touch("按钮珍宝阁绑元商城", y=-130)
                         self.touch("按钮珍宝阁搜索")
                         self.touch("标志输入道具名称")
                         self.input("吴越剑坯")
@@ -63,9 +56,14 @@ class DailyRedemptionTask(ClassicTask):
                         if self.exits("标志珍宝阁吴越剑坯", box=(910, 170, 1190, 285)):
                             self.mouseClick((988, 694), count=5, timeout=0.1)
                         self.touch("按钮珍宝阁搜索返回")
-                        self.closeRewardUi(count=5)
+                        self.closeRewardUi(5)
+                        self.backToMain()
 
-                    if self.taskConfig.baiGongDingBlank:
+                    if "白公鼎坯" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品珍宝阁")
+                        self.touch("按钮珍宝阁绑元商城", y=-130)
                         self.touch("按钮珍宝阁搜索")
                         self.touch("标志输入道具名称")
                         self.input("白公鼎坯")
@@ -73,7 +71,158 @@ class DailyRedemptionTask(ClassicTask):
                         if self.exits("标志珍宝阁白公鼎坯", box=(910, 170, 1190, 285)):
                             self.mouseClick((988, 694), count=5, timeout=0.1)
                         self.touch("按钮珍宝阁搜索返回")
-                        self.closeRewardUi(count=2)
+                        self.closeRewardUi(2)
+                        self.backToMain()
 
-                    self.backToMain()
+                    self.setup = 4
+                case 4:
+
+                    if "商会鸡蛋" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品珍宝阁")
+                        self.touch("按钮珍宝阁商会")
+
+                        self.mouseMove((186, 275), (186, 475), count=3)
+                        self.touch("按钮珍宝阁宝石")
+                        self.mouseMove((186, 475), (186, 275))
+                        self.touch("按钮珍宝阁江湖杂货")
+                        self.mouseMove((540, 275), (540, 475), count=3)
+                        self.mouseMove((540, 475), (540, 275))
+
+                        self.touch("按钮珍宝阁一筐鸡蛋")
+                        if self.exits("标志珍宝阁一筐鸡蛋", box=(750, 140, 1150, 270)):
+                            self.mouseClick((945, 675), count=5, timeout=0.1)
+                        self.closeRewardUi(5)
+                        self.backToMain()
+
+                    if "榫头卯眼" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品珍宝阁")
+                        self.touch("按钮珍宝阁商会")
+
+                        self.mouseMove((186, 275), (186, 475), count=3)
+                        self.touch("按钮珍宝阁宝石")
+                        self.mouseMove((186, 475), (186, 275))
+                        self.touch("按钮珍宝阁江湖杂货")
+                        self.mouseMove((540, 275), (540, 475), count=3)
+                        self.mouseMove((540, 475), (540, 275), count=3)
+
+                        self.touch("按钮珍宝阁榫头卯眼")
+                        if self.exits("标志珍宝阁榫头卯眼", box=(750, 140, 1150, 270)):
+                            self.mouseClick((945, 675), count=12, timeout=0.1)
+                        self.closeRewardUi(12)
+                        self.backToMain()
+
+                    self.setup = 5
+                case 5:
+                    if "锦芳绣残片" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品积分")
+                        self.touch("按钮物品社交")
+
+                        self.touch("按钮物品桃李值", x=350)
+                        if self.exits("标志兑换商店批量购买") is not None:
+                            self.touch("按钮兑换商店批量购买")
+                        self.touch("标志兑换商店输入名称搜索")
+                        self.input("锦芳绣残片")
+                        self.touch("按钮兑换商店搜索")
+
+                        if self.exits("标志兑换商店锦芳绣残片", box=(750, 140, 1150, 270)):
+                            self.mouseClick((945, 675), count=10, timeout=0.1)
+                        self.closeRewardUi(10)
+                        self.backToMain()
+
+                    self.setup = 6
+                case 6:
+                    if "帮派铜钱捐献" in self.taskConfig.dailyExchangeList:
+                        self.openFaction()
+                        self.touch("按钮帮派福利")
+                        self.touch("按钮帮派捐献")
+                        for _ in range(3):
+                            self.mouseClick((285, 585), timeout=0.1)
+                            self.touch("按钮确定")
+                        self.backToMain()
+
+                    if "帮派银两捐献" in self.taskConfig.dailyExchangeList:
+                        self.openFaction()
+                        self.touch("按钮帮派福利")
+                        self.touch("按钮帮派捐献")
+                        for _ in range(3):
+                            self.mouseClick((660, 585), timeout=0.1)
+                            self.touch("按钮确定")
+                        self.backToMain()
+
+                    self.setup = 7
+                case 7:
+                    if "莲子购买" in self.taskConfig.dailyExchangeList:
+                        self.locationDetection()
+                        self.areaGo("江南", x=670, y=1700)
+                        self.touch("按钮大世界对话")
+                        self.touch("按钮商人小蟹小虾")
+
+                        if self.exits("标志兑换商店批量购买") is not None:
+                            self.touch("按钮兑换商店批量购买")
+
+                        if self.exits("标志杂货商人莲子", box=(750, 140, 1150, 270)):
+                            self.touch("按钮满")
+                            self.mouseClick((930, 630))
+                        self.closeRewardUi()
+                        self.backToMain()
+
+                    if "艾草购买" in self.taskConfig.dailyExchangeList:
+                        self.locationDetection()
+                        self.areaGo("江南", x=673, y=1722)
+                        self.touch("按钮大世界对话")
+                        self.touch("按钮商人新鲜蔬菜")
+
+                        if self.exits("标志兑换商店批量购买") is not None:
+                            self.touch("按钮兑换商店批量购买")
+
+                        if self.exits("标志杂货商人艾草", box=(750, 140, 1150, 270)):
+                            self.touch("按钮满")
+                            self.mouseClick((930, 630))
+                        self.closeRewardUi()
+                        self.backToMain()
+
+                    self.setup = 8
+
+                case 8:
+
+                    if "神厨食材购买" in self.taskConfig.dailyExchangeList:
+                        self.locationDetection()
+                        self.areaGo("中原", x=1272, y=1725)
+                        self.touch("按钮大世界对话")
+                        self.touch("按钮商人购买食材")
+                        if self.exits("标志兑换商店批量购买") is not None:
+                            self.touch("按钮兑换商店批量购买")
+
+                        for text in self.taskConfig.chefIngredientsTags:
+                            self.touch("标志输入名称搜索")
+                            self.input(text)
+                            self.touch("按钮搜索")
+                            self.touch("按钮满")
+                            self.mouseClick((1015, 630))
+                            self.touch("按钮搜索返回")
+                        self.backToMain()
+
+                    if "神厨调料购买" in self.taskConfig.dailyExchangeList:
+                        self.locationDetection()
+                        self.areaGo("中原", x=1272, y=1725)
+                        self.touch("按钮大世界对话")
+                        self.touch("按钮商人购买调料")
+                        if self.exits("标志兑换商店批量购买") is not None:
+                            self.touch("按钮兑换商店批量购买")
+
+                        for text in self.taskConfig.chefIngredientsTags:
+                            self.touch("标志输入名称搜索")
+                            self.input(text)
+                            self.touch("按钮搜索")
+                            self.touch("按钮满")
+                            self.mouseClick((1015, 630))
+
+                            self.touch("按钮搜索返回")
+                        self.backToMain()
+
                     self.setup = 0
