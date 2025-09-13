@@ -51,93 +51,85 @@ class AcquisitionTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if self.checkSwitchBranchLine() == 2:
-                        self.toCollectionLocation()
-
-                    b = self.collection()
-                    if b == 0:
+                    # 判断采集次数
+                    if self.taskConfig.collectionCount < self.event[5]:
                         self.setup = 0
                         continue
-                    elif b == 1:
-                        continue
-                    elif b == 3:
-                        if self.exits("界面交易") is not None:
-                            if self.taskConfig.autoBuyTool:
-                                self.logs("购买工具")
-                                self.buy("摆摊购买")
+                    # 检查是否存在主界面
+                    self.backToMain()
+                    # 检查是否切换分线
+                    self.checkSwitchBranchLine()
+                    # 判断是否有采集物
+                    if self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取", "按钮大世界搜查", "按钮大世界垂钓", "按钮大世界市井喧闹",
+                                  "按钮大世界繁花似锦", "按钮大世界空山鸟语") is None:
+                        # 检查体力
+                        if self.exits("标志大世界体力上限") is not None:
+                            if not self.taskConfig.autoEatEgg:
+                                self.logs("无体力结束任务")
+                                self.setup = 0
                                 continue
-                            self.logs("无工具结束任务")
-                            self.setup = 0
+                            self.logs("吃鸡蛋")
+                            if not self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount):
+                                self.setup = 0
+                            continue
                         continue
+                    # 采集加速
+                    if self.wait("标志大世界采集加速", box=(620, 380, 655, 435), overTime=8) is None:
+                        # 检查工具
+                        if self.exits("界面交易") is not None:
+                            if not self.taskConfig.autoBuyTool:
+                                self.logs("无工具结束任务")
+                                self.setup = 0
+                                continue
+                            self.logs("购买工具")
+                            self.buy("摆摊购买")
+                        continue
+                    self.mouseClick((665, 470))
+                    self.logs(f"采集 {self.event[5]}次")
+                    self.event[5] += 1
+                    self.defer(5)
+                    self.closeRewardUi(3)
 
     def checkSwitchBranchLine(self):
         """
         检查并执行换线操作
 
-        该函数根据任务配置和当前事件状态来决定是否需要换线操作，
-        如果需要换线则调用相应的换线方法并更新事件状态
+        该函数根据当前事件状态和任务配置来决定是否需要执行换线操作。
+        主要逻辑包括：检查换线目标是否超出范围、判断是否需要跳过换线、
+        执行换线操作并更新换线计数器。
 
-        参数:
-            无
+        无参数
 
-        返回值:
-            2: 前往新坐标
+        无返回值
         """
         # 检查换线目标是否超出范围
         if self.event[4] >= self.taskConfig.collectionSwitch or not self.event[3]:
             self.event[4] = 1
-            return 2
-            # 如果换线只有一线默认不换线 跳过后续执行
+            # 前往新坐标
+            self.toCollectionLocation()
+            return
+        # 如果换线只有一线默认不换线 跳过后续执行
         if self.taskConfig.collectionSwitch == 1:
             return
+        # 执行换线操作并更新换线计数器
         self.switchBranchLine(self.event[4])
         self.event[4] += 1
-
-    def collection(self):
-        """
-        采集功能函数
-
-        该函数用于执行大世界中的采集操作，包括判断采集物是否存在以及执行采集加速操作
-
-        参数:
-            无
-
-        返回值:
-            0: 任务结束
-            1: 购买工具
-            3: 加速失败
-        """
-        # 判断采集次数
-        if self.taskConfig.collectionCount < self.event[5]:
-            return 0
-        # 判断是否有采集物
-        if self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取", "按钮大世界搜查",
-                      timeout=0) is None:
-            return
-        # 采集加速
-        if self.wait("标志大世界采集加速", box=(590, 370, 685, 450), overTime=10) is None:
-            return 3
-        self.mouseClick((665, 470))
-        self.logs(f"采集 {self.event[5]}次")
-        self.event[5] += 1
-        self.defer(5)
-        self.closeRewardUi(3)
 
     def toCollectionLocation(self):
         """
         前往采集坐标位置
 
         该函数根据事件数据中的坐标信息，验证坐标格式并前往指定的采集位置。
-        函数会检查坐标列表是否为空，验证索引有效性，检验坐标格式，最后调用
-        areaGo方法前往目标坐标。
+        主要功能包括坐标有效性检查、坐标格式验证和角色移动控制。
 
         参数:
-            无
+            self.event[0]: 当前坐标索引
+            self.event[1]: 坐标列表
+            self.event[2]: 区域信息
+            self.event[3]: 是否已处理标记
 
         返回值:
-            None: 当坐标列表为空或坐标格式不正确时
-            False: 当坐标格式验证失败时
-            无明确返回值: 正常执行完毕时
+            无返回值
         """
         # 如果坐标长度为0则跳过
         if len(self.event[1]) == 0:
@@ -148,10 +140,12 @@ class AcquisitionTask(ClassicTask):
         # 验证索引长度是否超过坐标列表长度
         self.event[0] = self.event[0] if self.event[0] < len(self.event[1]) else 0
         __coord = self.event[1][self.event[0]]
+        # 更新坐标计数器
+        self.event[0] += 1
         pattern = r'^\d+#\d+$'
         #  验证坐标格式
         if not bool(re.match(pattern, str(__coord))):
-            return False
+            return
         # 前往坐标
         self.logs(f"前往采集坐标 {__coord.split("#")[0]}:{__coord.split("#")[1]}")
         self.areaGo(self.event[2], __coord.split("#")[0], __coord.split("#")[1])
