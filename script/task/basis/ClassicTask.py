@@ -1,5 +1,6 @@
 import base64
 import threading
+import time
 from collections import deque
 from threading import Event
 
@@ -21,6 +22,30 @@ class ClassicTask(BasisTask, ABC):
         # 世界喊话设置
         self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
+        # self.thread = threading.Thread(target=self.autoFight, daemon=True)
+
+    def switchBranchLine(self, index):
+        """
+        切换游戏副本的分线
+
+        参数:
+            index (int): 目标分线的索引号
+
+        返回值:
+            None
+        """
+        self.logs(f"切换分线{index}")
+        self.keyClick("SPACE")
+        self.mouseClick((1230, 25))
+        # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
+        for _ in range(index // 7 + 1):
+            # 尝试点击目标分线按钮，如果找到则直接返回
+            if self.touch(f"按钮大世界{index}线") is not None:
+                return
+            # 向上滑动屏幕以显示更多分线选项
+
+            self.mouseMove((1050, 555), (1050, 255))
+        self.defer(8)
 
     def unstuck(self):
         """
@@ -186,11 +211,13 @@ class ClassicTask(BasisTask, ABC):
         self.logs("位置检测")
         self.areaGo("金陵", exits=True)
 
-    def areaGo(self, area, x=None, y=None, exits=False):
+    def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, currentArea=False):
         """
         前往指定区域
 
         :param exits: 是否检测当前区域
+        :param unstuck: 执行前是否脱离卡死
+        :param currentArea: 当前区域前往
         :param area: 目标区域名称
         :param x: 目标区域的x坐标，如果为None则使用默认坐标
         :param y: 目标区域的y坐标，如果为None则使用默认坐标
@@ -198,13 +225,23 @@ class ClassicTask(BasisTask, ABC):
         """
         __coordinate = {
             "金陵": (571, 484),
+            "江南": (1095, 1117),
+            "风雷岛": (970, 542),
+            "中原": (1080, 996),
+            "塞北": (1277, 718),
+            "华山": (344, 206),
+            "少林": (239, 326),
         }
 
         # 如果未指定坐标，则使用默认坐标
         x = __coordinate[area][0] if x is None else x
         y = __coordinate[area][1] if y is None else y
 
-        self.logs(f"{area}区域前往")
+        # 是否脱离卡死
+        if unstuck:
+            self.unstuck()
+
+        self.logs(f"{area}区域坐标前往 {x}:{y}")
         self.openMap()
 
         # 检查是否已经处于目标区域
@@ -214,8 +251,9 @@ class ClassicTask(BasisTask, ABC):
             return
 
         # 执行前往区域的操作流程
-        self.touch("按钮地图世界区域")
-        self.touch(f"按钮地图{area}区域")
+        if not currentArea:
+            self.touch("按钮地图世界区域")
+            self.touch(f"按钮地图{area}区域")
         self.coordinateInput(x, y)
         self.touch("按钮地图前往区域")
         self.closeMap()
@@ -663,6 +701,7 @@ class ClassicTask(BasisTask, ABC):
             无返回值
         """
         __count = 0
+        __start = time.time()
         self.logs("等待寻路结束")
         while not self.finished.is_set():
             # 检查是否正在寻路中，如果是则继续等待
@@ -670,6 +709,11 @@ class ClassicTask(BasisTask, ABC):
             if self.exits("标志寻路中") is not None or self.exits("标志地图加载", "标志地图加载_1") is not None:
                 __count = 0
                 continue
+            if time.time() - __start > 360:
+                self.logs("寻路超时")
+                __start = time.time()
+                self.unstuck()
+                self.touch("按钮继续寻路")
             # 限制循环次数，防止无限等待
             if __count >= 3:
                 break

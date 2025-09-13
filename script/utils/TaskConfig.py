@@ -34,6 +34,16 @@ class TaskConfig:
         # 江湖英雄榜
         self.heroListCount = kwargs.get('heroListCount', 1)
         self.heroListInitiativeExit = kwargs.get('heroListInitiativeExit', False)
+        # 采集任务
+        self.collectionMode = kwargs.get('collectionMode', '默认模式')
+        self.collectionSwitch = kwargs.get('collectionSwitch', 1)
+        self.collectionCount = kwargs.get('collectionCount', 1)
+        self.collectionMap = kwargs.get('collectionMap', '江南')
+        self.autoEatEgg = kwargs.get('autoEatEgg', False)
+        self.autoEatEggCount = kwargs.get('autoEatEggCount', 1)
+        self.autoBuyTool = kwargs.get('autoBuyTool', False)
+        self.collectionArticles = kwargs.get('collectionArticles', '江南野花')
+        self.customCoordinatesTags = kwargs.get('customCoordinatesTags', [])
 
     @staticmethod
     def loadConfig(*args):
@@ -63,6 +73,7 @@ class TaskConfig:
 
         参数:
             *args: 可变参数列表
+
                   args[0]: taskConfigName - 任务配置名称(字符串)
                   args[1]: 任务配置参数字典
 

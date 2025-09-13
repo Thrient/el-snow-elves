@@ -97,7 +97,6 @@ class BasisTask(ABC):
 
         参数:
             text (str): 要输入到控制台的文本内容
-
         返回值:
             无返回值
         """
@@ -202,6 +201,8 @@ class BasisTask(ABC):
         x = kwargs.get('x', 0)
         y = kwargs.get('y', 0)
         count = kwargs.get('count', 1)
+        timeout = kwargs.get('timeout', Config.TIMEOUT)
+        delay = kwargs.get('delay', 0)
 
         # 在超时时间内循环查找图像
         while time.time() - __currentTIme < overTime:
@@ -210,7 +211,7 @@ class BasisTask(ABC):
                 result = self.imageTemplate(image, threshold, box)
                 if result is None:
                     continue
-                self.mouseClick(result, x=x, y=y, count=count)
+                self.mouseClick(result, x=x, y=y, count=count, timeout=timeout, delay=delay)
                 return result
         return None
 

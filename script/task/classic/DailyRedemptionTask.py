@@ -130,8 +130,8 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮兑换商店搜索")
 
                         if self.exits("标志兑换商店锦芳绣残片", box=(750, 140, 1150, 270)):
-                            self.mouseClick((945, 675), count=10, timeout=0.1)
-                        self.closeRewardUi(10)
+                            self.touch("按钮满")
+                            self.mouseClick((1015, 630))
                         self.backToMain()
 
                     self.setup = 6
@@ -215,7 +215,7 @@ class DailyRedemptionTask(ClassicTask):
                         if self.exits("标志兑换商店批量购买") is not None:
                             self.touch("按钮兑换商店批量购买")
 
-                        for text in self.taskConfig.chefIngredientsTags:
+                        for text in self.taskConfig.chefSeasoningTags:
                             self.touch("标志输入名称搜索")
                             self.input(text)
                             self.touch("按钮搜索")

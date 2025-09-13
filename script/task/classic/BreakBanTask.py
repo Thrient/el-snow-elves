@@ -1,3 +1,5 @@
+from threading import Thread
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -11,8 +13,6 @@ class BreakBanTask(ClassicTask):
         return self
 
     def execute(self):
-        self.setup = 1
-
         while not self.finished.is_set():
 
             match self.setup:

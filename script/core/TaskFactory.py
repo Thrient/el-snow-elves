@@ -1,3 +1,4 @@
+from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.BreakBanTask import BreakBanTask
 from script.task.classic.ChivalryShoutTask import ChivalryShoutTask
 from script.task.classic.DailyCopiesTask import DailyCopiesTask
@@ -59,6 +60,7 @@ class TaskFactory:
         self.register("classic", "茶馆说书", TeaStoryTask)
         self.register("classic", "江湖行商", MerchantLakeTask)
         self.register("classic", "江湖英雄榜", HeroListTask)
+        self.register("classic", "采集任务", AcquisitionTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):
