@@ -129,6 +129,7 @@ class Config:
     }
     TASK_PARAMETER_DICT = {
         "坐观万象": {"model": "游历", "x": 0, "y": 45, "parameter": ["按钮活动坐观万象"]},
+        "摇钱树": {"model": "帮派", "x": 0, "y": 45, "parameter": ["按钮活动摇钱树"]},
         "破阵设宴": {"model": "帮派", "x": 0, "y": 45, "parameter": ["按钮活动破阵设宴"]},
         "门客设宴": {"model": "帮派", "x": 0, "y": 45, "parameter": ["按钮活动门客设宴"]},
         "帮派任务": {"model": "帮派", "x": 0, "y": 45, "parameter": ["按钮活动帮派任务"]},

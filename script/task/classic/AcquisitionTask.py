@@ -36,7 +36,7 @@ class AcquisitionTask(ClassicTask):
     def execute(self):
         while not self.finished.is_set():
 
-            if time.time() - self.timer.getElapsedTime() > 600000:
+            if self.timer.getElapsedTime() > 600000:
                 self.logs("采集任务超时")
                 return 0
 

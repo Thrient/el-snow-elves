@@ -15,7 +15,7 @@ class HeroListTask(ClassicTask):
     def execute(self):
         while not self.finished.is_set():
 
-            if time.time() - self.timer.getElapsedTime() > 1800:
+            if self.timer.getElapsedTime() > 1800:
                 self.logs("江湖英雄榜超时")
                 return 0
 

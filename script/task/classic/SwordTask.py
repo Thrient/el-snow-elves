@@ -16,7 +16,7 @@ class SwordTask(ClassicTask):
     def execute(self):
         while not self.finished.is_set():
 
-            if time.time() - self.timer.getElapsedTime() > 1800 * 2 * 3:
+            if self.timer.getElapsedTime() > 1800 * 2 * 3:
                 self.logs("单人论剑超时")
                 return 0
 

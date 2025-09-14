@@ -7,6 +7,7 @@ class Timer:
         self.__elapsedTime = 0
         self.__startTime = 0
         self.__paused = False
+        self.start()
 
     def start(self):
         """

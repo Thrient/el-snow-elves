@@ -16,7 +16,7 @@ class DailyRedemptionTask(ClassicTask):
     def execute(self):
         while not self.finished.is_set():
 
-            if time.time() - self.timer.getElapsedTime() > 1800:
+            if self.timer.getElapsedTime() > 1800:
                 self.logs("每日兑换超时")
                 return 0
 
@@ -118,6 +118,23 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮珍宝阁榫头卯眼")
                         if self.exits("标志珍宝阁榫头卯眼", box=(750, 140, 1150, 270)):
                             self.mouseClick((945, 675), count=12, timeout=0.1)
+                        self.closeRewardUi(12)
+                        self.backToMain()
+
+                    if "碧铜马坯" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品珍宝阁")
+                        self.touch("按钮珍宝阁商会")
+
+                        self.mouseMove((186, 275), (186, 475), count=3)
+                        self.touch("按钮珍宝阁宝石")
+                        self.mouseMove((186, 475), (186, 275), count=3)
+                        self.touch("按钮珍宝阁古董材料")
+
+                        self.touch("按钮珍宝阁碧铜马坯")
+                        if self.exits("标志珍宝阁碧铜马坯", box=(750, 140, 1150, 270)):
+                            self.mouseClick((945, 675), count=3, timeout=0.1)
                         self.closeRewardUi(12)
                         self.backToMain()
 
@@ -229,6 +246,57 @@ class DailyRedemptionTask(ClassicTask):
                             self.mouseClick((1015, 630))
 
                             self.touch("按钮搜索返回")
+                        self.backToMain()
+
+                    self.setup = 9
+                case 9:
+                    if "发布悬赏" in self.taskConfig.dailyExchangeList:
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品活动")
+                        self.touch("按钮活动悬赏")
+
+                        self.touch("按钮悬赏发布")
+                        self.touch("按钮发布悬赏下拉")
+                        self.touch("按钮发布悬赏江湖行商")
+                        self.touch("按钮悬赏发布悬赏")
+                        self.touch("按钮确定")
+                        self.closeCurrentUi()
+
+                        self.touch("按钮悬赏发布")
+                        self.touch("按钮发布悬赏下拉")
+                        self.touch("按钮发布悬赏聚义平冤")
+                        self.touch("按钮悬赏发布悬赏")
+                        self.touch("按钮确定")
+                        self.closeCurrentUi()
+
+                        self.backToMain()
+
+                    self.setup = 10
+
+                case 10:
+                    if "商票上缴" in self.taskConfig.dailyExchangeList:
+                        self.openFaction()
+                        self.touch("按钮帮派福利")
+                        self.touch("按钮帮派商票上缴")
+                        self.arrive()
+                        self.touch("按钮行商商票上缴")
+
+                        for _ in range(4):
+                            self.touch("标志行商高级商票")
+                            self.touch("按钮行商上缴")
+
+                        self.backToMain()
+
+                    self.setup = 11
+                case 11:
+                    if "摇钱树" in self.taskConfig.dailyExchangeList:
+                        self.executionActivities("摇钱树")
+                        self.touch("按钮摇钱树前往")
+                        self.arrive()
+
+                        self.touch(f"按钮摇钱树{self.taskConfig.moneyTreeSelect}")
+                        self.closeRewardUi(5)
                         self.backToMain()
 
                     self.setup = 0
