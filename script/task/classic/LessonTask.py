@@ -13,9 +13,11 @@ class LessonTask(ClassicTask):
         return self
 
     def execute(self):
-        self.setup = 1
-
         while not self.finished.is_set():
+
+            if time.time() - self.timer.getElapsedTime() > 1800:
+                self.logs("课业任务超时")
+                return 0
 
             match self.setup:
                 # 任务结束
@@ -31,23 +33,14 @@ class LessonTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.backToMain()
-                    self.openBackpack()
-                    self.touch("按钮物品综合入口")
-                    self.touch("按钮物品活动")
-                    self.touch("按钮活动江湖")
-                    if self.touch("按钮活动止杀", "按钮活动锻心", "按钮活动问卜", "按钮活动漱尘", "按钮活动归义",
-                                  "按钮活动濯剑", "按钮活动吟风", "按钮活动悟禅", "按钮活动含灵", "按钮活动寻道",
-                                  "按钮活动观梦", "按钮活动起茶", y=45) is None:
+                    if not self.executionActivities("课业任务"):
                         self.logs("课业任务已经完成")
                         self.setup = 0
                         continue
-
                     self.touch("按钮课业前往", box=(178, 443, 399, 582))
                     self.arrive()
-                    self.touch("按钮课业课业", "按钮课业悟禅", threshold=0.9)
+                    self.touch("按钮课业课业", "按钮课业悟禅")
                     self.touch("按钮课业确定")
-
                     self.setup = 4
                 case 4:
 

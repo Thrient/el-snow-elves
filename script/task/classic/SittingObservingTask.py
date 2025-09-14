@@ -3,10 +3,11 @@ import time
 from script.task.basis.ClassicTask import ClassicTask
 
 
-class HexagramDayTask(ClassicTask):
+class SittingObservingTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
+        self.event = [time.time() - 60]
 
     def instance(self):
         return self
@@ -15,14 +16,13 @@ class HexagramDayTask(ClassicTask):
         while not self.finished.is_set():
 
             if time.time() - self.timer.getElapsedTime() > 1800:
-                self.logs("每日一卦超时")
+                self.logs("坐观万象超时")
                 return 0
 
             match self.setup:
                 # 任务结束
                 case 0:
-                    self.backToMain()
-                    self.logs("每日一卦完成")
+                    self.logs("坐观万象完成")
                     return 0
                 # 位置检测
                 case 1:
@@ -33,24 +33,14 @@ class HexagramDayTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if not self.executionActivities("每日一挂"):
-                        self.logs("每日一卦已经完成")
+                    if not self.executionActivities("坐观万象"):
+                        self.logs("坐观万象已经完成")
                         self.setup = 0
                         continue
                     self.arrive()
-                    self.touch("按钮每日一卦算命占卜")
-                    self.touch("按钮每日一卦确定")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面每日一卦") is None:
-                        self.setup = 3
+                    if self.exits("标志大世界修炼中") is None:
+                        self.setup = 0
                         continue
-
-                    self.touch("按钮每日一卦听天由命")
-                    self.touch("按钮每日一卦占卜")
-                    self.defer(4)
-                    self.touch("按钮每日一卦接受卦象")
-                    self.touch("按钮确定")
-                    self.closeRewardUi(count=5)
-
-                    self.setup = 0
+                    self.defer(5)

@@ -24,6 +24,35 @@ class ClassicTask(BasisTask, ABC):
         self.WorldShoutsIndex = 0
         # self.thread = threading.Thread(target=self.autoFight, daemon=True)
 
+    def executionActivities(self, name):
+        """
+        执行活动相关的操作流程
+
+        :param name: 任务名称
+        :return: 如果成功执行返回True，否则返回False
+        """
+        taskParameter = Config.TASK_PARAMETER_DICT[name]
+        model = taskParameter["model"]
+        x = taskParameter["x"]
+        y = taskParameter["y"]
+        self.logs(f"查找活动{name}")
+        # 返回主界面并打开背包
+        self.backToMain()
+        self.openBackpack()
+
+        # 进入活动界面
+        self.logs("进入活动界面")
+        self.touch("按钮物品综合入口")
+        self.touch("按钮物品活动")
+        self.touch(f"按钮活动{model}")
+
+        # 尝试点击指定位置，如果成功则执行到达操作
+        if self.touch(*taskParameter["parameter"], x=x, y=y) is not None:
+            self.logs(f"活动{name}查找成功")
+            return True
+        self.logs(f"活动{name}查找失败")
+        return False
+
     def useBackpackArticles(self, articles, UsageTimes):
         """
         使用背包中的指定道具
@@ -238,7 +267,7 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         self.logs("位置检测")
-        self.areaGo("金陵", exits=True)
+        self.areaGo("金陵", exits=True, unstuck=True)
 
     def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, currentArea=False):
         """
@@ -430,11 +459,12 @@ class ClassicTask(BasisTask, ABC):
         :param box: 搜索区域配置，默认使用Config.BOX
         :return: 无返回值
         """
-        self.logs("关闭当前界面")
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, match=1) is None:
-                return
+            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, match=1) is not None:
+                self.logs("关闭当前界面")
+                continue
+            return
 
     def backToMain(self):
         """

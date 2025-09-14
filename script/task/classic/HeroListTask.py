@@ -1,3 +1,5 @@
+import time
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -11,9 +13,11 @@ class HeroListTask(ClassicTask):
         return self
 
     def execute(self):
-        self.setup = 1
-
         while not self.finished.is_set():
+
+            if time.time() - self.timer.getElapsedTime() > 1800:
+                self.logs("江湖英雄榜超时")
+                return 0
 
             match self.setup:
                 # 任务结束
@@ -29,14 +33,8 @@ class HeroListTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.backToMain()
-                    self.openBackpack()
-                    self.touch("按钮物品综合入口")
-                    self.touch("按钮物品活动")
-                    self.touch("按钮活动纷争")
-                    self.touch("按钮活动江湖英雄榜", y=45)
+                    self.executionActivities("江湖英雄榜")
                     self.setup = 4
-
                 case 4:
                     if self.exits("界面江湖英雄榜") is None:
                         if self.exits("标志江湖英雄榜匹配成功") is not None:

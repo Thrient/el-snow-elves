@@ -1,3 +1,5 @@
+import time
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -13,6 +15,10 @@ class DailyRedemptionTask(ClassicTask):
 
     def execute(self):
         while not self.finished.is_set():
+
+            if time.time() - self.timer.getElapsedTime() > 1800:
+                self.logs("每日兑换超时")
+                return 0
 
             match self.setup:
                 # 任务结束

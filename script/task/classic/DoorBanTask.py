@@ -1,3 +1,5 @@
+import time
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -11,9 +13,11 @@ class DoorBanTask(ClassicTask):
         return self
 
     def execute(self):
-        self.setup = 1
-
         while not self.finished.is_set():
+
+            if time.time() - self.timer.getElapsedTime() > 1800:
+                self.logs("门客设宴超时")
+                return 0
 
             match self.setup:
                 # 任务结束
@@ -29,12 +33,7 @@ class DoorBanTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.backToMain()
-                    self.openBackpack()
-                    self.touch("按钮物品综合入口")
-                    self.touch("按钮物品活动")
-                    self.touch("按钮活动帮派")
-                    if self.touch("按钮活动门客设宴", y=45) is None:
+                    if not self.executionActivities("门客设宴"):
                         self.logs("门客设宴已经完成")
                         self.setup = 0
                         continue

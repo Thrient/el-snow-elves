@@ -1,4 +1,5 @@
 import re
+import time
 
 from script.config.Config import Config
 from script.task.basis.ClassicTask import ClassicTask
@@ -35,6 +36,10 @@ class AcquisitionTask(ClassicTask):
     def execute(self):
         while not self.finished.is_set():
 
+            if time.time() - self.timer.getElapsedTime() > 600000:
+                self.logs("采集任务超时")
+                return 0
+
             match self.setup:
                 # 任务结束
                 case 0:
@@ -60,7 +65,8 @@ class AcquisitionTask(ClassicTask):
                     # 检查是否切换分线
                     self.checkSwitchBranchLine()
                     # 判断是否有采集物
-                    if self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取", "按钮大世界搜查", "按钮大世界垂钓", "按钮大世界市井喧闹",
+                    if self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取",
+                                  "按钮大世界搜查", "按钮大世界垂钓", "按钮大世界市井喧闹",
                                   "按钮大世界繁花似锦", "按钮大世界空山鸟语") is None:
                         # 检查体力
                         if self.exits("标志大世界体力上限") is not None:
@@ -84,6 +90,7 @@ class AcquisitionTask(ClassicTask):
                             self.logs("购买工具")
                             self.buy("摆摊购买")
                         continue
+                    # 点击采集加速按钮
                     self.mouseClick((665, 470))
                     self.logs(f"采集 {self.event[5]}次")
                     self.event[5] += 1

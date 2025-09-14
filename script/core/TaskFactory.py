@@ -9,6 +9,7 @@ from script.task.classic.HeroListTask import HeroListTask
 from script.task.classic.HexagramDayTask import HexagramDayTask
 from script.task.classic.LessonTask import LessonTask
 from script.task.classic.MerchantLakeTask import MerchantLakeTask
+from script.task.classic.SittingObservingTask import SittingObservingTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
 from script.task.classic.SwordTask import SwordTask
 from script.task.classic.TeaStoryTask import TeaStoryTask
@@ -61,6 +62,7 @@ class TaskFactory:
         self.register("classic", "江湖行商", MerchantLakeTask)
         self.register("classic", "江湖英雄榜", HeroListTask)
         self.register("classic", "采集任务", AcquisitionTask)
+        self.register("classic", "坐观万象", SittingObservingTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

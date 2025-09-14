@@ -1,3 +1,5 @@
+import time
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -12,9 +14,11 @@ class SwordTask(ClassicTask):
         return self
 
     def execute(self):
-        self.setup = 1
-
         while not self.finished.is_set():
+
+            if time.time() - self.timer.getElapsedTime() > 1800 * 2 * 3:
+                self.logs("单人论剑超时")
+                return 0
 
             match self.setup:
                 # 任务结束
@@ -31,14 +35,8 @@ class SwordTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.backToMain()
-                    self.openBackpack()
-                    self.touch("按钮物品综合入口")
-                    self.touch("按钮物品活动")
-                    self.touch("按钮活动纷争")
-                    self.touch("按钮活动华山论剑", "按钮活动萌芽论剑", x=-60, y=45)
+                    self.executionActivities("单人论剑")
                     self.setup = 4
-
                 case 4:
                     if self.exits("界面单人论剑") is None:
                         if self.exits("标志单人论剑匹配成功") is not None:
