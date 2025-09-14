@@ -34,8 +34,8 @@ class FactionTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if not self.executionActivities("门客设宴"):
-                        self.logs("门客设宴已经完成")
+                    if not self.executionActivities("帮派任务"):
+                        self.logs("帮派任务已经完成")
                         self.setup = 0
                         continue
                     self.arrive()

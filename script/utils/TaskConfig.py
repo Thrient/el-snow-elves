@@ -44,6 +44,9 @@ class TaskConfig:
         self.autoBuyTool = kwargs.get('autoBuyTool', False)
         self.collectionArticles = kwargs.get('collectionArticles', '江南野花')
         self.customCoordinatesTags = kwargs.get('customCoordinatesTags', [])
+        # 单人论剑
+        self.swordFightInitiativeExit = kwargs.get('swordFightInitiativeExit', False)
+        self.swordFightCount = kwargs.get('swordFightCount', 1)
 
     @staticmethod
     def loadConfig(*args):
