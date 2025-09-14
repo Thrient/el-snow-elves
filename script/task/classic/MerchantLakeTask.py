@@ -8,7 +8,8 @@ class MerchantLakeTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
-        self.event = [0, False, (0, 0, 0, 0)]
+        # 4:江湖行商次数计数器
+        self.event = [0, False, (0, 0, 0, 0), time.time(), 1]
 
     def instance(self):
         return self
@@ -34,26 +35,32 @@ class MerchantLakeTask(ClassicTask):
                     self.teamCreate(model="江湖行商")
                     self.setup = 3
                 case 3:
+                    if self.event[4] > self.taskConfig.merchantLakeCount:
+                        self.setup = 0
+                        continue
+
                     self.areaGo("江南", x=986, y=1190)
                     self.setup = 4
                 case 4:
                     self.openTeam()
 
                     if len(self.exitsAll("标志队伍空位")) <= 10 - 3:
-                        self.closeTeam()
+                        # 一键召唤
+                        self.followDetection()
                         self.setup = 5
                         continue
                     self.touch("按钮队伍自动匹配_V1", match=1)
 
-                    if 32 < time.time() - self.event[7]:
-                        self.worldShouts("sxy", ordinary=True)
+                    if 32 < time.time() - self.event[3]:
+                        self.event[3] = time.time()
+                        self.worldShouts(self.taskConfig.merchantLakeWordShout, ordinary=True, connected=True)
                 case 5:
                     self.touch("按钮大世界对话")
                     if self.touch("按钮江湖行商参与") is None:
-                        self.setup = 2
+                        self.setup = 3
                         continue
 
-                    if 3 < len(self.exitsAll("标志江湖行商参与条件")):
+                    if 3 != len(self.exitsAll("标志江湖行商参与条件")):
                         self.backToMain()
                         self.setup = 4
                         continue
@@ -63,11 +70,8 @@ class MerchantLakeTask(ClassicTask):
 
                     if self.wait("标志江湖行商放弃", overTime=10) is None:
                         self.backToMain()
-                        self.setup = 5
                         continue
-
                     self.setup = 6
-
                 case 6:
                     if 3 <= self.event[0]:
                         self.teamDetection()
@@ -87,7 +91,9 @@ class MerchantLakeTask(ClassicTask):
                     if self.exits("按钮江湖行商一键上缴") is not None:
                         self.touch("按钮江湖行商一键上缴")
                         self.closeRewardUi(count=5)
-                        self.setup = 0
+                        self.logs(f"江湖行商完成{self.event[4]}次")
+                        self.event[4] += 1
+                        self.setup = 3
                         continue
 
                     if self.exits("按钮地图江南区域") is not None:

@@ -293,7 +293,7 @@ class BasisTask(ABC):
             if results is not None:
                 return results
 
-        return None
+        return []
 
     def imageTemplate(self, image, threshold, box):
         """

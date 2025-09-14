@@ -47,6 +47,9 @@ class TaskConfig:
         # 单人论剑
         self.swordFightInitiativeExit = kwargs.get('swordFightInitiativeExit', False)
         self.swordFightCount = kwargs.get('swordFightCount', 1)
+        # 江湖行商
+        self.merchantLakeCount = kwargs.get('merchantLakeCount', 1)
+        self.merchantLakeWordShout = kwargs.get('merchantLakeWordShout', '江湖行商来人!!!(哔站搜时雪)')
 
     @staticmethod
     def loadConfig(*args):

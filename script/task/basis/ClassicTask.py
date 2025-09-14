@@ -24,6 +24,30 @@ class ClassicTask(BasisTask, ABC):
         self.WorldShoutsIndex = 0
         # self.thread = threading.Thread(target=self.autoFight, daemon=True)
 
+    def followDetection(self):
+        """
+        跟随检测函数
+
+        该函数用于检测并执行队伍跟随操作，主要流程包括：
+        1. 打开队伍界面
+        2. 检查一键召回按钮是否存在
+        3. 如果存在则执行召回操作并等待
+
+        无参数
+
+        无返回值
+        """
+        self.openTeam()
+        # 检查一键召回按钮是否存在，如果不存在则直接返回
+        if self.exits("按钮队伍一键召回") is None:
+            self.closeTeam()
+            return
+        self.logs("召回队员")
+        self.touch("按钮队伍一键召回")
+        self.closeTeam()
+        # 延迟20秒等待操作完成
+        self.defer(20)
+
     def executionActivities(self, name):
         """
         执行活动相关的操作流程
@@ -363,6 +387,7 @@ class ClassicTask(BasisTask, ABC):
     def teamCreate(self, model):
         self.logs(f"创建{model}队伍")
 
+        self.backToMain()
         if model == "日常":
             self.logs("刷新当天日常")
             self.openBackpack()
@@ -500,10 +525,11 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无
         """
-        self.logs("关闭帮派仓库")
+
         # 检查帮派仓库界面是否存在，不存在则直接返回
         if self.exits("界面帮派仓库") is None:
             return
+        self.logs("关闭帮派仓库")
         # 关闭当前界面
         self.closeCurrentUi()
 
@@ -519,10 +545,11 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无
         """
-        self.logs("关闭摆摊")
+
         # 检查交易界面是否存在，如果不存在则直接返回
         if self.exits("界面交易") is None:
             return
+        self.logs("关闭摆摊")
         # 关闭当前用户界面
         self.closeCurrentUi()
 
@@ -538,10 +565,11 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        self.logs("关闭珍宝阁")
+
         # 检查珍宝阁界面是否存在，不存在则直接返回
         if self.exits("界面珍宝阁") is None:
             return
+        self.logs("关闭珍宝阁")
         # 执行关闭当前界面的操作
         self.closeCurrentUi()
 
@@ -557,10 +585,11 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无
         """
-        self.logs("关闭帮派")
+
         # 检查当前是否已处于帮派界面，如果不是则直接返回
         if self.exits("界面帮派") is None:
             return
+        self.logs("关闭帮派")
         self.closeCurrentUi()
 
     def openFaction(self):
@@ -576,9 +605,10 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无
         """
-        self.logs("打开帮派")
+
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面帮派") is None:
+            self.logs("打开帮派")
             self.keyClick("O")
 
     def closeBuddy(self):
@@ -593,10 +623,11 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        self.logs("关闭好友")
+
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("界面好友") is None:
             return
+        self.logs("关闭好友")
         self.closeCurrentUi()
 
     def openBuddy(self):
@@ -612,9 +643,10 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        self.logs("打开好友")
+
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面好友") is None:
+            self.logs("打开好友")
             self.keyClick("H")
 
     def closeMap(self):
@@ -626,10 +658,11 @@ class ClassicTask(BasisTask, ABC):
         Returns:
             None
         """
-        self.logs("关闭地图")
+
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("标志地图当前坐标") is None:
             return
+        self.logs("关闭地图")
         self.closeCurrentUi()
 
     def openMap(self):
@@ -645,9 +678,10 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无
         """
-        self.logs("打开地图")
+
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("标志地图当前坐标") is None:
+            self.logs("打开地图")
             self.keyClick("M")
 
     def closeTeam(self):
@@ -662,10 +696,10 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无
         """
-        self.logs("关闭队伍")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("界面队伍") is None:
             return
+        self.logs("关闭队伍")
         self.closeCurrentUi()
 
     def openTeam(self):
@@ -674,9 +708,9 @@ class ClassicTask(BasisTask, ABC):
 
         该函数用于打开游戏中的队伍界面，如果队伍界面未开启则通过按键T来打开
         """
-        self.logs("打开队伍")
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面队伍") is None:
+            self.logs("打开队伍")
             self.keyClick("T")
 
     def closeBackpack(self):

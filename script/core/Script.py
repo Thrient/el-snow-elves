@@ -37,6 +37,7 @@ class Script(Thread):
             Utils.sendEmit(self.window, 'API:ADD:CHARACTER', state='初始化', hwnd=self.hwnd)
             self.windowConsole.setWindowNoMenu()
             self.windowConsole.setWinEnableClickThrough()
+            self.windowConsole.setWindowTransparent(255)
 
             # 主任务处理循环，当finished标志未设置时持续运行
             while not self.__finished.is_set():
@@ -84,6 +85,7 @@ class Script(Thread):
         self.resume()
         self.windowConsole.restStyle()
         self.windowConsole.setWinUnEnableClickThrough()
+        self.windowConsole.setWindowTransparent(255)
 
     def stop(self):
         """
@@ -102,6 +104,8 @@ class Script(Thread):
         if not self.__stop.is_set():
             self.__stop.set()
             self.__stopped.acquire()
+        # 去除窗口菜单
+        self.windowConsole.setWindowNoMenu()
         # 取消窗口的点击穿透功能
         self.windowConsole.setWinUnEnableClickThrough()
         # 停止计时器
@@ -124,10 +128,56 @@ class Script(Thread):
         if self.__stop.is_set():
             self.__stop.clear()
             self.__stopped.release()
+        # 恢复原本窗口
+        self.windowConsole.restStyle()
         # 设置窗口控制台为可点击穿透状态
         self.windowConsole.setWinEnableClickThrough()
         # 恢复计时器
         self.obj.timer.resume()
+
+    def lock(self):
+        """
+        锁定当前窗口
+
+        该函数用于锁定当前窗口，即设置窗口的点击穿透功能为不可点击。
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+        self.windowConsole.setWinEnableClickThrough()
+
+    def unlock(self):
+        """
+        解锁当前窗口
+
+        该函数用于解锁当前窗口，即取消窗口的点击穿透功能。
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+        self.windowConsole.setWinUnEnableClickThrough()
+
+    def setTransparent(self, transparent):
+        """
+        设置窗口透明度
+
+        该函数用于设置窗口的透明度，参数为0-255，0为完全透明，255为完全可见。
+
+        参数:
+            self: 类实例对象，包含windowConsole属性用于窗口操作
+            transparent: 透明度值，范围0-255
+
+        返回值:
+            无返回值
+
+        """
+        self.windowConsole.setWindowTransparent(transparent)
 
     def screenshot(self):
         """

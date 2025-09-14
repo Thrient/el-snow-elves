@@ -22,6 +22,7 @@ class SittingObservingTask(ClassicTask):
             match self.setup:
                 # 任务结束
                 case 0:
+                    self.backToMain()
                     self.logs("坐观万象完成")
                     return 0
                 # 位置检测

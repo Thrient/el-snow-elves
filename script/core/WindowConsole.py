@@ -275,6 +275,42 @@ class WindowConsole:
         win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
                               win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED)
 
+    def setWindowTransparent(self, transparent):
+        """
+        设置窗口的透明度
+
+        该函数通过设置窗口的分层样式和透明度值来调整窗口透明程度，
+        透明度值范围为0到255，其中0表示完全透明，255表示完全不透明。
+
+        参数:
+            opacity: 整数类型，窗口透明度值，范围0-255
+
+        返回值:
+            无
+
+        异常:
+            AssertionError: 当窗口句柄无效时抛出
+            ValueError: 当透明度值超出有效范围时抛出
+        """
+        # 验证窗口句柄有效性
+        assert win32gui.IsWindow(self.hwnd), "无效窗口"
+
+        # 获取当前窗口的扩展样式
+        ex_style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
+
+        # 添加WS_EX_LAYERED样式
+        ex_style |= win32con.WS_EX_LAYERED
+
+        # 设置修改后的窗口扩展样式
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_EXSTYLE, ex_style)
+
+        # 设置窗口透明度（LWA_ALPHA表示使用alpha值控制透明度）
+        win32gui.SetLayeredWindowAttributes(self.hwnd, 0, transparent, win32con.LWA_ALPHA)
+
+        # 更新窗口以应用更改
+        win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
+                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED)
+
     def captureWindow(self):
         """
         捕获指定窗口的内容并返回PIL图像对象

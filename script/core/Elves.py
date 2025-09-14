@@ -37,6 +37,12 @@ class Elves:
         api.on("API:SCRIPT:STOP", self.stop)
         # 注册脚本恢复事件监听器
         api.on("API:SCRIPT:RESUME", self.resume)
+        # 注册窗口锁定事件监听器
+        api.on("API:SCRIPT:LOCK", self.lock)
+        # 注册窗口解锁事件监听器
+        api.on("API:SCRIPT:UNLOCK", self.unlock)
+        # 注册设置窗口透明度事件监听器
+        api.on("API:SCRIPT:SET_TRANSPARENT", self.setTransparent)
         # 注册脚本截图事件监听器
         api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
         # 注册配置保存事件处理函数
@@ -124,6 +130,58 @@ class Elves:
         # 获取窗口对应的脚本并恢复执行
         script = self.winList.get(hwnd)
         script.resume()
+
+    def lock(self, hwnd):
+        """
+        锁定指定窗口的脚本执行
+
+        参数:
+            hwnd: 窗口句柄，用于标识要锁定脚本的窗口
+
+        返回值:
+            无返回值
+        """
+        # 检查窗口是否在窗口列表中
+        if hwnd not in self.winList:
+            return
+        # 获取窗口对应的脚本并锁定执行
+        script = self.winList.get(hwnd)
+        script.lock()
+
+    def unlock(self, hwnd):
+        """
+        解锁指定窗口的脚本执行
+
+        参数:
+            hwnd: 窗口句柄，用于标识要解锁脚本的窗口
+
+        返回值:
+            无返回值
+        """
+        # 检查窗口是否在窗口列表中
+        if hwnd not in self.winList:
+            return
+        # 获取窗口对应的脚本并解锁执行
+        script = self.winList.get(hwnd)
+        script.unlock()
+
+    def setTransparent(self, hwnd, transparent):
+        """
+        设置指定窗口的透明度
+
+        参数:
+            hwnd: 窗口句柄，用于标识要设置透明度的窗口
+            transparent: 透明度值，取值范围[0, 255]
+
+        返回值:
+            无返回值
+        """
+        # 检查窗口是否在窗口列表中
+        if hwnd not in self.winList:
+            return
+        # 获取窗口对应的脚本并设置透明度
+        script = self.winList.get(hwnd)
+        script.setTransparent(transparent)
 
     def screenshot(self, hwnd):
         """
