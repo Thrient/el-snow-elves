@@ -49,78 +49,60 @@ class AcquisitionTask(ClassicTask):
                 # 位置检测
                 case 1:
                     # 前往采集地图
-                    self.areaGo(self.event[2], unstuck=True)
+                    self.areaGo(self.event[2], exits=True, unstuck=True)
                     self.setup = 2
                 # 队伍检测
                 case 2:
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    # 判断采集次数
-                    if self.taskConfig.collectionCount < self.event[5]:
-                        self.setup = 0
-                        continue
-                    # 检查是否存在主界面
-                    self.backToMain()
-                    # 检查是否切换分线
-                    self.checkSwitchBranchLine()
-                    # 判断是否有采集物
-                    if self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取",
-                                  "按钮大世界搜查", "按钮大世界垂钓", "按钮大世界市井喧闹",
-                                  "按钮大世界繁花似锦", "按钮大世界空山鸟语") is None:
-                        # 检查体力
-                        if self.exits("标志大世界体力上限") is not None:
-                            if not self.taskConfig.autoEatEgg:
-                                self.logs("无体力结束任务")
-                                self.setup = 0
-                                continue
-                            self.logs("吃鸡蛋")
-                            if not self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount):
-                                self.setup = 0
+                    self.toCollectionLocation()
+                    self.setup = 4
+                case 4:
+                    if self.exits("标志大世界体力上限") is not None:
+                        self.logs("吃鸡蛋")
+                        if not self.taskConfig.autoEatEgg:
+                            self.logs("无体力 结束任务")
+                            self.setup = 0
+                            continue
+                        if not self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount):
+                            self.logs("缺少道具一筐鸡蛋 结束任务")
+                            self.setup = 0
                             continue
                         continue
-                    # 采集加速
-                    if self.wait("标志大世界采集加速", box=(620, 380, 655, 435), overTime=8) is None:
-                        # 检查工具
-                        if self.exits("界面交易") is not None:
-                            if not self.taskConfig.autoBuyTool:
-                                self.logs("无工具结束任务")
-                                self.setup = 0
-                                continue
-                            self.logs("购买工具")
-                            self.buy("摆摊购买")
+
+                    if self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取",
+                                  "按钮大世界搜查", "按钮大世界垂钓", "按钮大世界市井喧闹",
+                                  "按钮大世界繁花似锦", "按钮大世界空山鸟语") is not None:
+
+                        if self.buy("摆摊购买"):
+                            continue
+
+                        if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), overTime=8) is not None:
+                            self.mouseClick((665, 470))
+
+                        self.logs(f"采集 {self.event[5]}次")
+                        self.event[5] += 1
+
+                        if self.event[5] >= self.taskConfig.collectionCount:
+                            self.setup = 0
                         continue
-                    # 点击采集加速按钮
-                    self.mouseClick((665, 470))
-                    self.logs(f"采集 {self.event[5]}次")
-                    self.event[5] += 1
-                    self.defer(5)
-                    self.closeRewardUi(3)
 
-    def checkSwitchBranchLine(self):
-        """
-        检查并执行换线操作
+                    # 换线更新坐标
+                    if self.taskConfig.collectionSwitch == 1:
+                        self.toCollectionLocation()
+                        continue
 
-        该函数根据当前事件状态和任务配置来决定是否需要执行换线操作。
-        主要逻辑包括：检查换线目标是否超出范围、判断是否需要跳过换线、
-        执行换线操作并更新换线计数器。
+                    # 重置换线计数器
+                    if self.event[4] == self.taskConfig.collectionSwitch + 1:
+                        self.event[4] = 1
+                        self.toCollectionLocation()
+                        continue
 
-        无参数
-
-        无返回值
-        """
-        # 检查换线目标是否超出范围
-        if self.event[4] >= self.taskConfig.collectionSwitch or not self.event[3]:
-            self.event[4] = 1
-            # 前往新坐标
-            self.toCollectionLocation()
-            return
-        # 如果换线只有一线默认不换线 跳过后续执行
-        if self.taskConfig.collectionSwitch == 1:
-            return
-        # 执行换线操作并更新换线计数器
-        self.switchBranchLine(self.event[4])
-        self.event[4] += 1
+                    # 换线操作
+                    self.switchBranchLine(self.event[4])
+                    self.event[4] += 1
+                    continue
 
     def toCollectionLocation(self):
         """
@@ -155,4 +137,4 @@ class AcquisitionTask(ClassicTask):
             return
         # 前往坐标
         self.logs(f"前往采集坐标 {__coord.split("#")[0]}:{__coord.split("#")[1]}")
-        self.areaGo(self.event[2], __coord.split("#")[0], __coord.split("#")[1])
+        self.areaGo(self.event[2], __coord.split("#")[0], __coord.split("#")[1], currentArea=True)
