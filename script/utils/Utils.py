@@ -75,3 +75,19 @@ class Utils:
         data = {**kwargs}
         # 执行JavaScript代码，在window对象上触发指定事件
         return window.evaluate_js(f"window.$mitt.emit('{event}', {data})")
+
+    @staticmethod
+    def findWindowByTitleAndOwnerHwnd(title, ownerHwnd):
+        result = None
+
+        def callback(targetHwnd, _):
+            nonlocal result
+            if win32gui.GetWindow(targetHwnd, 4) == ownerHwnd and win32gui.GetWindowText(targetHwnd) == title:
+                result = targetHwnd
+            return True
+
+        win32gui.EnumWindows(callback, None)
+        return result
+
+
+

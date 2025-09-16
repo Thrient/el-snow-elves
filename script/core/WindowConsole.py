@@ -202,8 +202,9 @@ class WindowConsole:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
         # 确保窗口有效
         assert win32gui.IsWindow(self.hwnd), "无效窗口"
-        # 获取当前窗口样式
-        self.style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_STYLE)
+        if self.style is None:
+            # 获取当前窗口样式
+            self.style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_STYLE)
         # 移除窗口标题栏、边框和系统菜单样式
         style = self.style & ~(win32con.WS_CAPTION | win32con.WS_THICKFRAME | win32con.WS_SYSMENU)
         # 应用新的窗口样式

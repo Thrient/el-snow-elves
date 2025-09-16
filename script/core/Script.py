@@ -100,16 +100,18 @@ class Script(Thread):
         返回值:
             无
         """
-        # 如果停止标志位未被设置，则执行停止流程
-        if not self.__stop.is_set():
-            self.__stop.set()
-            self.__stopped.acquire()
-        # 去除窗口菜单
-        self.windowConsole.setWindowNoMenu()
-        # 取消窗口的点击穿透功能
-        self.windowConsole.setWinUnEnableClickThrough()
-        # 停止计时器
-        self.obj.timer.stop()
+        try:
+            # 如果停止标志位未被设置，则执行停止流程
+            if not self.__stop.is_set():
+                self.__stop.set()
+                self.__stopped.acquire()
+            # 恢复原本窗口
+            self.windowConsole.restStyle()
+            # 取消窗口的点击穿透功能
+            self.windowConsole.setWinUnEnableClickThrough()
+            self.obj.timer.stop()
+        except Exception as e:
+            print(e)
 
     def resume(self):
         """
@@ -124,16 +126,18 @@ class Script(Thread):
         返回值:
             无
         """
-        # 如果停止标志已设置，则清除停止标志并释放停止信号量
-        if self.__stop.is_set():
-            self.__stop.clear()
-            self.__stopped.release()
-        # 恢复原本窗口
-        self.windowConsole.restStyle()
-        # 设置窗口控制台为可点击穿透状态
-        self.windowConsole.setWinEnableClickThrough()
-        # 恢复计时器
-        self.obj.timer.resume()
+        try:
+            # 如果停止标志已设置，则清除停止标志并释放停止信号量
+            if self.__stop.is_set():
+                self.__stop.clear()
+                self.__stopped.release()
+            # 去除窗口菜单
+            self.windowConsole.setWindowNoMenu()
+            # 设置窗口控制台为可点击穿透状态
+            self.windowConsole.setWinEnableClickThrough()
+            self.obj.timer.resume()
+        except Exception as e:
+            print(e)
 
     def lock(self):
         """

@@ -134,7 +134,7 @@ class TaskConfig:
         Returns:
             list: 包含所有任务名的列表，任务名来源于JSON文件的文件名（去除.json后缀）
         """
-        taskList = ["默认配置"]
+        taskList = []
         Path(Config.USER_CONFIG_PATH).mkdir(parents=True, exist_ok=True)
         # 遍历用户配置路径下的所有文件，筛选出JSON文件
         for file in os.listdir(Config.USER_CONFIG_PATH):

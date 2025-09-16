@@ -1,6 +1,3 @@
-import time
-from threading import Thread
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
