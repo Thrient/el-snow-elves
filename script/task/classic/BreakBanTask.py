@@ -31,7 +31,9 @@ class BreakBanTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if not self.executionActivities("破阵设宴"):
+                    self.verifyTouch("按钮活动帮派")
+
+                    if self.touch("按钮活动破阵设宴", y=45) is None:
                         self.logs("破阵设宴已经完成")
                         self.setup = 0
                         continue

@@ -291,7 +291,9 @@ class DailyRedemptionTask(ClassicTask):
                     self.setup = 11
                 case 11:
                     if "摇钱树" in self.taskConfig.dailyExchangeList:
-                        self.executionActivities("摇钱树")
+                        self.verifyTouch("按钮活动帮派")
+
+                        self.touch("按钮活动摇钱树", y=45)
                         self.touch("按钮摇钱树前往")
                         self.arrive()
 

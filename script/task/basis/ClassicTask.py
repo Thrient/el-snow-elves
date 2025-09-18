@@ -24,6 +24,52 @@ class ClassicTask(BasisTask, ABC):
         self.WorldShoutsIndex = 0
         # self.thread = threading.Thread(target=self.autoFight, daemon=True)
 
+    def verifyTouch(self, *args, **kwargs):
+        """
+        验证并执行触摸操作的函数
+
+        该函数首先尝试执行触摸操作，如果触摸失败则根据配置执行相应的验证或动作操作，
+        然后递归调用自身继续验证触摸操作。
+
+        参数:
+            image: 图像标识符，用于在配置字典中查找相关参数
+            **kwargs: 可变关键字参数，传递给touch方法的额外参数
+
+        返回值:
+            无返回值
+        """
+        for image in args:
+            # 检查图像配置中的前缀是否存在，如果存在则验证其是否可用
+            b = False if Config.IMAGE_PARAMETER_DICT[image]["prefix"] is None else self.exits(
+                *Config.IMAGE_PARAMETER_DICT[image]["prefix"]) is not None
+
+            # 如果触摸操作成功或者前缀验证通过，则直接返回
+            if self.touch(image, **kwargs) is not None or b:
+                return
+
+            # 根据配置执行验证操作或动作操作
+            if Config.IMAGE_PARAMETER_DICT[image]["verify"] is not None:
+                self.verifyTouch(*Config.IMAGE_PARAMETER_DICT[image]["verify"])
+            elif Config.IMAGE_PARAMETER_DICT[image]["action"] is not None:
+                self.action(Config.IMAGE_PARAMETER_DICT[image]["action"])
+
+            # 递归调用自身继续验证触摸操作
+            self.verifyTouch(image, **kwargs)
+
+    def action(self, action):
+        """
+        执行指定的动作
+
+        参数:
+            action (str): 要执行的动作名称
+            
+        返回值:
+            无
+        """
+        # 检查是否为打开背包动作
+        if "打开背包" == action:
+            self.openBackpack()
+
     def followDetection(self):
         """
         跟随检测函数
@@ -47,35 +93,6 @@ class ClassicTask(BasisTask, ABC):
         self.closeTeam()
         # 延迟20秒等待操作完成
         self.defer(20)
-
-    def executionActivities(self, name):
-        """
-        执行活动相关的操作流程
-
-        :param name: 任务名称
-        :return: 如果成功执行返回True，否则返回False
-        """
-        taskParameter = Config.TASK_PARAMETER_DICT[name]
-        model = taskParameter["model"]
-        x = taskParameter["x"]
-        y = taskParameter["y"]
-        self.logs(f"查找活动{name}")
-        # 返回主界面并打开背包
-        self.backToMain()
-        self.openBackpack()
-
-        # 进入活动界面
-        self.logs("进入活动界面")
-        self.touch("按钮物品综合入口")
-        self.touch("按钮物品活动")
-        self.touch(f"按钮活动{model}")
-
-        # 尝试点击指定位置，如果成功则执行到达操作
-        if self.touch(*taskParameter["parameter"], x=x, y=y) is not None:
-            self.logs(f"活动{name}查找成功")
-            return True
-        self.logs(f"活动{name}查找失败")
-        return False
 
     def useBackpackArticles(self, articles, UsageTimes):
         """
@@ -154,7 +171,7 @@ class ClassicTask(BasisTask, ABC):
         # 点击设置界面中的确定按钮
         self.touch("按钮设置确定")
         # 延迟等待操作
-        self.defer(count=8)
+        self.defer(5)
         # 关闭设置界面
         self.closeSetting()
 

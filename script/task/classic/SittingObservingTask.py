@@ -34,10 +34,13 @@ class SittingObservingTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if not self.executionActivities("坐观万象"):
+                    self.verifyTouch("按钮活动游历")
+
+                    if self.touch("按钮活动坐观万象", y=45) is None:
                         self.logs("坐观万象已经完成")
                         self.setup = 0
                         continue
+
                     self.arrive()
                     self.setup = 4
                 case 4:

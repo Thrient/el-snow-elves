@@ -33,7 +33,8 @@ class HeroListTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.executionActivities("江湖英雄榜")
+                    self.verifyTouch("按钮活动纷争")
+                    self.touch("按钮活动江湖英雄榜", y=45)
                     self.setup = 4
                 case 4:
                     if self.exits("界面江湖英雄榜") is None:
@@ -51,7 +52,7 @@ class HeroListTask(ClassicTask):
                         self.setup = 0
                         continue
 
-                    self.touch("按钮江湖英雄榜匹配")
+                    self.touch("按钮江湖英雄榜匹配", "按钮江湖英雄榜晋级赛")
                 case 5:
 
                     if self.taskConfig.heroListInitiativeExit:

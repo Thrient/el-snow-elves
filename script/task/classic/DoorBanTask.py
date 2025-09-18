@@ -33,7 +33,9 @@ class DoorBanTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if not self.executionActivities("门客设宴"):
+                    self.verifyTouch("按钮活动帮派")
+
+                    if self.touch("按钮活动门客设宴", y=45) is None:
                         self.logs("门客设宴已经完成")
                         self.setup = 0
                         continue

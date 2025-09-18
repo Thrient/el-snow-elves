@@ -35,7 +35,10 @@ class SwordTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.executionActivities("单人论剑")
+                    self.verifyTouch("按钮活动纷争")
+
+                    self.touch("按钮活动华山论剑", "按钮活动萌芽论剑", x=-50, y=45)
+
                     self.setup = 4
                 case 4:
                     if self.taskConfig.swordFightCount < self.event[0]:
@@ -46,7 +49,7 @@ class SwordTask(ClassicTask):
                         if self.exits("标志单人论剑匹配成功") is not None:
                             self.logs(f"华山论剑第 {self.event[0]} 次")
                             self.event[0] += 1
-                            self.defer(3)
+                            self.defer(5)
                             self.waitMapLoading()
                             self.setup = 5
                             continue
@@ -62,7 +65,7 @@ class SwordTask(ClassicTask):
                 case 5:
                     # 检查是否处于论剑场景
                     if self.exits("标志单人论剑我方", "标志单人论剑敌方") is None:
-                        self.leavingSwordFight()
+                        self.leaveSwordFight()
                         self.setup = 4
                         continue
 
@@ -84,11 +87,11 @@ class SwordTask(ClassicTask):
                 case 6:
                     # 检查是否处于论剑场景
                     if self.exits("标志单人论剑我方", "标志单人论剑敌方") is None:
-                        self.leavingSwordFight()
+                        self.leaveSwordFight()
                         self.setup = 4
                         continue
 
-    def leavingSwordFight(self):
+    def leaveSwordFight(self):
         """
         离开华山论剑战斗场景
 

@@ -8,7 +8,7 @@ class DailyCopiesTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
-        self.event = [0, 1, 0, 0]
+        self.event = [0, 1, 0, 0.0]
 
     def instance(self):
         return self

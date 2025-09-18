@@ -34,10 +34,13 @@ class FactionTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if not self.executionActivities("帮派任务"):
+                    self.verifyTouch("按钮活动帮派")
+
+                    if self.touch("按钮活动帮派任务", y=45) is None:
                         self.logs("帮派任务已经完成")
                         self.setup = 0
                         continue
+
                     self.arrive()
                     self.touch("按钮帮派任务")
                     self.touch("按钮帮派任务确定")
