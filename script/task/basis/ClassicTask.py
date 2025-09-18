@@ -160,18 +160,16 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         self.logs("脱离卡死")
-        # 返回主界面操作
-        self.backToMain()
         # 模拟空格键点击
         self.keyClick("SPACE")
+        # 返回主界面操作
+        self.backToMain()
         # 打开设置界面
         self.openSetting()
         # 点击设置界面中的脱离卡死按钮
         self.touch("按钮设置脱离卡死")
         # 点击设置界面中的确定按钮
         self.touch("按钮设置确定")
-        # 延迟等待操作
-        self.defer(5)
         # 关闭设置界面
         self.closeSetting()
 
@@ -344,7 +342,7 @@ class ClassicTask(BasisTask, ABC):
         self.openMap()
 
         # 检查是否已经处于目标区域
-        if exits and self.exits(f"标志地图{area}坐标") is not None:
+        if exits and self.exits(f"标志地图{area}坐标", box=(125, 660, 300, 750)) is not None:
             self.logs(f"当前已处于{area}区域")
             self.closeMap()
             return
@@ -407,11 +405,9 @@ class ClassicTask(BasisTask, ABC):
         self.backToMain()
         if model == "日常":
             self.logs("刷新当天日常")
-            self.openBackpack()
-            self.touch("按钮物品综合入口")
-            self.touch("按钮物品活动")
-            self.touch("按钮活动江湖")
+            self.verifyTouch("按钮活动江湖")
             self.touch("按钮活动江湖纪事", y=45)
+            self.backToMain()
             self.openTeam()
             self.touch("按钮队伍创建")
             self.touch("按钮队伍下拉")

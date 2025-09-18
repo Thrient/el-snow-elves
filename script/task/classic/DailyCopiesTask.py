@@ -17,13 +17,13 @@ class DailyCopiesTask(ClassicTask):
         while not self.finished.is_set():
 
             if self.timer.getElapsedTime() > 1800:
-                self.logs("帮派任务超时")
+                self.logs("日常副本超时")
                 return 0
 
             match self.setup:
                 # 任务结束
                 case 0:
-                    self.logs("帮派任务完成")
+                    self.logs("日常副本完成")
                     return 0
                 # 位置检测
                 case 1:

@@ -258,6 +258,8 @@ class DailyRedemptionTask(ClassicTask):
                     cls(hwnd=self.hwnd, stopped=self.stopped, finished=self.finished, window=self.window,
                         taskConfig=self.taskConfig, windowConsole=self.windowConsole).instance().execute()
 
+                    self.setup = 10
+
                 case 10:
                     if "商票上缴" in self.taskConfig.dailyExchangeList:
                         self.openFaction()

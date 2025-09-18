@@ -37,7 +37,7 @@ class TeaStoryTask(ClassicTask):
                 case 3:
                     self.verifyTouch("按钮活动江湖")
 
-                    if self.touch("按钮活动摇钱树", y=45) is None:
+                    if self.touch("按钮活动茶馆说书", y=45) is None:
                         self.logs("茶馆说书已经完成")
                         self.setup = 0
                         continue
