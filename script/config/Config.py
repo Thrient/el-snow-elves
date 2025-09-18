@@ -137,4 +137,7 @@ class Config:
         "按钮活动游历": {"prefix": ["界面活动"], "verify": ["按钮物品活动"], "action": None},
         "按钮活动帮派": {"prefix": ["界面活动"], "verify": ["按钮物品活动"], "action": None},
         "按钮活动纷争": {"prefix": ["界面活动"], "verify": ["按钮物品活动"], "action": None},
+        "按钮活动悬赏": {"prefix": ["界面活动"], "verify": ["按钮物品活动"], "action": None},
+        "按钮悬赏发布": {"prefix": None, "verify": ["按钮活动悬赏"], "action": None},
+        "按钮发布悬赏下拉": {"prefix": None, "verify": ["按钮悬赏发布"], "action": None},
     }

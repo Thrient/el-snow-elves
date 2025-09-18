@@ -1,5 +1,3 @@
-import time
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -250,29 +248,15 @@ class DailyRedemptionTask(ClassicTask):
 
                     self.setup = 9
                 case 9:
-                    if "发布悬赏" in self.taskConfig.dailyExchangeList:
-                        self.openBackpack()
-                        self.touch("按钮物品综合入口")
-                        self.touch("按钮物品活动")
-                        self.touch("按钮活动悬赏")
+                    if "发布悬赏" not in self.taskConfig.dailyExchangeList:
+                        self.setup = 10
+                        continue
 
-                        self.touch("按钮悬赏发布")
-                        self.touch("按钮发布悬赏下拉")
-                        self.touch("按钮发布悬赏江湖行商")
-                        self.touch("按钮悬赏发布悬赏")
-                        self.touch("按钮确定")
-                        self.closeCurrentUi()
+                    from script.core.TaskFactory import TaskFactory
+                    cls = TaskFactory.instance().create(self.taskConfig.model, "发布悬赏")
 
-                        self.touch("按钮悬赏发布")
-                        self.touch("按钮发布悬赏下拉")
-                        self.touch("按钮发布悬赏聚义平冤")
-                        self.touch("按钮悬赏发布悬赏")
-                        self.touch("按钮确定")
-                        self.closeCurrentUi()
-
-                        self.backToMain()
-
-                    self.setup = 10
+                    cls(hwnd=self.hwnd, stopped=self.stopped, finished=self.finished, window=self.window,
+                        taskConfig=self.taskConfig, windowConsole=self.windowConsole).instance().execute()
 
                 case 10:
                     if "商票上缴" in self.taskConfig.dailyExchangeList:
