@@ -236,7 +236,7 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        if self.exits("按钮世界挂机") is None:
+        if self.wait("按钮世界挂机", overTime=30) is None:
             return None
         if model == "江湖":
             self.logs("激活江湖栏")

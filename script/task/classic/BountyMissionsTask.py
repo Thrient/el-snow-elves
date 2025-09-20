@@ -7,21 +7,44 @@ class BountyMissionsTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
+        self.cache = None
         # 事件类型定义
         # 0: 副本喊话时间计数器
-        # 1: 副本进入计时器
-        # 2: 副本激活失败计时器
-        # 3: 副本退出计数器
-        self.event = [time.time() - 300, time.time(), 0, 0]
+        # 1: 副本激活计时器
+        # 2: 副本任务激活计数器
+        # 3: 副本卡死计数器
+        # 4: 副本退出判断计数器
+        self.event = [0.0, 0.0, 0, 0, 0]
 
     def instance(self):
         return self
 
+    def resetEvent(self):
+
+        if self.cache == self.setup:
+            return
+        self.cache = self.setup
+        match self.cache:
+            case 5:
+                # 重置副本喊话时间计数器
+                self.event[0] = 0.0
+            case 7:
+                # 重置副本激活计时器
+                self.event[1] = 0.0
+                # 重置副本任务激活计数器
+                self.event[2] = 0
+                # 重置副本卡死计数器
+                self.event[3] = 0
+                # 重置副本退出判断计数器
+                self.event[4] = 0
+
     def execute(self):
         while not self.finished.is_set():
 
-            if self.timer.getElapsedTime() > 1800:
-                self.logs("课业任务超时")
+            self.resetEvent()
+
+            if self.timer.getElapsedTime() > 1800 * 2 * 6:
+                self.logs("悬赏任务超时")
                 return 0
 
             match self.setup:
@@ -74,29 +97,35 @@ class BountyMissionsTask(ClassicTask):
                     self.touch("按钮确认")
 
                     self.waitMapLoading()
+
                     self.setup = 7
                 case 7:
-                    if 3 < self.event[2]:
+                    if 3 < self.event[3]:
                         self.teamDetection()
                         self.setup = 2
                         continue
 
-                    if time.time() - self.event[1] > 360:
-                        self.event[1] = time.time()
+                    if 3 < self.event[2]:
+                        self.event[2] = 0
+                        self.event[3] += 1
                         self.unstuck()
-                        if self.activatedTask("按钮任务副本", model="任务") is None:
-                            self.event[2] += 1
+                        continue
+
+                    if 180 < time.time() - self.event[1]:
+                        self.event[1] = time.time()
+                        self.event[2] += 1
+                        self.activatedTask("按钮任务副本", model="任务")
                         continue
 
                     if self.exits("按钮副本跳过剧情") is not None:
                         self.touch("按钮副本跳过剧情")
 
                     if self.exits("标志副本完成") is not None:
-                        if 4 < self.event[3]:
-                            self.event[3] = 0
-                            self.touch("按钮副本退出")
-                            self.touch("按钮副本离开")
-                            self.waitMapLoading()
-                            self.setup = 3
+                        if 4 < self.event[4]:
+                            self.event[4] += 1
                             continue
-                        self.event[3] += 1
+                        self.touch("按钮副本退出")
+                        self.touch("按钮副本离开")
+                        self.waitMapLoading()
+                        self.setup = 3
+                        continue
