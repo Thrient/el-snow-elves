@@ -43,14 +43,15 @@ class BountyMissionsTask(ClassicTask):
 
             self.resetEvent()
 
-            if self.timer.getElapsedTime() > 1800 * 2 * 6:
+            if 1800 * 2 * 6 < self.timer.getElapsedTime():
                 self.logs("悬赏任务超时")
                 return 0
 
             match self.setup:
                 # 任务结束
                 case 0:
-                    self.logs("课业任务完成")
+                    self.backToMain()
+                    self.logs("悬赏任务完成")
                     return 0
                 # 位置检测
                 case 1:
@@ -59,7 +60,7 @@ class BountyMissionsTask(ClassicTask):
                 # 队伍检测
                 case 2:
                     self.teamCreate(model="日常")
-                    self.setup = 3
+                    self.setup = 5
                 case 3:
                     if self.exits("界面悬赏") is None:
                         self.verifyTouch("按钮活动悬赏")
@@ -121,7 +122,7 @@ class BountyMissionsTask(ClassicTask):
                         self.touch("按钮副本跳过剧情")
 
                     if self.exits("标志副本完成") is not None:
-                        if 4 < self.event[4]:
+                        if 4 > self.event[4]:
                             self.event[4] += 1
                             continue
                         self.touch("按钮副本退出")

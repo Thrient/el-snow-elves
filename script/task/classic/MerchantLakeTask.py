@@ -8,16 +8,30 @@ class MerchantLakeTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
-        # 4:江湖行商次数计数器
-        self.event = [0, False, (0, 0, 0, 0), time.time(), 1]
+        self.cache = None
+        # 事件类型定义
+        # 0: 江湖行商次数计数器
+        # 1: 江湖行商喊话间隔计时器
+        # 2: 江湖行商购买状态
+        self.event = [1, 0.0, True]
 
     def instance(self):
         return self
 
+    def resetEvent(self):
+
+        if self.cache == self.setup:
+            return
+        self.cache = self.setup
+        match self.cache:
+            case 4:
+                # 重置江湖行商喊话间隔计时器
+                self.event[1] = 0.0
+
     def execute(self):
         while not self.finished.is_set():
 
-            if self.timer.getElapsedTime() > 1800 * 2 * 3:
+            if 1800 * 2 * 3 < self.timer.getElapsedTime():
                 self.logs("江湖行商超时")
                 return 0
 
@@ -35,7 +49,8 @@ class MerchantLakeTask(ClassicTask):
                     self.teamCreate(model="江湖行商")
                     self.setup = 3
                 case 3:
-                    if self.event[4] > self.taskConfig.merchantLakeCount:
+                    # 江湖行商剩余次数检测
+                    if self.event[0] > self.taskConfig.merchantLakeCount:
                         self.setup = 0
                         continue
 
@@ -44,22 +59,26 @@ class MerchantLakeTask(ClassicTask):
                 case 4:
                     self.openTeam()
 
+                    # 检查队伍人数
                     if len(self.exitsAll("标志队伍空位")) <= 10 - 3:
-                        # 一键召唤
+                        # 一键召回
                         self.followDetection()
                         self.setup = 5
                         continue
                     self.touch("按钮队伍自动匹配_V1", match=1)
 
-                    if 32 < time.time() - self.event[3]:
-                        self.event[3] = time.time()
+                    # 世界喊话
+                    if 32 < time.time() - self.event[1]:
+                        self.event[1] = time.time()
                         self.worldShouts(self.taskConfig.merchantLakeWordShout, ordinary=True, connected=True)
                 case 5:
+                    # 对话行商NPC
                     self.touch("按钮大世界对话")
                     if self.touch("按钮江湖行商参与") is None:
                         self.setup = 3
                         continue
 
+                    # 检测行商参与条件
                     if 3 != len(self.exitsAll("标志江湖行商参与条件")):
                         self.backToMain()
                         self.setup = 4
@@ -68,75 +87,99 @@ class MerchantLakeTask(ClassicTask):
                     self.touch("按钮江湖行商确认发起")
                     self.touch("按钮江湖行商货单购买")
 
-                    if self.wait("标志江湖行商放弃", overTime=10) is None:
-                        self.backToMain()
-                        continue
+                    # 等待全部队员准备
+                    self.defer(10)
                     self.setup = 6
                 case 6:
-                    if 3 <= self.event[0]:
-                        self.teamDetection()
-                        self.setup = 2
-                        continue
 
-                    if self.wait("按钮江湖行商一键上缴", "按钮地图江南区域", "按钮江湖行商威逼行商交易",
-                                 overTime=360) is None:
-                        self.activatedTask("按钮任务行商", model="江湖")
-                        self.event[0] += 1
-                        continue
+                    self.touch("按钮江湖行商威逼行商交易", y=85)
 
-                    self.setup = 7
+                    self.touch("按钮地图江南区域")
 
-                case 7:
+                    if self.exits("界面行商") is not None:
+                        # 行商购买
+                        if self.event[1]:
+                            for pos in [(524, 258), (285, 258), (524, 178), (285, 178)]:
+                                self.mouseClick(pos)
+                                self.mouseClick((1037, 489), delay=3)
+                                self.touch("按钮江湖行商购买")
+                        # 行商出售
+                        else:
+                            self.touch("按钮江湖行商出售", count=5)
 
-                    if self.exits("按钮江湖行商一键上缴") is not None:
-                        self.touch("按钮江湖行商一键上缴")
-                        self.closeRewardUi(count=5)
-                        self.logs(f"江湖行商完成{self.event[4]}次")
-                        self.event[4] += 1
-                        self.setup = 3
-                        continue
-
-                    if self.exits("按钮地图江南区域") is not None:
-                        self.touch("按钮地图江南区域")
-                        self.defer(3)
-
-                        if self.exits("标志本体位置") is not None:
-                            if self.event[1]:
-                                self.event[2] = (1020, 150, 1125, 255)
-                            else:
-                                self.event[2] = (580, 355, 725, 480)
-
-                        elif self.exits("标志本体位置_V1") is not None:
-                            if self.event[1]:
-                                self.event[2] = (960, 25, 1020, 110)
-                            else:
-                                self.event[2] = (1020, 150, 1125, 255)
-                        elif self.exits("标志本体位置_V2") is not None:
-                            if self.event[1]:
-                                self.event[2] = (1020, 150, 1125, 255)
-                            else:
-                                self.event[2] = (960, 25, 1020, 110)
-
-                        self.touch("标志本体位置", "标志本体位置_V1", "标志本体位置_V2", "标志江湖行商商人",
-                                   box=self.event[2])
-                        self.touch("按钮确定")
-
-                    if self.exits("按钮江湖行商威逼行商交易") is not None and not self.event[1]:
-                        self.touch("按钮江湖行商威逼行商交易", y=85)
-                        for pos in [(524, 258), (285, 258), (524, 178), (285, 178)]:
-                            self.mouseClick(pos)
-                            self.mouseClick((1037, 489), delay=3)
-                            self.touch("按钮江湖行商购买")
-
-                        self.event[1] = True
+                        self.event[1] = not self.event[1]
                         self.defer(count=5)
                         self.closeCurrentUi()
 
-                    if self.exits("按钮江湖行商威逼行商交易") is not None and self.event[1]:
-                        self.touch("按钮江湖行商威逼行商交易", y=85)
-                        self.touch("按钮江湖行商出售", count=5)
-                        self.event[1] = False
-                        self.defer(count=5)
-                        self.closeCurrentUi()
 
-                    self.setup = 6
+
+
+
+                # case 6:
+                #     if 3 <= self.event[0]:
+                #         self.teamDetection()
+                #         self.setup = 2
+                #         continue
+                #
+                #     if self.wait("按钮江湖行商一键上缴", "按钮地图江南区域", "按钮江湖行商威逼行商交易",
+                #                  overTime=360) is None:
+                #         self.activatedTask("按钮任务行商", model="江湖")
+                #         self.event[0] += 1
+                #         continue
+                #
+                #     self.setup = 7
+                #
+                # case 7:
+                #
+                #     if self.exits("按钮江湖行商一键上缴") is not None:
+                #         self.touch("按钮江湖行商一键上缴")
+                #         self.closeRewardUi(count=5)
+                #         self.logs(f"江湖行商完成{self.event[4]}次")
+                #         self.event[4] += 1
+                #         self.setup = 3
+                #         continue
+                #
+                #     if self.exits("按钮地图江南区域") is not None:
+                #         self.touch("按钮地图江南区域")
+                #         self.defer(3)
+                #
+                #         if self.exits("标志本体位置") is not None:
+                #             if self.event[1]:
+                #                 self.event[2] = (1020, 150, 1125, 255)
+                #             else:
+                #                 self.event[2] = (580, 355, 725, 480)
+                #
+                #         elif self.exits("标志本体位置_V1") is not None:
+                #             if self.event[1]:
+                #                 self.event[2] = (960, 25, 1020, 110)
+                #             else:
+                #                 self.event[2] = (1020, 150, 1125, 255)
+                #         elif self.exits("标志本体位置_V2") is not None:
+                #             if self.event[1]:
+                #                 self.event[2] = (1020, 150, 1125, 255)
+                #             else:
+                #                 self.event[2] = (960, 25, 1020, 110)
+                #
+                #         self.touch("标志本体位置", "标志本体位置_V1", "标志本体位置_V2", "标志江湖行商商人",
+                #                    box=self.event[2])
+                #         self.touch("按钮确定")
+                #
+                #     if self.exits("按钮江湖行商威逼行商交易") is not None and not self.event[1]:
+                #         self.touch("按钮江湖行商威逼行商交易", y=85)
+                #         for pos in [(524, 258), (285, 258), (524, 178), (285, 178)]:
+                #             self.mouseClick(pos)
+                #             self.mouseClick((1037, 489), delay=3)
+                #             self.touch("按钮江湖行商购买")
+                #
+                #         self.event[1] = True
+                #         self.defer(count=5)
+                #         self.closeCurrentUi()
+                #
+                #     if self.exits("按钮江湖行商威逼行商交易") is not None and self.event[1]:
+                #         self.touch("按钮江湖行商威逼行商交易", y=85)
+                #         self.touch("按钮江湖行商出售", count=5)
+                #         self.event[1] = False
+                #         self.defer(count=5)
+                #         self.closeCurrentUi()
+                #
+                #     self.setup = 6

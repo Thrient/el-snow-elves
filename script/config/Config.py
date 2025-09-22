@@ -7,7 +7,7 @@ class Config:
     USER_CONFIG_PATH = APP_DATA + r"\Config\User"
     SYS_CONFIG_PATH = APP_DATA + r"\Config\Sys"
     STORAGE_PATH = APP_DATA + r"\pywebview"
-    THRESHOLD = 0.82
+    THRESHOLD = 0.80
     BOX = (0, 0, 1335, 750)
     TIMEOUT = 1.8
     OVERTIME = 1.8
@@ -16,6 +16,7 @@ class Config:
         "按钮世界挂机": 0.75,
         "标志寻路中": 0.7,
         "标志地图加载": 0.7,
+        "标志副本完成": 0.9,
         "标志地图加载_1": 0.7,
         "标志大世界修炼中": 0.7,
         "按钮地图世界区域": 0.8,

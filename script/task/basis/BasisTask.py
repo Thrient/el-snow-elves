@@ -63,7 +63,7 @@ class BasisTask(ABC):
         """
         self.mouseClick((1350, 750), timeout=0, delay=0)
 
-    def defer(self, count):
+    def defer(self, count=1):
         """
         延迟执行指定的秒数
 
