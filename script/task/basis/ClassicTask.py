@@ -499,7 +499,7 @@ class ClassicTask(BasisTask, ABC):
         """
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, match=1) is not None:
+            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, overTime=0.1) is not None:
                 self.logs("关闭当前界面")
                 continue
             return
@@ -523,7 +523,9 @@ class ClassicTask(BasisTask, ABC):
             if self.exits("按钮世界挂机") is not None:
                 break
             # 关闭当前打开的界面
-            self.touch("按钮聊天退出", match=1)
+            if self.exits("界面物品") is not None:
+                self.mouseClick((0, 0))
+            self.touch("按钮聊天退出", overTime=0.1)
             self.closeCurrentUi()
 
     def closeBanStore(self):

@@ -96,6 +96,7 @@ class DailyCopiesTask(ClassicTask):
                     if self.exits("标志副本完成") is not None:
                         if 4 > self.event[4]:
                             self.event[4] += 1
+                            self.defer()
                             continue
                         self.touch("按钮副本退出")
                         self.touch("按钮副本离开")

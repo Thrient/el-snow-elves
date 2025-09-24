@@ -7,7 +7,7 @@ class Config:
     USER_CONFIG_PATH = APP_DATA + r"\Config\User"
     SYS_CONFIG_PATH = APP_DATA + r"\Config\Sys"
     STORAGE_PATH = APP_DATA + r"\pywebview"
-    THRESHOLD = 0.80
+    THRESHOLD = 0.85
     BOX = (0, 0, 1335, 750)
     TIMEOUT = 1.8
     OVERTIME = 1.8
