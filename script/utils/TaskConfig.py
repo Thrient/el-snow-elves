@@ -64,7 +64,9 @@ class TaskConfig:
         """
         taskConfigName = args[0]
         if taskConfigName == "":
-            return {}
+            return TaskConfig().__dict__
+        if taskConfigName is None:
+            return TaskConfig().__dict__
         if taskConfigName == "默认配置":
             return TaskConfig().__dict__
         # 从用户配置路径下读取指定的JSON配置文件

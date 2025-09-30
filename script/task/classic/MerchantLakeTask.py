@@ -37,7 +37,7 @@ class MerchantLakeTask(ClassicTask):
     def execute(self):
         while not self.finished.is_set():
 
-            if 1800 * 2 * 3 < self.timer.getElapsedTime():
+            if 1800 * 2 * 6 < self.timer.getElapsedTime():
                 self.logs("江湖行商超时")
                 return 0
 
@@ -56,7 +56,7 @@ class MerchantLakeTask(ClassicTask):
                     self.setup = 3
                 case 3:
                     # 江湖行商剩余次数检测
-                    if self.event[0] >= self.taskConfig.merchantLakeCount:
+                    if self.event[0] > self.taskConfig.merchantLakeCount:
                         self.setup = 0
                         continue
 

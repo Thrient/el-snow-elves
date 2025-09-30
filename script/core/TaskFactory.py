@@ -14,6 +14,7 @@ from script.task.classic.PostBountyTask import PostBountyTask
 from script.task.classic.SittingObservingTask import SittingObservingTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
 from script.task.classic.SwordTask import SwordTask
+from script.task.classic.SwordThreeTask import SwordThreeTask
 from script.task.classic.TeaStoryTask import TeaStoryTask
 from script.task.classic.UrgentDeliveryTask import UrgentDeliveryTask
 from script.task.classic.WorldShoutsTask import WorldShoutsTask
@@ -67,6 +68,7 @@ class TaskFactory:
         self.register("classic", "坐观万象", SittingObservingTask)
         self.register("classic", "发布悬赏", PostBountyTask)
         self.register("classic", "悬赏任务", BountyMissionsTask)
+        self.register("classic", "多人论剑", SwordThreeTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

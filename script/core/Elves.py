@@ -1,4 +1,6 @@
 import argparse
+import os
+import subprocess
 import time
 
 import webview
@@ -29,6 +31,8 @@ class Elves:
         返回值:
             无
         """
+        # 注册脚本更新事件监听器
+        api.on("API:SCRIPT:UPDATE", self.update)
         # 注册脚本启动事件监听器
         api.on("API:SCRIPT:START", self.start)
         # 注册脚本解绑事件监听器
@@ -72,6 +76,17 @@ class Elves:
         # 遍历所有脚本对象并执行解绑操作
         for script in self.winList.values():
             script.unbind()
+
+    #
+    def update(self):
+        self.window.destroy()
+
+        current_dir = os.getcwd()
+
+        # 拼接bat脚本的完整路径（替换为你的bat文件名）
+        path = os.path.join(current_dir, "update.bat")
+
+        os.system(path)
 
     def unbind(self, hwnd):
         """

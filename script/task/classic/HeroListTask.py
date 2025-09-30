@@ -53,6 +53,7 @@ class HeroListTask(ClassicTask):
                         continue
 
                     self.touch("按钮江湖英雄榜匹配", "按钮江湖英雄榜晋级赛")
+                    self.touch("按钮江湖英雄榜确定")
                 case 5:
 
                     if self.taskConfig.heroListInitiativeExit:

@@ -1,15 +1,15 @@
 from script.task.basis.ClassicTask import ClassicTask
 
 
-class SwordTask(ClassicTask):
+class SwordThreeTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
         self.cache = None
         # 事件类型定义
-        # 0: 单人论剑次数计数器
-        # 1: 单人论剑战斗状态标志
+        # 0: 多人论剑次数计数器
+        # 1: 多人论剑战斗状态标志
         self.event = [1, False]
 
     def instance(self):
@@ -31,14 +31,14 @@ class SwordTask(ClassicTask):
             self.resetEvent()
 
             if self.timer.getElapsedTime() > 1800 * 2 * 3:
-                self.logs("单人论剑超时")
+                self.logs("多人论剑超时")
                 return 0
 
             match self.setup:
                 # 任务结束
                 case 0:
                     self.backToMain()
-                    self.logs("单人论剑完成")
+                    self.logs("多人论剑完成")
                     return 0
                 # 位置检测
                 case 1:
@@ -51,10 +51,11 @@ class SwordTask(ClassicTask):
                 case 3:
                     self.verifyTouch("按钮活动纷争")
 
-                    self.touch("按钮活动华山论剑", "按钮活动萌芽论剑", x=-50, y=45)
+                    self.touch("按钮活动华山论剑", "按钮活动萌芽论剑", x=50, y=45)
 
                     self.setup = 4
                 case 4:
+                    # 检测多人论剑次数
                     if self.taskConfig.swordFightCount < self.event[0]:
                         self.setup = 0
                         continue
@@ -62,13 +63,12 @@ class SwordTask(ClassicTask):
                     if self.exits("按钮单人论剑取消匹配") is None:
                         self.touch("按钮单人论剑匹配")
 
-                    if self.exits("按钮确认") is not None:
-                        self.touch("按钮确认")
-
-                    if self.exits("界面单人论剑") is not None:
+                    # 界面检测
+                    if self.exits("界面多人论剑") is not None:
                         continue
 
-                    if self.exits("标志单人论剑匹配成功") is None:
+                    # 匹配成功标志检测
+                    if self.exits("标志多人论剑匹配成功") is None:
                         self.setup = 3
                         continue
 
@@ -79,38 +79,45 @@ class SwordTask(ClassicTask):
                     self.setup = 5
 
                 case 5:
-                    # 检查是否处于论剑场景
-                    if self.exits("标志单人论剑我方", "标志单人论剑敌方") is None:
+
+                    if self.exits("标志多人论剑我方", "标志多人论剑敌方") is None:
                         self.setup = 6
                         continue
 
-                    # 判断是否主动退出
-                    if self.taskConfig.swordFightInitiativeExit:
-                        self.touch("按钮副本退出")
-                        self.touch("按钮确定")
-                        self.waitMapLoading()
-                        self.setup = 4
-                        continue
-
-                    if self.exits("标志单人论剑准备剩余时间") is not None:
+                    if self.exits("标志多人论剑准备剩余时间") is not None:
                         self.touch("按钮华山论剑准备", overTime=0.1)
                         continue
 
-                    if self.exits("标志单人论剑战斗剩余时间") is None:
+                    if self.exits("标志多人论剑战斗剩余时间") is None:
                         continue
 
                     if self.event[1]:
                         continue
                     self.event[1] = True
+
                     self.keyClick("W", delay=3)
                     self.autoFightStart()
 
                 case 6:
-                    # 点击华山论剑离开按钮
                     self.touch("按钮华山论剑离开")
                     # 停止自动战斗模式
                     self.autoFightStop()
                     # 等待地图加载完成
                     self.waitMapLoading()
                     self.setup = 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

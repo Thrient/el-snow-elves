@@ -38,6 +38,8 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
+        if self.finished.is_set():
+            return
         for image in args:
             # 检查图像配置中的前缀是否存在，如果存在则验证其是否可用
             b = False if Config.IMAGE_PARAMETER_DICT[image]["prefix"] is None else self.exits(
