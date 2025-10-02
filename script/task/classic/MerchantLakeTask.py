@@ -56,7 +56,7 @@ class MerchantLakeTask(ClassicTask):
                     self.setup = 3
                 case 3:
                     # 江湖行商剩余次数检测
-                    if self.event[0] > self.taskConfig.merchantLakeCount:
+                    if self.event[0] >= self.taskConfig.merchantLakeCount:
                         self.setup = 0
                         continue
 
@@ -151,4 +151,3 @@ class MerchantLakeTask(ClassicTask):
                             else:
                                 self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
                             continue
-

@@ -121,13 +121,17 @@ class BountyMissionsTask(ClassicTask):
                     if self.exits("按钮副本跳过剧情") is not None:
                         self.touch("按钮副本跳过剧情")
 
-                    if self.exits("标志副本完成") is not None:
-                        if 4 > self.event[4]:
-                            self.event[4] += 1
-                            self.defer()
-                            continue
-                        self.touch("按钮副本退出")
-                        self.touch("按钮副本离开")
-                        self.waitMapLoading()
-                        self.setup = 3
-                        continue
+                    self.checkExit()
+
+    def checkExit(self):
+        if self.exits("标志副本完成") is None:
+            self.event[4] = 0
+            return
+        if 5 > self.event[4]:
+            self.event[4] += 1
+            self.defer()
+            return
+        self.touch("按钮副本退出")
+        self.touch("按钮副本离开")
+        self.waitMapLoading()
+        self.setup = 3
