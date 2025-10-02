@@ -1,1 +1,0 @@
-import{_ as o,c as n,w as s,a as _,E as a,o as c}from"./index-BThFWz2V.js";const r={};function l(f,t){const e=a;return c(),n(e,null,{default:s(()=>t[0]||(t[0]=[_("你好")])),_:1,__:[0]})}const u=o(r,[["render",l]]);export{u as default};
