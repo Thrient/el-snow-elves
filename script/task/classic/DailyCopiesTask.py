@@ -9,7 +9,7 @@ class DailyCopiesTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._setup = 1
-        # 事件变量字典（可读性更强）
+        # 事件变量字典
         self.event = {
             "shout_timer": 0.0,  # 副本喊话时间计数器
             "activate_timer": 0.0,  # 副本激活计时器
@@ -56,7 +56,7 @@ class DailyCopiesTask(ClassicTask):
     def execute(self):
         while not self.finished.is_set():
 
-            if 1800 * 2 * 6 < self.timer.getElapsedTime():
+            if 1800 * 2 < self.timer.getElapsedTime():
                 self.logs("日常副本超时")
                 return 0
 
@@ -139,7 +139,7 @@ class DailyCopiesTask(ClassicTask):
                         self.touch("按钮副本跳过剧情")
 
                     self.checkExit()
-        return 0
+        return None
 
     def checkExit(self):
         if self.exits("标志副本完成") is None:
