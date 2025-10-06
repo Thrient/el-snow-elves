@@ -1,22 +1,62 @@
 import time
 
 from script.task.basis.ClassicTask import ClassicTask
+from script.utils.Thread import thread
 
 
 class DailyCopiesTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [0, 1, 0, 0.0]
+        self._setup = 1
+        # 事件变量字典（可读性更强）
+        self.event = {
+            "shout_timer": 0.0,  # 副本喊话时间计数器
+            "activate_timer": 0.0,  # 副本激活计时器
+            "task_activate_counter": 0,  # 副本任务激活计数器
+            "stuck_counter": 0,  # 副本卡死计数器
+            "exit_check_counter": 0  # 副本退出判断计数器
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
+            5: {"shout_timer": 0.0},
+            7: {
+                "activate_timer": 0.0,
+                "task_activate_counter": 0,
+                "stuck_counter": 0,
+                "exit_check_counter": 0
+            }
+        }
+        self.popCheck()
 
-    def instance(self):
-        return self
+    @thread(daemon=True)
+    def popCheck(self):
+        while not self.finished.is_set():
+            if self.exits("标志梦崽"):
+                self.closeCurrentUi()
+
+    @property
+    def setup(self):
+        return self._setup
+
+    @setup.setter
+    def setup(self, state):
+        # 只有状态发生变化时才执行重置
+        if state == self._setup:
+            return
+        self._reset_state_variables(state)
+        self._setup = state  # 更新为新状态
+
+    def _reset_state_variables(self, new_state):
+        reset_config = self.state_reset_config.get(new_state, {})
+        for var_name, value in reset_config.items():
+            if var_name in self.event:
+                self.event[var_name] = value
 
     def execute(self):
         while not self.finished.is_set():
 
-            if self.timer.getElapsedTime() > 1800:
+            if 1800 * 2 * 6 < self.timer.getElapsedTime():
                 self.logs("日常副本超时")
                 return 0
 
@@ -35,7 +75,12 @@ class DailyCopiesTask(ClassicTask):
                     self.setup = 5
                 case 3:
                     if self.exits("界面悬赏") is None:
-                        self.verifyTouch("按钮活动悬赏")
+                        self.openBackpack()
+                        self.touch("按钮物品综合入口")
+                        self.touch("按钮物品活动")
+                        if self.exits("界面活动") is None:
+                            continue
+                        self.touch("按钮活动悬赏")
                         self.touch("按钮悬赏下页", x=50)
                         continue
 
@@ -61,8 +106,8 @@ class DailyCopiesTask(ClassicTask):
                         continue
                     self.touch("按钮队伍自动匹配_V1")
 
-                    if time.time() - self.event[0] > 32:
-                        self.event[0] = time.time()
+                    if time.time() - self.event["shout_timer"] > 32:
+                        self.event["shout_timer"] = time.time()
                         self.worldShouts("悬赏十连来人!!!")
                 case 6:
                     self.openTeam()
@@ -73,20 +118,20 @@ class DailyCopiesTask(ClassicTask):
 
                     self.setup = 7
                 case 7:
-                    if 3 < self.event[3]:
+                    if 3 < self.event["stuck_counter"]:
                         self.teamDetection()
                         self.setup = 2
                         continue
 
-                    if 3 < self.event[2]:
-                        self.event[2] = 0
-                        self.event[3] += 1
+                    if 3 < self.event["task_activate_counter"]:
+                        self.event["task_activate_counter"] = 0
+                        self.event["stuck_counter"] += 1
                         self.unstuck()
                         continue
 
-                    if 180 < time.time() - self.event[1]:
-                        self.event[1] = time.time()
-                        self.event[2] += 1
+                    if 180 < time.time() - self.event["activate_timer"]:
+                        self.event["activate_timer"] = time.time()
+                        self.event["task_activate_counter"] += 1
                         self.activatedTask("按钮任务副本", model="任务")
                         continue
 
@@ -94,16 +139,20 @@ class DailyCopiesTask(ClassicTask):
                         self.touch("按钮副本跳过剧情")
 
                     self.checkExit()
+        return 0
 
     def checkExit(self):
         if self.exits("标志副本完成") is None:
-            self.event[4] = 0
+            self.event["exit_check_counter"] = 0
             return
-        if 5 > self.event[4]:
-            self.event[4] += 1
+        if 5 > self.event["exit_check_counter"]:
+            self.event["exit_check_counter"] += 1
             self.defer()
             return
+
         self.touch("按钮副本退出")
-        self.touch("按钮副本离开")
+
+        if self.touch("按钮副本离开") is None:
+            return
         self.waitMapLoading()
         self.setup = 0

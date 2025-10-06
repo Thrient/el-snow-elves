@@ -17,6 +17,6 @@ Remove-Item script.pyd -Force
 Remove-Item script.pyi -Force
 robocopy "resources" "dist\Elves\resources" /E
 robocopy "..\el-snow-elves-vue\dist" "dist\Elves\_internal\dist" /E
-copy "bat\update.bat" "dist\Elves\update.bat"
+copy "E:\Code\snow-elves\Tools\dist\Update.exe" "dist\Elves\Update.exe"
 Remove-Item 'dist\Elves.zip'  -Force
 ```

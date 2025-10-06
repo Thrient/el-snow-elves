@@ -21,19 +21,17 @@ class ClassicTask(BasisTask, ABC):
         # 世界喊话设置
         self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
-        self.thread = threading.Thread(target=self.checkRun, daemon=True)
 
-
-    def checkRun(self):
+    def instance(self):
         """
-        检查是否需要关闭“梦崽”相关界面
+        返回当前实例对象。
 
-        如果检测到“标志梦崽”界面存在，则调用 closeCurrentUi 关闭当前界面。
+        该方法通常用于获取当前类的实例本身，便于链式调用或接口兼容。
+
+        Returns:
+            self: 当前实例对象
         """
-        while not self.finished.is_set():
-            if self.exits("标志梦崽"):
-                self.closeCurrentUi()
-
+        return self
 
     def verifyTouch(self, *args, **kwargs):
         """
@@ -151,7 +149,6 @@ class ClassicTask(BasisTask, ABC):
             None
         """
         self.logs(f"切换分线{index}")
-        self.keyClick("SPACE")
         self.mouseClick((1230, 25))
         # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
         for _ in range(index // 7 + 1):
@@ -334,13 +331,13 @@ class ClassicTask(BasisTask, ABC):
         self.areaGo("金陵", exits=True, unstuck=True)
 
 
-    def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, currentArea=False):
+    def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, area_switch=False):
         """
         前往指定区域
 
         :param exits: 是否检测当前区域
         :param unstuck: 执行前是否脱离卡死
-        :param currentArea: 当前区域前往
+        :param area_switch: 当前区域前往
         :param area: 目标区域名称
         :param x: 目标区域的x坐标，如果为None则使用默认坐标
         :param y: 目标区域的y坐标，如果为None则使用默认坐标
@@ -374,7 +371,7 @@ class ClassicTask(BasisTask, ABC):
             return
 
         # 执行前往区域的操作流程
-        if not currentArea:
+        if not area_switch:
             self.touch("按钮地图世界区域")
             self.touch(f"按钮地图{area}区域")
         self.coordinateInput(x, y)
@@ -469,15 +466,12 @@ class ClassicTask(BasisTask, ABC):
         :return: 无返回值
         """
         if model == "摆摊购买":
-            __event = True
 
             # 检查交易界面是否存在
             if self.exits("界面交易") is None:
                 return False
-            # 记录交易购买日志
-            if __event is True:
-                __event = False
-                self.logs("摆摊购买")
+
+            self.logs("摆摊购买")
 
             # 点击交易需求按钮并执行购买流程
             self.touch("按钮交易需求", x=130, y=35)
@@ -531,7 +525,7 @@ class ClassicTask(BasisTask, ABC):
         """
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, overTime=0.1) is not None:
+            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, overTime=0.1, timeout=0) is not None:
                 self.logs("关闭当前界面")
                 continue
             return

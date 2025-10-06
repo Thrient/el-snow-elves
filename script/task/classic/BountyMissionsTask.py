@@ -60,7 +60,7 @@ class BountyMissionsTask(ClassicTask):
                 # 队伍检测
                 case 2:
                     self.teamCreate(model="日常")
-                    self.setup = 5
+                    self.setup = 3
                 case 3:
                     if self.exits("界面悬赏") is None:
                         self.verifyTouch("按钮活动悬赏")
