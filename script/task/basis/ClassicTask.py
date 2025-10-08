@@ -4,12 +4,14 @@ import time
 from abc import ABC
 from collections import deque
 from threading import Event
+from typing import Any
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
 
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
+from script.utils.Thread import thread
 from script.utils.Utils import Utils
 
 
@@ -18,9 +20,27 @@ class ClassicTask(BasisTask, ABC):
         super().__init__(**kwargs)
         # 自动战斗
         self.autoFightEvent = Event()
+        self.popCheckEvent = Event()
         # 世界喊话设置
         self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
+
+    def __enter__(self) -> 'ClassicTask':
+        """进入上下文时启动线程"""
+        self.popCheck()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """离开上下文时终止线程"""
+        self.popCheckEvent.set()
+
+    @thread(daemon=True)
+    def popCheck(self):
+        while not self.finished.is_set() and not self.popCheckEvent.is_set():
+            self.closeDreamCub()
+            print(self.__class__.__name__)
+
+            time.sleep(1)
 
     def instance(self):
         """
@@ -67,7 +87,6 @@ class ClassicTask(BasisTask, ABC):
             # 递归调用自身继续验证触摸操作
             self.verifyTouch(image, **kwargs)
 
-
     def action(self, action):
         """
         执行指定的动作
@@ -81,7 +100,6 @@ class ClassicTask(BasisTask, ABC):
         # 检查是否为打开背包动作
         if "打开背包" == action:
             self.openBackpack()
-
 
     def followDetection(self):
         """
@@ -106,7 +124,6 @@ class ClassicTask(BasisTask, ABC):
         self.closeTeam()
         # 延迟20秒等待操作完成
         self.defer(20)
-
 
     def useBackpackArticles(self, articles, UsageTimes):
         """
@@ -137,7 +154,6 @@ class ClassicTask(BasisTask, ABC):
         self.closeBackpack()
         return False
 
-
     def switchBranchLine(self, index):
         """
         切换游戏副本的分线
@@ -159,7 +175,6 @@ class ClassicTask(BasisTask, ABC):
 
             self.mouseMove((1050, 555), (1050, 255))
         self.defer(8)
-
 
     def unstuck(self):
         """
@@ -188,7 +203,6 @@ class ClassicTask(BasisTask, ABC):
         # 关闭设置界面
         self.closeSetting()
 
-
     def autoFight(self):
         """
         自动战斗循环函数，在后台线程中执行按键操作
@@ -202,7 +216,6 @@ class ClassicTask(BasisTask, ABC):
             __queue.append(index)
             self.keyClick(self.taskConfig.keyList[index])
 
-
     def autoFightStop(self):
         """
         停止自动战斗功能
@@ -210,7 +223,6 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("停止自动战斗")
         self.autoFightEvent.set()
-
 
     def autoFightStart(self):
         """
@@ -222,7 +234,6 @@ class ClassicTask(BasisTask, ABC):
         self.autoFightEvent.clear()
         # 创建并启动自动战斗的后台线程
         threading.Thread(target=self.autoFight, daemon=True).start()
-
 
     def worldShouts(self, text, ordinary=True, connected=False):
         # 返回主界面并点击世界聊天入口
@@ -244,7 +255,6 @@ class ClassicTask(BasisTask, ABC):
 
         # 退出聊天界面
         self.touch("按钮聊天退出")
-
 
     def activatedTask(self, *args, model):
         """
@@ -288,7 +298,6 @@ class ClassicTask(BasisTask, ABC):
             self.mouseMove((118, 300), (118, 452))
             return self.touch(*args, threshold=0.8)
 
-
     def waitMapLoading(self):
         """
         等待地图加载完成
@@ -314,7 +323,6 @@ class ClassicTask(BasisTask, ABC):
             __count += 1
         self.logs("地图加载结束")
 
-
     def locationDetection(self):
         """
         位置检测函数
@@ -330,8 +338,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("位置检测")
         self.areaGo("金陵", exits=True, unstuck=True)
 
-
-    def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, area_switch=False):
+    def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, area_switch=True):
         """
         前往指定区域
 
@@ -371,14 +378,13 @@ class ClassicTask(BasisTask, ABC):
             return
 
         # 执行前往区域的操作流程
-        if not area_switch:
+        if area_switch:
             self.touch("按钮地图世界区域")
             self.touch(f"按钮地图{area}区域")
         self.coordinateInput(x, y)
         self.touch("按钮地图前往区域")
         self.closeMap()
         self.arrive()
-
 
     def coordinateInput(self, x, y):
         """
@@ -402,7 +408,6 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮地图纵坐标")
         self.input(y)
 
-
     def teamDetection(self):
         """
         队伍检测功能函数
@@ -423,7 +428,6 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮队伍退出")
             self.touch("按钮队伍确定")
         self.closeTeam()
-
 
     def teamCreate(self, model):
         self.logs(f"创建{model}队伍")
@@ -457,7 +461,6 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮队伍确定")
         self.closeTeam()
 
-
     def buy(self, model):
         """
         执行购买操作
@@ -479,6 +482,7 @@ class ClassicTask(BasisTask, ABC):
                 self.touch("按钮交易确定")
 
             self.closeStalls()
+            self.defer(3)
             return True
 
         if model == "商城购买":
@@ -491,7 +495,7 @@ class ClassicTask(BasisTask, ABC):
 
             # 关闭商城界面
             self.closeMall()
-
+            self.defer(3)
             return True
 
         if model == "帮派仓库":
@@ -500,9 +504,10 @@ class ClassicTask(BasisTask, ABC):
             self.logs("帮派仓库提交")
             self.touch("按钮帮派仓库提交")
             self.closeBanStore()
+            self.defer(3)
 
             return True
-
+        return None
 
     def closeRewardUi(self, count=1):
         """
@@ -513,7 +518,6 @@ class ClassicTask(BasisTask, ABC):
         """
         # 关闭当前界面，指定奖励界面的坐标区域
         self.closeCurrentUi(count=count, box=(905, 201, 1118, 454))
-
 
     def closeCurrentUi(self, count=1, box=Config.BOX):
         """
@@ -529,7 +533,6 @@ class ClassicTask(BasisTask, ABC):
                 self.logs("关闭当前界面")
                 continue
             return
-
 
     def backToMain(self):
         """
@@ -555,6 +558,25 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮聊天退出", overTime=0.1)
             self.closeCurrentUi()
 
+    def closeDreamCub(self):
+        """
+        关闭梦崽界面
+
+        该函数用于关闭当前打开的梦崽界面。如果当前不在梦崽界面，则直接返回。
+
+        参数:
+            无
+
+        返回值:
+            无
+        """
+
+        # 检查当前是否已处于梦崽界面，如果不是则直接返回
+        if self.exits("标志梦崽") is None:
+            return
+        self.logs("关闭梦崽")
+        # 关闭当前用户界面
+        self.closeCurrentUi()
 
     def closeBanStore(self):
         """
@@ -576,7 +598,6 @@ class ClassicTask(BasisTask, ABC):
         # 关闭当前界面
         self.closeCurrentUi()
 
-
     def closeStalls(self):
         """
         关闭摆摊功能
@@ -596,7 +617,6 @@ class ClassicTask(BasisTask, ABC):
         self.logs("关闭摆摊")
         # 关闭当前用户界面
         self.closeCurrentUi()
-
 
     def closeMall(self):
         """
@@ -618,7 +638,6 @@ class ClassicTask(BasisTask, ABC):
         # 执行关闭当前界面的操作
         self.closeCurrentUi()
 
-
     def closeFaction(self):
         """
         关闭帮派界面
@@ -637,7 +656,6 @@ class ClassicTask(BasisTask, ABC):
             return
         self.logs("关闭帮派")
         self.closeCurrentUi()
-
 
     def openFaction(self):
         """
@@ -658,7 +676,6 @@ class ClassicTask(BasisTask, ABC):
             self.logs("打开帮派")
             self.keyClick("O")
 
-
     def closeBuddy(self):
         """
         关闭好友界面功能函数
@@ -677,7 +694,6 @@ class ClassicTask(BasisTask, ABC):
             return
         self.logs("关闭好友")
         self.closeCurrentUi()
-
 
     def openBuddy(self):
         """
@@ -698,7 +714,6 @@ class ClassicTask(BasisTask, ABC):
             self.logs("打开好友")
             self.keyClick("H")
 
-
     def closeMap(self):
         """
         关闭地图界面
@@ -714,7 +729,6 @@ class ClassicTask(BasisTask, ABC):
             return
         self.logs("关闭地图")
         self.closeCurrentUi()
-
 
     def openMap(self):
         """
@@ -735,7 +749,6 @@ class ClassicTask(BasisTask, ABC):
             self.logs("打开地图")
             self.keyClick("M")
 
-
     def closeTeam(self):
         """
         关闭队伍界面
@@ -754,7 +767,6 @@ class ClassicTask(BasisTask, ABC):
         self.logs("关闭队伍")
         self.closeCurrentUi()
 
-
     def openTeam(self):
         """
         打开队伍界面函数
@@ -765,7 +777,6 @@ class ClassicTask(BasisTask, ABC):
         if self.exits("界面队伍") is None:
             self.logs("打开队伍")
             self.keyClick("T")
-
 
     def closeBackpack(self):
         """
@@ -781,7 +792,6 @@ class ClassicTask(BasisTask, ABC):
         if self.exits("界面物品") is None:
             return
         self.closeCurrentUi()
-
 
     def openBackpack(self):
         """
@@ -801,7 +811,6 @@ class ClassicTask(BasisTask, ABC):
         if self.exits("界面物品") is None:
             self.keyClick("B")
 
-
     def closeSetting(self):
         """
         关闭设置界面
@@ -817,7 +826,6 @@ class ClassicTask(BasisTask, ABC):
         if self.exits("界面设置") is None:
             return
         self.closeCurrentUi()
-
 
     def openSetting(self):
         """
@@ -836,7 +844,6 @@ class ClassicTask(BasisTask, ABC):
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("界面设置") is None:
             self.keyClick("ESC")
-
 
     def arrive(self):
         """
@@ -871,7 +878,6 @@ class ClassicTask(BasisTask, ABC):
             __count += 1
         self.logs("寻路结束")
 
-
     def switchCharacter(self):
         """
         切换游戏角色
@@ -890,7 +896,6 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮设置确定")
         # 等待登录进入游戏按钮出现，超时时间30秒
         self.wait("按钮登录进入游戏", overTime=30)
-
 
     def switchCharacterOne(self):
         """
@@ -914,7 +919,6 @@ class ClassicTask(BasisTask, ABC):
         self.defer(count=30)
         self.setCharacterInfo()
 
-
     def switchCharacterTwo(self):
         """
         切换到第二个角色并进入游戏
@@ -936,7 +940,6 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮登录进入游戏")
         self.defer(count=30)
         self.setCharacterInfo()
-
 
     def switchCharacterThree(self):
         """
@@ -960,7 +963,6 @@ class ClassicTask(BasisTask, ABC):
         self.defer(count=30)
         self.setCharacterInfo()
 
-
     def switchCharacterFour(self):
         """
         切换到第四个角色并进入游戏
@@ -982,7 +984,6 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮登录进入游戏")
         self.defer(count=30)
         self.setCharacterInfo()
-
 
     def switchCharacterFive(self):
         """
@@ -1006,7 +1007,6 @@ class ClassicTask(BasisTask, ABC):
         self.defer(count=30)
         self.setCharacterInfo()
 
-
     def switchCharacterDefault(self):
         """
         切换角色默认设置
@@ -1020,7 +1020,6 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         self.setCharacterInfo()
-
 
     def setCharacterInfo(self):
         """

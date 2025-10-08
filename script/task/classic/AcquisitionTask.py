@@ -21,31 +21,13 @@ class AcquisitionTask(ClassicTask):
         self.state_reset_config = {
 
         }
-        self.popCheck()
-
 
     @thread(daemon=True)
     def popCheck(self):
         while not self.finished.is_set():
             self.closeRewardUi()
 
-    @property
-    def setup(self):
-        return self._setup
-
-    @setup.setter
-    def setup(self, state):
-        # 只有状态发生变化时才执行重置
-        if state == self._setup:
-            return
-        self._reset_state_variables(state)
-        self._setup = state  # 更新为新状态
-
-    def _reset_state_variables(self, new_state):
-        reset_config = self.state_reset_config.get(new_state, {})
-        for var_name, value in reset_config.items():
-            if var_name in self.event:
-                self.event[var_name] = value
+            time.sleep(1)
 
     def execute(self):
         while not self.finished.is_set():
@@ -62,8 +44,7 @@ class AcquisitionTask(ClassicTask):
                     return 0
                 # 位置检测
                 case 1:
-                    # 前往采集地图
-                    self.locationDetection()
+                    # self.locationDetection()
                     self.setup = 2
                 # 队伍检测
                 case 2:
@@ -76,8 +57,6 @@ class AcquisitionTask(ClassicTask):
                     elif self.taskConfig.collectionMode == "自定义模式":
                         self.event["collect_map"] = self.taskConfig.collectionMap
                         self.event["collect_coord"] = self.taskConfig.customCoordinatesTags
-
-                    self.areaGo(self.event["collect_map"], exits=True)
 
                     self.setup = 4
                 case 4:
@@ -179,4 +158,4 @@ class AcquisitionTask(ClassicTask):
             return
         # 前往坐标
         self.logs(f"前往采集坐标 {__coord.split("#")[0]}:{__coord.split("#")[1]}")
-        self.areaGo(self.event["collect_map"], __coord.split("#")[0], __coord.split("#")[1], area_switch=True)
+        self.areaGo(self.event["collect_map"], __coord.split("#")[0], __coord.split("#")[1], area_switch=False)

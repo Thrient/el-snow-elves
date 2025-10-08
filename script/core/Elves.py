@@ -84,7 +84,7 @@ class Elves:
         current_dir = os.getcwd()
 
         # 拼接bat脚本的完整路径（替换为你的bat文件名）
-        path = os.path.join(current_dir, "update.bat")
+        path = os.path.join(current_dir, "Update.exe")
 
         os.system(path)
 

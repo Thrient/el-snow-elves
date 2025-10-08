@@ -6,11 +6,17 @@ from script.task.basis.ClassicTask import ClassicTask
 class DoorBanTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [1, 0]
+        # 事件变量字典
+        self.event = {
+            "banquet_index": 1,  # 破阵设宴提交索引
+            "banquet_counter": 0   # 破阵设宴提交次数计数器
 
-    def instance(self):
-        return self
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
+
+        }
+
 
     def execute(self):
         while not self.finished.is_set():
@@ -33,7 +39,10 @@ class DoorBanTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.verifyTouch("按钮活动帮派")
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动帮派")
 
                     if self.touch("按钮活动门客设宴", y=45) is None:
                         self.logs("门客设宴已经完成")
@@ -46,57 +55,64 @@ class DoorBanTask(ClassicTask):
                     self.touch("按钮门客设宴确认邀约")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面门客设宴") is None:
+                    if self.exits("界面破阵设宴") is None:
                         self.setup = 3
                         continue
 
-                    if self.event[0] > 9:
-                        self.setup = 5
+                    if self.event["banquet_index"] > 8:
+                        self.setup = 6
                         continue
 
-                    if self.event[1] > 9:
-                        self.event[0] += 1
-                        self.event[1] = 0
+                    self.setup = 5
+                case 5:
+                    if self.event["banquet_counter"] > 9:
+                        self.event["banquet_index"] += 1
+                        self.event["banquet_counter"] = 0
+                        self.setup = 4
                         continue
 
-                    __x = (self.event[0] - 1) % 4
-                    __y = (self.event[0] - 1) // 4
+                    __x = (self.event["banquet_index"] - 1) % 4
+                    __y = (self.event["banquet_index"] - 1) // 4
 
                     self.mouseClick((633 + 172 * __x, 282 + 182 * __y))
 
                     if self.exits("按钮门客设宴获取") is None:
                         self.touch("按钮门客设宴一键提交")
-                        self.event[0] += 1
-                        self.event[1] = 0
+                        self.event["banquet_index"] += 1
+                        self.event["banquet_counter"] = 0
+                        self.setup = 4
                         continue
 
                     self.mouseClick((0, 0))
 
                     self.touch("按钮门客设宴获取")
 
-                    self.event[1] += 1
+                    self.event["banquet_counter"] += 1
 
-                    if self.event[1] in [1, 4, 6]:
+
+                    if self.event["banquet_counter"] in [1, 4, 6]:
                         if self.exits("按钮帮派仓库") is None:
                             continue
                         self.touch("按钮帮派仓库", y=-75)
                         self.buy("帮派仓库")
 
-                    elif self.event[1] in [2, 5, 7]:
+                    elif self.event["banquet_counter"] in [2, 5, 7]:
                         if self.exits("按钮摆摊购买") is None:
                             continue
                         self.touch("按钮摆摊购买", y=-75)
                         self.buy("摆摊购买")
 
-                    elif self.event[1] in [3, 8, 9]:
+                    elif self.event["banquet_counter"] in [3, 8, 9]:
                         if self.exits("按钮商城购买") is None:
                             continue
                         self.touch("按钮商城购买", y=-75)
                         self.buy("商城购买")
 
-                case 5:
+                    self.setup = 4
+                case 6:
                     if len(self.exitsAll("标志门客设宴已提交")) >= 8:
                         self.touch("按钮门客设宴开始")
                     self.closeRewardUi(5)
                     self.backToMain()
                     self.setup = 0
+        return None

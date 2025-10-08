@@ -60,9 +60,9 @@ class Script(Thread):
                     cls = TaskFactory.instance().create(self.taskConfig.model, task)
                     if cls is None:
                         continue
-                    self.obj = cls(hwnd=self.hwnd, stopped=self.__stopped, finished=self.__finished, window=self.window,
-                                   taskConfig=self.taskConfig, windowConsole=self.windowConsole).instance()
-                    self.obj.execute()
+                    with cls(hwnd=self.hwnd, stopped=self.__stopped, finished=self.__finished, window=self.window,
+                                   taskConfig=self.taskConfig, windowConsole=self.windowConsole) as self.obj:
+                        self.obj.execute()
                 except Exception as e:
                     print(e)
         except Exception as e:
@@ -101,6 +101,9 @@ class Script(Thread):
             无
         """
         try:
+            # 暂停计时器
+            if self.obj is not None:
+                self.obj.timer.stop()
             # 如果停止标志位未被设置，则执行停止流程
             if not self.__stop.is_set():
                 self.__stop.set()
@@ -109,7 +112,6 @@ class Script(Thread):
             self.windowConsole.restStyle()
             # 取消窗口的点击穿透功能
             self.windowConsole.setWinUnEnableClickThrough()
-            self.obj.timer.stop()
         except Exception as e:
             print(e)
 
@@ -127,6 +129,9 @@ class Script(Thread):
             无
         """
         try:
+            # 恢复计时器
+            if self.obj is not None:
+                self.obj.timer.resume()
             # 如果停止标志已设置，则清除停止标志并释放停止信号量
             if self.__stop.is_set():
                 self.__stop.clear()
@@ -135,7 +140,7 @@ class Script(Thread):
             self.windowConsole.setWindowNoMenu()
             # 设置窗口控制台为可点击穿透状态
             self.windowConsole.setWinEnableClickThrough()
-            self.obj.timer.resume()
+
         except Exception as e:
             print(e)
 

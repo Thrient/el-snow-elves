@@ -18,6 +18,34 @@ class BasisTask(ABC):
         self.taskConfig = taskConfig
         self.windowConsole = windowConsole
         self.timer = Timer()
+        self._setup = 1
+        # 事件变量字典
+        self.event = {
+
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
+
+        }
+
+    @property
+    def setup(self):
+        return self._setup
+
+    @setup.setter
+    def setup(self, state):
+        # 只有状态发生变化时才执行重置
+        if state == self._setup:
+            return
+        self._reset_state_variables(state)
+        self._setup = state
+
+    def _reset_state_variables(self, new_state):
+        reset_config = self.state_reset_config.get(new_state, {})
+        for var_name, value in reset_config.items():
+            if var_name in self.event:
+                self.event[var_name] = value
+
 
     @abstractmethod
     def instance(self):
