@@ -2,6 +2,7 @@ import time
 from abc import ABC, abstractmethod
 
 from airtest.aircv.utils import pil_2_cv2
+from airtest.core.api import touch, swipe
 from airtest.core.cv import Template
 
 from script.config.Config import Config
@@ -134,6 +135,30 @@ class BasisTask(ABC):
         # 在停止锁的保护下执行控制台输入操作
         with self.stopped:
             self.windowConsole.input(text)
+
+    def mouseWheel(self, pos, step=120, timeout=Config.TIMEOUT, count=1):
+        """
+        执行鼠标滚轮操作，在指定位置进行滚动
+
+        参数:
+            pos: 鼠标滚轮操作的位置坐标，格式为(x, y)的元组
+            step: 滚动步长，正值表示向上滚动，负值表示向下滚动，默认值为1
+            timeout: 每次滚动后的等待时间，默认使用Config.TIMEOUT配置
+            count: 滚动次数，默认为1次
+
+        返回值:
+            无返回值
+        """
+        if self.finished.is_set():
+            return
+        with self.stopped:
+            # 确保滚动次数至少为1次
+            count = 1 if count <= 0 else count
+            # 执行指定次数的鼠标滚轮操作
+            for _ in range(count):
+                print(f"pos: {pos[0]}, {pos[1]}, step: {step}")
+                self.windowConsole.mouseWheel(pos, step)
+            time.sleep(timeout)
 
     def mouseMove(self, start, end, timeout=Config.TIMEOUT, count=1):
         """
@@ -314,14 +339,24 @@ class BasisTask(ABC):
         """
         threshold = kwargs.get('threshold', Config.THRESHOLD)
         box = kwargs.get('box', Config.BOX)
+        findAll = kwargs.get('findAll', False)
+
+        resultsAll = []
+
+        exitsAll = True
 
         # 遍历所有待查找的图像模板
         for image in args:
             results = self.imageTemplateAll(image, threshold, box)
-            if results is not None:
-                return results
+            if not results and not findAll:
+                return results, False
+            if not results and findAll:
+                exitsAll = False
+                continue
 
-        return []
+            resultsAll += results
+
+        return resultsAll, exitsAll
 
     def imageTemplate(self, image, threshold, box):
         """
@@ -339,7 +374,7 @@ class BasisTask(ABC):
         threshold = Config.THRESHOLD_IMAGE[image] if Config.THRESHOLD_IMAGE.get(image) else threshold
 
         if self.finished.is_set():
-            return
+            return None
         with self.stopped:
             # 截取指定窗口的指定区域并转换为OpenCV格式
             screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
@@ -370,11 +405,11 @@ class BasisTask(ABC):
             screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
             # 在屏幕截图中查找所有匹配的模板图像
             results = Template(f"resources/images/{self.taskConfig.model}/{image}.bmp",
-                               threshold=threshold).match_all_in(
-                screen)
+                               threshold=threshold).match_all_in(screen)
+
             print(f"{image}: {results}")
             # 将相对坐标转换为绝对坐标并返回
             return [
                 (box[0] + result['result'][0], box[1] + result['result'][1])
                 for result in results
-            ]
+            ] if results is not None else []

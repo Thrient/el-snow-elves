@@ -1,6 +1,8 @@
 import time
 from threading import Thread, Lock, Event
 
+from airtest.core.api import auto_setup
+
 from script.core.TaskFactory import TaskFactory
 from script.core.TaskScheduler import TaskScheduler
 from script.core.WindowConsole import WindowConsole

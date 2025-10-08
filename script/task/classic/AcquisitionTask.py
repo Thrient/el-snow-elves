@@ -24,7 +24,7 @@ class AcquisitionTask(ClassicTask):
 
     @thread(daemon=True)
     def popCheck(self):
-        while not self.finished.is_set():
+        while not self.finished.is_set() and not self.popCheckEvent.is_set():
             self.closeRewardUi()
 
             time.sleep(1)
@@ -63,21 +63,35 @@ class AcquisitionTask(ClassicTask):
                     self.toCollectionLocation()
                     self.setup = 5
                 case 5:
-                    if self.exits("标志大世界体力上限") is not None:
-                        self.logs("吃鸡蛋")
-                        if not self.taskConfig.autoEatEgg:
-                            self.logs("无体力 结束任务")
-                            self.setup = 0
-                            continue
-                        if not self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount):
-                            self.logs("缺少道具一筐鸡蛋 结束任务")
-                            self.setup = 0
-                            continue
-                        continue
+                    self.checkPhysicalStrength()
 
                     self.collect()
 
         return None
+
+    def checkPhysicalStrength(self):
+        """
+        体力检测
+        该函数用于检测当前角色的体力状态，判断是否需要进行补充体力操作。
+
+        :param
+
+        :return
+            None
+        """
+
+        if self.exits("标志大世界体力上限") is None:
+            return
+
+        self.logs("吃鸡蛋")
+        if not self.taskConfig.autoEatEgg:
+            self.logs("无体力 结束任务")
+            self.setup = 0
+            return
+        if not self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount):
+            self.logs("缺少道具一筐鸡蛋 结束任务")
+            self.setup = 0
+            return
 
     def collect(self):
         """

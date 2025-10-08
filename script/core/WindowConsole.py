@@ -144,6 +144,24 @@ class WindowConsole:
         position = win32api.MAKELONG(end_x, end_y)
         win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, position)
 
+    def mouseWheel(self, pos, delta):
+        """
+        模拟鼠标滚轮滑动
+
+        参数:
+            pos (tuple): 包含x、y坐标的元组，表示鼠标滚轮滑动的位置
+            delta: 滚轮滚动量，正值向上滚，负值向下滚，通常每次滚动值为120的倍数
+
+        """
+        x, y = pos
+
+        position = win32api.MAKELONG(x, y)
+
+        wparam = (delta & 0xFFFF) << 16
+
+        # 发送鼠标滚轮消息
+        win32api.SendMessage(self.hwnd, win32con.WM_MOUSEWHEEL, wparam, position)
+
     def mouseDownUp(self, pos, delay):
         """
         模拟鼠标在指定位置按下并释放左键的操作

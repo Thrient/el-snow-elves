@@ -8,6 +8,7 @@ from typing import Any
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
+from airtest.core.api import swipe
 
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
@@ -38,7 +39,6 @@ class ClassicTask(BasisTask, ABC):
     def popCheck(self):
         while not self.finished.is_set() and not self.popCheckEvent.is_set():
             self.closeDreamCub()
-            print(self.__class__.__name__)
 
             time.sleep(1)
 
@@ -165,16 +165,27 @@ class ClassicTask(BasisTask, ABC):
             None
         """
         self.logs(f"切换分线{index}")
+        digits = [int(d) for d in str(index)]
+        args = [f"标志{i}" for i in digits]
+
         self.mouseClick((1230, 25))
         # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
-        for _ in range(index // 7 + 1):
-            # 尝试点击目标分线按钮，如果找到则直接返回
-            if self.touch(f"按钮大世界{index}线") is not None:
-                return
-            # 向上滑动屏幕以显示更多分线选项
 
-            self.mouseMove((1050, 555), (1050, 255))
-        self.defer(8)
+        for _ in range(index // 7 + 2):
+            for result in self.exitsAll("标志线")[0]:
+                results, exitsAll = self.exitsAll(*args, box=(result[0]-50, result[1]-15, result[0]-15, result[1]+15), findAll=True)
+                if len(results) != len(digits):
+                    continue
+                if not exitsAll:
+                    continue
+                self.mouseClick((result[0]-30, result[1]))
+                return
+
+            self.mouseMove((1050, 555), (1050, 355))
+
+        self.mouseClick((1335, 750))
+
+
 
     def unstuck(self):
         """
