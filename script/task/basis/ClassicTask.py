@@ -171,21 +171,20 @@ class ClassicTask(BasisTask, ABC):
         self.mouseClick((1230, 25))
         # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
 
-        for _ in range(index // 7 + 2):
-            for result in self.exitsAll("标志线")[0]:
-                results, exitsAll = self.exitsAll(*args, box=(result[0]-50, result[1]-15, result[0]-15, result[1]+15), findAll=True)
-                if len(results) != len(digits):
-                    continue
-                if not exitsAll:
-                    continue
-                self.mouseClick((result[0]-30, result[1]))
-                return
-
+        for _ in range(index // 7 + 5):
+            for result in self.exitsAll("标志线"):
+                if len(digits) == 1:
+                    if self.exits(args[0], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
+                        self.mouseClick((result[0] - 30, result[1]))
+                        return
+                if len(digits) == 2:
+                    if self.exits(args[0], box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) is not None and \
+                        self.exits(args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
+                        self.mouseClick((result[0] - 50, result[1]))
+                        return
             self.mouseMove((1050, 555), (1050, 355))
 
         self.mouseClick((1335, 750))
-
-
 
     def unstuck(self):
         """

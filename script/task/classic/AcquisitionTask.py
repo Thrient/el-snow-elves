@@ -127,7 +127,7 @@ class AcquisitionTask(ClassicTask):
         if self.buy("摆摊购买"):
             return False
 
-        if self.wait("标志大世界采集加速", box=(620, 380, 655, 435), overTime=8) is not None:
+        if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), overTime=8) is not None:
             self.mouseClick((665, 470))
 
         self.logs(f"采集 {self.event["collect_counter"]}次")
@@ -172,4 +172,4 @@ class AcquisitionTask(ClassicTask):
             return
         # 前往坐标
         self.logs(f"前往采集坐标 {__coord.split("#")[0]}:{__coord.split("#")[1]}")
-        self.areaGo(self.event["collect_map"], __coord.split("#")[0], __coord.split("#")[1], area_switch=False)
+        self.areaGo(self.event["collect_map"], __coord.split("#")[0], __coord.split("#")[1], area_switch=self.event["collect_coord_index"] != 0)

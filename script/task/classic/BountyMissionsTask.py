@@ -7,7 +7,6 @@ from script.utils.Thread import thread
 class BountyMissionsTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._setup = 1
         # 事件变量字典
         self.event = {
             "shout_timer": 0.0,  # 副本喊话时间计数器
@@ -103,7 +102,7 @@ class BountyMissionsTask(ClassicTask):
                         self.unstuck()
                         continue
 
-                    if 180 < time.time() - self.event["activate_timer"]:
+                    if 360 < time.time() - self.event["activate_timer"]:
                         self.event["activate_timer"] = time.time()
                         self.event["task_activate_counter"] += 1
                         self.activatedTask("按钮任务副本", model="任务")

@@ -19,6 +19,7 @@ class BasisTask(ABC):
         self.taskConfig = taskConfig
         self.windowConsole = windowConsole
         self.timer = Timer()
+        # 流程控制变量, 默认值1
         self._setup = 1
         # 事件变量字典
         self.event = {
@@ -341,22 +342,14 @@ class BasisTask(ABC):
         box = kwargs.get('box', Config.BOX)
         findAll = kwargs.get('findAll', False)
 
-        resultsAll = []
-
-        exitsAll = True
-
+        results = []
         # 遍历所有待查找的图像模板
         for image in args:
-            results = self.imageTemplateAll(image, threshold, box)
-            if not results and not findAll:
-                return results, False
-            if not results and findAll:
-                exitsAll = False
-                continue
+            results += self.imageTemplateAll(image, threshold, box)
+            if results is not None and not findAll:
+                return results
 
-            resultsAll += results
-
-        return resultsAll, exitsAll
+        return results
 
     def imageTemplate(self, image, threshold, box):
         """

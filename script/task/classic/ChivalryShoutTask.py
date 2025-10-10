@@ -1,5 +1,3 @@
-import time
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -7,11 +5,10 @@ class ChivalryShoutTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [1]
-
-    def instance(self):
-        return self
+        # 事件变量字典
+        self.event = {
+            "shout_count": 1,  # 侠缘喊话次数计数器
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -42,14 +39,15 @@ class ChivalryShoutTask(ClassicTask):
                     self.mouseClick((290, 333))
                     self.setup = 4
                 case 4:
-                    self.touch("标志好友输入文字")
-                    self.input("日出日落都浪漫, 有风无风都自由")
-                    self.touch("按钮好友发送")
-                    self.logs(f"侠缘喊话 {self.event[0]} 次")
-                    self.event[0] += 1
-
-                    if self.event[0] > self.taskConfig.chivalryShoutCount:
+                    if self.event["shout_count"] > self.taskConfig.chivalryShoutCount:
                         self.closeBuddy()
                         self.setup = 0
                         continue
+
+                    self.touch("标志好友输入文字")
+                    self.input("日出日落都浪漫, 有风无风都自由")
+                    self.touch("按钮好友发送")
+                    self.logs(f"侠缘喊话 {self.event["shout_count"]} 次")
+                    self.event["shout_count"] += 1
                     self.defer(3)
+        return None

@@ -129,7 +129,7 @@ class DailyCopiesTask(ClassicTask):
                         self.unstuck()
                         continue
 
-                    if 180 < time.time() - self.event["activate_timer"]:
+                    if 360 < time.time() - self.event["activate_timer"]:
                         self.event["activate_timer"] = time.time()
                         self.event["task_activate_counter"] += 1
                         self.activatedTask("按钮任务副本", model="任务")
