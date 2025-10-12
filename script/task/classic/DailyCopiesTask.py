@@ -1,14 +1,11 @@
 import time
 
 from script.task.basis.ClassicTask import ClassicTask
-from script.utils.Thread import thread
-
 
 class DailyCopiesTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._setup = 1
         # 事件变量字典
         self.event = {
             "shout_timer": 0.0,  # 副本喊话时间计数器
@@ -27,31 +24,6 @@ class DailyCopiesTask(ClassicTask):
                 "exit_check_counter": 0
             }
         }
-        self.popCheck()
-
-    @thread(daemon=True)
-    def popCheck(self):
-        while not self.finished.is_set():
-            if self.exits("标志梦崽"):
-                self.closeCurrentUi()
-
-    @property
-    def setup(self):
-        return self._setup
-
-    @setup.setter
-    def setup(self, state):
-        # 只有状态发生变化时才执行重置
-        if state == self._setup:
-            return
-        self._reset_state_variables(state)
-        self._setup = state  # 更新为新状态
-
-    def _reset_state_variables(self, new_state):
-        reset_config = self.state_reset_config.get(new_state, {})
-        for var_name, value in reset_config.items():
-            if var_name in self.event:
-                self.event[var_name] = value
 
     def execute(self):
         while not self.finished.is_set():

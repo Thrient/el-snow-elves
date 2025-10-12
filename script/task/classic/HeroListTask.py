@@ -6,11 +6,14 @@ from script.task.basis.ClassicTask import ClassicTask
 class HeroListTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [1]
+        # 事件变量字典
+        self.event = {
+            "hero_list_counter": 1,  # 江湖英雄榜次数计数器
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
 
-    def instance(self):
-        return self
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -33,15 +36,18 @@ class HeroListTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.verifyTouch("按钮活动纷争")
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动纷争")
                     self.touch("按钮活动江湖英雄榜", y=45)
                     self.setup = 4
                 case 4:
                     if self.exits("界面江湖英雄榜") is None:
                         if self.exits("标志江湖英雄榜匹配成功") is not None:
-                            self.logs(f"江湖英雄榜第 {self.event[0]} 次")
-                            self.event[0] += 1
-                            self.defer(3)
+                            self.logs(f"江湖英雄榜第 {self.event["hero_list_counter"]} 次")
+                            self.event["hero_list_counter"] += 1
+                            self.defer(count=3)
                             self.waitMapLoading()
                             self.setup = 5
                             continue
@@ -53,7 +59,7 @@ class HeroListTask(ClassicTask):
                         continue
 
                     self.touch("按钮江湖英雄榜匹配", "按钮江湖英雄榜晋级赛")
-                    self.touch("按钮江湖英雄榜确定")
+                    self.touch("按钮江湖英雄榜确定", overTime=0.5)
                 case 5:
 
                     if self.taskConfig.heroListInitiativeExit:
@@ -74,7 +80,7 @@ class HeroListTask(ClassicTask):
 
                         self.touch("按钮江湖英雄榜离开")
 
-                        if self.event[0] > self.taskConfig.heroListCount:
+                        if self.event["hero_list_counter"] > self.taskConfig.heroListCount:
                             self.setup = 0
                             continue
 
@@ -82,3 +88,4 @@ class HeroListTask(ClassicTask):
                         self.setup = 4
 
                         continue
+        return None

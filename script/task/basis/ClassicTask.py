@@ -201,7 +201,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("脱离卡死")
         # 模拟空格键点击
-        self.keyClick("SPACE")
+        self.mouseClick((1350, 750))
         # 返回主界面操作
         self.backToMain()
         # 打开设置界面
@@ -445,7 +445,10 @@ class ClassicTask(BasisTask, ABC):
         self.backToMain()
         if model == "日常":
             self.logs("刷新当天日常")
-            self.verifyTouch("按钮活动江湖")
+            self.openBackpack()
+            self.touch("按钮物品综合入口")
+            self.touch("按钮物品活动")
+            self.touch("按钮活动江湖")
             self.touch("按钮活动江湖纪事", y=45)
             self.backToMain()
             self.openTeam()
@@ -776,6 +779,7 @@ class ClassicTask(BasisTask, ABC):
             return
         self.logs("关闭队伍")
         self.closeCurrentUi()
+        self.defer(count=2)
 
     def openTeam(self):
         """
