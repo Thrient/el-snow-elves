@@ -5,6 +5,7 @@ from script.task.classic.ChivalryShoutTask import ChivalryShoutTask
 from script.task.classic.DailyCopiesTask import DailyCopiesTask
 from script.task.classic.DailyRedemptionTask import DailyRedemptionTask
 from script.task.classic.DoorBanTask import DoorBanTask
+from script.task.classic.FactionPointsTask import FactionPointsTask
 from script.task.classic.FactionTask import FactionTask
 from script.task.classic.HeroListTask import HeroListTask
 from script.task.classic.HexagramDayTask import HexagramDayTask
@@ -71,6 +72,7 @@ class TaskFactory:
         self.register("classic", "悬赏任务", BountyMissionsTask)
         self.register("classic", "多人论剑", SwordThreeTask)
         self.register("classic", "山河器", RiverTask)
+        self.register("classic", "帮派积分", FactionPointsTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

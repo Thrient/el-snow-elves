@@ -37,7 +37,10 @@ class SwordTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.verifyTouch("按钮活动纷争")
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动纷争")
 
                     self.touch("按钮活动华山论剑", "按钮活动萌芽论剑", x=-50, y=45)
 

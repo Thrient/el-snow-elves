@@ -37,7 +37,10 @@ class TeaStoryTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.verifyTouch("按钮活动江湖")
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动江湖")
 
                     if self.touch("按钮活动茶馆说书", y=45) is None:
                         self.logs("茶馆说书已经完成")

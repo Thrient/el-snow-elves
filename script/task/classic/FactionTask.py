@@ -37,7 +37,10 @@ class FactionTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.verifyTouch("按钮活动帮派")
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动帮派")
 
                     if self.touch("按钮活动帮派任务", y=45) is None:
                         self.logs("帮派任务已经完成")
@@ -69,8 +72,9 @@ class FactionTask(ClassicTask):
                     if self.exits("按钮摆摊购买") is not None:
                         self.touch("按钮摆摊购买", y=-75)
 
-                    self.buy("摆摊购买")
-                    self.buy("商城购买")
+                    # 检查商城购买
+                    if self.buy("摆摊购买") or self.buy("商城购买"):
+                        self.event["last_activated_time"] = time.time() - 90
 
                     self.closeRewardUi()
 

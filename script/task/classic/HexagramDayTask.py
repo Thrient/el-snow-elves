@@ -37,7 +37,10 @@ class HexagramDayTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.verifyTouch("按钮活动游历")
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动游历")
 
                     if self.touch("按钮活动每日一挂", y=45) is None:
                         self.logs("每日一卦已经完成")

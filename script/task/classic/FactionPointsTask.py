@@ -1,7 +1,7 @@
 from script.task.basis.ClassicTask import ClassicTask
 
 
-class SittingObservingTask(ClassicTask):
+class FactionPointsTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # 事件类型定义
@@ -17,14 +17,13 @@ class SittingObservingTask(ClassicTask):
         while not self.finished.is_set():
 
             if self.timer.getElapsedTime() > 1800:
-                self.logs("坐观万象超时")
+                self.logs("帮派积分超时")
                 return 0
 
             match self.setup:
                 # 任务结束
                 case 0:
-                    self.backToMain()
-                    self.logs("坐观万象完成")
+                    self.logs("帮派积分完成")
                     return 0
                 # 位置检测
                 case 1:
@@ -35,21 +34,20 @@ class SittingObservingTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.openBackpack()
-                    self.touch("按钮物品综合入口")
-                    self.touch("按钮物品活动")
-                    self.touch("按钮活动游历")
-
-                    if self.touch("按钮活动坐观万象", y=45) is None:
-                        self.logs("坐观万象已经完成")
-                        self.setup = 0
-                        continue
-
+                    self.openFaction()
+                    self.touch("按钮帮派领地")
+                    self.touch("按钮帮派前往领地")
                     self.arrive()
+                    self.resetLens()
+                    self.keyClick("W", delay=0.2)
+                    self.touch("按钮大世界清扫")
+
                     self.setup = 4
                 case 4:
-                    if self.exits("标志大世界修炼中") is None:
-                        self.setup = 0
-                        continue
-                    self.defer(5)
+                    self.defer(count=12000)
+
+                    self.setup = 0
+
+
+
         return None

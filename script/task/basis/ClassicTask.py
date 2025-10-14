@@ -86,6 +86,15 @@ class ClassicTask(BasisTask, ABC):
             # 递归调用自身继续验证触摸操作
             self.verifyTouch(image, **kwargs)
 
+    def resetLens(self):
+        """
+            重置镜头
+        :return:
+        """
+        self.backToMain()
+        self.mouseClick((1330, 715))
+        self.touch("按钮大世界镜头重置")
+
     def action(self, action):
         """
         执行指定的动作
@@ -544,11 +553,10 @@ class ClassicTask(BasisTask, ABC):
         """
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            results =  self.exitsAll("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box)
+            results = self.exitsAll("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box)
             if len(results) == 0 or results[0] is None:
                 return
             self.mouseClick((results[-1][0], results[-1][1]), timeout=0)
-
 
     def backToMain(self):
         """
