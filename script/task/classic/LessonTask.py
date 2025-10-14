@@ -6,11 +6,14 @@ from script.task.basis.ClassicTask import ClassicTask
 class LessonTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [time.time() - 60]
+        # 事件类型定义
+        self.event = {
+            "last_activated_time": 0.0,  # 上次激活任务时间
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
 
-    def instance(self):
-        return self
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -73,8 +76,8 @@ class LessonTask(ClassicTask):
                     self.touch("按钮确定")
                 case 5:
                     # 　定时激活任务
-                    if time.time() - self.event[0] > 90:
-                        self.event[0] = time.time()
+                    if time.time() - self.event["last_activated_time"] > 90:
+                        self.event["last_activated_time"] = time.time()
                         self.activatedTask("按钮任务止杀", "按钮任务锻心", "按钮任务问卜", "按钮任务漱尘", "按钮任务归义", "按钮任务濯剑", "按钮任务吟风", "按钮任务悟禅", "按钮任务含灵", "按钮任务寻道", "按钮任务观梦", "按钮任务起茶", model="江湖")
 
                     # 商城购买
@@ -87,7 +90,7 @@ class LessonTask(ClassicTask):
 
                     # 检查商城购买
                     if self.buy("摆摊购买") or self.buy("商城购买"):
-                        self.event[0] = time.time() - 90
+                        self.event["last_activated_time"] = time.time() - 90
 
                     # 杂货商人
                     if self.exits("界面杂货商人") is not None:
@@ -106,3 +109,4 @@ class LessonTask(ClassicTask):
                         self.setup = 0
 
                     self.defer(1)
+        return None

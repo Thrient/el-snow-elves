@@ -4,10 +4,14 @@ from script.task.basis.ClassicTask import ClassicTask
 class PostBountyTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
+        # 事件类型定义
+        self.event = {
+            
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
 
-    def instance(self):
-        return self
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -48,3 +52,4 @@ class PostBountyTask(ClassicTask):
                     self.touch("按钮确定")
                     self.closeCurrentUi(box=(826, 72, 1130, 255))
                     self.setup = 0
+        return None

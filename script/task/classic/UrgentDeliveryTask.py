@@ -6,11 +6,14 @@ from script.task.basis.ClassicTask import ClassicTask
 class UrgentDeliveryTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [1]
+        # 事件类型定义
+        self.event = {
+            "buy_counter": 0.0,  # 购买失败计数器
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
 
-    def instance(self):
-        return self
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -56,10 +59,10 @@ class UrgentDeliveryTask(ClassicTask):
                         continue
 
                     if self.exits("按钮江湖急送前往购买") is not None:
-                        if self.event[0] >= 3:
+                        if self.event["buy_counter"] >= 3:
                             self.touch("按钮江湖急送放弃订单")
                             self.touch("按钮确定")
-                            self.event[0] = 1
+                            self.event["buy_counter"] = 1
                             self.setup = 3
                             continue
 
@@ -83,7 +86,7 @@ class UrgentDeliveryTask(ClassicTask):
                             self.mouseClick((1330, 745))
 
                         self.backToMain()
-                        self.event[0] += 1
+                        self.event["buy_counter"] += 1
 
                     if self.exits("按钮江湖急送领取食盆") is not None:
                         self.touch("按钮江湖急送领取食盆")
@@ -95,3 +98,4 @@ class UrgentDeliveryTask(ClassicTask):
                         self.touch("按钮江湖急送选择")
                         self.touch("按钮江湖急送选择菜品")
                         self.touch("按钮确定")
+        return None

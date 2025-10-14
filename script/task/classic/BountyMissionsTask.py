@@ -1,7 +1,6 @@
 import time
 
 from script.task.basis.ClassicTask import ClassicTask
-from script.utils.Thread import thread
 
 
 class BountyMissionsTask(ClassicTask):

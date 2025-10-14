@@ -6,11 +6,15 @@ from script.task.basis.ClassicTask import ClassicTask
 class WorldShoutsTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [time.time(), 1]
+        # 事件类型定义
+        self.event = {
+            "shout_timer": 0.0,  # 喊话计时器
+            "shout_counter": 0,  # 喊话次数计数器
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
 
-    def instance(self):
-        return self
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -33,12 +37,12 @@ class WorldShoutsTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if self.event[1] > self.taskConfig.worldShoutsCount:
+                    if self.event["shout_counter"] > self.taskConfig.worldShoutsCount:
                         self.setup = 0
                         continue
 
-                    if time.time() - self.event[0] > 34:
-                        self.event[0] = time.time()
+                    if time.time() - self.event["shout_timer"] > 34:
+                        self.event["shout_timer"] = time.time()
 
                         self.WorldShoutsIndex = 0 \
                             if self.WorldShoutsIndex >= len(self.WorldShoutsTextList) \
@@ -50,7 +54,8 @@ class WorldShoutsTask(ClassicTask):
                                          ordinary=self.taskConfig.ordinaryWorldShouts,
                                          connected=self.taskConfig.connectedWorldShouts)
                         self.WorldShoutsIndex += 1
-                        self.logs(f"世界喊话 {self.event[1]} 次")
-                        self.event[1] += 1
+                        self.logs(f"世界喊话 {self.event["shout_counter"]} 次")
+                        self.event["shout_counter"] += 1
 
                     self.defer(1)
+        return None

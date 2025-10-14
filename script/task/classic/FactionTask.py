@@ -7,11 +7,14 @@ class FactionTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [time.time() - 60]
+        self.event = {
+            "last_activated_time": 0.0,  # 上次激活任务时间
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
 
-    def instance(self):
-        return self
+        }
+
 
     def execute(self):
         while not self.finished.is_set():
@@ -48,8 +51,8 @@ class FactionTask(ClassicTask):
                     self.setup = 4
                 case 4:
                     # 　定时激活任务
-                    if time.time() - self.event[0] > 90:
-                        self.event[0] = time.time()
+                    if time.time() - self.event["last_activated_time"] > 90:
+                        self.event["last_activated_time"] = time.time()
                         self.activatedTask("按钮任务帮派", model="江湖")
 
                     if self.exits("标志帮派任务下一轮") is not None:
@@ -77,3 +80,4 @@ class FactionTask(ClassicTask):
                         self.mouseClick((0, 0))
                         self.closeRewardUi(5)
                         self.setup = 0
+        return None

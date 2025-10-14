@@ -9,7 +9,6 @@ from script.utils.Thread import thread
 class AcquisitionTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._setup = 1
         self.event = {
             "collect_coord": [],  # 采集坐标 任务开始根据模式赋值采集坐标
             "collect_coord_index": 0,        # 采集坐标索引 用于切换采集坐标

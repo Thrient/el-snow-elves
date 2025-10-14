@@ -1,16 +1,17 @@
-import time
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
 class SittingObservingTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [time.time() - 60]
+        # 事件类型定义
+        self.event = {
 
-    def instance(self):
-        return self
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
+
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -48,3 +49,4 @@ class SittingObservingTask(ClassicTask):
                         self.setup = 0
                         continue
                     self.defer(5)
+        return None

@@ -5,30 +5,18 @@ class SwordTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.cache = None
         # 事件类型定义
-        # 0: 单人论剑次数计数器
-        # 1: 单人论剑战斗状态标志
-        self.event = [1, False]
-
-    def instance(self):
-        return self
-
-    def resetEvent(self):
-
-        if self.cache == self.setup:
-            return
-        self.cache = self.setup
-        match self.cache:
-            case 5:
-                # 重置单人论剑战斗状态标志
-                self.event[1] = False
+        self.event = {
+            "sword_counter": 1,  # 单人论剑次数计数器,
+            "is_prepare": False,  # 论剑准备状态
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
+            5: {"is_prepare": False},
+        }
 
     def execute(self):
         while not self.finished.is_set():
-
-            self.resetEvent()
 
             if self.timer.getElapsedTime() > 1800 * 2 * 3:
                 self.logs("单人论剑超时")
@@ -55,7 +43,7 @@ class SwordTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
-                    if self.taskConfig.swordFightCount < self.event[0]:
+                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
                         self.setup = 0
                         continue
 
@@ -72,8 +60,8 @@ class SwordTask(ClassicTask):
                         self.setup = 3
                         continue
 
-                    self.logs(f"华山论剑第 {self.event[0]} 次")
-                    self.event[0] += 1
+                    self.logs(f"华山论剑第 {self.event["sword_counter"]} 次")
+                    self.event["sword_counter"] += 1
                     self.defer(5)
                     self.waitMapLoading()
                     self.setup = 5
@@ -92,16 +80,11 @@ class SwordTask(ClassicTask):
                         self.setup = 4
                         continue
 
-                    if self.exits("标志单人论剑准备剩余时间") is not None:
-                        self.touch("按钮华山论剑准备", overTime=0.1)
+                    if self.event["is_prepare"]:
                         continue
 
-                    if self.exits("标志单人论剑战斗剩余时间") is None:
-                        continue
-
-                    if self.event[1]:
-                        continue
-                    self.event[1] = True
+                    self.touch("按钮华山论剑准备")
+                    self.event["is_prepare"] = True
                     self.keyClick("W", delay=3)
                     self.autoFightStart()
 
@@ -113,4 +96,4 @@ class SwordTask(ClassicTask):
                     # 等待地图加载完成
                     self.waitMapLoading()
                     self.setup = 4
-
+        return None

@@ -8,7 +8,6 @@ from typing import Any
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
-from airtest.core.api import swipe
 
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
@@ -174,12 +173,15 @@ class ClassicTask(BasisTask, ABC):
         for _ in range(index // 7 + 5):
             for result in self.exitsAll("标志线"):
                 if len(digits) == 1:
-                    if self.exits(args[0], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
+                    if self.exits(args[0],
+                                  box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
                         self.mouseClick((result[0] - 30, result[1]))
                         return
                 if len(digits) == 2:
-                    if self.exits(args[0], box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) is not None and \
-                        self.exits(args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
+                    if self.exits(args[0],
+                                  box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) is not None and \
+                            self.exits(args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15,
+                                                     result[1] + 20)) is not None:
                         self.mouseClick((result[0] - 50, result[1]))
                         return
             self.mouseMove((1050, 555), (1050, 355))
@@ -542,10 +544,11 @@ class ClassicTask(BasisTask, ABC):
         """
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            if self.touch("按钮关闭_1", "按钮关闭_V1", "按钮关闭", box=box, overTime=0.1, timeout=0) is not None:
-                self.logs("关闭当前界面")
-                continue
-            return
+            results =  self.exitsAll("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box)
+            if len(results) == 0 or results[0] is None:
+                return
+            self.mouseClick((results[-1][0], results[-1][1]), timeout=0)
+
 
     def backToMain(self):
         """
@@ -568,6 +571,9 @@ class ClassicTask(BasisTask, ABC):
             # 关闭当前打开的界面
             if self.exits("界面物品") is not None:
                 self.mouseClick((0, 0))
+            # 购买确认
+            if self.exits("标志购买确认") is not None:
+                self.touch("按钮取消")
             self.touch("按钮聊天退出", overTime=0.1)
             self.closeCurrentUi()
 

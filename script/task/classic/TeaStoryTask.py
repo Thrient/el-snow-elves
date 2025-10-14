@@ -1,5 +1,4 @@
 import random
-import time
 
 from script.task.basis.ClassicTask import ClassicTask
 
@@ -7,11 +6,14 @@ from script.task.basis.ClassicTask import ClassicTask
 class TeaStoryTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = 1
-        self.event = [False]
+        # 事件类型定义
+        self.event = {
+            "answer_sign": False,  # 答题标志
+        }
+        # 状态-重置配置表：key=状态值，value=需要重置的变量
+        self.state_reset_config = {
 
-    def instance(self):
-        return self
+        }
 
     def execute(self):
         while not self.finished.is_set():
@@ -52,12 +54,12 @@ class TeaStoryTask(ClassicTask):
                         continue
 
                     if self.exits("标志茶馆发布题目") is not None:
-                        self.event[0] = True
+                        self.event["answer_sign"] = True
                         continue
 
-                    if self.exits("标志茶馆答题时间") is not None and self.event[0]:
+                    if self.exits("标志茶馆答题时间") is not None and self.event["answer_sign"]:
                         self.logs("随机答题")
-                        self.event[0] = False
+                        self.event["answer_sign"] = False
 
                         actions = [
                             "按钮茶馆甲",
@@ -74,3 +76,4 @@ class TeaStoryTask(ClassicTask):
                         self.touch("按钮茶馆退出")
                         self.setup = 0
                         continue
+        return None
