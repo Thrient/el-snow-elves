@@ -90,7 +90,7 @@ class SwordTask(ClassicTask):
 
                 case 6:
                     # 点击华山论剑离开按钮
-                    self.touch("按钮华山论剑离开")
+                    self.touch("按钮华山论剑离开", overTime=20)
                     # 停止自动战斗模式
                     self.autoFightStop()
                     # 等待地图加载完成

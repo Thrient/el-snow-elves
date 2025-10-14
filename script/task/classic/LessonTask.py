@@ -36,7 +36,10 @@ class LessonTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.verifyTouch("按钮活动江湖")
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动江湖")
 
                     if self.touch("按钮活动止杀", "按钮活动锻心", "按钮活动问卜", "按钮活动漱尘", "按钮活动归义",
                                   "按钮活动濯剑", "按钮活动吟风", "按钮活动悟禅", "按钮活动含灵", "按钮活动寻道",
