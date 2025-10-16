@@ -6,9 +6,9 @@ import win32api
 import win32con
 import win32gui
 import win32ui
+from PIL import Image
 
 from script.utils.Utils import Utils
-from PIL import Image
 
 
 class WindowConsole:
@@ -18,7 +18,28 @@ class WindowConsole:
         self.vkCode = {
             "TAB": 0x09,
             "ESC": 0x1B,
-            "SPACE": 0x20
+            "SPACE": 0x20,
+            "DIGIT0": 0x30,
+            "DIGIT1": 0x31,
+            "DIGIT2": 0x32,
+            "DIGIT3": 0x33,
+            "DIGIT4": 0x34,
+            "DIGIT5": 0x35,
+            "DIGIT6": 0x36,
+            "DIGIT7": 0x37,
+            "DIGIT8": 0x38,
+            "DIGIT9": 0x39,
+            "NUMPAD0": 0x60,
+            "NUMPAD1": 0x61,
+            "NUMPAD2": 0x62,
+            "NUMPAD3": 0x63,
+            "NUMPAD4": 0x64,
+            "NUMPAD5": 0x65,
+            "NUMPAD6": 0x66,
+            "NUMPAD7": 0x67,
+            "NUMPAD8": 0x68,
+            "NUMPAD9": 0x69,
+
         }
 
     def input(self, text):
