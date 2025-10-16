@@ -18,6 +18,7 @@ from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
 from script.task.classic.SwordTask import SwordTask
 from script.task.classic.SwordThreeTask import SwordThreeTask
 from script.task.classic.TeaStoryTask import TeaStoryTask
+from script.task.classic.UniqueSkillsTask import UniqueSkillsTask
 from script.task.classic.UrgentDeliveryTask import UrgentDeliveryTask
 from script.task.classic.WorldShoutsTask import WorldShoutsTask
 
@@ -73,6 +74,7 @@ class TaskFactory:
         self.register("classic", "多人论剑", SwordThreeTask)
         self.register("classic", "山河器", RiverTask)
         self.register("classic", "帮派积分", FactionPointsTask)
+        self.register("classic", "行当绝活", UniqueSkillsTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

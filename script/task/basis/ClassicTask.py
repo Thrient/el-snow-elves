@@ -335,13 +335,14 @@ class ClassicTask(BasisTask, ABC):
         self.logs("等待地图加载")
         while not self.finished.is_set():
             # 限制循环次数，防止无限等待
-            if __count >= 3:
+            if __count > 3:
                 break
             # 检查是否正在加载地图，如果是则继续等待
             if self.exits("标志地图加载", "标志地图加载_1") is not None:
                 __count = 0
                 continue
             __count += 1
+            time.sleep(1)
         self.logs("地图加载结束")
 
     def locationDetection(self):
@@ -901,9 +902,10 @@ class ClassicTask(BasisTask, ABC):
                 self.unstuck()
                 self.touch("按钮继续寻路")
             # 限制循环次数，防止无限等待
-            if __count >= 3:
+            if __count > 3:
                 break
             __count += 1
+            time.sleep(1)
         self.logs("寻路结束")
 
     def switchCharacter(self):

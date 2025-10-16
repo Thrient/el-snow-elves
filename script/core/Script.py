@@ -1,8 +1,9 @@
 import time
 from threading import Thread, Lock, Event
 
-from airtest.core.api import auto_setup
+from apscheduler.schedulers.background import BackgroundScheduler
 
+from script.config.Config import Config
 from script.core.TaskFactory import TaskFactory
 from script.core.TaskScheduler import TaskScheduler
 from script.core.WindowConsole import WindowConsole
@@ -20,7 +21,23 @@ class Script(Thread):
         self.__stopped = Lock()
         self.__finished = Event()
         self.__stop = Event()
+        self.sched = BackgroundScheduler(demon=True)
         self.obj = None
+        self.addScheduledTasks()
+        self.sched.start()
+
+    def addScheduledTasks(self):
+
+        def restart():
+            # Config.SWITCH_CHARACTER_STATE[self.hwnd] = [True, True, True, True, True, True]
+            pass
+        self.sched.add_job(
+            restart,
+            "cron",
+            hour=19,
+            minute=12,
+            timezone="Asia/Shanghai"
+        )
 
     def run(self):
         """

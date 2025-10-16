@@ -2,7 +2,6 @@ import time
 from abc import ABC, abstractmethod
 
 from airtest.aircv.utils import pil_2_cv2
-from airtest.core.api import touch, swipe
 from airtest.core.cv import Template
 
 from script.config.Config import Config
@@ -267,6 +266,7 @@ class BasisTask(ABC):
                     continue
                 self.mouseClick(result, x=x, y=y, count=count, timeout=timeout, delay=delay)
                 return result
+            time.sleep(0.05)
         return None
 
     def wait(self, *args, **kwargs):
@@ -350,6 +350,19 @@ class BasisTask(ABC):
                 return results
 
         return results
+
+    # def ocr(self, box):
+    #     """ocr识别"""
+    #     with self.stopped:
+    #         screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
+    #         ocr = CnOcr(
+    #             det_model_name="en_PP-OCRv3_det",
+    #             det_model_fp="resources/cnstd/1.2/ppocr/en_PP-OCRv3_det_infer.onnx",
+    #             rec_model_name="en_number_mobile_v2.0",
+    #             rec_model_fp="resources/cnocr/2.3/ppocr/en_number_mobile_v2.0_rec_infer.onnx"
+    #         )
+    #         res = ocr.ocr_for_single_line(screen)
+    #         return res
 
     def imageTemplate(self, image, threshold, box):
         """
