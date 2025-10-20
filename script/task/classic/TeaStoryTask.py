@@ -16,7 +16,7 @@ class TeaStoryTask(ClassicTask):
         }
 
     def execute(self):
-        while not self.finished.is_set():
+        while not self._finished.is_set():
 
             if self.timer.getElapsedTime() > 1800:
                 self.logs("茶馆说书超时")

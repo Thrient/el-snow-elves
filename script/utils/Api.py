@@ -45,6 +45,7 @@ class Api:
                         return callback(*args)
                 else:
                     return callback()
+        return None
 
 
 api = Api()

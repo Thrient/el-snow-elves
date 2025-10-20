@@ -16,7 +16,7 @@ class HeroListTask(ClassicTask):
         }
 
     def execute(self):
-        while not self.finished.is_set():
+        while not self._finished.is_set():
 
             if self.timer.getElapsedTime() > 1800:
                 self.logs("江湖英雄榜超时")
@@ -73,8 +73,8 @@ class HeroListTask(ClassicTask):
                     self.setup = 6
                 case 6:
 
-                    if (self.exits("按钮江湖英雄榜离开") is not None
-                            or self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方") is None):
+                    if self.exits("按钮江湖英雄榜离开") is not None \
+                            or self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方") is None:
 
                         self.autoFightStop()
 

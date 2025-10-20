@@ -1,36 +1,46 @@
 import time
-from threading import Thread, Lock, Event
+from threading import Thread, Event
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from script.config.Config import Config
+from script.core.TaskConfigScheduler import task_config_scheduler
 from script.core.TaskFactory import TaskFactory
 from script.core.TaskScheduler import TaskScheduler
 from script.core.WindowConsole import WindowConsole
+from script.utils.TaskConfig import TaskConfig
 from script.utils.Utils import Utils
 
 
 class Script(Thread):
-    def __init__(self, hwnd, window, taskConfig):
+    def __init__(self, hwnd, window):
         super().__init__()
         self.hwnd = hwnd
         self.window = window
-        self.taskConfig = taskConfig
-        self.taskScheduler = TaskScheduler(hwnd, taskConfig)
+        self.taskScheduler = TaskScheduler(hwnd)
         self.windowConsole = WindowConsole(hwnd)
-        self.__stopped = Lock()
-        self.__finished = Event()
-        self.__stop = Event()
         self.sched = BackgroundScheduler(demon=True)
         self.obj = None
         self.addScheduledTasks()
         self.sched.start()
+
+        self._on = Event()
+        self._end = Event()
+
+    def switch_on(self, config, taskConfig):
+        if self._on.is_set():
+            return
+        self._on.set()
+        task_config_scheduler.load_common(self.hwnd, taskConfig if config == "默认配置" else TaskConfig().loadConfig(config))
+        # 初始化窗口的切换角色状态
+        Config.SWITCH_CHARACTER_STATE[self.hwnd] = [True, True, True, True, True, True]
 
     def addScheduledTasks(self):
 
         def restart():
             # Config.SWITCH_CHARACTER_STATE[self.hwnd] = [True, True, True, True, True, True]
             pass
+
         self.sched.add_job(
             restart,
             "cron",
@@ -53,13 +63,13 @@ class Script(Thread):
             无
         """
         try:
-            Utils.sendEmit(self.window, 'API:ADD:CHARACTER', state='初始化', hwnd=self.hwnd)
+
             self.windowConsole.setWindowNoMenu()
             self.windowConsole.setWinEnableClickThrough()
             self.windowConsole.setWindowTransparent(255)
 
             # 主任务处理循环，当finished标志未设置时持续运行
-            while not self.__finished.is_set():
+            while not self._end.is_set():
                 try:
                     # 从任务调度器获取下一个待执行任务
                     task = self.taskScheduler.pop()
@@ -76,11 +86,10 @@ class Script(Thread):
                                    info="信息", data=f"{task}开始")
 
                     # 根据任务配置创建对应的任务对象实例
-                    cls = TaskFactory.instance().create(self.taskConfig.model, task)
+                    cls = TaskFactory.instance().create(task_config_scheduler.read_common(self.hwnd).model, task)
                     if cls is None:
                         continue
-                    with cls(hwnd=self.hwnd, stopped=self.__stopped, finished=self.__finished, window=self.window,
-                                   taskConfig=self.taskConfig, windowConsole=self.windowConsole) as self.obj:
+                    with cls(hwnd=self.hwnd, window=self.window, windowConsole=self.windowConsole) as self.obj:
                         self.obj.execute()
                 except Exception as e:
                     print(e)
@@ -100,11 +109,24 @@ class Script(Thread):
         返回值:
             无
         """
-        self.__finished.set()
-        self.resume()
-        self.windowConsole.restStyle()
-        self.windowConsole.setWinUnEnableClickThrough()
-        self.windowConsole.setWindowTransparent(255)
+        try:
+            self.obj.finish()
+        except Exception as e:
+            print(e)
+        finally:
+            self._end.set()
+            self.windowConsole.restStyle()
+            self.windowConsole.setWinUnEnableClickThrough()
+            self.windowConsole.setWindowTransparent(255)
+
+    def end(self):
+        try:
+            self.obj.finish()
+        except Exception as e:
+            print(e)
+        finally:
+            self._on.clear()
+            self.taskScheduler.clear()
 
     def stop(self):
         """
@@ -120,19 +142,14 @@ class Script(Thread):
             无
         """
         try:
-            # 暂停计时器
-            if self.obj is not None:
-                self.obj.timer.stop()
-            # 如果停止标志位未被设置，则执行停止流程
-            if not self.__stop.is_set():
-                self.__stop.set()
-                self.__stopped.acquire()
+            self.obj.stop()
+        except Exception as e:
+            print(e)
+        finally:
             # 恢复原本窗口
             self.windowConsole.restStyle()
             # 取消窗口的点击穿透功能
             self.windowConsole.setWinUnEnableClickThrough()
-        except Exception as e:
-            print(e)
 
     def resume(self):
         """
@@ -148,20 +165,14 @@ class Script(Thread):
             无
         """
         try:
-            # 恢复计时器
-            if self.obj is not None:
-                self.obj.timer.resume()
-            # 如果停止标志已设置，则清除停止标志并释放停止信号量
-            if self.__stop.is_set():
-                self.__stop.clear()
-                self.__stopped.release()
+            self.obj.resume()
+        except Exception as e:
+            print(e)
+        finally:
             # 去除窗口菜单
             self.windowConsole.setWindowNoMenu()
             # 设置窗口控制台为可点击穿透状态
             self.windowConsole.setWinEnableClickThrough()
-
-        except Exception as e:
-            print(e)
 
     def lock(self):
         """

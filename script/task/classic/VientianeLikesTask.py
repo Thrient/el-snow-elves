@@ -15,7 +15,7 @@ class VientianeLikesTask(ClassicTask):
         }
 
     def execute(self):
-        while not self.finished.is_set():
+        while not self._finished.is_set():
 
             if self.timer.getElapsedTime() > 1800:
                 self.logs("万象刷赞超时")

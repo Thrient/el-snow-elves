@@ -51,8 +51,20 @@ class TaskConfig:
         self.merchantLakeCount = kwargs.get('merchantLakeCount', 1)
         self.merchantLakeWordShout = kwargs.get('merchantLakeWordShout', '江湖行商来人!!!(哔站搜时雪)')
 
+    def loadConfig(self, config):
+        if config == "":
+            return self
+        if config is None:
+            return self
+        if config == "默认配置":
+            return self
+        # 从用户配置路径下读取指定的JSON配置文件
+        with open(fr"{Config.USER_CONFIG_PATH}\{config}.json", 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return TaskConfig(**data)
+
     @staticmethod
-    def loadConfig(*args):
+    def loadConfigDict(*args):
         """
         加载任务配置信息
 

@@ -26,7 +26,7 @@ class BountyMissionsTask(ClassicTask):
         }
 
     def execute(self):
-        while not self.finished.is_set():
+        while not self._finished.is_set():
 
             if 1800 * 2 * 6 < self.timer.getElapsedTime():
                 self.logs("悬赏任务超时")

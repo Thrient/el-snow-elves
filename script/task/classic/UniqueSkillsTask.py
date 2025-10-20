@@ -16,7 +16,7 @@ class UniqueSkillsTask(ClassicTask):
         }
 
     def execute(self):
-        while not self.finished.is_set():
+        while not self._finished.is_set():
 
             if self.timer.getElapsedTime() > 1800:
                 self.logs("行当绝活超时")
@@ -47,7 +47,7 @@ class UniqueSkillsTask(ClassicTask):
                     if self.exits("界面行当通用") is None:
                         self.setup = 3
                         continue
-                    self.touch("按钮行当鉴宝")
+                    self.touch("按钮行当鉴宝", "按钮行当裁衣", "按钮行当缝裤", "按钮行当冶兵")
                     self.arrive()
                     self.touch("按钮行当磨具打造", "按钮行当鞋裤制样", "按钮行当兵刃图样", "按钮行当服冠制样")
                     self.setup = 5

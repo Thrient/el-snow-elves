@@ -1,21 +1,23 @@
 import time
 from abc import ABC, abstractmethod
+from threading import Lock, Event
 
 from airtest.aircv.utils import pil_2_cv2
 from airtest.core.cv import Template
 
 from script.config.Config import Config
+from script.core.TaskConfigScheduler import task_config_scheduler
 from script.core.Timer import Timer
 from script.utils.Utils import Utils
 
 
 class BasisTask(ABC):
-    def __init__(self, hwnd, stopped, finished, window, taskConfig, windowConsole):
+    def __init__(self, hwnd, window, windowConsole):
         self.hwnd = hwnd
-        self.stopped = stopped
-        self.finished = finished
+        self._stopped = Lock()
+        self._finished = Event()
         self.window = window
-        self.taskConfig = taskConfig
+        self.taskConfig = task_config_scheduler.read(self.hwnd)
         self.windowConsole = windowConsole
         self.timer = Timer()
         # 流程控制变量, 默认值1
@@ -47,6 +49,17 @@ class BasisTask(ABC):
             if var_name in self.event:
                 self.event[var_name] = value
 
+    def stop(self):
+        self._stopped.acquire()
+        self.timer.stop()
+
+    def resume(self):
+        self._stopped.release()
+        self.timer.resume()
+
+    def finish(self):
+        self.resume()
+        self._finished.set()
 
     @abstractmethod
     def instance(self):
@@ -130,10 +143,10 @@ class BasisTask(ABC):
             无返回值
         """
         # 如果已完成标志已设置，则直接返回
-        if self.finished.is_set():
+        if self._finished.is_set():
             return
         # 在停止锁的保护下执行控制台输入操作
-        with self.stopped:
+        with self._stopped:
             self.windowConsole.input(text)
 
     def mouseWheel(self, pos, step=120, timeout=Config.TIMEOUT, count=1):
@@ -149,9 +162,9 @@ class BasisTask(ABC):
         返回值:
             无返回值
         """
-        if self.finished.is_set():
+        if self._finished.is_set():
             return
-        with self.stopped:
+        with self._stopped:
             # 确保滚动次数至少为1次
             count = 1 if count <= 0 else count
             # 执行指定次数的鼠标滚轮操作
@@ -172,9 +185,9 @@ class BasisTask(ABC):
         返回值:
             无返回值
         """
-        if self.finished.is_set():
+        if self._finished.is_set():
             return
-        with self.stopped:
+        with self._stopped:
             for _ in range(count):
                 # 打印鼠标移动的起始和结束坐标信息
                 print(f"start: {start[0]}:{start[1]} to end: {end[0]}:{end[1]}")
@@ -198,9 +211,9 @@ class BasisTask(ABC):
         返回值:
             无返回值
         """
-        if self.finished.is_set():
+        if self._finished.is_set():
             return
-        with self.stopped:
+        with self._stopped:
             # 确保点击次数至少为1次
             count = 1 if count <= 0 else count
             # 执行指定次数的鼠标点击操作
@@ -221,10 +234,10 @@ class BasisTask(ABC):
         返回值:
             无返回值
         """
-        if self.finished.is_set():
+        if self._finished.is_set():
             return
         # 执行按键操作
-        with self.stopped:
+        with self._stopped:
             self.windowConsole.keyDownUp(key, delay=delay)
             print(f"key: {key}")
             time.sleep(timeout)
@@ -353,7 +366,7 @@ class BasisTask(ABC):
 
     # def ocr(self, box):
     #     """ocr识别"""
-    #     with self.stopped:
+    #     with self._stopped:
     #         screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
     #         ocr = CnOcr(
     #             det_model_name="en_PP-OCRv3_det",
@@ -379,9 +392,9 @@ class BasisTask(ABC):
 
         threshold = Config.THRESHOLD_IMAGE[image] if Config.THRESHOLD_IMAGE.get(image) else threshold
 
-        if self.finished.is_set():
+        if self._finished.is_set():
             return None
-        with self.stopped:
+        with self._stopped:
             # 截取指定窗口的指定区域并转换为OpenCV格式
             screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
             # 使用模板匹配算法在截图中查找指定图像
@@ -404,9 +417,9 @@ class BasisTask(ABC):
             list: 匹配到的所有位置坐标列表，每个坐标为相对于原始窗口的绝对坐标
         """
         threshold = Config.THRESHOLD_IMAGE[image] if Config.THRESHOLD_IMAGE.get(image) else threshold
-        if self.finished.is_set():
+        if self._finished.is_set():
             return
-        with self.stopped:
+        with self._stopped:
             # 截取指定区域的屏幕图像并转换为OpenCV格式
             screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
             # 在屏幕截图中查找所有匹配的模板图像

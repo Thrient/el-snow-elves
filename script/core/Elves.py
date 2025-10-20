@@ -4,6 +4,7 @@ import time
 import webview
 
 from script.config.Config import Config
+from script.core.HotkeyManager import hot_key_manager
 from script.core.Script import Script
 from script.utils.Api import api
 from script.utils.TaskConfig import TaskConfig
@@ -33,6 +34,12 @@ class Elves:
         api.on("API:SCRIPT:UPDATE", self.update)
         # 注册脚本启动事件监听器
         api.on("API:SCRIPT:START", self.start)
+        # 注册脚本结束事件监听器
+        api.on("API:SCRIPT:END", self.end)
+        # 注册脚本查找事件监听器
+        api.on("API:SCRIPT:SEARCH", self.search)
+        # 注册脚本绑定监听器
+        api.on("API:SCRIPT:BIND", self.bind)
         # 注册脚本解绑事件监听器
         api.on("API:SCRIPT:UNBIND", self.unbind)
         # 注册脚本停止事件监听器
@@ -52,9 +59,12 @@ class Elves:
 
         api.on("API:TASK:CONFIG:DELETE", TaskConfig.deleteConfig)
         # 注册任务配置加载事件处理函数
-        api.on("API:TASK:CONFIG:lOAD", TaskConfig.loadConfig)
+        api.on("API:TASK:CONFIG:lOAD", TaskConfig.loadConfigDict)
         # 注册配置列表获取事件处理函数
         api.on("API:TASK:CONFIG:LIST", TaskConfig.getTaskList)
+
+
+        hot_key_manager.register("ctrl+shift+e", self.hot_key_bind, "快捷键启动")
 
         self.window.events.closed += self.on_closed
 
@@ -74,6 +84,8 @@ class Elves:
         # 遍历所有脚本对象并执行解绑操作
         for script in self.winList.values():
             script.unbind()
+
+        hot_key_manager.stop()
 
     #
     def update(self):
@@ -212,7 +224,61 @@ class Elves:
         script = self.winList.get(hwnd)
         script.screenshot()
 
-    def start(self, **kwargs):
+    def search(self):
+        """
+
+        :return:
+        """
+
+        for hwnd in Utils.getHwndByTitle():
+
+            if hwnd in self.winList:
+                continue
+            self.launch_script(hwnd)
+
+    def launch_script(self, hwnd):
+        script = Script(hwnd=hwnd, window=self.window)
+        Utils.sendEmit(self.window, 'API:ADD:CHARACTER', state='初始化', hwnd=hwnd, config="默认配置")
+        self.winList[hwnd] = script
+        # 初始化窗口的切换角色状态
+        Config.SWITCH_CHARACTER_STATE[hwnd] = [True, True, True, True, True, True]
+        # 运行脚本
+        script.start()
+
+    def end(self, hwnd):
+        # 如果该窗口已在监控列表中，则直接返回
+        if hwnd not in self.winList:
+            return
+
+        # 创建新的脚本实例并添加到窗口列表中
+        script = self.winList.get(hwnd)
+
+        script.end()
+
+    def start(self, hwnd, config):
+        """
+        启动脚本执行函数
+
+        参数:
+            **kwargs: 传递给任务配置的键值对参数
+
+        返回值:
+            无
+        """
+
+        # 如果该窗口不在监控列表中，则直接返回
+        if hwnd not in self.winList:
+            return
+
+        # 创建新的脚本实例并添加到窗口列表中
+        script = self.winList[hwnd]
+
+        def callback(kwargs):
+            script.switch_on(config=config, taskConfig=TaskConfig(**kwargs))
+
+        Utils.sendEmit(self.window, 'API:TASK:CONFIG:GET', callback)
+
+    def bind(self):
         """
         启动脚本执行函数
 
@@ -224,22 +290,33 @@ class Elves:
         """
         # 等待2秒后获取鼠标位置对应的窗口句柄
         time.sleep(2)
-        hwnd = Utils.getHwndByMouse()
+        hwnd = Utils.getHwndByMouseAndTitle()
 
-        # 如果该窗口已在监控列表中，则直接返回
         if hwnd in self.winList:
             return
 
-        # 创建新的脚本实例并添加到窗口列表中
-        script = Script(hwnd=hwnd, window=self.window, taskConfig=TaskConfig(**kwargs))
+        self.launch_script(hwnd=hwnd)
 
-        self.winList[hwnd] = script
+        self.start(hwnd, "默认配置")
 
-        # 初始化窗口的切换角色状态
-        Config.SWITCH_CHARACTER_STATE[hwnd] = [True, True, True, True, True, True]
+    def hot_key_bind(self):
+        """
+        启动脚本执行函数
 
-        # 运行脚本
-        script.run()
+        参数:
+            **kwargs: 传递给任务配置的键值对参数
+
+        返回值:
+            无
+        """
+        hwnd = Utils.getHwndByMouseAndTitle()
+
+        if hwnd in self.winList:
+            return
+
+        self.launch_script(hwnd=hwnd)
+
+        self.start(hwnd, "默认配置")
 
     @staticmethod
     def run(debug=False):
@@ -250,6 +327,7 @@ class Elves:
         并提供JavaScript API接口
 
         参数:
+
             self: 类实例引用
 
         返回值:

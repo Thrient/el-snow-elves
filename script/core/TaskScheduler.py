@@ -1,14 +1,14 @@
 import queue
 
 from script.config.Config import Config
+from script.core.TaskConfigScheduler import task_config_scheduler
 
 
 class TaskScheduler:
 
-    def __init__(self, hwnd, taskConfig):
+    def __init__(self, hwnd):
         self.counter = 0
         self.hwnd = hwnd
-        self.taskConfig = taskConfig
         self.queue = queue.PriorityQueue()
         self.tasks = set()
 
@@ -16,8 +16,11 @@ class TaskScheduler:
         self.queue = queue.PriorityQueue()
         self.tasks.clear()
         self.counter = 0
-        for task in self.taskConfig.executeList:
+        for task in task_config_scheduler.read_common(self.hwnd).executeList:
             self.add(0, task["data"])
+
+    def clear(self):
+        self.queue = queue.PriorityQueue()
 
     def add(self, index, task):
         """
@@ -46,11 +49,16 @@ class TaskScheduler:
             return task
 
         characterState = [
-            "characterOne" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][0],
-            "characterTwo" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][1],
-            "characterThree" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][2],
-            "characterFour" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][3],
-            "characterFive" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][4],
+            "characterOne" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            Config.SWITCH_CHARACTER_STATE[self.hwnd][0],
+            "characterTwo" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            Config.SWITCH_CHARACTER_STATE[self.hwnd][1],
+            "characterThree" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            Config.SWITCH_CHARACTER_STATE[self.hwnd][2],
+            "characterFour" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            Config.SWITCH_CHARACTER_STATE[self.hwnd][3],
+            "characterFive" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            Config.SWITCH_CHARACTER_STATE[self.hwnd][4],
             all(Config.SWITCH_CHARACTER_STATE[self.hwnd])
         ]
 

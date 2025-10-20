@@ -26,7 +26,7 @@ class DailyCopiesTask(ClassicTask):
         }
 
     def execute(self):
-        while not self.finished.is_set():
+        while not self._finished.is_set():
 
             if 1800 * 2 < self.timer.getElapsedTime():
                 self.logs("日常副本超时")

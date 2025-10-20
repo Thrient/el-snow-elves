@@ -36,7 +36,7 @@ class ClassicTask(BasisTask, ABC):
 
     @thread(daemon=True)
     def popCheck(self):
-        while not self.finished.is_set() and not self.popCheckEvent.is_set():
+        while not self._finished.is_set() and not self.popCheckEvent.is_set():
             self.closeDreamCub()
 
             time.sleep(1)
@@ -66,7 +66,7 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        if self.finished.is_set():
+        if self._finished.is_set():
             return
         for image in args:
             # 检查图像配置中的前缀是否存在，如果存在则验证其是否可用
@@ -333,7 +333,7 @@ class ClassicTask(BasisTask, ABC):
         """
         __count = 0
         self.logs("等待地图加载")
-        while not self.finished.is_set():
+        while not self._finished.is_set():
             # 限制循环次数，防止无限等待
             if __count > 3:
                 break
@@ -573,7 +573,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("返回主界面")
         # 循环关闭当前界面直到返回主界面或任务完成
-        while not self.finished.is_set():
+        while not self._finished.is_set():
             # 检查是否已经回到主界面（通过检测"按钮世界挂机"是否存在）
             if self.exits("按钮世界挂机") is not None:
                 break
@@ -890,7 +890,7 @@ class ClassicTask(BasisTask, ABC):
         __count = 0
         __start = time.time()
         self.logs("等待寻路结束")
-        while not self.finished.is_set():
+        while not self._finished.is_set():
             # 检查是否正在寻路中，如果是则继续等待
             # 检查是否正在加载地图，如果是则继续等待
             if self.exits("标志寻路中") is not None or self.exits("标志地图加载", "标志地图加载_1") is not None:
