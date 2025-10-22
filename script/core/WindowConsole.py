@@ -13,6 +13,8 @@ from script.utils.Utils import Utils
 
 class WindowConsole:
     def __init__(self, hwnd):
+        self.left = win32gui.GetWindowRect(hwnd)[0]
+        self.top = win32gui.GetWindowRect(hwnd)[1]
         self.hwnd = hwnd
         self.style = None
         self.vkCode = {
@@ -221,8 +223,8 @@ class WindowConsole:
         # 重新设置原始窗口样式
         win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, self.style)
         # 触发窗口重绘以应用样式
-        win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
-                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED)
+        win32gui.SetWindowPos(self.hwnd, 0, self.left, self.top, 1335, 750,
+                              win32con.SWP_FRAMECHANGED)
 
     def setWindowNoMenu(self):
         """
@@ -237,13 +239,16 @@ class WindowConsole:
         返回值:
             无
         """
-        # 设置进程DPI感知级别
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
         # 确保窗口有效
         assert win32gui.IsWindow(self.hwnd), "无效窗口"
+
+        # 设置进程DPI感知级别
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+
         if self.style is None:
             # 获取当前窗口样式
             self.style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_STYLE)
+
         # 移除窗口标题栏、边框和系统菜单样式
         style = self.style & ~(win32con.WS_CAPTION | win32con.WS_THICKFRAME | win32con.WS_SYSMENU)
         # 应用新的窗口样式
@@ -252,9 +257,9 @@ class WindowConsole:
         win32gui.SetWindowPos(
             self.hwnd,
             win32con.HWND_TOP,
-            0, 0,
+            self.left, self.top,
             1335, 750,
-            win32con.SWP_NOMOVE | win32con.SWP_NOZORDER | win32con.SWP_FRAMECHANGED
+            win32con.SWP_FRAMECHANGED
         )
 
     def setWinEnableClickThrough(self):
@@ -350,6 +355,47 @@ class WindowConsole:
         # 更新窗口以应用更改
         win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
                               win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED)
+
+    def setWindowFullscreen(self):
+
+        # 验证窗口句柄有效性
+        assert win32gui.IsWindow(self.hwnd), "无效窗口"
+
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+
+        # 获取窗口左上角所在屏幕的设备上下文
+        screen_dc = win32api.MonitorFromWindow(self.hwnd, win32con.MONITOR_DEFAULTTONEAREST)
+        # 获取目标屏幕的真实分辨率（排除任务栏等系统区域）
+        monitor_info = win32api.GetMonitorInfo(screen_dc)
+        screen_rect = monitor_info["Monitor"]  # 屏幕完整矩形（x1,y1,x2,y2）
+        screen_width = screen_rect[2] - screen_rect[0]
+        screen_height = screen_rect[3] - screen_rect[1]
+
+        ex_style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
+
+        # 设置窗口样式（无边框、全屏）
+        ex_style = ex_style & ~(
+                win32con.WS_CAPTION |  # 移除标题栏
+                win32con.WS_THICKFRAME |  # 移除可调整大小边框
+                win32con.WS_MINIMIZE |  # 禁用最小化
+                win32con.WS_MAXIMIZEBOX |  # 移除最大化按钮
+                win32con.WS_SYSMENU  # 移除系统菜单（右键菜单）
+        )
+
+        # 设置修改后的窗口扩展样式
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, ex_style)
+
+        # 调整窗口位置和大小以覆盖全屏
+        win32gui.SetWindowPos(
+            self.hwnd,
+            win32con.HWND_TOPMOST,  # 置顶显示，避免被其他窗口遮挡
+            screen_rect[0], screen_rect[1],  # 屏幕左上角坐标（适配多屏幕）
+            screen_width, screen_height,  # 窗口大小=屏幕分辨率
+            # 窗口操作标志：不改变Z序、显示窗口、忽略大小缓存
+            win32con.SWP_NOZORDER | win32con.SWP_SHOWWINDOW | win32con.SWP_FRAMECHANGED
+        )
+
+        win32gui.SetForegroundWindow(self.hwnd)
 
     def captureWindow(self):
         """

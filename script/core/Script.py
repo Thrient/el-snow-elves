@@ -4,7 +4,7 @@ from threading import Thread, Event
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from script.config.Config import Config
-from script.core.TaskConfigScheduler import task_config_scheduler
+from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.TaskFactory import TaskFactory
 from script.core.TaskScheduler import TaskScheduler
 from script.core.WindowConsole import WindowConsole
@@ -24,16 +24,20 @@ class Script(Thread):
         self.addScheduledTasks()
         self.sched.start()
 
+        self._full = Event()
         self._on = Event()
         self._end = Event()
 
     def switch_on(self, config, taskConfig):
         if self._on.is_set():
             return
+        if self._full.is_set():
+            return
         self._on.set()
-        task_config_scheduler.load_common(self.hwnd, taskConfig if config == "默认配置" else TaskConfig().loadConfig(config))
+        taskConfigScheduler.load_common(self.hwnd, taskConfig if config == "默认配置" else TaskConfig().loadConfig(config))
         # 初始化窗口的切换角色状态
         Config.SWITCH_CHARACTER_STATE[self.hwnd] = [True, True, True, True, True, True]
+        self.lock()
 
     def addScheduledTasks(self):
 
@@ -65,7 +69,6 @@ class Script(Thread):
         try:
 
             self.windowConsole.setWindowNoMenu()
-            self.windowConsole.setWinEnableClickThrough()
             self.windowConsole.setWindowTransparent(255)
 
             # 主任务处理循环，当finished标志未设置时持续运行
@@ -75,6 +78,7 @@ class Script(Thread):
                     task = self.taskScheduler.pop()
                     if task is None:
                         Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state='无任务', hwnd=self.hwnd)
+                        time.sleep(3)
                         continue
 
                     # 发送任务状态更新信息
@@ -86,7 +90,7 @@ class Script(Thread):
                                    info="信息", data=f"{task}开始")
 
                     # 根据任务配置创建对应的任务对象实例
-                    cls = TaskFactory.instance().create(task_config_scheduler.read_common(self.hwnd).model, task)
+                    cls = TaskFactory.instance().create(taskConfigScheduler.read_common(self.hwnd).model, task)
                     if cls is None:
                         continue
                     with cls(hwnd=self.hwnd, window=self.window, windowConsole=self.windowConsole) as self.obj:
@@ -115,6 +119,7 @@ class Script(Thread):
             print(e)
         finally:
             self._end.set()
+            taskConfigScheduler.clear(self.hwnd)
             self.windowConsole.restStyle()
             self.windowConsole.setWinUnEnableClickThrough()
             self.windowConsole.setWindowTransparent(255)
@@ -125,6 +130,7 @@ class Script(Thread):
         except Exception as e:
             print(e)
         finally:
+            self.unlock()
             self._on.clear()
             self.taskScheduler.clear()
 
@@ -169,6 +175,7 @@ class Script(Thread):
         except Exception as e:
             print(e)
         finally:
+            self._full.clear()
             # 去除窗口菜单
             self.windowConsole.setWindowNoMenu()
             # 设置窗口控制台为可点击穿透状态
@@ -217,6 +224,13 @@ class Script(Thread):
 
         """
         self.windowConsole.setWindowTransparent(transparent)
+
+    def fullScreen(self):
+        if self._full.is_set():
+            return
+        self._full.set()
+        self.stop()
+        self.windowConsole.setWindowFullscreen()
 
     def screenshot(self):
         """

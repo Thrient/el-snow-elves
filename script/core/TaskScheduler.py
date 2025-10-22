@@ -1,7 +1,7 @@
 import queue
 
 from script.config.Config import Config
-from script.core.TaskConfigScheduler import task_config_scheduler
+from script.core.TaskConfigScheduler import taskConfigScheduler
 
 
 class TaskScheduler:
@@ -16,7 +16,7 @@ class TaskScheduler:
         self.queue = queue.PriorityQueue()
         self.tasks.clear()
         self.counter = 0
-        for task in task_config_scheduler.read_common(self.hwnd).executeList:
+        for task in taskConfigScheduler.read_common(self.hwnd).executeList:
             self.add(0, task["data"])
 
     def clear(self):
@@ -49,15 +49,15 @@ class TaskScheduler:
             return task
 
         characterState = [
-            "characterOne" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            "characterOne" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
             Config.SWITCH_CHARACTER_STATE[self.hwnd][0],
-            "characterTwo" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            "characterTwo" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
             Config.SWITCH_CHARACTER_STATE[self.hwnd][1],
-            "characterThree" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            "characterThree" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
             Config.SWITCH_CHARACTER_STATE[self.hwnd][2],
-            "characterFour" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            "characterFour" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
             Config.SWITCH_CHARACTER_STATE[self.hwnd][3],
-            "characterFive" in task_config_scheduler.read_common(self.hwnd).switchCharacterList and
+            "characterFive" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
             Config.SWITCH_CHARACTER_STATE[self.hwnd][4],
             all(Config.SWITCH_CHARACTER_STATE[self.hwnd])
         ]

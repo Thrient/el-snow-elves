@@ -6,7 +6,7 @@ from airtest.aircv.utils import pil_2_cv2
 from airtest.core.cv import Template
 
 from script.config.Config import Config
-from script.core.TaskConfigScheduler import task_config_scheduler
+from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.Timer import Timer
 from script.utils.Utils import Utils
 
@@ -17,7 +17,7 @@ class BasisTask(ABC):
         self._stopped = Lock()
         self._finished = Event()
         self.window = window
-        self.taskConfig = task_config_scheduler.read(self.hwnd)
+        self.taskConfig = taskConfigScheduler.read(self.hwnd)
         self.windowConsole = windowConsole
         self.timer = Timer()
         # 流程控制变量, 默认值1

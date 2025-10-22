@@ -1,5 +1,3 @@
-from typing import overload
-
 from script.utils.TaskConfig import TaskConfig
 
 
@@ -7,8 +5,6 @@ class TaskConfigScheduler:
     def __init__(self):
         self._dict = {}
         self._common_dict = {}
-
-
 
     def load(self, hwnd, arg: str | TaskConfig) -> None:
         if isinstance(arg, str):
@@ -29,5 +25,11 @@ class TaskConfigScheduler:
             return TaskConfig()
         return self._common_dict[hwnd]
 
+    def clear(self, hwnd):
+        if hwnd in self._dict:
+            del self._dict[hwnd]
+        if hwnd in self._common_dict:
+            del self._common_dict[hwnd]
 
-task_config_scheduler = TaskConfigScheduler()
+
+taskConfigScheduler = TaskConfigScheduler()

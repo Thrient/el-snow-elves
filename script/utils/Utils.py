@@ -87,39 +87,90 @@ class Utils:
     def sendEmit(window, event, callback=None, **kwargs):
         """
         向指定窗口发送自定义事件
-
-        :param window: 目标窗口对象，用于执行JavaScript代码
-        :param callback: 回调函数
-        :param event: 事件名称字符串
-        :param kwargs: 传递给事件的额外参数，将作为事件数据发送
-        :return: 无返回值
         """
-        # 生成唯一的临时事件名（避免冲突）
         callback_event = f"__callback_{uuid.uuid4().hex}"
-
-        # 构造事件数据（包含临时回调事件名，供前端返回结果）
         data = {**kwargs, "_callback_event": callback_event}
 
         js_code = f"""
-            new Promise((resolve) => {{
-                // 定义事件回调函数（单独提取，方便移除）
-                const handleCallback = (result) => {{
-                    // 1. 先移除监听（确保只执行一次）
-                    window.$mitt.off('{callback_event}', handleCallback);
-                    // 2. 再处理结果
-                    resolve(result);
-                }};
-                console.log('{callback_event}')
-                // 注册普通事件监听
-                window.$mitt.on('{callback_event}', handleCallback);
+            (function() {{
+                return new Promise((resolve, reject) => {{
+                    // 设置超时
+                    const timeoutId = setTimeout(() => {{
+                        cleanup();
+                    }}, 5000);
 
-                // 触发原事件，传递数据
-                window.$mitt.emit('{event}', {data});
-            }})
+                    // 统一的清理函数
+                    function cleanup() {{
+                        try {{
+                            if (window.$mitt && window.$mitt.off) {{
+                                window.$mitt.off('{callback_event}', handleCallback);
+                            }}
+                        }} catch (e) {{
+                            console.warn('Cleanup error:', e);
+                        }}
+                    }}
+
+                    // 事件处理函数
+                    function handleCallback(result) {{
+                        clearTimeout(timeoutId);
+                        cleanup();
+                        resolve(result);
+                    }}
+
+                    try {{
+                        // 注册事件监听
+                        if (window.$mitt && window.$mitt.on) {{
+                            window.$mitt.on('{callback_event}', handleCallback);
+                            window.$mitt.emit('{event}', {data});
+                        }} else {{
+                            cleanup();
+                        }}
+                    }} catch (error) {{
+                        cleanup();
+                    }}
+                }});
+            }})()
         """
 
-        # 执行JavaScript代码，在window对象上触发指定事件
         return window.evaluate_js(js_code, callback=callback)
+
+    # @staticmethod
+    # def sendEmit(window, event, callback=None, **kwargs):
+    #     """
+    #     向指定窗口发送自定义事件
+    #
+    #     :param window: 目标窗口对象，用于执行JavaScript代码
+    #     :param callback: 回调函数
+    #     :param event: 事件名称字符串
+    #     :param kwargs: 传递给事件的额外参数，将作为事件数据发送
+    #     :return: 无返回值
+    #     """
+    #     # 生成唯一的临时事件名（避免冲突）
+    #     callback_event = f"__callback_{uuid.uuid4().hex}"
+    #
+    #     # 构造事件数据（包含临时回调事件名，供前端返回结果）
+    #     data = {**kwargs, "_callback_event": callback_event}
+    #
+    #     js_code = f"""
+    #         new Promise((resolve) => {{
+    #             // 定义事件回调函数（单独提取，方便移除）
+    #             const handleCallback = (result) => {{
+    #                 // 1. 先移除监听（确保只执行一次）
+    #                 window.$mitt.off('{callback_event}', handleCallback);
+    #                 // 2. 再处理结果
+    #                 resolve(result);
+    #             }};
+    #             console.log('{callback_event}')
+    #             // 注册普通事件监听
+    #             window.$mitt.on('{callback_event}', handleCallback);
+    #
+    #             // 触发原事件，传递数据
+    #             window.$mitt.emit('{event}', {data});
+    #         }})
+    #     """
+    #
+    #     # 执行JavaScript代码，在window对象上触发指定事件
+    #     return window.evaluate_js(js_code, callback=callback)
 
     @staticmethod
     def findWindowByTitleAndOwnerHwnd(title, ownerHwnd):

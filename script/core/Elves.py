@@ -46,6 +46,8 @@ class Elves:
         api.on("API:SCRIPT:STOP", self.stop)
         # 注册脚本恢复事件监听器
         api.on("API:SCRIPT:RESUME", self.resume)
+        # 注册脚本全屏监听器
+        api.on("API:SCRIPT:FULLSCREEN", self.fullScreen)
         # 注册窗口锁定事件监听器
         api.on("API:SCRIPT:LOCK", self.lock)
         # 注册窗口解锁事件监听器
@@ -62,7 +64,6 @@ class Elves:
         api.on("API:TASK:CONFIG:lOAD", TaskConfig.loadConfigDict)
         # 注册配置列表获取事件处理函数
         api.on("API:TASK:CONFIG:LIST", TaskConfig.getTaskList)
-
 
         hot_key_manager.register("ctrl+shift+e", self.hot_key_bind, "快捷键启动")
 
@@ -172,6 +173,12 @@ class Elves:
         # 获取窗口对应的脚本并锁定执行
         script = self.winList.get(hwnd)
         script.lock()
+
+    def fullScreen(self, hwnd):
+        if hwnd not in self.winList:
+            return
+        script = self.winList.get(hwnd)
+        script.fullScreen()
 
     def unlock(self, hwnd):
         """
