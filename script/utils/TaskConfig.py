@@ -17,6 +17,8 @@ class TaskConfig:
         self.chivalryShoutCount = kwargs.get('chivalryShoutCount', 1)
         self.chivalryNameOrNumber = kwargs.get('chivalryNameOrNumber', '')
         self.model = kwargs.get('model', 'classic')
+        # 额外延迟
+        self.delay = kwargs.get('delay', 0)
         # 切换角色
         self.switchCharacterList = kwargs.get('switchCharacterList', [])
         # 每日兑换
@@ -47,6 +49,8 @@ class TaskConfig:
         # 单人论剑
         self.swordFightInitiativeExit = kwargs.get('swordFightInitiativeExit', False)
         self.swordFightCount = kwargs.get('swordFightCount', 1)
+        # 多人论剑
+        self.swordThreeCount = kwargs.get('swordThreeCount', 1)
         # 江湖行商
         self.merchantLakeCount = kwargs.get('merchantLakeCount', 1)
         self.merchantLakeWordShout = kwargs.get('merchantLakeWordShout', '江湖行商来人!!!(哔站搜时雪)')

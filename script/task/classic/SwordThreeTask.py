@@ -47,26 +47,26 @@ class SwordThreeTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
+                    # 界面检测
+                    if self.exits("界面多人论剑") is None:
+                        self.setup = 3
+                        continue
+
                     # 检测多人论剑次数
-                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
+                    if self.taskConfig.swordThreeCount < self.event["sword_counter"]:
                         self.setup = 0
                         continue
 
                     if self.exits("按钮单人论剑取消匹配") is None:
                         self.touch("按钮单人论剑匹配")
 
-                    # 界面检测
-                    if self.exits("界面多人论剑") is not None:
-                        continue
-
                     # 匹配成功标志检测
                     if self.exits("标志多人论剑匹配成功") is None:
-                        self.setup = 3
                         continue
 
                     self.logs(f"华山论剑第 {self.event["sword_counter"]} 次")
                     self.event["sword_counter"] += 1
-                    self.defer(5)
+                    self.defer(count=3)
                     self.waitMapLoading()
                     self.setup = 5
 

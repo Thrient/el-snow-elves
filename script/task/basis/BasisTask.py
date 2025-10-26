@@ -47,7 +47,7 @@ class BasisTask(ABC):
         reset_config = self.state_reset_config.get(new_state, {})
         for var_name, value in reset_config.items():
             if var_name in self.event:
-                self.event[var_name] = value
+                self.event[var_name] = value() if callable(value) else value
 
     def stop(self):
         self._stopped.acquire()
@@ -116,8 +116,9 @@ class BasisTask(ABC):
             None
         """
         # 循环等待指定的秒数
-        for _ in range(count):
+        while self._finished.is_set() and count <= 0:
             self.keyClick("TAB", timeout=0)
+            count -= 1
             time.sleep(1)
 
     def logs(self, message):
@@ -171,7 +172,7 @@ class BasisTask(ABC):
             for _ in range(count):
                 print(f"pos: {pos[0]}, {pos[1]}, step: {step}")
                 self.windowConsole.mouseWheel(pos, step)
-            time.sleep(timeout)
+            time.sleep(timeout + self.taskConfig.delay / 1000)
 
     def mouseMove(self, start, end, timeout=Config.TIMEOUT, count=1):
         """
@@ -194,7 +195,7 @@ class BasisTask(ABC):
                 # 执行窗口控制台的鼠标移动操作
                 self.windowConsole.mouseMove(start, end)
             # 等待指定的超时时间
-            time.sleep(timeout)
+            time.sleep(timeout + self.taskConfig.delay / 1000)
 
     def mouseClick(self, pos, x=0, y=0, timeout=Config.TIMEOUT, count=1, delay=0):
         """
@@ -220,7 +221,7 @@ class BasisTask(ABC):
             for _ in range(count):
                 print(f"pos: {pos[0]}, {pos[1]}")
                 self.windowConsole.mouseDownUp((pos[0] + x, pos[1] + y), delay=delay)
-                time.sleep(timeout)
+                time.sleep(timeout + self.taskConfig.delay / 1000)
 
     def keyClick(self, key, timeout=Config.TIMEOUT, delay=0):
         """
@@ -240,7 +241,7 @@ class BasisTask(ABC):
         with self._stopped:
             self.windowConsole.keyDownUp(key, delay=delay)
             print(f"key: {key}")
-            time.sleep(timeout)
+            time.sleep(timeout + self.taskConfig.delay / 1000)
 
     def touch(self, *args, **kwargs):
         """
@@ -418,7 +419,7 @@ class BasisTask(ABC):
         """
         threshold = Config.THRESHOLD_IMAGE[image] if Config.THRESHOLD_IMAGE.get(image) else threshold
         if self._finished.is_set():
-            return
+            return None
         with self._stopped:
             # 截取指定区域的屏幕图像并转换为OpenCV格式
             screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))

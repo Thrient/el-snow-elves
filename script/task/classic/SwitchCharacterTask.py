@@ -12,31 +12,31 @@ class SwitchCharacterTask(ClassicTask):
         return self
 
     def execute(self):
-        if "characterOne" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][0]:
+        if "characterOne" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][0]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][0] = False
             config = taskConfigScheduler.read_common(self.hwnd)
             taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
             self.switchCharacterOne()
             return
-        if "characterTwo" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][1]:
+        if "characterTwo" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][1]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][1] = False
             config = taskConfigScheduler.read_common(self.hwnd)
             taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
             self.switchCharacterTwo()
             return
-        if "characterThree" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][2]:
+        if "characterThree" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][2]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][2] = False
             config = taskConfigScheduler.read_common(self.hwnd)
             taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
             self.switchCharacterThree()
             return
-        if "characterFour" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][3]:
+        if "characterFour" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][3]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][3] = False
             config = taskConfigScheduler.read_common(self.hwnd)
             taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
             self.switchCharacterFour()
             return
-        if "characterFive" in self.taskConfig.switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][4]:
+        if "characterFive" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][4]:
             Config.SWITCH_CHARACTER_STATE[self.hwnd][4] = False
             config = taskConfigScheduler.read_common(self.hwnd)
             taskConfigScheduler.load(hwnd=self.hwnd, arg=config)

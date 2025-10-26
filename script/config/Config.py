@@ -9,7 +9,7 @@ class Config:
     STORAGE_PATH = APP_DATA + r"\pywebview"
     THRESHOLD = 0.85
     BOX = (0, 0, 1335, 750)
-    TIMEOUT = 1.8
+    TIMEOUT = 1.2
     OVERTIME = 1.8
     SWITCH_CHARACTER_STATE = {}
     THRESHOLD_IMAGE = {
