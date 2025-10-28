@@ -127,7 +127,7 @@ class AcquisitionTask(ClassicTask):
             return False
 
         if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), overTime=8) is not None:
-            self.mouseClick((665, 470))
+            self.click_mouse(pos=(665, 470))
 
         self.logs(f"采集 {self.event["collect_counter"]}次")
         self.event["collect_counter"] += 1

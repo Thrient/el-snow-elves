@@ -1,5 +1,3 @@
-import time
-
 from script.task.basis.ClassicTask import ClassicTask
 
 

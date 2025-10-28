@@ -18,7 +18,7 @@ class TaskConfig:
         self.chivalryNameOrNumber = kwargs.get('chivalryNameOrNumber', '')
         self.model = kwargs.get('model', 'classic')
         # 额外延迟
-        self.delay = kwargs.get('delay', 0)
+        self.delay = kwargs.get('delay', 1800)
         # 切换角色
         self.switchCharacterList = kwargs.get('switchCharacterList', [])
         # 每日兑换

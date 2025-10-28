@@ -123,14 +123,14 @@ class MerchantLakeTask(ClassicTask):
                     if self.exits("界面行商") is not None:
                         # 行商购买
                         if self.event[2]:
-                            self.mouseClick((1175, 170))
+                            self.click_mouse(pos=(1175, 170))
                             for pos in [(524, 258), (285, 258), (524, 178), (285, 178)]:
-                                self.mouseClick(pos)
-                                self.mouseClick((1037, 489), delay=3)
+                                self.click_mouse(pos=pos)
+                                self.click_mouse(pos=(1037, 489), delay=3)
                                 self.touch("按钮江湖行商购买")
                         # 行商出售
                         else:
-                            self.mouseClick((1175, 270))
+                            self.click_mouse(pos=(1175, 270))
                             self.touch("按钮江湖行商出售", count=5)
 
                         self.event[2] = not self.event[2]
@@ -151,3 +151,4 @@ class MerchantLakeTask(ClassicTask):
                             else:
                                 self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
                             continue
+        return None

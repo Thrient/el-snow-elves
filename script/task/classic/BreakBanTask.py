@@ -74,7 +74,7 @@ class BreakBanTask(ClassicTask):
                     __x = (self.event["banquet_index"] - 1) % 4
                     __y = (self.event["banquet_index"] - 1) // 4
 
-                    self.mouseClick((633 + 172 * __x, 282 + 182 * __y))
+                    self.click_mouse(pos=(633 + 172 * __x, 282 + 182 * __y))
 
                     if self.exits("按钮破阵设宴获取") is None:
                         self.touch("按钮破阵设宴一键提交")
@@ -83,7 +83,7 @@ class BreakBanTask(ClassicTask):
                         self.setup = 4
                         continue
 
-                    self.mouseClick((0, 0))
+                    self.click_mouse(pos=(0, 0))
 
                     self.touch("按钮破阵设宴获取")
 

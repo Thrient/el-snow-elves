@@ -184,4 +184,3 @@ class Utils:
 
         win32gui.EnumWindows(callback, None)
         return result
-

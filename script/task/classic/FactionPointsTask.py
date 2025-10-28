@@ -39,7 +39,7 @@ class FactionPointsTask(ClassicTask):
                     self.touch("按钮帮派前往领地")
                     self.arrive()
                     self.resetLens()
-                    self.keyClick("W", delay=0.2)
+                    self.click_key(key="W", delay=0.2)
                     self.touch("按钮大世界清扫")
 
                     self.setup = 4

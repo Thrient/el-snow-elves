@@ -1,5 +1,3 @@
-import time
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -71,7 +69,7 @@ class UrgentDeliveryTask(ClassicTask):
                         self.defer(2)
                         self.touch("按钮江湖急送菜品标签")
                         results = self.exitsAll("标志江湖急送标签")
-                        self.mouseClick((1330, 745))
+                        self.click_mouse(pos=(1330, 745))
 
                         for index in range(len(results) + 1):
                             if self.exits("标志江湖急送符合") is not None:
@@ -82,8 +80,8 @@ class UrgentDeliveryTask(ClassicTask):
                             if index == len(results):
                                 break
                             self.touch("按钮江湖急送菜品标签")
-                            self.mouseClick(results[index])
-                            self.mouseClick((1330, 745))
+                            self.click_mouse(pos=results[index])
+                            self.click_mouse(pos=(1330, 745))
 
                         self.backToMain()
                         self.event["buy_counter"] += 1

@@ -97,7 +97,7 @@ class LessonTask(ClassicTask):
 
                     # 杂货商人
                     if self.exits("界面杂货商人") is not None:
-                        self.mouseClick((1018, 625))
+                        self.click_mouse(pos=(1018, 625))
 
                     # 答题
                     if self.exits("标志课业答题") is not None:

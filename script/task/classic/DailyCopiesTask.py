@@ -2,6 +2,7 @@ import time
 
 from script.task.basis.ClassicTask import ClassicTask
 
+
 class DailyCopiesTask(ClassicTask):
 
     def __init__(self, **kwargs):
@@ -60,7 +61,7 @@ class DailyCopiesTask(ClassicTask):
                         self.touch("按钮悬赏上页", x=-50)
                         self.setup = 4
                         continue
-                    self.mouseClick((1100, 145), timeout=0.1)
+                    self.click_mouse(pos=(1100, 145), timeout=0.1)
                     if self.exits("标志悬赏江湖纪事", box=(265, 175, 1190, 565)) is None:
                         continue
                     self.touch("标志悬赏江湖纪事", y=325, timeout=0)

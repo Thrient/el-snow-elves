@@ -92,7 +92,7 @@ class ClassicTask(BasisTask, ABC):
         :return:
         """
         self.backToMain()
-        self.mouseClick((1330, 715))
+        self.click_mouse(pos=(1330, 715))
         self.touch("按钮大世界镜头重置")
 
     def action(self, action):
@@ -147,7 +147,7 @@ class ClassicTask(BasisTask, ABC):
         self.openBackpack()
         self.touch("按钮搜索")
         self.touch("标志输入道具名称")
-        self.input(articles)
+        self.input(text=articles)
         self.touch("按钮搜索")
 
         # 检查道具是否存在，如果不存在则返回False
@@ -176,7 +176,7 @@ class ClassicTask(BasisTask, ABC):
         digits = [int(d) for d in str(index)]
         args = [f"标志{i}" for i in digits]
 
-        self.mouseClick((1230, 25))
+        self.click_mouse(pos=(1230, 25))
         # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
 
         for _ in range(index // 7 + 5):
@@ -184,18 +184,18 @@ class ClassicTask(BasisTask, ABC):
                 if len(digits) == 1:
                     if self.exits(args[0],
                                   box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
-                        self.mouseClick((result[0] - 30, result[1]))
+                        self.click_mouse(pos=(result[0] - 30, result[1]))
                         return
                 if len(digits) == 2:
                     if self.exits(args[0],
                                   box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) is not None and \
                             self.exits(args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15,
                                                      result[1] + 20)) is not None:
-                        self.mouseClick((result[0] - 50, result[1]))
+                        self.click_mouse(pos=(result[0] - 50, result[1]))
                         return
-            self.mouseMove((1050, 555), (1050, 355))
+            self.move_mouse(start=(1050, 555), end=(1050, 355))
 
-        self.mouseClick((1335, 750))
+        self.click_mouse(pos=(1335, 750))
 
     def unstuck(self):
         """
@@ -212,7 +212,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("脱离卡死")
         # 模拟空格键点击
-        self.mouseClick((1350, 750))
+        self.keepAlive()
         # 返回主界面操作
         self.backToMain()
         # 打开设置界面
@@ -235,7 +235,7 @@ class ClassicTask(BasisTask, ABC):
         while not self.autoFightEvent.is_set():
             index = __queue.popleft()
             __queue.append(index)
-            self.keyClick(self.taskConfig.keyList[index])
+            self.click_key(key=self.taskConfig.keyList[index])
 
     def autoFightStop(self):
         """
@@ -259,19 +259,19 @@ class ClassicTask(BasisTask, ABC):
     def worldShouts(self, text, ordinary=True, connected=False):
         # 返回主界面并点击世界聊天入口
         self.backToMain()
-        self.mouseClick((305, 600))
+        self.click_mouse(pos=(305, 600))
 
         # 检查普通世界按钮是否存在，如果存在且允许在普通世界发送则执行发送操作
         if ordinary:
             self.touch("按钮大世界普通世界", "按钮大世界普通世界_V1", box=(0, 0, 150, 750))
             self.touch("标志点击输入文字")
-            self.input(text)
+            self.input(text=text)
             self.touch("按钮大世界发送")
 
         if connected:
             self.touch("按钮大世界互联世界", box=(0, 0, 150, 750))
             self.touch("标志点击输入文字")
-            self.input(text)
+            self.input(text=text)
             self.touch("按钮大世界发送")
 
         # 退出聊天界面
@@ -293,7 +293,7 @@ class ClassicTask(BasisTask, ABC):
             self.logs("激活江湖栏")
             # 检查任务栏是否已经激活
             if self.exits("按钮主界面江湖-激活") is not None:
-                self.mouseMove((118, 300), (118, 452))
+                self.move_mouse(start=(118, 300), end=(118, 452))
                 return self.touch(*args, threshold=0.8)
             # 检查任务图标是否激活，如果激活则点击江湖按钮
             if self.exits("按钮主界面任务图标-激活") is not None:
@@ -302,7 +302,7 @@ class ClassicTask(BasisTask, ABC):
             # 任务图标未激活时的处理流程
             self.touch("按钮主界面任务图标-未激活")
             self.touch("按钮主界面江湖-未激活")
-            self.mouseMove((118, 300), (118, 452))
+            self.move_mouse(start=(118, 300), end=(118, 452))
             return self.touch(*args, threshold=0.8)
         if model == "任务":
             self.logs("激活任务栏")
@@ -316,8 +316,9 @@ class ClassicTask(BasisTask, ABC):
             # 任务图标未激活时的处理流程
             self.touch("按钮主界面任务图标-未激活")
             self.touch("按钮主界面任务-未激活")
-            self.mouseMove((118, 300), (118, 452))
+            self.move_mouse(start=(118, 300), end=(118, 452))
             return self.touch(*args, threshold=0.8)
+        return None
 
     def waitMapLoading(self):
         """
@@ -424,11 +425,11 @@ class ClassicTask(BasisTask, ABC):
 
         # 输入横坐标值
         self.touch("按钮地图横坐标")
-        self.input(x)
+        self.input(text=x)
 
         # 输入纵坐标值
         self.touch("按钮地图纵坐标")
-        self.input(y)
+        self.input(text=y)
 
     def teamDetection(self):
         """
@@ -466,7 +467,7 @@ class ClassicTask(BasisTask, ABC):
             self.openTeam()
             self.touch("按钮队伍创建")
             self.touch("按钮队伍下拉")
-            self.mouseMove((258, 307), (258, 607))
+            self.move_mouse(start=(258, 307), end=(258, 607))
             self.touch("按钮队伍无目标")
             self.touch("按钮队伍江湖纪事")
             self.touch("按钮队伍自动匹配")
@@ -477,7 +478,7 @@ class ClassicTask(BasisTask, ABC):
             self.openTeam()
             self.touch("按钮队伍创建")
             self.touch("按钮队伍下拉")
-            self.mouseMove((258, 307), (258, 607))
+            self.move_mouse(start=(258, 307), end=(258, 607))
             self.touch("按钮队伍无目标")
             self.touch("按钮队伍行当玩法")
             self.touch("按钮队伍江湖行商")
@@ -516,7 +517,7 @@ class ClassicTask(BasisTask, ABC):
                 return False
             # 记录商城购买日志并执行购买操作
             self.logs("商城购买")
-            self.mouseClick((990, 690), count=8, timeout=0.1)
+            self.click_mouse(pos=(990, 690), count=8)
 
             # 关闭商城界面
             self.closeMall()
@@ -529,7 +530,7 @@ class ClassicTask(BasisTask, ABC):
             self.logs("帮派仓库提交")
             self.touch("按钮帮派仓库提交")
             self.closeBanStore()
-            self.defer(3)
+            self.defer(count=3)
 
             return True
         return None
@@ -557,7 +558,7 @@ class ClassicTask(BasisTask, ABC):
             results = self.exitsAll("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box)
             if len(results) == 0 or results[0] is None:
                 return
-            self.mouseClick((results[-1][0], results[-1][1]), timeout=0)
+            self.click_mouse(pos=(results[-1][0], results[-1][1]), post_delay=0)
 
     def backToMain(self):
         """
@@ -579,7 +580,7 @@ class ClassicTask(BasisTask, ABC):
                 break
             # 关闭当前打开的界面
             if self.exits("界面物品") is not None:
-                self.mouseClick((0, 0))
+                self.click_mouse(pos=(0, 0))
             # 购买确认
             if self.exits("标志购买确认") is not None:
                 self.touch("按钮取消")
@@ -702,7 +703,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面帮派") is None:
             self.logs("打开帮派")
-            self.keyClick("O")
+            self.click_key(key="O")
 
     def closeBuddy(self):
         """
@@ -740,7 +741,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面好友") is None:
             self.logs("打开好友")
-            self.keyClick("H")
+            self.click_key(key="H")
 
     def closeMap(self):
         """
@@ -775,7 +776,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("标志地图当前坐标") is None:
             self.logs("打开地图")
-            self.keyClick("M")
+            self.click_key(key="M")
 
     def closeTeam(self):
         """
@@ -805,7 +806,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面队伍") is None:
             self.logs("打开队伍")
-            self.keyClick("T")
+            self.click_key(key="T")
 
     def closeBackpack(self):
         """
@@ -838,7 +839,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("打开背包")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("界面物品") is None:
-            self.keyClick("B")
+            self.click_key(key="B")
 
     def closeSetting(self):
         """
@@ -872,7 +873,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("打开设置")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("界面设置") is None:
-            self.keyClick("ESC")
+            self.click_key(key="ESC")
 
     def arrive(self):
         """
@@ -944,7 +945,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("切换角色一")
         self.switchCharacter()
-        self.mouseClick((1245, 70))
+        self.click_mouse(pos=(1245, 70))
         self.touch("按钮登录进入游戏")
         self.defer(count=30)
         self.setCharacterInfo()
@@ -966,7 +967,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("切换角色二")
         self.switchCharacter()
-        self.mouseClick((1245, 170))
+        self.click_mouse(pos=(1245, 170))
         self.touch("按钮登录进入游戏")
         self.defer(count=30)
         self.setCharacterInfo()
@@ -988,7 +989,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("切换角色三")
         self.switchCharacter()
-        self.mouseClick((1245, 270))
+        self.click_mouse(pos=(1245, 270))
         self.touch("按钮登录进入游戏")
         self.defer(count=30)
         self.setCharacterInfo()
@@ -1010,7 +1011,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("切换角色四")
         self.switchCharacter()
-        self.mouseClick((1245, 370))
+        self.click_mouse(pos=(1245, 370))
         self.touch("按钮登录进入游戏")
         self.defer(count=30)
         self.setCharacterInfo()
@@ -1032,7 +1033,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("切换角色五")
         self.switchCharacter()
-        self.mouseClick((1245, 470))
+        self.click_mouse(pos=(1245, 470))
         self.touch("按钮登录进入游戏")
         self.defer(count=30)
         self.setCharacterInfo()
@@ -1073,7 +1074,7 @@ class ClassicTask(BasisTask, ABC):
         self.openBackpack()
         self.touch("按钮物品属性")
         # 截取角色信息区域并转换图像格式
-        character = pil_2_cv2(self.windowConsole.captureWindow().crop((742, 158, 892, 186)))
+        character = pil_2_cv2(self.win_console.capture.crop((742, 158, 892, 186)))
 
         # 将图像编码为PNG格式的二进制数据
         _, buffer = cv2.imencode('.png', character)

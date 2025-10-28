@@ -60,7 +60,7 @@ class FactionTask(ClassicTask):
 
                     if self.exits("标志帮派任务下一轮") is not None:
                         self.touch("按钮取消")
-                        self.mouseClick((0, 0))
+                        self.click_mouse(pos=(0, 0))
                         self.closeRewardUi(5)
                         self.setup = 0
 
@@ -81,7 +81,7 @@ class FactionTask(ClassicTask):
                     self.touch("按钮帮派任务一键提交")
 
                     if self.exits("标志帮派任务完成") is not None:
-                        self.mouseClick((0, 0))
+                        self.click_mouse(pos=(0, 0))
                         self.closeRewardUi(5)
                         self.setup = 0
         return None

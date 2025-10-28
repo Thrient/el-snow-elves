@@ -8,17 +8,18 @@ from airtest.core.cv import Template
 from script.config.Config import Config
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.Timer import Timer
+from script.functools.functools import delay, repeat
 from script.utils.Utils import Utils
 
 
 class BasisTask(ABC):
-    def __init__(self, hwnd, window, windowConsole):
+    def __init__(self, hwnd, window, win_console):
         self.hwnd = hwnd
         self._stopped = Lock()
         self._finished = Event()
         self.window = window
         self.taskConfig = taskConfigScheduler.read(self.hwnd)
-        self.windowConsole = windowConsole
+        self.win_console = win_console
         self.timer = Timer()
         # 流程控制变量, 默认值1
         self._setup = 1
@@ -37,27 +38,30 @@ class BasisTask(ABC):
 
     @setup.setter
     def setup(self, state):
-        # 只有状态发生变化时才执行重置
         if state == self._setup:
             return
         self._reset_state_variables(state)
         self._setup = state
 
     def _reset_state_variables(self, new_state):
+        """重置变量"""
         reset_config = self.state_reset_config.get(new_state, {})
         for var_name, value in reset_config.items():
             if var_name in self.event:
                 self.event[var_name] = value() if callable(value) else value
 
     def stop(self):
+        """暂停"""
         self._stopped.acquire()
         self.timer.stop()
 
     def resume(self):
+        """恢复"""
         self._stopped.release()
         self.timer.resume()
 
     def finish(self):
+        """结束"""
         self.resume()
         self._finished.set()
 
@@ -103,7 +107,7 @@ class BasisTask(ABC):
         返回值:
             无
         """
-        self.mouseClick((1350, 750), timeout=0, delay=0)
+        self.click_mouse(pos=(1335, 750), timeout=0, delay=0)
 
     def defer(self, count=1):
         """
@@ -116,10 +120,9 @@ class BasisTask(ABC):
             None
         """
         # 循环等待指定的秒数
-        while self._finished.is_set() and count <= 0:
-            self.keyClick("TAB", timeout=0)
+        while not self._finished.is_set() and count >= 0:
+            self.click_key(key="TAB", post_delay=1000)
             count -= 1
-            time.sleep(1)
 
     def logs(self, message):
         """
@@ -131,156 +134,97 @@ class BasisTask(ABC):
         返回值:
             无
         """
-        Utils.sendEmit(self.window, 'API:ADD:LOGS', time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                       info="信息", data=message)
+        Utils.sendEmit(
+            self.window,
+            'API:ADD:LOGS',
+            time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+            info="信息",
+            data=message
+        )
 
-    def input(self, text):
-        """
-        向控制台窗口输入文本内容
+    def input(self, **kwargs):
+        """输入信息"""
 
-        参数:
-            text (str): 要输入到控制台的文本内容
-        返回值:
-            无返回值
-        """
-        # 如果已完成标志已设置，则直接返回
-        if self._finished.is_set():
-            return
-        # 在停止锁的保护下执行控制台输入操作
-        with self._stopped:
-            self.windowConsole.input(text)
+        @delay(post_delay=self.taskConfig.delay)
+        def _inner(**inner_kwargs):
+            text = inner_kwargs.get('text')
+            # 如果已完成标志已设置，则直接返回
+            if self._finished.is_set():
+                return
+            # 在停止锁的保护下执行控制台输入操作
+            with self._stopped:
+                self.win_console.input(text)
 
-    def mouseWheel(self, pos, step=120, timeout=Config.TIMEOUT, count=1):
-        """
-        执行鼠标滚轮操作，在指定位置进行滚动
+        return _inner(**kwargs)
 
-        参数:
-            pos: 鼠标滚轮操作的位置坐标，格式为(x, y)的元组
-            step: 滚动步长，正值表示向上滚动，负值表示向下滚动，默认值为1
-            timeout: 每次滚动后的等待时间，默认使用Config.TIMEOUT配置
-            count: 滚动次数，默认为1次
+    def move_mouse(self, **kwargs):
+        """鼠标从起始位置移动到结束位置"""
 
-        返回值:
-            无返回值
-        """
-        if self._finished.is_set():
-            return
-        with self._stopped:
-            # 确保滚动次数至少为1次
-            count = 1 if count <= 0 else count
-            # 执行指定次数的鼠标滚轮操作
-            for _ in range(count):
-                print(f"pos: {pos[0]}, {pos[1]}, step: {step}")
-                self.windowConsole.mouseWheel(pos, step)
-            time.sleep(timeout + self.taskConfig.delay / 1000)
+        @delay(post_delay=self.taskConfig.delay)
+        @repeat()
+        def _inner(**inner_kwargs):
+            start = inner_kwargs.get('start', (0, 0))
+            end = inner_kwargs.get('end', (0, 0))
 
-    def mouseMove(self, start, end, timeout=Config.TIMEOUT, count=1):
-        """
-        执行鼠标移动操作，从起始位置移动到结束位置
-
-        参数:
-            start: 起始位置坐标，格式为(x, y)的元组
-            end: 结束位置坐标，格式为(x, y)的元组
-            timeout: 操作超时时间，默认使用Config.TIMEOUT配置值
-
-        返回值:
-            无返回值
-        """
-        if self._finished.is_set():
-            return
-        with self._stopped:
-            for _ in range(count):
-                # 打印鼠标移动的起始和结束坐标信息
-                print(f"start: {start[0]}:{start[1]} to end: {end[0]}:{end[1]}")
+            if self._finished.is_set():
+                return
+            with self._stopped:
                 # 执行窗口控制台的鼠标移动操作
-                self.windowConsole.mouseMove(start, end)
-            # 等待指定的超时时间
-            time.sleep(timeout + self.taskConfig.delay / 1000)
+                self.win_console.mouse_move(start, end)
 
-    def mouseClick(self, pos, x=0, y=0, timeout=Config.TIMEOUT, count=1, delay=0):
-        """
-        在指定位置执行鼠标点击操作
+        return _inner(**kwargs)
 
-        参数:
-            pos: 鼠标点击的基础位置坐标，格式为(x, y)元组
-            x: 相对于基础位置的x轴偏移量, 默认0
-            y: 相对于基础位置的y轴偏移量, 默认
-            timeout: 每次点击后的等待时间，默认使用Config.TIMEOUT配置
-            count: 点击次数，默认为1次
-            delay: 鼠标按下和释放之间的时间延迟，默认为0
+    def click_mouse(self, **kwargs):
+        """鼠标点击"""
 
-        返回值:
-            无返回值
-        """
-        if self._finished.is_set():
-            return
-        with self._stopped:
-            # 确保点击次数至少为1次
-            count = 1 if count <= 0 else count
-            # 执行指定次数的鼠标点击操作
-            for _ in range(count):
-                print(f"pos: {pos[0]}, {pos[1]}")
-                self.windowConsole.mouseDownUp((pos[0] + x, pos[1] + y), delay=delay)
-                time.sleep(timeout + self.taskConfig.delay / 1000)
+        @delay(post_delay=self.taskConfig.delay)
+        @repeat()
+        def _inner(**inner_kwargs):
+            pos = inner_kwargs.get('pos', (1335, 750))
+            x = inner_kwargs.get('x', 0)
+            y = inner_kwargs.get('y', 0)
+            press_down_delay = inner_kwargs.get('press_down_delay', 0)
 
-    def keyClick(self, key, timeout=Config.TIMEOUT, delay=0):
-        """
-        模拟键盘按键点击操作
+            if self._finished.is_set():
+                return
+            with self._stopped:
+                self.win_console.click_mouse((pos[0] + x, pos[1] + y), press_down_delay=press_down_delay)
 
-        参数:
-            key: 要按下的键值
-            timeout: 操作后的等待时间，默认使用配置中的超时时间
-            delay: 按键之间的延迟时间，默认为0
+        return _inner(**kwargs)
 
-        返回值:
-            无返回值
-        """
-        if self._finished.is_set():
-            return
-        # 执行按键操作
-        with self._stopped:
-            self.windowConsole.keyDownUp(key, delay=delay)
-            print(f"key: {key}")
-            time.sleep(timeout + self.taskConfig.delay / 1000)
+    def click_key(self, **kwargs):
+        """键盘点击"""
+
+        @delay(post_delay=self.taskConfig.delay)
+        @repeat()
+        def _inner(**inner_kwargs):
+            key = inner_kwargs.get('key', None)
+            press_down_delay = inner_kwargs.get('press_down_delay', 0)
+
+            if self._finished.is_set():
+                return
+            # 执行按键操作
+            with self._stopped:
+                self.win_console.click_key(key=key, press_down_delay=press_down_delay)
+
+        return _inner(**kwargs)
 
     def touch(self, *args, **kwargs):
-        """
-        在指定时间内查找并点击屏幕上的图像模板
+        """查找并点击屏幕上的图像模板"""
+        _start_time = time.time()
 
-        参数:
-            *args: 可变参数，包含待查找的图像文件路径
-            **kwargs: 关键字参数
-                overTime: 超时时间，默认为Config.OVERTIME
-                threshold: 图像匹配阈值，默认为Config.THRESHOLD
-                box: 查找区域，默认为Config.BOX
-                x: 点击位置x坐标偏移量，默认为0
-                y: 点击位置y坐标偏移量，默认为0
-                count: 点击次数，默认为1
-
-        返回值:
-            找到并点击的图像匹配结果，如果超时未找到则返回None
-        """
-        __currentTIme = time.time()
-
-        overTime = kwargs.get('overTime', Config.OVERTIME)
+        over_time = kwargs.get('over_time', Config.OVERTIME)
         threshold = kwargs.get('threshold', Config.THRESHOLD)
         box = kwargs.get('box', Config.BOX)
-        x = kwargs.get('x', 0)
-        y = kwargs.get('y', 0)
-        count = kwargs.get('count', 1)
-        timeout = kwargs.get('timeout', Config.TIMEOUT)
-        delay = kwargs.get('delay', 0)
 
-        # 在超时时间内循环查找图像
-        while time.time() - __currentTIme < overTime:
-            # 遍历所有待查找的图像
+        while time.time() - _start_time < over_time:
             for image in args:
-                result = self.imageTemplate(image, threshold, box)
+                result = self.imageTemplate(image, threshold=threshold, box=box)
                 if result is None:
                     continue
-                self.mouseClick(result, x=x, y=y, count=count, timeout=timeout, delay=delay)
+                self.click_mouse(pos=result, **kwargs)
                 return result
-            time.sleep(0.05)
+            time.sleep(0.1)
         return None
 
     def wait(self, *args, **kwargs):
@@ -397,7 +341,7 @@ class BasisTask(ABC):
             return None
         with self._stopped:
             # 截取指定窗口的指定区域并转换为OpenCV格式
-            screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
+            screen = pil_2_cv2(self.win_console.capture.crop(box))
             # 使用模板匹配算法在截图中查找指定图像
             result = Template(f"resources/images/{self.taskConfig.model}/{image}.bmp", threshold=threshold).match_in(
                 screen)
@@ -422,7 +366,7 @@ class BasisTask(ABC):
             return None
         with self._stopped:
             # 截取指定区域的屏幕图像并转换为OpenCV格式
-            screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
+            screen = pil_2_cv2(self.win_console.capture.crop(box))
             # 在屏幕截图中查找所有匹配的模板图像
             results = Template(f"resources/images/{self.taskConfig.model}/{image}.bmp",
                                threshold=threshold).match_all_in(screen)

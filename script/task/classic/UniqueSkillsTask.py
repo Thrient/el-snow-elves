@@ -1,5 +1,3 @@
-import re
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -39,7 +37,7 @@ class UniqueSkillsTask(ClassicTask):
                 case 3:
                     self.openBackpack()
                     self.touch("按钮物品综合入口")
-                    self.mouseMove((1245, 630), (1245, 330))
+                    self.move_mouse(start=(1245, 630), end=(1245, 330))
                     self.touch("按钮物品精进行当")
                     self.touch("按钮行当通用")
                     self.setup = 4

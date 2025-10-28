@@ -36,7 +36,7 @@ class VientianeLikesTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    self.mouseClick((1240, 715))
+                    self.click_mouse(pos=(1240, 715))
                     self.setup = 4
                 case 4:
                     if self.exits("界面场景") is None:

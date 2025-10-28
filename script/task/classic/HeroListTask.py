@@ -1,5 +1,3 @@
-import time
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -67,7 +65,7 @@ class HeroListTask(ClassicTask):
                         self.touch("按钮江湖英雄榜退出副本")
                     else:
                         self.touch("按钮江湖英雄榜准备")
-                        self.keyClick("W", delay=3)
+                        self.click_key(key="W", press_down_delay=3)
                         self.autoFightStart()
 
                     self.setup = 6

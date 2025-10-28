@@ -81,7 +81,7 @@ class SwordThreeTask(ClassicTask):
 
                     self.touch("按钮华山论剑准备")
                     self.event["is_prepare"] = True
-                    self.keyClick("W", delay=3)
+                    self.click_key(key="W", delay=3)
                     self.autoFightStart()
 
                 case 6:

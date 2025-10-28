@@ -1,5 +1,3 @@
-import time
-
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -9,14 +7,13 @@ class DoorBanTask(ClassicTask):
         # 事件变量字典
         self.event = {
             "banquet_index": 1,  # 破阵设宴提交索引
-            "banquet_counter": 0   # 破阵设宴提交次数计数器
+            "banquet_counter": 0  # 破阵设宴提交次数计数器
 
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
 
         }
-
 
     def execute(self):
         while not self._finished.is_set():
@@ -74,7 +71,7 @@ class DoorBanTask(ClassicTask):
                     __x = (self.event["banquet_index"] - 1) % 4
                     __y = (self.event["banquet_index"] - 1) // 4
 
-                    self.mouseClick((633 + 172 * __x, 282 + 182 * __y))
+                    self.click_mouse(pos=(633 + 172 * __x, 282 + 182 * __y))
 
                     if self.exits("按钮门客设宴获取") is None:
                         self.touch("按钮门客设宴一键提交")
@@ -83,12 +80,11 @@ class DoorBanTask(ClassicTask):
                         self.setup = 4
                         continue
 
-                    self.mouseClick((0, 0))
+                    self.click_mouse(pos=(0, 0))
 
                     self.touch("按钮门客设宴获取")
 
                     self.event["banquet_counter"] += 1
-
 
                     if self.event["banquet_counter"] in [1, 4, 6]:
                         if self.exits("按钮帮派仓库") is None:

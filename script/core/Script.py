@@ -7,9 +7,9 @@ from script.config.Config import Config
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.TaskFactory import TaskFactory
 from script.core.TaskScheduler import TaskScheduler
-from script.core.WindowConsole import WindowConsole
 from script.utils.TaskConfig import TaskConfig
 from script.utils.Utils import Utils
+from script.window.Console import Console
 
 
 class Script(Thread):
@@ -18,7 +18,7 @@ class Script(Thread):
         self.hwnd = hwnd
         self.window = window
         self.taskScheduler = TaskScheduler(hwnd)
-        self.windowConsole = WindowConsole(hwnd)
+        self.win_console = Console(hwnd)
         self.sched = BackgroundScheduler(demon=True)
         self.obj = None
         self.addScheduledTasks()
@@ -34,7 +34,8 @@ class Script(Thread):
         if self._full.is_set():
             return
         self._on.set()
-        taskConfigScheduler.load_common(self.hwnd, taskConfig if config == "默认配置" else TaskConfig().loadConfig(config))
+        taskConfigScheduler.load_common(self.hwnd,
+                                        taskConfig if config == "默认配置" else TaskConfig().loadConfig(config))
         # 初始化窗口的切换角色状态
         Config.SWITCH_CHARACTER_STATE[self.hwnd] = [True, True, True, True, True, True]
         self.lock()
@@ -68,8 +69,8 @@ class Script(Thread):
         """
         try:
 
-            self.windowConsole.setWindowNoMenu()
-            self.windowConsole.setWindowTransparent(255)
+            self.win_console.set_style_no_menu()
+            self.win_console.set_transparent(255)
 
             # 主任务处理循环，当finished标志未设置时持续运行
             while not self._end.is_set():
@@ -93,7 +94,7 @@ class Script(Thread):
                     cls = TaskFactory.instance().create(taskConfigScheduler.read_common(self.hwnd).model, task)
                     if cls is None:
                         continue
-                    with cls(hwnd=self.hwnd, window=self.window, windowConsole=self.windowConsole) as self.obj:
+                    with cls(hwnd=self.hwnd, window=self.window, win_console=self.win_console) as self.obj:
                         self.obj.execute()
                 except Exception as e:
                     print(e)
@@ -120,9 +121,9 @@ class Script(Thread):
         finally:
             self._end.set()
             taskConfigScheduler.clear(self.hwnd)
-            self.windowConsole.restStyle()
-            self.windowConsole.setWinUnEnableClickThrough()
-            self.windowConsole.setWindowTransparent(255)
+            self.win_console.rest_style()
+            self.win_console.disable_click_through()
+            self.win_console.set_transparent(255)
 
     def end(self):
         try:
@@ -153,9 +154,9 @@ class Script(Thread):
             print(e)
         finally:
             # 恢复原本窗口
-            self.windowConsole.restStyle()
+            self.win_console.rest_style()
             # 取消窗口的点击穿透功能
-            self.windowConsole.setWinUnEnableClickThrough()
+            self.win_console.disable_click_through()
 
     def resume(self):
         """
@@ -177,9 +178,9 @@ class Script(Thread):
         finally:
             self._full.clear()
             # 去除窗口菜单
-            self.windowConsole.setWindowNoMenu()
+            self.win_console.set_style_no_menu()
             # 设置窗口控制台为可点击穿透状态
-            self.windowConsole.setWinEnableClickThrough()
+            self.win_console.enable_click_through()
 
     def lock(self):
         """
@@ -193,7 +194,7 @@ class Script(Thread):
         返回值:
             无
         """
-        self.windowConsole.setWinEnableClickThrough()
+        self.win_console.enable_click_through()
 
     def unlock(self):
         """
@@ -207,7 +208,7 @@ class Script(Thread):
         返回值:
             无
         """
-        self.windowConsole.setWinUnEnableClickThrough()
+        self.win_console.disable_click_through()
 
     def setTransparent(self, transparent):
         """
@@ -223,14 +224,14 @@ class Script(Thread):
             无返回值
 
         """
-        self.windowConsole.setWindowTransparent(transparent)
+        self.win_console.set_transparent(transparent)
 
     def fullScreen(self):
         if self._full.is_set():
             return
         self._full.set()
         self.stop()
-        self.windowConsole.setWindowFullscreen()
+        self.win_console.full_screen()
 
     def screenshot(self):
         """
@@ -246,6 +247,6 @@ class Script(Thread):
             1. 调用windowConsole的captureWindow方法获取窗口截图
             2. 将截图保存到临时图片目录，文件名为时间戳.bmp格式
         """
-        image = self.windowConsole.captureWindow()
+        image = self.win_console.capture
         # 保存截图到临时目录，使用时间戳作为文件名
         image.save(f"temp/images/{time.time()}.bmp")
