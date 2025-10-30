@@ -39,7 +39,7 @@ class ClassicTask(BasisTask, ABC):
         while not self._finished.is_set() and not self.popCheckEvent.is_set():
             self.closeDreamCub()
 
-            time.sleep(1)
+            self.defer()
 
     def instance(self):
         """
@@ -558,6 +558,7 @@ class ClassicTask(BasisTask, ABC):
             results = self.exitsAll("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box)
             if len(results) == 0 or results[0] is None:
                 return
+            results = sorted(results, key=lambda pos: (-pos[0], pos[1]))
             self.click_mouse(pos=(results[-1][0], results[-1][1]), post_delay=0)
 
     def backToMain(self):
@@ -586,6 +587,7 @@ class ClassicTask(BasisTask, ABC):
                 self.touch("按钮取消")
             self.touch("按钮聊天退出", overTime=0.1)
             self.closeCurrentUi()
+            self.keepAlive()
 
     def closeDreamCub(self):
         """
@@ -1080,6 +1082,10 @@ class ClassicTask(BasisTask, ABC):
         _, buffer = cv2.imencode('.png', character)
 
         # 将图像数据转换为base64编码并发送到前端界面
-        Utils.sendEmit(self.window, "API:UPDATE:CHARACTER",
-                       character=f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}", hwnd=self.hwnd)
+        Utils.sendEmit(
+            self.window,
+            "API:UPDATE:CHARACTER",
+            character=f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
+            hwnd=self.hwnd
+        )
         self.backToMain()

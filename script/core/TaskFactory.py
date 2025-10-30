@@ -1,3 +1,4 @@
+from script.task.classic.SkyCurtainElegantGardenTask import SkyCurtainElegantGardenTask
 from script.task.classic.VientianeLikesTask import VientianeLikesTask
 from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.BountyMissionsTask import BountyMissionsTask
@@ -77,6 +78,7 @@ class TaskFactory:
         self.register("classic", "帮派积分", FactionPointsTask)
         self.register("classic", "行当绝活", UniqueSkillsTask)
         self.register("classic", "万象刷赞", VientianeLikesTask)
+        self.register("classic", "天幕雅苑", SkyCurtainElegantGardenTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

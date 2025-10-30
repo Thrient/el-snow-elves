@@ -108,7 +108,7 @@ class DoorBanTask(ClassicTask):
                 case 6:
                     if len(self.exitsAll("标志门客设宴已提交")) >= 8:
                         self.touch("按钮门客设宴开始")
-                    self.closeRewardUi(5)
+                        self.closeRewardUi(5)
                     self.backToMain()
                     self.setup = 0
         return None

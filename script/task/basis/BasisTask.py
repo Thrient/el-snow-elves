@@ -43,9 +43,9 @@ class BasisTask(ABC):
         self._reset_state_variables(state)
         self._setup = state
 
-    def _reset_state_variables(self, new_state):
+    def _reset_state_variables(self, state):
         """重置变量"""
-        reset_config = self.state_reset_config.get(new_state, {})
+        reset_config = self.state_reset_config.get(state, {})
         for var_name, value in reset_config.items():
             if var_name in self.event:
                 self.event[var_name] = value() if callable(value) else value
@@ -107,7 +107,7 @@ class BasisTask(ABC):
         返回值:
             无
         """
-        self.click_mouse(pos=(1335, 750), timeout=0, delay=0)
+        self.click_mouse(pos=(1335, 750), post_delay=1000)
 
     def defer(self, count=1):
         """
@@ -121,7 +121,7 @@ class BasisTask(ABC):
         """
         # 循环等待指定的秒数
         while not self._finished.is_set() and count >= 0:
-            self.click_key(key="TAB", post_delay=1000)
+            time.sleep(1)
             count -= 1
 
     def logs(self, message):
@@ -160,8 +160,8 @@ class BasisTask(ABC):
     def move_mouse(self, **kwargs):
         """鼠标从起始位置移动到结束位置"""
 
-        @delay(post_delay=self.taskConfig.delay)
         @repeat()
+        @delay(post_delay=self.taskConfig.delay)
         def _inner(**inner_kwargs):
             start = inner_kwargs.get('start', (0, 0))
             end = inner_kwargs.get('end', (0, 0))
@@ -177,8 +177,8 @@ class BasisTask(ABC):
     def click_mouse(self, **kwargs):
         """鼠标点击"""
 
-        @delay(post_delay=self.taskConfig.delay)
         @repeat()
+        @delay(post_delay=self.taskConfig.delay)
         def _inner(**inner_kwargs):
             pos = inner_kwargs.get('pos', (1335, 750))
             x = inner_kwargs.get('x', 0)
@@ -195,8 +195,8 @@ class BasisTask(ABC):
     def click_key(self, **kwargs):
         """键盘点击"""
 
-        @delay(post_delay=self.taskConfig.delay)
         @repeat()
+        @delay(post_delay=self.taskConfig.delay)
         def _inner(**inner_kwargs):
             key = inner_kwargs.get('key', None)
             press_down_delay = inner_kwargs.get('press_down_delay', 0)
@@ -208,6 +208,18 @@ class BasisTask(ABC):
                 self.win_console.click_key(key=key, press_down_delay=press_down_delay)
 
         return _inner(**kwargs)
+
+    def touch_once(self, *args, **kwargs):
+        """只尝试查找一次"""
+        threshold = kwargs.get('threshold', Config.THRESHOLD)
+        box = kwargs.get('box', Config.BOX)
+        for image in args:
+            result = self.imageTemplate(image, threshold=threshold, box=box)
+            if result is None:
+                continue
+            self.click_mouse(pos=result, **kwargs)
+            return result
+        return None
 
     def touch(self, *args, **kwargs):
         """查找并点击屏幕上的图像模板"""

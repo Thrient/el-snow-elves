@@ -115,6 +115,8 @@ class Script(Thread):
             无
         """
         try:
+            Config.SWITCH_CHARACTER_STATE[self.hwnd] = [False, False, False, False, False, False]
+            self.taskScheduler.clear()
             self.obj.finish()
         except Exception as e:
             print(e)
@@ -127,13 +129,14 @@ class Script(Thread):
 
     def end(self):
         try:
+            Config.SWITCH_CHARACTER_STATE[self.hwnd] = [False, False, False, False, False, False]
+            self.taskScheduler.clear()
             self.obj.finish()
         except Exception as e:
             print(e)
         finally:
             self.unlock()
             self._on.clear()
-            self.taskScheduler.clear()
 
     def stop(self):
         """

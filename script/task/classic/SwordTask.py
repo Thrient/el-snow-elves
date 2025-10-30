@@ -54,30 +54,30 @@ class SwordTask(ClassicTask):
                         self.setup = 5
                         continue
 
-                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
+                    if self.taskConfig.swordFightCount <= self.event["sword_counter"]:
                         self.setup = 0
                         continue
 
                     if self.exits("按钮单人论剑取消匹配") is None:
-                        self.touch("按钮单人论剑匹配")
+                        self.touch_once("按钮单人论剑匹配")
 
                     if self.exits("按钮确认") is not None:
-                        self.touch("按钮确认")
+                        self.touch_once("按钮确认")
 
                 case 5:
                     if time.time() - self.event["check_timer"] > 30:
                         self.setup = 3
                         continue
 
-                    if self.exits("标志单人论剑匹配成功") is None:
-                        self.setup = 6
+                    if self.exits("标志单人论剑匹配成功") is not None:
+                        self.defer(count=2)
                         self.waitMapLoading()
-                        continue
-
-                    if self.exits("标志单人论剑我方", "标志单人论剑敌方") is None:
                         self.setup = 6
                         continue
 
+                    if self.exits("标志单人论剑我方", "标志单人论剑敌方") is not None:
+                        self.setup = 6
+                        continue
                 case 6:
                     self.logs(f"华山论剑第 {self.event["sword_counter"]} 次")
                     self.event["sword_counter"] += 1
@@ -105,10 +105,11 @@ class SwordTask(ClassicTask):
                     self.autoFightStart()
                 case 8:
                     # 点击华山论剑离开按钮
-                    self.touch("按钮华山论剑离开", overTime=20)
+                    self.touch("按钮华山论剑离开", over_time=20)
                     # 停止自动战斗模式
                     self.autoFightStop()
                     # 等待地图加载完成
                     self.waitMapLoading()
                     self.setup = 4
+
         return None

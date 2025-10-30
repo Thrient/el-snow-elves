@@ -1,4 +1,5 @@
 import queue
+from threading import Event
 
 from script.config.Config import Config
 from script.core.TaskConfigScheduler import taskConfigScheduler

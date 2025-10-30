@@ -111,5 +111,4 @@ class LessonTask(ClassicTask):
                         self.closeRewardUi(5)
                         self.setup = 0
 
-                    self.defer(1)
         return None
