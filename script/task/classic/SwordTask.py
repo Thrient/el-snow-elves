@@ -41,6 +41,10 @@ class SwordTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
+                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
+                        self.setup = 0
+                        continue
+
                     self.openBackpack()
                     self.touch("按钮物品综合入口")
                     self.touch("按钮物品活动")
@@ -54,7 +58,7 @@ class SwordTask(ClassicTask):
                         self.setup = 5
                         continue
 
-                    if self.taskConfig.swordFightCount <= self.event["sword_counter"]:
+                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
                         self.setup = 0
                         continue
 

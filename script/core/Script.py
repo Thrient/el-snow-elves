@@ -1,5 +1,6 @@
 import time
-from threading import Thread, Event
+from multiprocessing import Process
+from threading import Event
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -12,7 +13,7 @@ from script.utils.Utils import Utils
 from script.window.Console import Console
 
 
-class Script(Thread):
+class Script(Process):
     def __init__(self, hwnd, window):
         super().__init__()
         self.hwnd = hwnd
@@ -86,9 +87,13 @@ class Script(Thread):
                     Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state=task, hwnd=self.hwnd)
 
                     # 发送日志事件，记录任务开始信息
-                    Utils.sendEmit(self.window, 'API:ADD:LOGS',
-                                   time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                                   info="信息", data=f"{task}开始")
+                    Utils.sendEmit(
+                        self.window,
+                        'API:ADD:LOGS',
+                        time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                        info="信息",
+                        data=f"{task}开始"
+                    )
 
                     # 根据任务配置创建对应的任务对象实例
                     cls = TaskFactory.instance().create(taskConfigScheduler.read_common(self.hwnd).model, task)
@@ -97,9 +102,21 @@ class Script(Thread):
                     with cls(hwnd=self.hwnd, window=self.window, win_console=self.win_console) as self.obj:
                         self.obj.execute()
                 except Exception as e:
-                    print(e)
+                    Utils.sendEmit(
+                        self.window,
+                        'API:ADD:LOGS',
+                        time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                        info="错误",
+                        data=f"{e}"
+                    )
         except Exception as e:
-            print(e)
+            Utils.sendEmit(
+                self.window,
+                'API:ADD:LOGS',
+                time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                info="错误",
+                data=f"{e}"
+            )
 
     def unbind(self):
         """

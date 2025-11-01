@@ -109,6 +109,7 @@ class Console:
         win32api.PostMessage(self.hwnd, win32con.WM_MOUSEWHEEL, wparam, position)
 
     def get_rect(self):
+        # noinspection PyUnresolvedReferences
         f = ctypes.windll.dwmapi.DwmGetWindowAttribute
         rect = wintypes.RECT()
         f(wintypes.HWND(self.hwnd),
@@ -121,6 +122,7 @@ class Console:
     def get_vk_code(self, key):
         """获取虚拟按键码"""
         if len(key) == 1:
+            # noinspection PyUnresolvedReferences
             return ctypes.windll.user32.VkKeyScanA(ord(key)) & 0xFF
         # 如果key是字符串，则从vkCode字典中获取对应的虚拟键码
         else:
@@ -131,6 +133,7 @@ class Console:
         if key is None:
             return
         wparam = self.get_vk_code(key)
+        # noinspection PyUnresolvedReferences
         lparam = (ctypes.windll.user32.MapVirtualKeyW(wparam, 0) << 16) | 1
         win32api.PostMessage(self.hwnd, win32con.WM_KEYDOWN, wparam, lparam)
         time.sleep(press_down_delay)
@@ -138,8 +141,8 @@ class Console:
 
     def set_style_no_menu(self):
         """设置窗口无菜单"""
-        assert win32gui.IsWindow(self.hwnd), "无效窗口"
         # 设置进程DPI感知级别
+        # noinspection PyUnresolvedReferences
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
 
         # 扩展窗口新样式
@@ -161,7 +164,6 @@ class Console:
 
     def rest_style(self):
         """重置窗口样式"""
-        assert win32gui.IsWindow(self.hwnd), "无效窗口"
         # 设置窗口原始样式
         win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, self.style)
         # 重绘窗口
@@ -177,8 +179,6 @@ class Console:
 
     def enable_click_through(self):
         """激活窗口点击穿透"""
-
-        assert win32gui.IsWindow(self.hwnd), "无效窗口"
 
         # 获取当前窗口样式
         style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
@@ -199,7 +199,6 @@ class Console:
 
     def disable_click_through(self):
         """取消窗口点击穿透"""
-        assert win32gui.IsWindow(self.hwnd), "无效窗口"
 
         # 获取当前窗口样式
         style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
@@ -223,7 +222,6 @@ class Console:
 
     def set_transparent(self, transparent):
         """设置透明度"""
-        assert win32gui.IsWindow(self.hwnd), "无效窗口"
 
         # 获取当前窗口的扩展样式
         style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
@@ -250,9 +248,9 @@ class Console:
 
     def full_screen(self):
         """全屏窗口"""
-        assert win32gui.IsWindow(self.hwnd), "无效窗口"
 
         # 设置系统级别DPI感知
+        # noinspection PyUnresolvedReferences
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
 
         # 获取窗口左上角所在屏幕的设备上下文
@@ -298,6 +296,7 @@ class Console:
             char_code = (wideText[i + 1] << 8) | wideText[i]
 
             # 发送WM_CHAR消息 (WM_CHAR的值为0x0102)
+            # noinspection PyUnresolvedReferences
             ctypes.windll.user32.PostMessageW(self.hwnd, 0x0102, char_code, 0)
 
             # 模拟键入延迟
