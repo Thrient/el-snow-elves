@@ -1,35 +1,22 @@
+from script.utils.Api import api
 from script.utils.TaskConfig import TaskConfig
 
 
 class TaskConfigScheduler:
+
     def __init__(self):
-        self._dict = {}
-        self._common_dict = {}
+        self.common = TaskConfig()
+        self.config = TaskConfig()
+        api.on("TASK:CONFIG:SCHEDULER:SYNC", self.sync)
 
-    def load(self, hwnd, arg: str | TaskConfig) -> None:
-        if isinstance(arg, str):
-            self._dict[hwnd] = TaskConfig().loadConfig(arg)
-        else:
-            self._dict[hwnd] = arg
+    def init(self, config, **kwargs):
+        self.common = TaskConfig(**kwargs) if config == "默认配置" else TaskConfig().loadConfig(config)
 
-    def load_common(self, hwnd, config):
-        self._common_dict[hwnd] = config
+    def load(self, config):
+        self.config = TaskConfig().loadConfig(config)
 
-    def read(self, hwnd):
-        if hwnd not in self._dict:
-            return TaskConfig()
-        return self._dict[hwnd]
-
-    def read_common(self, hwnd):
-        if hwnd not in self._common_dict:
-            return TaskConfig()
-        return self._common_dict[hwnd]
-
-    def clear(self, hwnd):
-        if hwnd in self._dict:
-            del self._dict[hwnd]
-        if hwnd in self._common_dict:
-            del self._common_dict[hwnd]
+    def sync(self):
+        self.config = self.common
 
 
 taskConfigScheduler = TaskConfigScheduler()

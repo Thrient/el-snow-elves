@@ -1,6 +1,7 @@
-from script.config.Config import Config
+from script.core.SwitchCharacterScheduler import switchCharacterScheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.task.basis.ClassicTask import ClassicTask
+from script.utils.Api import api
 
 
 class SwitchCharacterTask(ClassicTask):
@@ -12,39 +13,39 @@ class SwitchCharacterTask(ClassicTask):
         return self
 
     def execute(self):
-        if "characterOne" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][0]:
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][0] = False
-            config = taskConfigScheduler.read_common(self.hwnd)
-            taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
+        if "characterOne" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterOne:
+            switchCharacterScheduler.switchCharacterOne = False
             self.switchCharacterOne()
+            api.emit("TASK:CONFIG:SCHEDULER:SYNC")
+
             return
-        if "characterTwo" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][1]:
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][1] = False
-            config = taskConfigScheduler.read_common(self.hwnd)
-            taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
+        if "characterTwo" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterTwo:
+            switchCharacterScheduler.switchCharacterTwo = False
             self.switchCharacterTwo()
+            api.emit("TASK:CONFIG:SCHEDULER:SYNC")
+
             return
-        if "characterThree" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][2]:
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][2] = False
-            config = taskConfigScheduler.read_common(self.hwnd)
-            taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
+        if "characterThree" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterThree:
+            switchCharacterScheduler.switchCharacterThree = False
             self.switchCharacterThree()
+            api.emit("TASK:CONFIG:SCHEDULER:SYNC")
+
             return
-        if "characterFour" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][3]:
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][3] = False
-            config = taskConfigScheduler.read_common(self.hwnd)
-            taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
+        if "characterFour" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterFour:
+            switchCharacterScheduler.switchCharacterFour = False
             self.switchCharacterFour()
+            api.emit("TASK:CONFIG:SCHEDULER:SYNC")
+
             return
-        if "characterFive" in taskConfigScheduler.read_common(hwnd=self.hwnd).switchCharacterList and Config.SWITCH_CHARACTER_STATE[self.hwnd][4]:
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][4] = False
-            config = taskConfigScheduler.read_common(self.hwnd)
-            taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
+        if "characterFive" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterFive:
+            switchCharacterScheduler.switchCharacterFive = False
             self.switchCharacterFive()
+            api.emit("TASK:CONFIG:SCHEDULER:SYNC")
+
             return
-        if all(Config.SWITCH_CHARACTER_STATE[self.hwnd]):
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][5] = False
-            config = taskConfigScheduler.read_common(self.hwnd)
-            taskConfigScheduler.load(hwnd=self.hwnd, arg=config)
+        if all(switchCharacterScheduler.__list__):
+            switchCharacterScheduler.switchCharacterDefault = False
             self.switchCharacterDefault()
+            api.emit("TASK:CONFIG:SCHEDULER:SYNC")
+
             return

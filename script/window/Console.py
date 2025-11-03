@@ -61,43 +61,62 @@ class Console:
         time.sleep(press_down_delay)
         win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, position)
 
-    def mouse_move(self, start, end):
-        """鼠标拖动"""
+    def mouse_move(self, start, end, duration=None):
+        """模拟鼠标拖拽操作
+
+        Args:
+            start: 起始坐标 (x, y)
+            end: 结束坐标 (x, y)
+            duration: 拖拽总时长(秒)，为None时根据距离自动计算
+        """
         start_x, start_y = start
         end_x, end_y = end
-        position = win32api.MAKELONG(start_x, start_y)
 
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, position)
-
+        # 计算移动距离
         dx = end_x - start_x
         dy = end_y - start_y
-
         distance = math.sqrt(dx ** 2 + dy ** 2)
 
-        duration = 0.5 + distance * 0.01
+        # 自动计算持续时间（如果未指定）
 
-        steps = 1 if int(duration * 100) <= 0 else int(duration * 100)
+        duration = max(0.3, min(2.0, distance * 0.01)) if duration is None else duration  # 限制在0.3-2秒之间
 
-        start_time = time.time()
+        # 计算步数（基于时间和距离）
+        min_steps = max(5, int(distance * 0.1))  # 最少5步或距离的10%
+        max_steps = 100  # 最大步数限制
+        steps = min(max_steps, max(min_steps, int(duration * 60)))  # 60 FPS
 
-        for step in range(steps + 1):
-            progress = step / steps
+        try:
+            # 按下左键
+            start_position = win32api.MAKELONG(start_x, start_y)
+            win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, start_position)
 
-            t = progress
-            t = 0.5 - math.cos(t * math.pi) / 2
+            # 平滑移动
+            start_time = time.time()
 
-            current_x = int(start_x + dx * t)
-            current_y = int(start_y + dy * t)
+            for step in range(steps + 1):
+                # 使用缓动函数实现平滑移动
+                progress = step / steps
+                # 使用三次缓动函数，更自然的移动效果
+                t = 1 - (1 - progress) ** 3
 
-            position = win32api.MAKELONG(current_x, current_y)
-            win32api.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, position)
+                current_x = int(start_x + dx * t)
+                current_y = int(start_y + dy * t)
 
-            elapsed = time.time() - start_time
-            expected_elapsed = step * duration / steps
-            sleep_time = expected_elapsed - elapsed
-            time.sleep(sleep_time)
-        position = win32api.MAKELONG(end_x, end_y)
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, position)
+                # 发送鼠标移动消息
+                current_position = win32api.MAKELONG(current_x, current_y)
+                win32api.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, current_position)
+
+                # 精确控制时间间隔
+                elapsed = time.time() - start_time
+                expected_time = step * duration / steps
+                time.sleep(max(0.0, expected_time - elapsed))
+
+        except Exception as e:
+            raise e
+        finally:
+            # 释放左键
+            win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, win32api.MAKELONG(end_x, end_y))
 
     def mouse_wheel(self, pos, delta):
         """鼠标滚轮滚动"""

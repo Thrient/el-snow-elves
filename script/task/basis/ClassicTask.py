@@ -25,21 +25,21 @@ class ClassicTask(BasisTask, ABC):
         self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
 
-    def __enter__(self) -> 'ClassicTask':
-        """进入上下文时启动线程"""
-        self.popCheck()
-        return self
+    # def __enter__(self) -> 'ClassicTask':
+    #     """进入上下文时启动线程"""
+    #     self.popCheck()
+    #     return self
+    #
+    # def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    #     """离开上下文时终止线程"""
+    #     self.popCheckEvent.set()
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """离开上下文时终止线程"""
-        self.popCheckEvent.set()
-
-    @thread(daemon=True)
-    def popCheck(self):
-        while not self._finished.is_set() and not self.popCheckEvent.is_set():
-            self.closeDreamCub()
-
-            self.defer()
+    # @thread(daemon=True)
+    # def popCheck(self):
+    #     while not self._finished.is_set() and not self.popCheckEvent.is_set():
+    #         self.closeDreamCub()
+    #
+    #         self.defer()
 
     def instance(self):
         """
@@ -1076,16 +1076,23 @@ class ClassicTask(BasisTask, ABC):
         self.openBackpack()
         self.touch("按钮物品属性")
         # 截取角色信息区域并转换图像格式
-        character = pil_2_cv2(self.win_console.capture.crop((742, 158, 892, 186)))
+        character = pil_2_cv2(self.winConsole.capture.crop((742, 158, 892, 186)))
 
         # 将图像编码为PNG格式的二进制数据
         _, buffer = cv2.imencode('.png', character)
 
         # 将图像数据转换为base64编码并发送到前端界面
-        Utils.sendEmit(
-            self.window,
-            "API:UPDATE:CHARACTER",
-            character=f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
-            hwnd=self.hwnd
+        self.queueListener.emit(
+            {
+                "event": "JS:EMIT",
+                "args": (
+                    "API:UPDATE:CHARACTER",
+                    {
+                        "character": f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
+                        "hwnd": self.hwnd
+                    }
+                )
+            }
         )
+
         self.backToMain()

@@ -9,17 +9,18 @@ from script.config.Config import Config
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.Timer import Timer
 from script.functools.functools import delay, repeat
-from script.utils.Utils import Utils
 
 
 class BasisTask(ABC):
-    def __init__(self, hwnd, window, win_console):
+    def __init__(self, hwnd, winConsole, queueListener):
+        super().__init__()
         self.hwnd = hwnd
+        self.winConsole = winConsole
+        self.queueListener = queueListener
         self._stopped = Lock()
         self._finished = Event()
-        self.window = window
-        self.taskConfig = taskConfigScheduler.read(self.hwnd)
-        self.win_console = win_console
+        self.taskConfig = taskConfigScheduler.config
+
         self.timer = Timer()
         # 流程控制变量, 默认值1
         self._setup = 1
@@ -57,8 +58,11 @@ class BasisTask(ABC):
 
     def resume(self):
         """恢复"""
-        self._stopped.release()
-        self.timer.resume()
+        try:
+            self.timer.resume()
+            self._stopped.release()
+        except Exception as e:
+            print(e)
 
     def finish(self):
         """结束"""
@@ -134,16 +138,24 @@ class BasisTask(ABC):
         返回值:
             无
         """
-        Utils.sendEmit(
-            self.window,
-            'API:ADD:LOGS',
-            time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-            info="信息",
-            data=message
+        self.queueListener.emit(
+            {
+                "event": "JS:EMIT",
+                "args": (
+                    "API:ADD:LOGS",
+                    {
+                        "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                        "info": "信息",
+                        "data": message
+                    }
+                )
+            }
         )
 
     def input(self, **kwargs):
         """输入信息"""
+        if self._finished.is_set():
+            return None
 
         @delay(post_delay=self.taskConfig.delay)
         def _inner(**inner_kwargs):
@@ -153,12 +165,14 @@ class BasisTask(ABC):
                 return
             # 在停止锁的保护下执行控制台输入操作
             with self._stopped:
-                self.win_console.input(text)
+                self.winConsole.input(text)
 
         return _inner(**kwargs)
 
     def move_mouse(self, **kwargs):
         """鼠标从起始位置移动到结束位置"""
+        if self._finished.is_set():
+            return None
 
         @repeat()
         @delay(post_delay=self.taskConfig.delay)
@@ -166,16 +180,17 @@ class BasisTask(ABC):
             start = inner_kwargs.get('start', (0, 0))
             end = inner_kwargs.get('end', (0, 0))
 
-            if self._finished.is_set():
-                return
             with self._stopped:
                 # 执行窗口控制台的鼠标移动操作
-                self.win_console.mouse_move(start, end)
+                self.winConsole.mouse_move(start, end)
 
         return _inner(**kwargs)
 
     def click_mouse(self, **kwargs):
         """鼠标点击"""
+
+        if self._finished.is_set():
+            return None
 
         @repeat()
         @delay(post_delay=self.taskConfig.delay)
@@ -185,15 +200,16 @@ class BasisTask(ABC):
             y = inner_kwargs.get('y', 0)
             press_down_delay = inner_kwargs.get('press_down_delay', 0)
 
-            if self._finished.is_set():
-                return
             with self._stopped:
-                self.win_console.click_mouse((pos[0] + x, pos[1] + y), press_down_delay=press_down_delay)
+                self.winConsole.click_mouse((pos[0] + x, pos[1] + y), press_down_delay=press_down_delay)
 
         return _inner(**kwargs)
 
     def click_key(self, **kwargs):
         """键盘点击"""
+
+        if self._finished.is_set():
+            return None
 
         @repeat()
         @delay(post_delay=self.taskConfig.delay)
@@ -201,11 +217,9 @@ class BasisTask(ABC):
             key = inner_kwargs.get('key', None)
             press_down_delay = inner_kwargs.get('press_down_delay', 0)
 
-            if self._finished.is_set():
-                return
             # 执行按键操作
             with self._stopped:
-                self.win_console.click_key(key=key, press_down_delay=press_down_delay)
+                self.winConsole.click_key(key=key, press_down_delay=press_down_delay)
 
         return _inner(**kwargs)
 
@@ -229,7 +243,7 @@ class BasisTask(ABC):
         threshold = kwargs.get('threshold', Config.THRESHOLD)
         box = kwargs.get('box', Config.BOX)
 
-        while time.time() - _start_time < over_time:
+        while time.time() - _start_time < over_time and not self._finished.is_set():
             for image in args:
                 result = self.imageTemplate(image, threshold=threshold, box=box)
                 if result is None:
@@ -262,7 +276,7 @@ class BasisTask(ABC):
         box = kwargs.get('box', Config.BOX)
 
         # 在超时时间内循环检测图像匹配
-        while time.time() - __currentTIme < overTime:
+        while time.time() - __currentTIme < overTime and not self._finished.is_set():
 
             # 遍历所有待检测的图像
             for image in args:
@@ -353,7 +367,7 @@ class BasisTask(ABC):
             return None
         with self._stopped:
             # 截取指定窗口的指定区域并转换为OpenCV格式
-            screen = pil_2_cv2(self.win_console.capture.crop(box))
+            screen = pil_2_cv2(self.winConsole.capture.crop(box))
             # 使用模板匹配算法在截图中查找指定图像
             result = Template(f"resources/images/{self.taskConfig.model}/{image}.bmp", threshold=threshold).match_in(
                 screen)
@@ -378,7 +392,7 @@ class BasisTask(ABC):
             return None
         with self._stopped:
             # 截取指定区域的屏幕图像并转换为OpenCV格式
-            screen = pil_2_cv2(self.win_console.capture.crop(box))
+            screen = pil_2_cv2(self.winConsole.capture.crop(box))
             # 在屏幕截图中查找所有匹配的模板图像
             results = Template(f"resources/images/{self.taskConfig.model}/{image}.bmp",
                                threshold=threshold).match_all_in(screen)

@@ -1,27 +1,28 @@
 import queue
-from threading import Event
 
-from script.config.Config import Config
+from script.core.SwitchCharacterScheduler import switchCharacterScheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
+from script.utils.Api import api
 
 
 class TaskScheduler:
 
-    def __init__(self, hwnd):
+    def __init__(self):
         self.counter = 0
-        self.hwnd = hwnd
         self.queue = queue.PriorityQueue()
         self.tasks = set()
+        api.on("TASK:SCHEDULER:INIT", self.init)
 
     def init(self):
         self.queue = queue.PriorityQueue()
         self.tasks.clear()
         self.counter = 0
-        for task in taskConfigScheduler.read_common(self.hwnd).executeList:
+        for task in taskConfigScheduler.config.executeList:
             self.add(0, task["data"])
 
     def clear(self):
         self.queue = queue.PriorityQueue()
+        self.tasks.clear()
 
     def add(self, index, task):
         """
@@ -50,21 +51,23 @@ class TaskScheduler:
             return task
 
         characterState = [
-            "characterOne" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][0],
-            "characterTwo" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][1],
-            "characterThree" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][2],
-            "characterFour" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][3],
-            "characterFive" in taskConfigScheduler.read_common(self.hwnd).switchCharacterList and
-            Config.SWITCH_CHARACTER_STATE[self.hwnd][4],
-            all(Config.SWITCH_CHARACTER_STATE[self.hwnd])
+            "characterOne" in taskConfigScheduler.common.switchCharacterList and
+            switchCharacterScheduler.switchCharacterOne,
+            "characterTwo" in taskConfigScheduler.common.switchCharacterList and
+            switchCharacterScheduler.switchCharacterTwo,
+            "characterThree" in taskConfigScheduler.common.switchCharacterList and
+            switchCharacterScheduler.switchCharacterThree,
+            "characterFour" in taskConfigScheduler.common.switchCharacterList and
+            switchCharacterScheduler.switchCharacterFour,
+            "characterFive" in taskConfigScheduler.common.switchCharacterList and
+            switchCharacterScheduler.switchCharacterFive,
+            all(switchCharacterScheduler.__list__)
         ]
 
         if any(characterState):
-            self.init()
+            api.emit("TASK:SCHEDULER:INIT")
             return '切换角色'
-
         return None
+
+
+taskScheduler = TaskScheduler()

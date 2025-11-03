@@ -1,196 +1,216 @@
 import time
-from multiprocessing import Process
-from threading import Event
+from multiprocessing import Process, Event
 
-from apscheduler.schedulers.background import BackgroundScheduler
-
-from script.config.Config import Config
+from script.core.SwitchCharacterScheduler import switchCharacterScheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.TaskFactory import TaskFactory
-from script.core.TaskScheduler import TaskScheduler
-from script.utils.TaskConfig import TaskConfig
-from script.utils.Utils import Utils
+from script.core.TaskScheduler import taskScheduler
+from script.utils.Api import api
+from script.utils.QueueListener import QueueListener
 from script.window.Console import Console
 
 
 class Script(Process):
-    def __init__(self, hwnd, window):
+    def __init__(self, hwnd, queue):
         super().__init__()
         self.hwnd = hwnd
-        self.window = window
-        self.taskScheduler = TaskScheduler(hwnd)
-        self.win_console = Console(hwnd)
-        self.sched = BackgroundScheduler(demon=True)
+        self.queue = queue
+
         self.obj = None
-        self.addScheduledTasks()
-        self.sched.start()
+        self.winConsole = None
+        self.queueListener = None
 
+        self._unbind = Event()
+        self._started = Event()
+        self._ended = Event()
         self._full = Event()
-        self._on = Event()
-        self._end = Event()
-
-    def switch_on(self, config, taskConfig):
-        if self._on.is_set():
-            return
-        if self._full.is_set():
-            return
-        self._on.set()
-        taskConfigScheduler.load_common(self.hwnd,
-                                        taskConfig if config == "默认配置" else TaskConfig().loadConfig(config))
-        # 初始化窗口的切换角色状态
-        Config.SWITCH_CHARACTER_STATE[self.hwnd] = [True, True, True, True, True, True]
-        self.lock()
-
-    def addScheduledTasks(self):
-
-        def restart():
-            # Config.SWITCH_CHARACTER_STATE[self.hwnd] = [True, True, True, True, True, True]
-            pass
-
-        self.sched.add_job(
-            restart,
-            "cron",
-            hour=19,
-            minute=12,
-            timezone="Asia/Shanghai"
-        )
 
     def run(self):
-        """
-        运行主任务循环
-
-        该方法负责初始化窗口状态，然后进入任务处理循环，不断从任务调度器中获取任务并执行。
-        在循环过程中会通过Utils.sendEmit发送状态更新信息到指定窗口。
-
-        参数:
-            无
-
-        返回值:
-            无
-        """
+        """运行主任务循环"""
         try:
-
-            self.win_console.set_style_no_menu()
-            self.win_console.set_transparent(255)
-
-            # 主任务处理循环，当finished标志未设置时持续运行
-            while not self._end.is_set():
+            self.init()
+            while not self._unbind.is_set():
                 try:
-                    # 从任务调度器获取下一个待执行任务
-                    task = self.taskScheduler.pop()
-                    if task is None:
-                        Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state='无任务', hwnd=self.hwnd)
-                        time.sleep(3)
+                    if self._ended.is_set():
+                        self.queueListener.emit(
+                            {
+                                "event": "JS:EMIT",
+                                "args": (
+                                    "API:UPDATE:CHARACTER",
+                                    {
+                                        "hwnd": self.hwnd,
+                                        "state": "结 束"
+                                    }
+                                )
+                            }
+                        )
+                        time.sleep(1)
                         continue
-
-                    # 发送任务状态更新信息
-                    Utils.sendEmit(self.window, 'API:UPDATE:CHARACTER', state=task, hwnd=self.hwnd)
-
-                    # 发送日志事件，记录任务开始信息
-                    Utils.sendEmit(
-                        self.window,
-                        'API:ADD:LOGS',
-                        time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                        info="信息",
-                        data=f"{task}开始"
+                    task = taskScheduler.pop()
+                    if task is None:
+                        self.queueListener.emit(
+                            {
+                                "event": "JS:EMIT",
+                                "args": (
+                                    "API:UPDATE:CHARACTER",
+                                    {
+                                        "hwnd": self.hwnd,
+                                        "state": "无任务"
+                                    }
+                                )
+                            }
+                        )
+                        time.sleep(1)
+                        continue
+                    self.queueListener.emit(
+                        {
+                            "event": "JS:EMIT",
+                            "args": (
+                                "API:UPDATE:CHARACTER",
+                                {
+                                    "hwnd": self.hwnd,
+                                    "state": task
+                                }
+                            )
+                        }
                     )
-
-                    # 根据任务配置创建对应的任务对象实例
-                    cls = TaskFactory.instance().create(taskConfigScheduler.read_common(self.hwnd).model, task)
+                    self.queueListener.emit(
+                        {
+                            "event": "JS:EMIT",
+                            "args": (
+                                "API:ADD:LOGS",
+                                {
+                                    "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                                    "info": "信息",
+                                    "data": f"{task}开始"
+                                }
+                            )
+                        }
+                    )
+                    cls = TaskFactory.instance().create(taskConfigScheduler.common.model, task)
                     if cls is None:
                         continue
-                    with cls(hwnd=self.hwnd, window=self.window, win_console=self.win_console) as self.obj:
-                        self.obj.execute()
+                    self.obj = cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener)
+                    self.obj.execute()
+
                 except Exception as e:
-                    Utils.sendEmit(
-                        self.window,
-                        'API:ADD:LOGS',
-                        time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                        info="错误",
-                        data=f"{e}"
+                    self.queueListener.emit(
+                        {
+                            "event": "JS:EMIT",
+                            "args": (
+                                "API:ADD:LOGS",
+                                {
+                                    "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                                    "info": "错误",
+                                    "data": e
+                                }
+                            )
+                        }
                     )
         except Exception as e:
-            Utils.sendEmit(
-                self.window,
-                'API:ADD:LOGS',
-                time=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                info="错误",
-                data=f"{e}"
+            self.queueListener.emit(
+                {
+                    "event": "JS:EMIT",
+                    "args": (
+                        "API:ADD:LOGS",
+                        {
+                            "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+                            "info": "错误",
+                            "data": e
+                        }
+                    )
+                }
             )
 
-    def unbind(self):
-        """
-        解除绑定操作
+    def init(self):
+        """初始化"""
+        self.winConsole = Console(hwnd=self.hwnd)
+        self.queueListener = QueueListener(self.queue, self.hwnd, "script")
 
-        该函数用于设置finished标志位，表示某个操作或任务已经完成。
-        通常用于线程同步或资源清理等场景。
+        api.on("API:SCRIPT:STOP", self.stop)
+        api.on("API:SCRIPT:RESUME", self.resume)
+        api.on("API:SCRIPT:LOCK", self.lock)
+        api.on("API:SCRIPT:UNLOCK", self.unlock)
+        api.on("API:SCRIPT:FULLSCREEN", self.fullScreen)
+        api.on("API:SCRIPT:TRANSPARENT", self.transparent)
+        api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
+        api.on("API:SCRIPT:END", self.end)
 
-        参数:
-            self: 对象实例
+        api.on("API:SCRIPT:UNBIND", self.unbind)
+        api.on("API:SCRIPT:LAUNCH", self.launch)
 
-        返回值:
-            无
-        """
+        self.borderless()
+        self.transparent(255)
+
+        self.queueListener.start()
+
+    def launch(self, config, kwargs):
+        """启动"""
+        if self._started.is_set():
+            return
+        self._started.set()
+        self._ended.clear()
+        taskConfigScheduler.init(config, **kwargs)
+        switchCharacterScheduler.reset()
+
+    def lock(self):
+        """锁定当前窗口"""
         try:
-            Config.SWITCH_CHARACTER_STATE[self.hwnd] = [False, False, False, False, False, False]
-            self.taskScheduler.clear()
-            self.obj.finish()
+            self.winConsole.enable_click_through()
         except Exception as e:
             print(e)
-        finally:
-            self._end.set()
-            taskConfigScheduler.clear(self.hwnd)
-            self.win_console.rest_style()
-            self.win_console.disable_click_through()
-            self.win_console.set_transparent(255)
 
-    def end(self):
+    def unlock(self):
+        """解锁当前窗口="""
         try:
-            Config.SWITCH_CHARACTER_STATE[self.hwnd] = [False, False, False, False, False, False]
-            self.taskScheduler.clear()
-            self.obj.finish()
+            self.winConsole.disable_click_through()
         except Exception as e:
             print(e)
-        finally:
-            self.unlock()
-            self._on.clear()
+
+    def reset_win(self):
+        try:
+            self.winConsole.rest_style()
+        except Exception as e:
+            print(e)
+
+    def borderless(self):
+        try:
+            self.winConsole.set_style_no_menu()
+        except Exception as e:
+            print(e)
+
+    def fullScreen(self):
+        """全屏窗口"""
+        try:
+            if self._full.is_set():
+                return
+            self._full.set()
+            self.stop()
+            self.winConsole.full_screen()
+        except Exception as e:
+            print(e)
+
+    def transparent(self, transparent):
+        """设置窗口透明度"""
+        try:
+            self.winConsole.set_transparent(transparent)
+        except Exception as e:
+            print(e)
 
     def stop(self):
-        """
-        停止当前脚本的运行
-
-        该函数用于停止脚本的运行状态，通过设置停止标志位并获取停止信号量来实现。
-        同时会调用窗口控制台方法取消窗口的点击穿透功能。
-
-        参数:
-            self: 对象实例
-
-        返回值:
-            无
-        """
+        """停止脚本运行"""
         try:
             self.obj.stop()
         except Exception as e:
             print(e)
         finally:
             # 恢复原本窗口
-            self.win_console.rest_style()
+            self.reset_win()
             # 取消窗口的点击穿透功能
-            self.win_console.disable_click_through()
+            self.unlock()
 
     def resume(self):
-        """
-        恢复函数，用于恢复脚本的运行状态
-
-        该函数会检查停止标志，如果已设置则清除标志并释放停止信号量，
-        同时设置窗口控制台为可点击穿透状态
-
-        参数:
-            无
-
-        返回值:
-            无
-        """
+        """恢复脚本运行"""
         try:
             self.obj.resume()
         except Exception as e:
@@ -198,75 +218,37 @@ class Script(Process):
         finally:
             self._full.clear()
             # 去除窗口菜单
-            self.win_console.set_style_no_menu()
+            self.borderless()
             # 设置窗口控制台为可点击穿透状态
-            self.win_console.enable_click_through()
+            self.unlock()
 
-    def lock(self):
-        """
-        锁定当前窗口
+    def unbind(self):
+        """解绑"""
+        try:
+            self.queueListener.end()
+            taskScheduler.clear()
+            self.obj.finish()
+        except Exception as e:
+            print(e)
+        finally:
+            self.reset_win()
+            self.unlock()
+            self.transparent(255)
+            self._unbind.set()
 
-        该函数用于锁定当前窗口，即设置窗口的点击穿透功能为不可点击。
-
-        参数:
-            无
-
-        返回值:
-            无
-        """
-        self.win_console.enable_click_through()
-
-    def unlock(self):
-        """
-        解锁当前窗口
-
-        该函数用于解锁当前窗口，即取消窗口的点击穿透功能。
-
-        参数:
-            无
-
-        返回值:
-            无
-        """
-        self.win_console.disable_click_through()
-
-    def setTransparent(self, transparent):
-        """
-        设置窗口透明度
-
-        该函数用于设置窗口的透明度，参数为0-255，0为完全透明，255为完全可见。
-
-        参数:
-            self: 类实例对象，包含windowConsole属性用于窗口操作
-            transparent: 透明度值，范围0-255
-
-        返回值:
-            无返回值
-
-        """
-        self.win_console.set_transparent(transparent)
-
-    def fullScreen(self):
-        if self._full.is_set():
-            return
-        self._full.set()
-        self.stop()
-        self.win_console.full_screen()
+    def end(self):
+        try:
+            taskScheduler.clear()
+            self.obj.finish()
+        except Exception as e:
+            print(e)
+        finally:
+            self.unlock()
+            self._started.clear()
+            self._ended.set()
 
     def screenshot(self):
-        """
-        截取当前窗口的屏幕截图并保存为图片文件
-
-        参数:
-            self: 类实例对象，包含windowConsole属性用于窗口操作
-
-        返回值:
-            无返回值
-
-        功能说明:
-            1. 调用windowConsole的captureWindow方法获取窗口截图
-            2. 将截图保存到临时图片目录，文件名为时间戳.bmp格式
-        """
-        image = self.win_console.capture
+        """截图并保存为图片文件"""
+        image = self.winConsole.capture
         # 保存截图到临时目录，使用时间戳作为文件名
         image.save(f"temp/images/{time.time()}.bmp")

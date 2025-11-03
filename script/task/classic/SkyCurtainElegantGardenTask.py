@@ -50,7 +50,7 @@ class SkyCurtainElegantGardenTask(ClassicTask):
                     if self.exits("按钮展馆时装试穿进行中") is not None:
                         self.touch("按钮展馆时装试穿进行中")
                         self.arrive()
-                        if self.exits("标志星天外展室任务") is None:
+                        if self.exits("标志普通展厅任务") is not None:
                             self.resetLens()
                             self.click_key(key="W", press_down_delay=1.2)
                         self.touch("按钮大世界试穿")
