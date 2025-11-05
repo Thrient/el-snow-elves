@@ -22,7 +22,6 @@ class Script(Process):
 
         self._unbind = Event()
         self._started = Event()
-        self._ended = Event()
         self._full = Event()
 
     def run(self):
@@ -31,21 +30,6 @@ class Script(Process):
             self.init()
             while not self._unbind.is_set():
                 try:
-                    if self._ended.is_set():
-                        self.queueListener.emit(
-                            {
-                                "event": "JS:EMIT",
-                                "args": (
-                                    "API:UPDATE:CHARACTER",
-                                    {
-                                        "hwnd": self.hwnd,
-                                        "state": "结  束"
-                                    }
-                                )
-                            }
-                        )
-                        time.sleep(1)
-                        continue
                     task = taskScheduler.pop()
                     if task is None:
                         self.queueListener.emit(
@@ -149,7 +133,6 @@ class Script(Process):
         if self._started.is_set():
             return
         self._started.set()
-        self._ended.clear()
         self.lock()
         taskConfigScheduler.init(config, **kwargs)
         switchCharacterScheduler.reset()
@@ -246,7 +229,6 @@ class Script(Process):
         finally:
             self.unlock()
             self._started.clear()
-            self._ended.set()
 
     def screenshot(self):
         """截图并保存为图片文件"""

@@ -1,3 +1,5 @@
+import time
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -7,10 +9,13 @@ class HeroListTask(ClassicTask):
         # 事件变量字典
         self.event = {
             "hero_list_counter": 1,  # 江湖英雄榜次数计数器
+            "is_prepare": False,  # 准备状态
+            "check_timer": 0.0  # 场景检测计时器
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
-
+            5: {"check_timer": lambda: time.time()},
+            7: {"is_prepare": False},
         }
 
     def execute(self):
@@ -42,13 +47,6 @@ class HeroListTask(ClassicTask):
                     self.setup = 4
                 case 4:
                     if self.exits("界面江湖英雄榜") is None:
-                        if self.exits("标志江湖英雄榜匹配成功") is not None:
-                            self.logs(f"江湖英雄榜第 {self.event["hero_list_counter"]} 次")
-                            self.event["hero_list_counter"] += 1
-                            self.defer(count=3)
-                            self.waitMapLoading()
-                            self.setup = 5
-                            continue
                         self.setup = 3
                         continue
 
@@ -57,33 +55,54 @@ class HeroListTask(ClassicTask):
                         continue
 
                     self.touch("按钮江湖英雄榜匹配", "按钮江湖英雄榜晋级赛")
-                    self.touch("按钮江湖英雄榜确定", overTime=0.5)
+                    self.touch("按钮江湖英雄榜确定", seconds=None)
+                    self.setup = 5
                 case 5:
+                    if self.taskConfig.heroListCount < self.event["hero_list_counter"]:
+                        self.setup = 0
+                        continue
+
+                    if time.time() - self.event["check_timer"] > 15:
+                        if self.exits("界面江湖英雄榜") is not None:
+                            self.setup = 4
+                            continue
+                        self.setup = 3
+                        continue
+
+                    if self.exits("标志江湖英雄榜匹配成功") is not None:
+                        self.defer(count=2)
+                        self.waitMapLoading()
+                        self.setup = 6
+                        continue
+
+                    if self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方") is not None:
+                        self.setup = 6
+
+                case 6:
+                    self.logs(f"江湖英雄榜第 {self.event["hero_list_counter"]} 次")
+                    self.event["hero_list_counter"] += 1
+                    self.setup = 7
+                case 7:
+                    if self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方") is None:
+                        self.setup = 8
+                        continue
 
                     if self.taskConfig.heroListInitiativeExit:
                         self.touch("按钮江湖英雄榜退出")
                         self.touch("按钮江湖英雄榜退出副本")
-                    else:
-                        self.touch("按钮江湖英雄榜准备")
-                        self.click_key(key="W", press_down_delay=3)
-                        self.autoFightStart()
-
-                    self.setup = 6
-                case 6:
-
-                    if self.exits("按钮江湖英雄榜离开") is not None \
-                            or self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方") is None:
-
-                        self.autoFightStop()
-
-                        self.touch("按钮江湖英雄榜离开")
-
-                        if self.event["hero_list_counter"] > self.taskConfig.heroListCount:
-                            self.setup = 0
-                            continue
-
-                        self.waitMapLoading()
-                        self.setup = 4
-
+                        self.setup = 8
                         continue
+                    if self.event["is_prepare"]:
+                        continue
+
+                    self.touch("按钮江湖英雄榜准备")
+                    self.event["is_prepare"] = True
+                    self.click_key(key="W", press_down_delay=3)
+                    self.autoFightStart()
+                case 8:
+                    self.touch("按钮江湖英雄榜离开", seconds=20)
+                    self.autoFightStop()
+                    self.waitMapLoading()
+                    self.setup = 5
+
         return None

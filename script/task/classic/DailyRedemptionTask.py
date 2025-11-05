@@ -6,10 +6,12 @@ class DailyRedemptionTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.setup = 1
+        self.obj = None
         self.event = [True]
 
-    def instance(self):
-        return self
+    def finish(self):
+        super().finish()
+        self.obj.finish()
 
     def execute(self):
         while not self._finished.is_set():
@@ -254,9 +256,8 @@ class DailyRedemptionTask(ClassicTask):
 
                     from script.core.TaskFactory import TaskFactory
                     cls = TaskFactory.instance().create(self.taskConfig.model, "发布悬赏")
-
-                    cls(hwnd=self.hwnd, window=self.window, win_console=self.win_console).instance().execute()
-
+                    with cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as self.obj:
+                        self.obj.execute()
                     self.setup = 10
 
                 case 10:

@@ -28,7 +28,7 @@ class PostBountyTask(ClassicTask):
                     return 0
                 # 位置检测
                 case 1:
-                    self.locationDetection()
+                    # self.locationDetection()
                     self.setup = 2
                 # 队伍检测
                 case 2:
@@ -41,7 +41,8 @@ class PostBountyTask(ClassicTask):
                     self.touch("按钮活动悬赏")
                     self.setup = 4
                 case 4:
-                    self.verifyTouch("按钮发布悬赏下拉")
+                    self.touch("按钮悬赏发布")
+                    self.touch("按钮发布悬赏下拉")
                     self.touch("按钮发布悬赏江湖行商")
                     self.touch("按钮悬赏发布悬赏")
                     self.touch("按钮确定")
@@ -49,7 +50,8 @@ class PostBountyTask(ClassicTask):
 
                     self.setup = 5
                 case 5:
-                    self.verifyTouch("按钮发布悬赏下拉")
+                    self.touch("按钮悬赏发布")
+                    self.touch("按钮发布悬赏下拉")
                     self.touch("按钮发布悬赏聚义平冤")
                     self.touch("按钮悬赏发布悬赏")
                     self.touch("按钮确定")

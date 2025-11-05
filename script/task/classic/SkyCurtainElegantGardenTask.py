@@ -64,6 +64,8 @@ class SkyCurtainElegantGardenTask(ClassicTask):
                         self.backToMain()
                     self.setup = 6
                 case 6:
+                    self.closeRewardUi(count=5)
                     self.touch("按钮副本退出")
+                    self.waitMapLoading()
                     self.setup = 0
         return None

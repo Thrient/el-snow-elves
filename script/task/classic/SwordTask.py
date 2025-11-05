@@ -10,7 +10,7 @@ class SwordTask(ClassicTask):
         # 事件类型定义
         self.event = {
             "sword_counter": 1,  # 单人论剑次数计数器,
-            "is_prepare": False,  # 论剑准备状态
+            "is_prepare": False,  # 准备状态
             "check_timer": 0.0  # 场景检测计时器
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
@@ -96,7 +96,7 @@ class SwordTask(ClassicTask):
                         self.touch("按钮副本退出")
                         self.touch("按钮确定")
                         self.waitMapLoading()
-                        self.setup = 4
+                        self.setup = 5
                         continue
 
                     if self.event["is_prepare"]:
@@ -108,11 +108,11 @@ class SwordTask(ClassicTask):
                     self.autoFightStart()
                 case 8:
                     # 点击华山论剑离开按钮
-                    self.touch("按钮华山论剑离开", over_time=20)
+                    self.touch("按钮华山论剑离开", seconse=20)
                     # 停止自动战斗模式
                     self.autoFightStop()
                     # 等待地图加载完成
                     self.waitMapLoading()
-                    self.setup = 4
+                    self.setup = 5
 
         return None

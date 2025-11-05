@@ -1,5 +1,3 @@
-from script.task.classic.SkyCurtainElegantGardenTask import SkyCurtainElegantGardenTask
-from script.task.classic.VientianeLikesTask import VientianeLikesTask
 from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.BountyMissionsTask import BountyMissionsTask
 from script.task.classic.BreakBanTask import BreakBanTask
@@ -7,6 +5,7 @@ from script.task.classic.ChivalryShoutTask import ChivalryShoutTask
 from script.task.classic.DailyCopiesTask import DailyCopiesTask
 from script.task.classic.DailyRedemptionTask import DailyRedemptionTask
 from script.task.classic.DoorBanTask import DoorBanTask
+from script.task.classic.EmailReceiveTask import EmailReceiveTask
 from script.task.classic.FactionPointsTask import FactionPointsTask
 from script.task.classic.FactionTask import FactionTask
 from script.task.classic.HeroListTask import HeroListTask
@@ -16,12 +15,14 @@ from script.task.classic.MerchantLakeTask import MerchantLakeTask
 from script.task.classic.PostBountyTask import PostBountyTask
 from script.task.classic.RiverTask import RiverTask
 from script.task.classic.SittingObservingTask import SittingObservingTask
+from script.task.classic.SkyCurtainElegantGardenTask import SkyCurtainElegantGardenTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
 from script.task.classic.SwordTask import SwordTask
 from script.task.classic.SwordThreeTask import SwordThreeTask
 from script.task.classic.TeaStoryTask import TeaStoryTask
 from script.task.classic.UniqueSkillsTask import UniqueSkillsTask
 from script.task.classic.UrgentDeliveryTask import UrgentDeliveryTask
+from script.task.classic.VientianeLikesTask import VientianeLikesTask
 from script.task.classic.WorldShoutsTask import WorldShoutsTask
 
 
@@ -79,6 +80,7 @@ class TaskFactory:
         self.register("classic", "行当绝活", UniqueSkillsTask)
         self.register("classic", "万象刷赞", VientianeLikesTask)
         self.register("classic", "天幕雅苑", SkyCurtainElegantGardenTask)
+        self.register("classic", "邮件领取", EmailReceiveTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

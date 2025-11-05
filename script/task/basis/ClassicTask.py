@@ -7,10 +7,10 @@ from threading import Event
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
+
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
 from script.utils.Thread import thread
-from script.utils.Utils import Utils
 
 
 class ClassicTask(BasisTask, ABC):
@@ -218,6 +218,7 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮设置确定")
         # 关闭设置界面
         self.closeSetting()
+        self.defer(count=5)
 
     def autoFight(self):
         """
@@ -664,6 +665,21 @@ class ClassicTask(BasisTask, ABC):
         # 执行关闭当前界面的操作
         self.closeCurrentUi()
 
+    def closeFlyingEagle(self):
+        """关闭飞鹰界面"""
+        if self.exits("界面飞鹰") is None:
+            return
+        self.logs("关闭飞鹰")
+        self.closeCurrentUi()
+
+    def openFlyingEagle(self):
+        """打开飞鹰界面"""
+        if self.exits("界面飞鹰") is not None:
+            return
+        self.logs("打开飞鹰")
+        self.openBuddy()
+        self.touch("按钮好友飞鹰")
+
     def closeFaction(self):
         """
         关闭帮派界面
@@ -919,6 +935,7 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无
         """
+        self.backToMain()
         self.openSetting()
         self.touch("按钮设置切换角色")
         self.touch("按钮设置确定")
