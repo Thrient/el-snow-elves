@@ -4,11 +4,9 @@ import time
 from abc import ABC
 from collections import deque
 from threading import Event
-from typing import Any
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
-
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
 from script.utils.Thread import thread
@@ -20,26 +18,23 @@ class ClassicTask(BasisTask, ABC):
         super().__init__(**kwargs)
         # 自动战斗
         self.autoFightEvent = Event()
-        self.popCheckEvent = Event()
         # 世界喊话设置
         self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
+        self.popCheck()
 
-    # def __enter__(self) -> 'ClassicTask':
-    #     """进入上下文时启动线程"""
-    #     self.popCheck()
-    #     return self
-    #
-    # def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-    #     """离开上下文时终止线程"""
-    #     self.popCheckEvent.set()
+    def __enter__(self):
+        return self
 
-    # @thread(daemon=True)
-    # def popCheck(self):
-    #     while not self._finished.is_set() and not self.popCheckEvent.is_set():
-    #         self.closeDreamCub()
-    #
-    #         self.defer()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.finish()
+
+    @thread(daemon=True)
+    def popCheck(self):
+        while not self._finished.is_set():
+            self.closeDreamCub()
+
+            self.defer()
 
     def instance(self):
         """

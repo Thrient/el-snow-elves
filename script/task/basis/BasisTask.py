@@ -8,7 +8,7 @@ from airtest.core.cv import Template
 from script.config.Config import Config
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.Timer import Timer
-from script.functools.functools import delay, repeat
+from script.functools.functools import delay, repeat, during
 
 
 class BasisTask(ABC):
@@ -111,7 +111,7 @@ class BasisTask(ABC):
         返回值:
             无
         """
-        self.click_mouse(pos=(1335, 750), post_delay=1000)
+        self.click_mouse(pos=(1335, 750), post_delay=0)
 
     def defer(self, count=1):
         """
@@ -237,21 +237,23 @@ class BasisTask(ABC):
 
     def touch(self, *args, **kwargs):
         """查找并点击屏幕上的图像模板"""
-        _start_time = time.time()
+        if self._finished.is_set():
+            return None
 
-        over_time = kwargs.get('over_time', Config.OVERTIME)
-        threshold = kwargs.get('threshold', Config.THRESHOLD)
-        box = kwargs.get('box', Config.BOX)
+        @during(seconds=Config.OVERTIME)
+        def _inner(**inner_kwargs):
+            threshold = inner_kwargs.get('threshold', Config.THRESHOLD)
+            box = inner_kwargs.get('box', Config.BOX)
 
-        while time.time() - _start_time < over_time and not self._finished.is_set():
             for image in args:
                 result = self.imageTemplate(image, threshold=threshold, box=box)
                 if result is None:
                     continue
                 self.click_mouse(pos=result, **kwargs)
                 return result
-            time.sleep(0.1)
-        return None
+            return None
+
+        return _inner(**kwargs)
 
     def wait(self, *args, **kwargs):
         """

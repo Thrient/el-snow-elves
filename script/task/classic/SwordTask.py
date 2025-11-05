@@ -39,12 +39,8 @@ class SwordTask(ClassicTask):
                 # 队伍检测
                 case 2:
                     self.teamDetection()
-                    self.setup = 3
+                    self.setup = 5
                 case 3:
-                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
-                        self.setup = 0
-                        continue
-
                     self.openBackpack()
                     self.touch("按钮物品综合入口")
                     self.touch("按钮物品活动")
@@ -58,10 +54,6 @@ class SwordTask(ClassicTask):
                         self.setup = 5
                         continue
 
-                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
-                        self.setup = 0
-                        continue
-
                     if self.exits("按钮单人论剑取消匹配") is None:
                         self.touch_once("按钮单人论剑匹配")
 
@@ -69,7 +61,14 @@ class SwordTask(ClassicTask):
                         self.touch_once("按钮确认")
 
                 case 5:
-                    if time.time() - self.event["check_timer"] > 30:
+                    if self.taskConfig.swordFightCount < self.event["sword_counter"]:
+                        self.setup = 0
+                        continue
+
+                    if time.time() - self.event["check_timer"] > 15:
+                        if self.exits("界面单人论剑") is not None:
+                            self.setup = 4
+                            continue
                         self.setup = 3
                         continue
 

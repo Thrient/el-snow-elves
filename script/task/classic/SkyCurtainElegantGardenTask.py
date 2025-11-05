@@ -43,7 +43,7 @@ class SkyCurtainElegantGardenTask(ClassicTask):
                     self.touch("按钮天幕雅苑展馆排名")
                     self.move_mouse(start=(1050, 450), end=(500, 450), count=random.randint(1, 3))
                     self.touch("按钮天幕雅苑进入展馆")
-                    self.defer(count=5)
+                    self.waitMapLoading()
 
                     self.setup = 4
                 case 4:

@@ -23,7 +23,7 @@ class AcquisitionTask(ClassicTask):
 
     @thread(daemon=True)
     def popCheck(self):
-        while not self._finished.is_set() and not self.popCheckEvent.is_set():
+        while not self._finished.is_set():
             self.closeRewardUi()
 
             time.sleep(1)

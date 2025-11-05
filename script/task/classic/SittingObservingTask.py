@@ -51,5 +51,6 @@ class SittingObservingTask(ClassicTask):
                     if self.exits("标志大世界修炼中") is None:
                         self.setup = 0
                         continue
-                    self.defer(5)
+                    self.defer(count=5)
+                    self.keepAlive()
         return None

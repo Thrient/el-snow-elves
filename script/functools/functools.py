@@ -29,3 +29,20 @@ def repeat(count: Union[int] = 1):
 
     return decorator
 
+
+def during(seconds: Union[int, float] = 1.0):
+    """持续运行"""
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            end_time = time.time() + kwargs.get('seconds', seconds)
+            while time.time() < end_time:
+                result = func(*args, **kwargs)
+                if result is not None:
+                    return result
+                time.sleep(0.05)
+            return None
+
+        return wrapper
+
+    return decorator

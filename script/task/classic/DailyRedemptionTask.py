@@ -43,7 +43,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.input(text="银票礼盒")
                         self.touch("按钮珍宝阁搜索")
                         if self.exits("标志珍宝阁银票礼盒", box=(910, 170, 1190, 285)):
-                            self.click_mouse(pos=(988, 694), count=30, pre_delay=0.1)
+                            self.click_mouse(pos=(988, 694), count=30, post_delay=0.1)
                         self.touch("按钮珍宝阁搜索返回")
                         self.closeRewardUi()
                         self.backToMain()

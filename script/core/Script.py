@@ -39,7 +39,7 @@ class Script(Process):
                                     "API:UPDATE:CHARACTER",
                                     {
                                         "hwnd": self.hwnd,
-                                        "state": "结 束"
+                                        "state": "结  束"
                                     }
                                 )
                             }
@@ -90,8 +90,8 @@ class Script(Process):
                     cls = TaskFactory.instance().create(taskConfigScheduler.common.model, task)
                     if cls is None:
                         continue
-                    self.obj = cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener)
-                    self.obj.execute()
+                    with cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as self.obj:
+                        self.obj.execute()
 
                 except Exception as e:
                     self.queueListener.emit(
@@ -150,6 +150,7 @@ class Script(Process):
             return
         self._started.set()
         self._ended.clear()
+        self.lock()
         taskConfigScheduler.init(config, **kwargs)
         switchCharacterScheduler.reset()
 

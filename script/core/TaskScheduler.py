@@ -65,6 +65,7 @@ class TaskScheduler:
         ]
 
         if any(characterState):
+            api.emit("TASK:CONFIG:SCHEDULER:SYNC")
             api.emit("TASK:SCHEDULER:INIT")
             return '切换角色'
         return None
