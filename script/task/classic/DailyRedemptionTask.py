@@ -181,6 +181,7 @@ class DailyRedemptionTask(ClassicTask):
                 case 7:
                     if "莲子购买" in self.taskConfig.dailyExchangeList:
                         self.locationDetection()
+                        self.defer()
                         self.areaGo("江南", x=670, y=1700)
                         self.touch("按钮大世界对话")
                         self.touch("按钮商人小蟹小虾")
@@ -196,6 +197,7 @@ class DailyRedemptionTask(ClassicTask):
 
                     if "艾草购买" in self.taskConfig.dailyExchangeList:
                         self.locationDetection()
+                        self.defer()
                         self.areaGo("江南", x=673, y=1722)
                         self.touch("按钮大世界对话")
                         self.touch("按钮商人新鲜蔬菜")
@@ -213,40 +215,6 @@ class DailyRedemptionTask(ClassicTask):
 
                 case 8:
 
-                    if "神厨食材购买" in self.taskConfig.dailyExchangeList:
-                        self.locationDetection()
-                        self.areaGo("中原", x=1272, y=1725)
-                        self.touch("按钮大世界对话")
-                        self.touch("按钮商人购买食材")
-                        if self.exits("标志兑换商店批量购买") is not None:
-                            self.touch("按钮兑换商店批量购买")
-
-                        for text in self.taskConfig.chefIngredientsTags:
-                            self.touch("标志输入名称搜索")
-                            self.input(text=text)
-                            self.touch("按钮搜索")
-                            self.touch("按钮满")
-                            self.click_mouse(pos=(1015, 630))
-                            self.touch("按钮搜索返回")
-                        self.backToMain()
-
-                    if "神厨调料购买" in self.taskConfig.dailyExchangeList:
-                        self.locationDetection()
-                        self.areaGo("中原", x=1272, y=1725)
-                        self.touch("按钮大世界对话")
-                        self.touch("按钮商人购买调料")
-                        if self.exits("标志兑换商店批量购买") is not None:
-                            self.touch("按钮兑换商店批量购买")
-
-                        for text in self.taskConfig.chefSeasoningTags:
-                            self.touch("标志输入名称搜索")
-                            self.input(text=text)
-                            self.touch("按钮搜索")
-                            self.touch("按钮满")
-                            self.click_mouse(pos=(1015, 630))
-
-                            self.touch("按钮搜索返回")
-                        self.backToMain()
 
                     self.setup = 9
                 case 9:

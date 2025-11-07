@@ -1,6 +1,7 @@
 from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.BountyMissionsTask import BountyMissionsTask
 from script.task.classic.BreakBanTask import BreakBanTask
+from script.task.classic.ChefIngredientsTask import ChefIngredientsTask
 from script.task.classic.ChivalryShoutTask import ChivalryShoutTask
 from script.task.classic.DailyCopiesTask import DailyCopiesTask
 from script.task.classic.DailyRedemptionTask import DailyRedemptionTask
@@ -81,6 +82,7 @@ class TaskFactory:
         self.register("classic", "万象刷赞", VientianeLikesTask)
         self.register("classic", "天幕雅苑", SkyCurtainElegantGardenTask)
         self.register("classic", "邮件领取", EmailReceiveTask)
+        self.register("classic", "神厨食材", ChefIngredientsTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):
