@@ -365,7 +365,7 @@ class Elves:
             }
         )
 
-    def bind(self):
+    def bind(self, **kwargs):
         """
         启动脚本执行函数
 
@@ -384,7 +384,7 @@ class Elves:
 
         self.launch_script(hwnd=hwnd)
 
-        self.start(hwnd, "默认配置")
+        self.start(hwnd, "默认配置", kwargs)
 
     def hot_key_bind(self):
         """

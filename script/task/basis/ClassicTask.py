@@ -665,6 +665,22 @@ class ClassicTask(BasisTask, ABC):
         # 执行关闭当前界面的操作
         self.closeCurrentUi()
 
+    def closeExchangeShop(self):
+        """关闭兑换商店"""
+        if self.exits("界面兑换商店") is None:
+            return
+        self.logs("关闭兑换商店")
+        self.closeCurrentUi()
+
+    def openExchangeShop(self):
+        """打开兑换商店"""
+        if self.exits("界面兑换商店") is not None:
+            return
+        self.logs("打开兑换商店")
+        self.openBackpack()
+        self.touch("按钮物品积分")
+        self.touch("按钮物品打开兑换商店")
+
     def closeFlyingEagle(self):
         """关闭飞鹰界面"""
         if self.exits("界面飞鹰") is None:
