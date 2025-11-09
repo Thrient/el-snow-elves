@@ -253,6 +253,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮活动摇钱树", y=45)
                         self.touch("按钮摇钱树前往")
                         self.arrive()
+                        self.resetLens()
 
                         self.touch(f"按钮摇钱树{self.taskConfig.moneyTreeSelect}")
                         self.closeRewardUi(5)

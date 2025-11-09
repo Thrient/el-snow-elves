@@ -65,7 +65,7 @@ class SwordTask(ClassicTask):
                         self.setup = 0
                         continue
 
-                    if time.time() - self.event["check_timer"] > 15:
+                    if time.time() - self.event["check_timer"] > 20:
                         if self.exits("界面单人论剑") is not None:
                             self.setup = 4
                             continue
@@ -82,7 +82,7 @@ class SwordTask(ClassicTask):
                         self.setup = 6
                         continue
                 case 6:
-                    self.logs(f"华山论剑第 {self.event["sword_counter"]} 次")
+                    self.logs(f"单人论剑第 {self.event["sword_counter"]} 次")
                     self.event["sword_counter"] += 1
                     self.setup = 7
                 case 7:
@@ -102,7 +102,7 @@ class SwordTask(ClassicTask):
                     if self.event["is_prepare"]:
                         continue
 
-                    self.touch("按钮华山论剑准备")
+                    self.touch("按钮华山论剑准备", post_delay=0)
                     self.event["is_prepare"] = True
                     self.click_key(key="W", press_down_delay=3)
                     self.autoFightStart()

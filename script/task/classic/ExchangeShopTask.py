@@ -1,3 +1,5 @@
+import re
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -52,17 +54,22 @@ class ExchangeShopTask(ClassicTask):
                     self.event["exchange_counter"] += 1
                     self.touch("标志输入框")
 
-                    self.input(text=__text.split("#")[0])
-                    self.touch("按钮搜索")
+                    #  验证坐标格式
+                    if not bool(re.match(r'^[\u4e00-\u9fa50-9]+#[\u4e00-\u9fa50-9]+$', str(__text))):
+                        continue
 
-                    self.touch(f"标志{__text.split("#")[1]}")
-                    self.touch("按钮满")
-                    self.click_mouse(pos=(1160, 700))
+                    self.input(text=__text.split("#")[1])
+                    self.touch("按钮搜索")
+                    self.click_mouse(pos=(200, 200))
+
+                    for _ in range(10):
+                        if self.exchange(text=__text.split("#")[0]):
+                            self.touch("按钮满")
+                            self.click_mouse(pos=(1160, 700))
+                            self.closeRewardUi(count=5)
+                            break
+                        self.move_mouse(start=(700, 650), end=(700, 250))
+
                     self.touch("按钮搜索返回")
 
         return None
-
-    # def exchange(self):
-    #     if len(self.event["collect_coord"]) == 0:
-    #         return
-    #     if len(self.event["collect_coord"]) == 1:

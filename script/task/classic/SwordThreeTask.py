@@ -1,3 +1,5 @@
+import time
+
 from script.task.basis.ClassicTask import ClassicTask
 
 
@@ -9,10 +11,12 @@ class SwordThreeTask(ClassicTask):
         self.event = {
             "sword_counter": 0,  # 多人论剑次数计数器
             "is_prepare": 0,  # 多人论剑准备状态
+            "check_timer": 0.0  # 场景检测计时器
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
-            5: {"is_prepare": False},
+            5: {"check_timer": lambda: time.time()},
+            7: {"is_prepare": False},
 
         }
 
@@ -36,7 +40,7 @@ class SwordThreeTask(ClassicTask):
                 # 队伍检测
                 case 2:
                     self.teamDetection()
-                    self.setup = 3
+                    self.setup = 5
                 case 3:
                     self.openBackpack()
                     self.touch("按钮物品综合入口")
@@ -49,46 +53,58 @@ class SwordThreeTask(ClassicTask):
                 case 4:
                     # 界面检测
                     if self.exits("界面多人论剑") is None:
-                        self.setup = 3
-                        continue
-
-                    # 检测多人论剑次数
-                    if self.taskConfig.swordThreeCount < self.event["sword_counter"]:
-                        self.setup = 0
+                        self.setup = 5
                         continue
 
                     if self.exits("按钮单人论剑取消匹配") is None:
                         self.touch("按钮单人论剑匹配")
 
-                    # 匹配成功标志检测
-                    if self.exits("标志多人论剑匹配成功") is None:
-                        continue
-
-                    self.logs(f"华山论剑第 {self.event["sword_counter"]} 次")
-                    self.event["sword_counter"] += 1
-                    self.defer(count=3)
-                    self.waitMapLoading()
-                    self.setup = 5
+                    if self.exits("按钮确认") is not None:
+                        self.touch_once("按钮确认")
 
                 case 5:
+                    if self.taskConfig.swordThreeCount < self.event["sword_counter"]:
+                        self.setup = 0
+                        continue
 
-                    if self.exits("标志多人论剑我方", "标志多人论剑敌方") is None:
+                    if time.time() - self.event["check_timer"] > 20:
+                        if self.exits("界面多人论剑") is not None:
+                            self.setup = 4
+                            continue
+                        self.setup = 3
+                        continue
+
+                    if self.exits("标志多人论剑匹配成功") is not None:
+                        self.defer(count=2)
+                        self.waitMapLoading()
                         self.setup = 6
+                        continue
+
+                    if self.exits("标志多人论剑我方", "标志多人论剑敌方") is not None:
+                        self.setup = 6
+                        continue
+                case 6:
+                    self.logs(f"多人论剑第 {self.event["sword_counter"]} 次")
+                    self.event["sword_counter"] += 1
+                    self.setup = 7
+                case 7:
+                    if self.exits("标志多人论剑我方", "标志多人论剑敌方") is None:
+                        self.setup = 8
                         continue
 
                     if self.event["is_prepare"]:
                         continue
 
-                    self.touch("按钮华山论剑准备")
+                    self.touch("按钮华山论剑准备", post_delay=0)
                     self.event["is_prepare"] = True
-                    self.click_key(key="W", delay=3)
+                    self.click_key(key="W", press_down_delay=3)
                     self.autoFightStart()
-
-                case 6:
-                    self.touch("按钮华山论剑离开")
+                case 8:
+                    # 点击华山论剑离开按钮
+                    self.touch("按钮华山论剑离开", seconse=20)
                     # 停止自动战斗模式
                     self.autoFightStop()
                     # 等待地图加载完成
                     self.waitMapLoading()
-                    self.setup = 4
+                    self.setup = 5
         return None

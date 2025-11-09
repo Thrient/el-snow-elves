@@ -7,6 +7,7 @@ from threading import Event
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
+from sympy.physics.units import seconds
 
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
@@ -157,6 +158,33 @@ class ClassicTask(BasisTask, ABC):
         self.closeBackpack()
         return False
 
+    def exchange(self, **kwargs):
+        """查找文字"""
+
+        def __exites():
+            """内部判断方法"""
+            for index in range(len(args)):
+                if self.exits(
+                        args[index],
+                        box=(
+                                result[0] + 25 * index - 13,
+                                result[1] - 13,
+                                result[0] + 25 * index + 13,
+                                result[1] + 13
+                        )
+                ) is None:
+                    return False
+            return True
+
+        text = kwargs.get("text", "")
+        digits = [d for d in str(text)]
+        args = [f"标志{i}" for i in digits]
+        for result in self.exitsAll(args[0]):
+            if __exites():
+                self.click_mouse(pos=(result[0], result[1]))
+                return True
+        return False
+
     def switchBranchLine(self, index):
         """
         切换游戏副本的分线
@@ -231,7 +259,7 @@ class ClassicTask(BasisTask, ABC):
         while not self.autoFightEvent.is_set():
             index = __queue.popleft()
             __queue.append(index)
-            self.click_key(key=self.taskConfig.keyList[index])
+            self.click_key(key=self.taskConfig.keyList[index], post_delay=0.5)
 
     def autoFightStop(self):
         """
@@ -502,6 +530,8 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮交易需求", x=130, y=35)
             if self.touch("按钮交易购买") is not None:
                 self.touch("按钮交易确定")
+
+            self.touch("按钮交易查看全服", seconds=None)
 
             self.closeStalls()
             self.defer(3)
@@ -1103,6 +1133,7 @@ class ClassicTask(BasisTask, ABC):
         self.backToMain()
         self.openBackpack()
         self.touch("按钮物品属性")
+        self.defer(count=5)
         # 截取角色信息区域并转换图像格式
         character = pil_2_cv2(self.winConsole.capture.crop((742, 158, 892, 186)))
 

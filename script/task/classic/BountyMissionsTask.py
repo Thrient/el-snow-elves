@@ -20,8 +20,8 @@ class BountyMissionsTask(ClassicTask):
             5: {"shout_timer": 0.0},
             7: {
                 "activate_timer": 0.0,
-                "unstuck_timer": lambda : time.time(),
-                "stuck_timer": lambda : time.time(),
+                "unstuck_timer": lambda: time.time(),
+                "stuck_timer": lambda: time.time(),
                 "exit_check_counter": 0
             }
         }
@@ -127,4 +127,4 @@ class BountyMissionsTask(ClassicTask):
         if self.touch("按钮副本离开") is None:
             return
         self.waitMapLoading()
-        self.setup = 0
+        self.setup = 3

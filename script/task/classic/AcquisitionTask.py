@@ -123,8 +123,9 @@ class AcquisitionTask(ClassicTask):
             self.event["collect_change_line"] += 1
             return False
 
-        if self.buy("摆摊购买"):
-            return False
+        if self.taskConfig.autoBuyTool:
+            if self.buy("摆摊购买"):
+                return False
 
         if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), overTime=8) is not None:
             self.click_mouse(pos=(665, 470))

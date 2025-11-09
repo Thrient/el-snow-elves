@@ -103,6 +103,14 @@ class LessonTask(ClassicTask):
                     if self.exits("标志课业答题") is not None:
                         self.closeCurrentUi()
 
+                    # 对话
+                    if self.exits("标志对话卷轴") is not None:
+                        self.touch("标志对话卷轴")
+
+                    # 担水
+                    if self.exits("标志课业一大桶水") is not None:
+                        self.touch("按钮使用")
+
                     if self.exits("按钮课业一键提交") is not None:
                         self.touch("按钮课业一键提交")
 

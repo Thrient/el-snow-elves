@@ -54,7 +54,7 @@ class HeroListTask(ClassicTask):
                         self.setup = 0
                         continue
 
-                    self.touch("按钮江湖英雄榜匹配", "按钮江湖英雄榜晋级赛")
+                    self.touch("按钮江湖英雄榜匹配", "按钮江湖英雄榜晋级赛", "按钮江湖英雄榜走火入魔")
                     self.touch("按钮江湖英雄榜确定", seconds=None)
                     self.setup = 5
                 case 5:
@@ -62,7 +62,7 @@ class HeroListTask(ClassicTask):
                         self.setup = 0
                         continue
 
-                    if time.time() - self.event["check_timer"] > 15:
+                    if time.time() - self.event["check_timer"] > 30:
                         if self.exits("界面江湖英雄榜") is not None:
                             self.setup = 4
                             continue
