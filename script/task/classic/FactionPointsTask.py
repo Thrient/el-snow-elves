@@ -6,7 +6,7 @@ class FactionPointsTask(ClassicTask):
         super().__init__(**kwargs)
         # 事件类型定义
         self.event = {
-
+            "advance_counter": 0
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
@@ -39,15 +39,23 @@ class FactionPointsTask(ClassicTask):
                     self.touch("按钮帮派前往领地")
                     self.arrive()
                     self.resetLens()
-                    self.click_key(key="W", press_down_delay=0.15)
-                    self.touch("按钮大世界清扫")
-
                     self.setup = 4
                 case 4:
+                    if self.event["advance_counter"] >= 5:
+                        self.setup = 0
+                        continue
+                    self.event["advance_counter"] += 1
+                    self.click_key(key="W", press_down_delay=0.05)
+
+                    self.setup = 5
+                case 5:
+                    if self.touch("按钮大世界清扫") is None:
+                        self.setup = 4
+                        continue
+                    self.setup = 6
+                case 6:
                     self.defer(count=500)
 
                     self.setup = 0
-
-
 
         return None

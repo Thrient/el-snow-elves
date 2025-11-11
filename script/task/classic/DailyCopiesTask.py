@@ -103,8 +103,9 @@ class DailyCopiesTask(ClassicTask):
                         continue
 
                     if 360 < time.time() - self.event["activate_timer"]:
+                        if self.activatedTask("按钮任务副本", model="任务") is None:
+                            continue
                         self.event["activate_timer"] = time.time()
-                        self.activatedTask("按钮任务副本", model="任务")
                         continue
 
                     if self.exits("按钮副本跳过剧情") is not None:

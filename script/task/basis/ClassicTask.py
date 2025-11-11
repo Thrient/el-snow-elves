@@ -7,7 +7,6 @@ from threading import Event
 
 import cv2
 from airtest.aircv.utils import pil_2_cv2
-from sympy.physics.units import seconds
 
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
@@ -163,13 +162,15 @@ class ClassicTask(BasisTask, ABC):
 
         def __exites():
             """内部判断方法"""
+            x = 10 if digits[0] in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] else 0
             for index in range(len(args)):
+                x = 0 if index == 0 else 5 if digits[0] in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] else 0
                 if self.exits(
                         args[index],
                         box=(
-                                result[0] + 25 * index - 13,
+                                result[0] + 25 * index - 13 - x,
                                 result[1] - 13,
-                                result[0] + 25 * index + 13,
+                                result[0] + 25 * index + 13 - x,
                                 result[1] + 13
                         )
                 ) is None:
@@ -244,9 +245,9 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮设置脱离卡死")
         # 点击设置界面中的确定按钮
         self.touch("按钮设置确定")
+        self.defer(count=5)
         # 关闭设置界面
         self.closeSetting()
-        self.defer(count=5)
 
     def autoFight(self):
         """
