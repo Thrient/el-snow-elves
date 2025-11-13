@@ -18,7 +18,7 @@ class BountyMissionsTask(ClassicTask):
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
             5: {"shout_timer": 0.0},
-            7: {
+            8: {
                 "activate_timer": 0.0,
                 "unstuck_timer": lambda: time.time(),
                 "stuck_timer": lambda: time.time(),
@@ -61,11 +61,11 @@ class BountyMissionsTask(ClassicTask):
                         self.touch("按钮悬赏上页", x=-50)
                         self.setup = 4
                         continue
-                    self.click_mouse(pos=(1100, 145), timeout=0.1)
+                    self.click_mouse(pos=(1100, 145), post_delay=0.5)
                     if self.exits("标志悬赏江湖纪事", box=(265, 175, 1190, 565)) is None:
                         continue
-                    self.touch("标志悬赏江湖纪事", y=325, timeout=0)
-                    self.touch("按钮悬赏押金", timeout=0)
+                    self.touch("标志悬赏江湖纪事", y=325, post_delay=0)
+                    self.touch("按钮悬赏押金", post_delay=0)
                 case 4:
                     if self.exits("按钮悬赏前往") is None:
                         self.setup = 0
@@ -74,23 +74,37 @@ class BountyMissionsTask(ClassicTask):
                     self.setup = 5
                 case 5:
                     self.openTeam()
-                    if len(self.exitsAll("标志队伍空位")) <= 10 - 1:
+                    if len(self.exitsAll("标志队伍空位")) <= 10 - self.taskConfig.copiesPeoples:
                         self.setup = 6
                         continue
                     self.touch("按钮队伍自动匹配_V1")
 
+                    if self.touch("按钮队伍赛季喊话") is None:
+                        self.touch("按钮队伍普通喊话", x=80)
+
                     if time.time() - self.event["shout_timer"] > 32:
                         self.event["shout_timer"] = time.time()
-                        self.worldShouts("悬赏十连来人!!!")
+                        self.worldShouts(self.taskConfig.copiesShoutText)
                 case 6:
                     self.openTeam()
                     self.touch("按钮队伍进入副本")
                     self.touch("按钮确认")
 
-                    self.waitMapLoading()
-
                     self.setup = 7
                 case 7:
+
+                    if self.exits("界面日常") is None:
+                        self.setup = 8
+                        continue
+                    self.defer(count=5)
+                    if self.touch("按钮副本全体进入") is None:
+                        self.setup = 6
+                        continue
+
+                    self.waitMapLoading()
+
+                    self.setup = 8
+                case 8:
                     if 360 * 4 - 20 < time.time() - self.event["stuck_timer"]:
                         self.teamDetection()
                         self.setup = 2
@@ -123,9 +137,6 @@ class BountyMissionsTask(ClassicTask):
             self.defer()
             return
 
-        self.touch("按钮副本退出")
-
-        if self.touch("按钮副本离开") is None:
-            return
+        self.backToMain()
         self.waitMapLoading()
         self.setup = 3

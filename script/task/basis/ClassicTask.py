@@ -34,6 +34,9 @@ class ClassicTask(BasisTask, ABC):
         while not self._finished.is_set():
             self.closeDreamCub()
 
+            if self.exits("标志副本提示") is not None:
+                self.touch("按钮取消")
+
             self.defer()
 
     def instance(self):
@@ -86,7 +89,7 @@ class ClassicTask(BasisTask, ABC):
             重置镜头
         :return:
         """
-        self.backToMain()
+        self.backToMain(exclude_branches=["副本退出"])
         self.click_mouse(pos=(1330, 715))
         self.touch("按钮大世界镜头重置")
 
@@ -588,7 +591,7 @@ class ClassicTask(BasisTask, ABC):
             results = sorted(results, key=lambda pos: (-pos[0], pos[1]))
             self.click_mouse(pos=(results[-1][0], results[-1][1]), post_delay=0)
 
-    def backToMain(self):
+    def backToMain(self, exclude_branches=None):
         """
         返回主界面函数
 
@@ -601,18 +604,34 @@ class ClassicTask(BasisTask, ABC):
             无返回值
         """
         self.logs("返回主界面")
+        exclude = exclude_branches or []
         # 循环关闭当前界面直到返回主界面或任务完成
         while not self._finished.is_set():
-            # 检查是否已经回到主界面（通过检测"按钮世界挂机"是否存在）
+            # 副本退出分支（可屏蔽）
+            if "副本退出" not in exclude and self.exits("按钮副本退出") is not None:
+                self.touch("按钮副本退出")
+                self.touch("按钮回到坊间", "按钮确定", "按钮离开")
+                continue
+
+            # 物品界面关闭分支（可屏蔽）
+            if "物品界面" not in exclude and self.exits("界面物品") is not None:
+                self.click_mouse(pos=(0, 0))
+                continue
+
+            # 购买确认关闭分支（可屏蔽）
+            if "购买确认" not in exclude and self.exits("标志购买确认") is not None:
+                self.touch("按钮取消")
+                continue
+
+            # 聊天窗口关闭分支（可屏蔽）
+            if "聊天窗口" not in exclude and self.exits("按钮聊天退出") is not None:
+                self.touch("按钮聊天退出")
+                continue
+
+            # 检查是否已经回到主界面
             if self.exits("按钮世界挂机") is not None:
                 break
-            # 关闭当前打开的界面
-            if self.exits("界面物品") is not None:
-                self.click_mouse(pos=(0, 0))
-            # 购买确认
-            if self.exits("标志购买确认") is not None:
-                self.touch("按钮取消")
-            self.touch("按钮聊天退出", overTime=0.1)
+
             self.closeCurrentUi()
             self.keepAlive()
 
@@ -630,9 +649,9 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查当前是否已处于梦崽界面，如果不是则直接返回
-        if self.exits("标志梦崽") is None:
+        if self.exits("标志限时礼包") is None:
             return
-        self.logs("关闭梦崽")
+        self.logs("关闭梦崽礼包")
         # 关闭当前用户界面
         self.closeCurrentUi()
 

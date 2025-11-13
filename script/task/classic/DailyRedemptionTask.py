@@ -60,7 +60,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.input(text="吴越剑坯")
                         self.touch("按钮珍宝阁搜索")
                         if self.exits("标志珍宝阁吴越剑坯", box=(910, 170, 1190, 285)):
-                            self.click_mouse(pos=(988, 694), count=5, timeout=0.1)
+                            self.click_mouse(pos=(988, 694), count=5, post_delay=0.1)
                         self.touch("按钮珍宝阁搜索返回")
                         self.closeRewardUi(5)
                         self.backToMain()
@@ -75,7 +75,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.input(text="白公鼎坯")
                         self.touch("按钮珍宝阁搜索")
                         if self.exits("标志珍宝阁白公鼎坯", box=(910, 170, 1190, 285)):
-                            self.click_mouse(pos=(988, 694), count=5, timeout=0.1)
+                            self.click_mouse(pos=(988, 694), count=5, post_delay=0.1)
                         self.touch("按钮珍宝阁搜索返回")
                         self.closeRewardUi(2)
                         self.backToMain()
@@ -98,7 +98,7 @@ class DailyRedemptionTask(ClassicTask):
 
                         self.touch("按钮珍宝阁一筐鸡蛋")
                         if self.exits("标志珍宝阁一筐鸡蛋", box=(750, 140, 1150, 270)):
-                            self.click_mouse(pos=(945, 675), count=5, timeout=0.1)
+                            self.click_mouse(pos=(945, 675), count=5, post_delay=0.1)
                         self.closeRewardUi(5)
                         self.backToMain()
 
@@ -117,7 +117,7 @@ class DailyRedemptionTask(ClassicTask):
 
                         self.touch("按钮珍宝阁榫头卯眼")
                         if self.exits("标志珍宝阁榫头卯眼", box=(750, 140, 1150, 270)):
-                            self.click_mouse(pos=(945, 675), count=12, timeout=0.1)
+                            self.click_mouse(pos=(945, 675), count=12, post_delay=0.1)
                         self.closeRewardUi(12)
                         self.backToMain()
 
@@ -134,7 +134,7 @@ class DailyRedemptionTask(ClassicTask):
 
                         self.touch("按钮珍宝阁碧铜马坯")
                         if self.exits("标志珍宝阁碧铜马坯", box=(750, 140, 1150, 270)):
-                            self.click_mouse(pos=(945, 675), count=3, timeout=0.1)
+                            self.click_mouse(pos=(945, 675), count=3, post_delay=0.1)
                         self.closeRewardUi(12)
                         self.backToMain()
 
@@ -164,7 +164,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮帮派福利")
                         self.touch("按钮帮派捐献")
                         for _ in range(3):
-                            self.click_mouse(pos=(285, 585), timeout=0.1)
+                            self.click_mouse(pos=(285, 585), post_delay=0.1)
                             self.touch("按钮确定")
                         self.backToMain()
 
@@ -173,7 +173,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮帮派福利")
                         self.touch("按钮帮派捐献")
                         for _ in range(3):
-                            self.click_mouse(pos=(660, 585), timeout=0.1)
+                            self.click_mouse(pos=(660, 585), post_delay=0.1)
                             self.touch("按钮确定")
                         self.backToMain()
 

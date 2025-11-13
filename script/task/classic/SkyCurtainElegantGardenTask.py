@@ -25,6 +25,7 @@ class SkyCurtainElegantGardenTask(ClassicTask):
             match self.setup:
                 # 任务结束
                 case 0:
+                    self.backToMain()
                     self.logs("天幕雅苑完成")
                     return 0
                 # 位置检测
@@ -47,25 +48,36 @@ class SkyCurtainElegantGardenTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
-                    if self.exits("按钮展馆时装试穿进行中") is not None:
-                        self.touch("按钮展馆时装试穿进行中")
-                        self.arrive()
-                        if self.exits("标志普通展厅任务") is not None:
-                            self.resetLens()
-                            self.click_key(key="W", press_down_delay=1.2)
-                        self.touch("按钮大世界试穿")
-                    self.setup = 5
+                    if self.exits("按钮展馆时装试穿进行中") is None:
+                        self.setup = 6
+                        continue
+
+                    if self.exits("标志普通展厅任务") is None:
+                        self.setup = 5
+                        continue
+
+                    self.touch("按钮展馆时装试穿进行中")
+                    self.arrive()
+                    self.resetLens()
+                    self.click_key(key="W", press_down_delay=1.2)
+                    self.touch("按钮大世界试穿")
+                    self.setup = 6
                 case 5:
-                    if self.exits("按钮展馆盖章打卡进行中") is not None:
-                        self.touch("按钮展馆盖章打卡进行中")
-                        self.arrive()
-                        self.touch("按钮大世界签到盖章")
-                        self.touch("按钮盖章确认")
-                        self.backToMain()
+                    self.touch("按钮展馆时装试穿进行中")
+                    self.arrive()
+                    self.touch("按钮大世界试穿")
                     self.setup = 6
                 case 6:
+                    if self.exits("按钮展馆盖章打卡进行中") is None:
+                        self.setup = 7
+                        continue
+                    self.touch("按钮展馆盖章打卡进行中")
+                    self.arrive()
+                    self.touch("按钮大世界签到盖章")
+                    self.touch("按钮盖章确认")
+                    self.backToMain()
+                    self.setup = 7
+                case 7:
                     self.closeRewardUi(count=5)
-                    self.touch("按钮副本退出")
-                    self.waitMapLoading()
                     self.setup = 0
         return None

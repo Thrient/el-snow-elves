@@ -26,6 +26,7 @@ class BreakBanTask(ClassicTask):
             match self.setup:
                 # 任务结束
                 case 0:
+                    self.backToMain()
                     self.logs("破阵设宴完成")
                     return 0
                 # 位置检测
@@ -113,7 +114,6 @@ class BreakBanTask(ClassicTask):
                     if len(self.exitsAll("标志破阵设宴已提交")) >= 8:
                         self.touch("按钮破阵设宴开始")
                         self.closeRewardUi(5)
-                    self.backToMain()
                     self.setup = 0
         return None
 

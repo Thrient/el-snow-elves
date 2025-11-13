@@ -78,13 +78,12 @@ class Console:
         distance = math.sqrt(dx ** 2 + dy ** 2)
 
         # 自动计算持续时间（如果未指定）
-
-        duration = max(0.3, min(2.0, distance * 0.01)) if duration is None else duration  # 限制在0.3-2秒之间
+        duration = max(0.1, min(1.0, distance * 0.005)) if duration is None else duration
 
         # 计算步数（基于时间和距离）
-        min_steps = max(5, int(distance * 0.1))  # 最少5步或距离的10%
-        max_steps = 100  # 最大步数限制
-        steps = min(max_steps, max(min_steps, int(duration * 60)))  # 60 FPS
+        min_steps = max(5, int(distance * 0.05))  # 最少5步或距离的10%
+        max_steps = 60  # 最大步数限制
+        steps = min(max_steps, max(min_steps, int(duration * 30)))
 
         try:
             # 按下左键
@@ -98,7 +97,7 @@ class Console:
                 # 使用缓动函数实现平滑移动
                 progress = step / steps
                 # 使用三次缓动函数，更自然的移动效果
-                t = 1 - (1 - progress) ** 3
+                t = progress ** 2
 
                 current_x = int(start_x + dx * t)
                 current_y = int(start_y + dy * t)

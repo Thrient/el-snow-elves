@@ -36,7 +36,7 @@ class BenefitCollectionTask(ClassicTask):
                 case 3:
                     self.openBackpack()
                     self.touch("按钮物品综合入口")
-                    self.move_mouse(start=(1245, 630), end=(1245, 200))
+                    self.move_mouse(start=(1245, 630), end=(1245, 200), count=3)
                     self.touch("按钮物品福利")
 
                     self.setup = 4
@@ -62,7 +62,6 @@ class BenefitCollectionTask(ClassicTask):
                     self.closeRewardUi(count=10)
                     self.backToMain()
                     self.setup = 0
-
 
                     #
                     # self.touch("按钮特惠的标志拍照", x=-84, y=-642)

@@ -1,3 +1,4 @@
+import random
 import time
 
 from script.task.basis.ClassicTask import ClassicTask
@@ -81,7 +82,9 @@ class LessonTask(ClassicTask):
                     # 　定时激活任务
                     if time.time() - self.event["last_activated_time"] > 90:
                         self.event["last_activated_time"] = time.time()
-                        self.activatedTask("按钮任务止杀", "按钮任务锻心", "按钮任务问卜", "按钮任务漱尘", "按钮任务归义", "按钮任务濯剑", "按钮任务吟风", "按钮任务悟禅", "按钮任务含灵", "按钮任务寻道", "按钮任务观梦", "按钮任务起茶", model="江湖")
+                        self.activatedTask("按钮任务止杀", "按钮任务锻心", "按钮任务问卜", "按钮任务漱尘",
+                                           "按钮任务归义", "按钮任务濯剑", "按钮任务吟风", "按钮任务悟禅",
+                                           "按钮任务含灵", "按钮任务寻道", "按钮任务观梦", "按钮任务起茶", model="江湖")
 
                     # 商城购买
                     if self.exits("按钮商城购买") is not None:
@@ -110,6 +113,12 @@ class LessonTask(ClassicTask):
                     # 担水
                     if self.exits("标志课业一大桶水") is not None:
                         self.touch("按钮使用")
+
+                    # 华山课业排序
+                    if self.exits("标志课业倒计时") is not None:
+                        results = self.exitsAll("标志课业诗词")
+                        selected = random.sample(results, 2)
+                        self.move_mouse(start=selected[0], end=selected[1])
 
                     if self.exits("按钮课业一键提交") is not None:
                         self.touch("按钮课业一键提交")

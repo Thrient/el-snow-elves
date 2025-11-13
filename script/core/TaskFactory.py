@@ -15,9 +15,11 @@ from script.task.classic.FactionTask import FactionTask
 from script.task.classic.HeroListTask import HeroListTask
 from script.task.classic.HexagramDayTask import HexagramDayTask
 from script.task.classic.LessonTask import LessonTask
+from script.task.classic.MansionCheckInTask import MansionCheckInTask
 from script.task.classic.MerchantLakeTask import MerchantLakeTask
 from script.task.classic.PostBountyTask import PostBountyTask
 from script.task.classic.RiverTask import RiverTask
+from script.task.classic.SectTrialsDailyTask import SectTrialsDailyTask
 from script.task.classic.SittingObservingTask import SittingObservingTask
 from script.task.classic.SkyCurtainElegantGardenTask import SkyCurtainElegantGardenTask
 from script.task.classic.SwitchCharacterTask import SwitchCharacterTask
@@ -89,6 +91,8 @@ class TaskFactory:
         self.register("classic", "兑换商店", ExchangeShopTask)
         self.register("classic", "紫薇斗数", AstrologyTask)
         self.register("classic", "福利领取", BenefitCollectionTask)
+        self.register("classic", "宗门试炼日常", SectTrialsDailyTask)
+        self.register("classic", "宅邸打卡", MansionCheckInTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

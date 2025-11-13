@@ -56,6 +56,9 @@ class TaskConfig:
         self.merchantLakeWordShout = kwargs.get('merchantLakeWordShout', '江湖行商来人!!!(哔站搜时雪)')
         # 兑换商店
         self.exchangeShopList = kwargs.get('exchangeShopList', ["高级萃石#亮剑令"])
+        # 副本设置
+        self.copiesPeoples = kwargs.get('copiesPeoples', 1)
+        self.copiesShoutText = kwargs.get('copiesShoutText', '日常副本一次来人!')
 
     def loadConfig(self, config):
         if config == "":
