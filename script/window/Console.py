@@ -12,6 +12,7 @@ from PIL import Image
 from script.utils.Utils import Utils
 
 
+
 class Console:
     """窗口控制"""
 

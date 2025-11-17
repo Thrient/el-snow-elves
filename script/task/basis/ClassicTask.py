@@ -92,6 +92,7 @@ class ClassicTask(BasisTask, ABC):
         self.backToMain(exclude_branches=["副本退出"])
         self.click_mouse(pos=(1330, 715))
         self.touch("按钮大世界镜头重置")
+        self.click_mouse(pos=(1330, 715))
 
     def action(self, action):
         """
@@ -165,7 +166,6 @@ class ClassicTask(BasisTask, ABC):
 
         def __exites():
             """内部判断方法"""
-            x = 10 if digits[0] in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] else 0
             for index in range(len(args)):
                 x = 0 if index == 0 else 5 if digits[0] in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] else 0
                 if self.exits(
@@ -183,7 +183,7 @@ class ClassicTask(BasisTask, ABC):
         text = kwargs.get("text", "")
         digits = [d for d in str(text)]
         args = [f"标志{i}" for i in digits]
-        for result in self.exitsAll(args[0]):
+        for result in self.exits(args[0], find_all=True):
             if __exites():
                 self.click_mouse(pos=(result[0], result[1]))
                 return True
@@ -207,7 +207,10 @@ class ClassicTask(BasisTask, ABC):
         # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
 
         for _ in range(index // 7 + 5):
-            for result in self.exitsAll("标志线"):
+            results = self.exits("标志线", find_all=True)
+            if results is None:
+                continue
+            for result in results:
                 if len(digits) == 1:
                     if self.exits(args[0],
                                   box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
@@ -241,7 +244,7 @@ class ClassicTask(BasisTask, ABC):
         # 模拟空格键点击
         self.keepAlive()
         # 返回主界面操作
-        self.backToMain()
+        self.backToMain(exclude_branches=["副本退出"])
         # 打开设置界面
         self.openSetting()
         # 点击设置界面中的脱离卡死按钮
@@ -263,7 +266,7 @@ class ClassicTask(BasisTask, ABC):
         while not self.autoFightEvent.is_set():
             index = __queue.popleft()
             __queue.append(index)
-            self.click_key(key=self.taskConfig.keyList[index], post_delay=0.5)
+            self.click_key(key=self.taskConfig.keyList[index])
 
     def autoFightStop(self):
         """
@@ -315,7 +318,7 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        if self.wait("按钮世界挂机", overTime=30) is None:
+        if self.wait("按钮世界挂机", seconds=30) is None:
             return None
         if model == "江湖":
             self.logs("激活江湖栏")
@@ -367,7 +370,7 @@ class ClassicTask(BasisTask, ABC):
             if __count > 3:
                 break
             # 检查是否正在加载地图，如果是则继续等待
-            if self.exits("标志地图加载", "标志地图加载_1") is not None:
+            if self.exits("标志地图加载", "标志地图加载_V1") is not None:
                 __count = 0
                 continue
             __count += 1
@@ -585,10 +588,9 @@ class ClassicTask(BasisTask, ABC):
         """
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            results = self.exitsAll("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box)
-            if len(results) == 0 or results[0] is None:
+            results = self.exits("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box, find_all=True)
+            if results is None:
                 return
-            results = sorted(results, key=lambda pos: (-pos[0], pos[1]))
             self.click_mouse(pos=(results[-1][0], results[-1][1]), post_delay=0)
 
     def backToMain(self, exclude_branches=None):
@@ -605,6 +607,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("返回主界面")
         exclude = exclude_branches or []
+        _count = 0
         # 循环关闭当前界面直到返回主界面或任务完成
         while not self._finished.is_set():
             # 副本退出分支（可屏蔽）
@@ -616,21 +619,22 @@ class ClassicTask(BasisTask, ABC):
             # 物品界面关闭分支（可屏蔽）
             if "物品界面" not in exclude and self.exits("界面物品") is not None:
                 self.click_mouse(pos=(0, 0))
-                continue
 
             # 购买确认关闭分支（可屏蔽）
             if "购买确认" not in exclude and self.exits("标志购买确认") is not None:
                 self.touch("按钮取消")
-                continue
 
             # 聊天窗口关闭分支（可屏蔽）
             if "聊天窗口" not in exclude and self.exits("按钮聊天退出") is not None:
                 self.touch("按钮聊天退出")
-                continue
 
             # 检查是否已经回到主界面
             if self.exits("按钮世界挂机") is not None:
-                break
+                _count += 1
+                if _count >= 3:
+                    break
+                continue
+            _count = 0
 
             self.closeCurrentUi()
             self.keepAlive()
@@ -973,7 +977,7 @@ class ClassicTask(BasisTask, ABC):
         while not self._finished.is_set():
             # 检查是否正在寻路中，如果是则继续等待
             # 检查是否正在加载地图，如果是则继续等待
-            if self.exits("标志寻路中") is not None or self.exits("标志地图加载", "标志地图加载_1") is not None:
+            if self.exits("标志寻路中") is not None or self.exits("标志地图加载", "标志地图加载_V1") is not None:
                 __count = 0
                 continue
             if time.time() - __start > 360:
@@ -1006,7 +1010,7 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮设置切换角色")
         self.touch("按钮设置确定")
         # 等待登录进入游戏按钮出现，超时时间30秒
-        self.wait("按钮登录进入游戏", overTime=30)
+        self.wait("按钮登录进入游戏", seconds=30)
 
     def switchCharacterOne(self):
         """
@@ -1153,7 +1157,7 @@ class ClassicTask(BasisTask, ABC):
         self.backToMain()
         self.openBackpack()
         self.touch("按钮物品属性")
-        self.defer(count=5)
+        self.defer(count=3)
         # 截取角色信息区域并转换图像格式
         character = pil_2_cv2(self.winConsole.capture.crop((742, 158, 892, 186)))
 

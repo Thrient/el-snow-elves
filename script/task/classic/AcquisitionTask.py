@@ -11,10 +11,10 @@ class AcquisitionTask(ClassicTask):
         super().__init__(**kwargs)
         self.event = {
             "collect_coord": [],  # 采集坐标 任务开始根据模式赋值采集坐标
-            "collect_coord_index": 0,        # 采集坐标索引 用于切换采集坐标
-            "collect_map": '',       # 采集地图 任务开始根据模式赋值采集地图
-            "collect_change_line": 1,        # 采集换线 用于切换下一分线
-            "collect_counter": 1         # 采集次数 用于记录采集次数
+            "collect_coord_index": 0,  # 采集坐标索引 用于切换采集坐标
+            "collect_map": '',  # 采集地图 任务开始根据模式赋值采集地图
+            "collect_change_line": 1,  # 采集换线 用于切换下一分线
+            "collect_counter": 1  # 采集次数 用于记录采集次数
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
@@ -63,10 +63,21 @@ class AcquisitionTask(ClassicTask):
                     self.setup = 5
                 case 5:
                     self.checkPhysicalStrength()
-
+                    self.buyTools()
                     self.collect()
 
         return None
+
+    def buyTools(self):
+        """购买工具"""
+        if self.exits("界面交易") is None:
+            return False
+        if not self.taskConfig.autoBuyTool:
+            self.setup = 0
+            return False
+        if self.buy("摆摊购买"):
+            return False
+        return True
 
     def checkPhysicalStrength(self):
         """
@@ -123,11 +134,7 @@ class AcquisitionTask(ClassicTask):
             self.event["collect_change_line"] += 1
             return False
 
-        if self.taskConfig.autoBuyTool:
-            if self.buy("摆摊购买"):
-                return False
-
-        if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), overTime=8) is not None:
+        if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), seconds=8, times=None) is not None:
             self.click_mouse(pos=(665, 470))
 
         self.logs(f"采集 {self.event["collect_counter"]}次")
@@ -136,8 +143,6 @@ class AcquisitionTask(ClassicTask):
         if self.event["collect_counter"] >= self.taskConfig.collectionCount:
             self.setup = 0
         return True
-
-
 
     def toCollectionLocation(self):
         """

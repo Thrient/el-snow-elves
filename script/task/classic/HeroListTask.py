@@ -100,7 +100,7 @@ class HeroListTask(ClassicTask):
                     self.click_key(key="W", press_down_delay=3)
                     self.autoFightStart()
                 case 8:
-                    self.touch("按钮江湖英雄榜离开", seconds=20)
+                    self.touch("按钮江湖英雄榜离开", seconds=15)
                     self.autoFightStop()
                     self.waitMapLoading()
                     self.setup = 5

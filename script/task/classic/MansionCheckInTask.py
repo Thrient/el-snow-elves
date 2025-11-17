@@ -60,7 +60,10 @@ class MansionCheckInTask(ClassicTask):
                     self.event["decline_counter"] += 1
 
                     self.touch("标志宅邸打卡经典")
-                    self.touch("标志宅邸打卡参观")
+                    if self.touch("标志宅邸打卡参观") is None:
+                        self.closeCurrentUi()
+                        continue
+                    self.backToMain(exclude_branches=["副本退出"])
                     self.setup = 5
                 case 5:
                     self.defer(count=40)

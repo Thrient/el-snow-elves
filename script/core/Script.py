@@ -1,4 +1,5 @@
 import time
+import traceback
 from multiprocessing import Process, Event
 
 from script.core.SwitchCharacterScheduler import switchCharacterScheduler
@@ -78,6 +79,7 @@ class Script(Process):
                         self.obj.execute()
 
                 except Exception as e:
+                    traceback.print_exc()  # 直接打印到控制台
                     self.queueListener.emit(
                         {
                             "event": "JS:EMIT",
@@ -92,6 +94,7 @@ class Script(Process):
                         }
                     )
         except Exception as e:
+            traceback.print_exc()  # 直接打印到控制台
             self.queueListener.emit(
                 {
                     "event": "JS:EMIT",

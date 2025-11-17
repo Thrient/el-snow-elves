@@ -42,9 +42,10 @@ def during(seconds: Union[int, float, None] = 1.0):
                 result = func(*args, **kwargs)
                 if result is not None:
                     return result
-                time.sleep(0.05)
+                time.sleep(0.01)
             return None
 
         return wrapper
 
     return decorator
+

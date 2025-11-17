@@ -74,7 +74,7 @@ class BountyMissionsTask(ClassicTask):
                     self.setup = 5
                 case 5:
                     self.openTeam()
-                    if len(self.exitsAll("标志队伍空位")) <= 10 - self.taskConfig.copiesPeoples:
+                    if len(self.exits("标志队伍空位", find_all=True)) <= 10 - self.taskConfig.copiesPeoples:
                         self.setup = 6
                         continue
                     self.touch("按钮队伍自动匹配_V1")
@@ -138,5 +138,4 @@ class BountyMissionsTask(ClassicTask):
             return
 
         self.backToMain()
-        self.waitMapLoading()
         self.setup = 3

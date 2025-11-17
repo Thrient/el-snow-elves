@@ -1,7 +1,6 @@
 from script.core.SwitchCharacterScheduler import switchCharacterScheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.task.basis.ClassicTask import ClassicTask
-from script.utils.Api import api
 
 
 class SwitchCharacterTask(ClassicTask):

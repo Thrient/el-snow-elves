@@ -68,7 +68,7 @@ class UrgentDeliveryTask(ClassicTask):
                         self.touch("按钮神厨商会", y=-75)
                         self.defer(2)
                         self.touch("按钮江湖急送菜品标签")
-                        results = self.exitsAll("标志江湖急送标签")
+                        results = self.exits("标志江湖急送标签", find_all=True)
                         self.click_mouse(pos=(1330, 745))
 
                         for index in range(len(results) + 1):

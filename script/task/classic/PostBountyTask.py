@@ -41,7 +41,7 @@ class PostBountyTask(ClassicTask):
                     self.touch("按钮活动悬赏")
                     self.setup = 4
                 case 4:
-                    self.touch("按钮悬赏发布")
+                    self.touch("按钮悬赏发布", click_mode="first")
                     self.touch("按钮发布悬赏下拉")
                     self.touch("按钮发布悬赏江湖行商")
                     self.touch("按钮悬赏发布悬赏")
@@ -50,7 +50,7 @@ class PostBountyTask(ClassicTask):
 
                     self.setup = 5
                 case 5:
-                    self.touch("按钮悬赏发布")
+                    self.touch("按钮悬赏发布", click_mode="first")
                     self.touch("按钮发布悬赏下拉")
                     self.touch("按钮发布悬赏聚义平冤")
                     self.touch("按钮悬赏发布悬赏")

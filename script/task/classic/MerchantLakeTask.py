@@ -66,7 +66,7 @@ class MerchantLakeTask(ClassicTask):
                     self.openTeam()
 
                     # 检查队伍人数
-                    if len(self.exitsAll("标志队伍空位")) <= 10 - 3:
+                    if len(self.exits("标志队伍空位", find_all=True)) <= 10 - 3:
                         # 一键召回
                         self.followDetection()
                         self.setup = 5
@@ -85,7 +85,7 @@ class MerchantLakeTask(ClassicTask):
                         continue
 
                     # 检测行商参与条件
-                    if 3 != len(self.exitsAll("标志江湖行商参与条件")):
+                    if 3 != len(self.exits("标志江湖行商参与条件", find_all=True)):
                         self.backToMain()
                         self.setup = 4
                         continue
@@ -94,7 +94,7 @@ class MerchantLakeTask(ClassicTask):
                     self.touch("按钮江湖行商货单购买")
 
                     # 等待全部队员准备
-                    if self.wait("标志行商任务接取成功", overTime=20) is None:
+                    if self.wait("标志行商任务接取成功", seconds=20) is None:
                         self.backToMain()
                         self.setup = 4
                         continue

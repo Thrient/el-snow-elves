@@ -1,3 +1,4 @@
+from script.task.classic.ActivityRewardTask import ActivityRewardTask
 from script.task.classic.AstrologyTask import AstrologyTask
 from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.BenefitCollectionTask import BenefitCollectionTask
@@ -15,6 +16,9 @@ from script.task.classic.FactionTask import FactionTask
 from script.task.classic.HeroListTask import HeroListTask
 from script.task.classic.HexagramDayTask import HexagramDayTask
 from script.task.classic.LessonTask import LessonTask
+from script.task.classic.LouLanCollectionTask import LouLanCollectionTask
+from script.task.classic.LouLanDailyTask import LouLanDailyTask
+from script.task.classic.LouLanGuardTask import LouLanGuardTask
 from script.task.classic.MansionCheckInTask import MansionCheckInTask
 from script.task.classic.MerchantLakeTask import MerchantLakeTask
 from script.task.classic.PostBountyTask import PostBountyTask
@@ -29,6 +33,7 @@ from script.task.classic.TeaStoryTask import TeaStoryTask
 from script.task.classic.UniqueSkillsTask import UniqueSkillsTask
 from script.task.classic.UrgentDeliveryTask import UrgentDeliveryTask
 from script.task.classic.VientianeLikesTask import VientianeLikesTask
+from script.task.classic.WeekDailyPack import WeekDailyPack
 from script.task.classic.WorldShoutsTask import WorldShoutsTask
 
 
@@ -93,6 +98,11 @@ class TaskFactory:
         self.register("classic", "福利领取", BenefitCollectionTask)
         self.register("classic", "宗门试炼日常", SectTrialsDailyTask)
         self.register("classic", "宅邸打卡", MansionCheckInTask)
+        self.register("classic", "活跃度奖励", ActivityRewardTask)
+        self.register("classic", "周卡每日礼包", WeekDailyPack)
+        self.register("classic", "楼兰日常", LouLanDailyTask)
+        self.register("classic", "楼兰守护", LouLanGuardTask)
+        self.register("classic", "楼兰采集", LouLanCollectionTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):
