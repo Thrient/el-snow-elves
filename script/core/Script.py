@@ -2,7 +2,7 @@ import time
 import traceback
 from multiprocessing import Process, Event
 
-from script.core.SwitchCharacterScheduler import switchCharacterScheduler
+from script.core.Scheduler import scheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.TaskFactory import TaskFactory
 from script.core.TaskScheduler import taskScheduler
@@ -113,6 +113,7 @@ class Script(Process):
         """初始化"""
         self.winConsole = Console(hwnd=self.hwnd)
         self.queueListener = QueueListener(self.queue, self.hwnd, "script")
+        scheduler.start()
 
         api.on("API:SCRIPT:STOP", self.stop)
         api.on("API:SCRIPT:RESUME", self.resume)
@@ -131,14 +132,17 @@ class Script(Process):
 
         self.queueListener.start()
 
-    def launch(self, config, kwargs):
+        api.emit("TASK:SCHEDULER:INIT")
+
+    def launch(self, config):
         """启动"""
         if self._started.is_set():
             return
         self._started.set()
         self.lock()
-        taskConfigScheduler.init(config, **kwargs)
-        switchCharacterScheduler.reset()
+        api.emit("TASK:CONFIG:SCHEDULER:INIT", config["config"], config)
+        api.emit("SWITCH:CHARACTER:SCHEDULER:CLEAR")
+        api.emit("TASK:SCHEDULER:INIT")
 
     def lock(self):
         """锁定当前窗口"""
@@ -213,8 +217,8 @@ class Script(Process):
         """解绑"""
         try:
             self.queueListener.end()
-            taskScheduler.clear()
-            self.obj.finish()
+            api.emit("TASK:SCHEDULER:CLEAR")
+            api.emit("API:SCRIPT:FINISH")
         except Exception as e:
             print(e)
         finally:
@@ -225,8 +229,8 @@ class Script(Process):
 
     def end(self):
         try:
-            taskScheduler.clear()
-            self.obj.finish()
+            api.emit("TASK:SCHEDULER:CLEAR")
+            api.emit("API:SCRIPT:FINISH")
         except Exception as e:
             print(e)
         finally:

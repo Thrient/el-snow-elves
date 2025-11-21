@@ -1,4 +1,3 @@
-import logging
 import multiprocessing as mp
 import os
 import time
@@ -14,6 +13,7 @@ from script.utils.JsApi import js
 from script.utils.QueueListener import QueueListener
 from script.utils.TaskConfig import TaskConfig
 from script.utils.Utils import Utils
+
 
 # logger = logging.getLogger('airtest')
 # logger.setLevel(logging.ERROR)
@@ -342,7 +342,7 @@ class Elves:
             }
         )
 
-    def start(self, hwnd, config, kwargs):
+    def start(self, hwnd, config):
         """
         启动脚本执行函数
 
@@ -366,12 +366,11 @@ class Elves:
                 'event': 'API:SCRIPT:LAUNCH',
                 'args': (
                     config,
-                    kwargs
                 )
             }
         )
 
-    def bind(self, **kwargs):
+    def bind(self, config):
         """
         启动脚本执行函数
 
@@ -390,7 +389,7 @@ class Elves:
 
         self.launch_script(hwnd=hwnd)
 
-        self.start(hwnd, "默认配置", kwargs)
+        self.start(hwnd, {**config, "config": "默认配置"})
 
     def hot_key_bind(self):
         """

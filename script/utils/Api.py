@@ -34,17 +34,15 @@ class Api:
         :param args: 回调函数的位置参数
         :return: None
         """
-        if event in self._events:
-            for callback in self._events[event]:
-                # 如果有参数则传递，没有则不传递
-                if args:
-                    # 如果第一个参数是字典，则将其作为关键字参数传递
-                    if len(args) == 1 and isinstance(args[0], dict):
-                        return callback(**args[0])
-                    else:
-                        return callback(*args)
-                else:
-                    return callback()
+        if event not in self._events:
+            return None
+
+        if len(self._events[event]) == 1:
+            return self._events[event][0](*args)
+
+        for callback in self._events[event]:
+            # 如果有参数则传递，没有则不传递
+            callback(*args)
         return None
 
 

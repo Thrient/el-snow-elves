@@ -14,8 +14,9 @@ class Config:
     TIMES = 3
     SWITCH_CHARACTER_STATE = {}
     THRESHOLD_IMAGE = {
-        "按钮世界挂机": 0.75,
+        "标志副本完成": 0.7,
         "标志寻路中": 0.7,
+        "按钮世界挂机": 0.75,
         "标志地图加载": 0.65,
         "标志地图加载_1": 0.65,
         "标志地图加载_V1": 0.65,
@@ -109,3 +110,9 @@ class Config:
         "按钮发布悬赏下拉": {"prefix": None, "verify": ["按钮悬赏发布"], "action": None},
 
     }
+    KEY_LIST = [
+        'DIGIT2', 'DIGIT3', 'DIGIT4', 'DIGIT5', 'DIGIT6', 'DIGIT7', 'DIGIT8', 'DIGIT9',
+        '', '', '', '', 'DIGIT1', 'R', 'F', 'Z',
+        'W', 'S', 'A', 'D', 'B', 'O', 'T', 'M',
+        'H', 'ESCAPE'
+    ]

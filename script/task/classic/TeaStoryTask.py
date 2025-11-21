@@ -74,9 +74,10 @@ class TeaStoryTask(ClassicTask):
                         # 随机选择并执行一个操作
                         self.touch(random.choice(actions))
 
-                    if self.exits("按钮茶馆退出") is not None:
+                    if self.exits("按钮茶馆退出", times=3) is not None:
                         self.closeRewardUi(count=5)
-                        self.touch("按钮茶馆退出")
+                        if self.touch("按钮茶馆退出") is None:
+                            continue
                         self.setup = 0
                         continue
         return None

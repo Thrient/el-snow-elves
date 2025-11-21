@@ -1,6 +1,7 @@
 from script.core.SwitchCharacterScheduler import switchCharacterScheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.task.basis.ClassicTask import ClassicTask
+from script.utils.Api import api
 
 
 class SwitchCharacterTask(ClassicTask):
@@ -15,25 +16,18 @@ class SwitchCharacterTask(ClassicTask):
         if "characterOne" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterOne:
             switchCharacterScheduler.switchCharacterOne = False
             self.switchCharacterOne()
-
-
             return
         if "characterTwo" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterTwo:
             switchCharacterScheduler.switchCharacterTwo = False
             self.switchCharacterTwo()
-
-
             return
         if "characterThree" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterThree:
             switchCharacterScheduler.switchCharacterThree = False
             self.switchCharacterThree()
-
             return
         if "characterFour" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterFour:
             switchCharacterScheduler.switchCharacterFour = False
             self.switchCharacterFour()
-
-
             return
         if "characterFive" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterFive:
             switchCharacterScheduler.switchCharacterFive = False
@@ -43,6 +37,5 @@ class SwitchCharacterTask(ClassicTask):
         if all(switchCharacterScheduler.__list__):
             switchCharacterScheduler.switchCharacterDefault = False
             self.switchCharacterDefault()
-
-
+            api.emit("TASK:CONFIG:SCHEDULER:LOAD", "默认配置")
             return

@@ -11,16 +11,13 @@ class DailyCopiesTask(ClassicTask):
         self.event = {
             "shout_timer": 0.0,  # 副本喊话时间计数器
             "activate_timer": 0.0,  # 副本激活计时器
-            "unstuck_timer": 0.0,  # 副本脱离卡死计时器
             "stuck_timer": 0.0,  # 副本卡死计时器
-            "exit_check_counter": 0  # 副本退出判断计数器
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
             5: {"shout_timer": 0.0},
             8: {
                 "activate_timer": 0.0,
-                "unstuck_timer": lambda: time.time(),
                 "stuck_timer": lambda: time.time(),
                 "exit_check_counter": 0
             }
@@ -77,14 +74,14 @@ class DailyCopiesTask(ClassicTask):
                     if len(self.exits("标志队伍空位", find_all=True)) <= 10 - self.taskConfig.copiesPeoples:
                         self.setup = 6
                         continue
-                    self.touch("按钮队伍自动匹配_V1")
+                    self.touch("按钮队伍自动匹配")
 
                     if self.touch("按钮队伍赛季喊话") is None:
                         self.touch("按钮队伍普通喊话", x=80)
 
                     if time.time() - self.event["shout_timer"] > 32:
                         self.event["shout_timer"] = time.time()
-                        self.worldShouts(self.taskConfig.copiesShoutText)
+                        self.worldShouts(self.taskConfig.copiesShoutText, connected=True)
                 case 6:
                     self.openTeam()
                     self.touch("按钮队伍进入副本")
@@ -104,18 +101,13 @@ class DailyCopiesTask(ClassicTask):
 
                     self.setup = 8
                 case 8:
-                    if 360 * 4 - 20 < time.time() - self.event["stuck_timer"]:
+                    if 360 * 2 - 20 < time.time() - self.event["stuck_timer"]:
                         self.teamDetection()
                         self.setup = 2
                         continue
 
-                    if 360 * 2 - 20 < time.time() - self.event["unstuck_timer"]:
-                        self.event["unstuck_timer"] = time.time()
-                        self.event["activate_timer"] = 0
-                        self.unstuck()
-                        continue
-
                     if 360 < time.time() - self.event["activate_timer"]:
+                        self.unstuck()
                         if self.activatedTask("按钮任务副本", model="任务") is None:
                             continue
                         self.event["activate_timer"] = time.time()
@@ -128,7 +120,7 @@ class DailyCopiesTask(ClassicTask):
         return None
 
     def checkExit(self):
-        if self.exits("标志副本完成") is None:
+        if self.exits("标志副本完成", "标志副本完成_V1") is None:
             self.event["exit_check_counter"] = 0
             return
         if 5 > self.event["exit_check_counter"]:

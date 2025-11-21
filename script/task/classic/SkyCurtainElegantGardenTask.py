@@ -59,7 +59,7 @@ class SkyCurtainElegantGardenTask(ClassicTask):
                     self.touch("按钮展馆时装试穿进行中")
                     self.arrive()
                     self.resetLens()
-                    self.click_key(key="W", press_down_delay=1.2)
+                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=1.2)
                     self.touch("按钮大世界试穿")
                     self.setup = 6
                 case 5:

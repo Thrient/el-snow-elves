@@ -10,7 +10,7 @@ from airtest.core.cv import Template
 from script.config.Config import Config
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.Timer import Timer
-from script.functools.functools import delay, repeat, during
+from script.functools.functools import delay, repeat, during, verify
 
 
 class BasisTask(ABC):
@@ -416,13 +416,15 @@ class BasisTask(ABC):
         if self._finished.is_set():
             return None
 
+        @verify()
         def _inner(**inner_kwargs):
             try:
                 image = inner_kwargs.get('image', None)
                 box = inner_kwargs.get('box', Config.BOX)
                 find_all = inner_kwargs.get('find_all', False)
-                threshold = Config.THRESHOLD_IMAGE[image] if Config.THRESHOLD_IMAGE.get(image) else inner_kwargs.get(
-                    'threshold', Config.THRESHOLD)
+                threshold = Config.THRESHOLD_IMAGE[image] \
+                    if Config.THRESHOLD_IMAGE.get(image) \
+                    else inner_kwargs.get('threshold', Config.THRESHOLD)
 
                 screen = pil_2_cv2(self.winConsole.capture.crop(box))
                 template = Template(
@@ -444,7 +446,6 @@ class BasisTask(ABC):
             except Exception as e:
                 logging.error(e)
                 return None
-
 
         return _inner(**kwargs)
 #

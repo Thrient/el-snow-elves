@@ -117,6 +117,8 @@ class LessonTask(ClassicTask):
                     # 华山课业排序
                     if self.exits("标志课业倒计时") is not None:
                         results = self.exits("标志课业诗词", find_all=True)
+                        if results is None:
+                            continue
                         selected = random.sample(results, 2)
                         self.move_mouse(start=selected[0], end=selected[1])
 

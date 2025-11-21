@@ -32,7 +32,7 @@ class TaskConfig:
         self.worldShoutsText = kwargs.get('worldShoutsText', '')
         self.worldShoutsCount = kwargs.get('worldShoutsCount', 1)
         # 按键
-        self.keyList = kwargs.get('keyList', ['1', '2', '3', '4', '5', '6', '7', '8'])
+        self.keyList = kwargs.get('keyList', Config.KEY_LIST)
         # 江湖英雄榜
         self.heroListCount = kwargs.get('heroListCount', 1)
         self.heroListInitiativeExit = kwargs.get('heroListInitiativeExit', False)
@@ -59,6 +59,10 @@ class TaskConfig:
         # 副本设置
         self.copiesPeoples = kwargs.get('copiesPeoples', 1)
         self.copiesShoutText = kwargs.get('copiesShoutText', '日常副本一次来人!')
+        # 斗地主
+        self.douDiZhuMode = kwargs.get('douDiZhuMode', "赢")
+        # 五点重启
+        self.reStart = kwargs.get('reStart', False)
 
     def loadConfig(self, config):
         if config == "":

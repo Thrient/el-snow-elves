@@ -1,7 +1,7 @@
 from script.task.basis.ClassicTask import ClassicTask
 
 
-class LouLanDailyTask(ClassicTask):
+class RewardsClaimTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # 事件类型定义
@@ -16,15 +16,15 @@ class LouLanDailyTask(ClassicTask):
     def execute(self):
         while not self._finished.is_set():
 
-            if self.timer.getElapsedTime() > 3600:
-                self.logs("楼兰日常超时")
+            if self.timer.getElapsedTime() > 1800:
+                self.logs("奖励招领超时")
                 return 0
 
             match self.setup:
                 # 任务结束
                 case 0:
                     self.backToMain()
-                    self.logs("楼兰日常完成")
+                    self.logs("奖励招领完成")
                     return 0
                 # 位置检测
                 case 1:
@@ -33,18 +33,24 @@ class LouLanDailyTask(ClassicTask):
                 # 队伍检测
                 case 2:
                     self.teamDetection()
-                    self.setup = 3
+                    self.setup = 4
                 case 3:
-                    from script.core.TaskFactory import TaskFactory
-                    cls = TaskFactory.instance().create(self.taskConfig.model, "楼兰守护")
-                    with cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as obj:
-                        obj.execute()
+                    self.openBackpack()
+                    self.touch("按钮物品综合入口")
+                    self.touch("按钮物品活动")
+                    self.touch("按钮活动招领")
                     self.setup = 4
                 case 4:
-                    from script.core.TaskFactory import TaskFactory
-                    cls = TaskFactory.instance().create(self.taskConfig.model, "楼兰采集")
-                    with cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as obj:
-                        obj.execute()
+                    if self.exits("界面奖励招领") is None:
+                        self.backToMain()
+                        self.setup = 3
+                        continue
+
+                    for image in ["标志茶馆说书宝箱", "标志帮派任务宝箱", "标志江湖缥缈录宝箱"]:
+                        if self.touch(image) is None:
+                            continue
+                        self.click_mouse(pos=(1120, 495), count=5, post_delay=0.1)
+
                     self.setup = 0
 
         return None

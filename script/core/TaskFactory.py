@@ -1,6 +1,6 @@
+from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.ActivityRewardTask import ActivityRewardTask
 from script.task.classic.AstrologyTask import AstrologyTask
-from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.BenefitCollectionTask import BenefitCollectionTask
 from script.task.classic.BountyMissionsTask import BountyMissionsTask
 from script.task.classic.BreakBanTask import BreakBanTask
@@ -9,6 +9,9 @@ from script.task.classic.ChivalryShoutTask import ChivalryShoutTask
 from script.task.classic.DailyCopiesTask import DailyCopiesTask
 from script.task.classic.DailyRedemptionTask import DailyRedemptionTask
 from script.task.classic.DoorBanTask import DoorBanTask
+from script.task.classic.DouDiZhuLoseTask import DouDiZhuLoseTask
+from script.task.classic.DouDiZhuTask import DouDiZhuTask
+from script.task.classic.DouDiZhuWinTask import DouDiZhuWinTask
 from script.task.classic.EmailReceiveTask import EmailReceiveTask
 from script.task.classic.ExchangeShopTask import ExchangeShopTask
 from script.task.classic.FactionPointsTask import FactionPointsTask
@@ -22,6 +25,8 @@ from script.task.classic.LouLanGuardTask import LouLanGuardTask
 from script.task.classic.MansionCheckInTask import MansionCheckInTask
 from script.task.classic.MerchantLakeTask import MerchantLakeTask
 from script.task.classic.PostBountyTask import PostBountyTask
+from script.task.classic.RedressingInjusticesTask import RedressingInjusticesTask
+from script.task.classic.RewardsClaimTask import RewardsClaimTask
 from script.task.classic.RiverTask import RiverTask
 from script.task.classic.SectTrialsDailyTask import SectTrialsDailyTask
 from script.task.classic.SittingObservingTask import SittingObservingTask
@@ -103,6 +108,11 @@ class TaskFactory:
         self.register("classic", "楼兰日常", LouLanDailyTask)
         self.register("classic", "楼兰守护", LouLanGuardTask)
         self.register("classic", "楼兰采集", LouLanCollectionTask)
+        self.register("classic", "聚义平冤", RedressingInjusticesTask)
+        self.register("classic", "奖励招领", RewardsClaimTask)
+        self.register("classic", "斗地主赢", DouDiZhuWinTask)
+        self.register("classic", "斗地主输", DouDiZhuLoseTask)
+        self.register("classic", "斗地主", DouDiZhuTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

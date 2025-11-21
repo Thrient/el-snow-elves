@@ -42,10 +42,31 @@ def during(seconds: Union[int, float, None] = 1.0):
                 result = func(*args, **kwargs)
                 if result is not None:
                     return result
-                time.sleep(0.01)
+                time.sleep(0.05)
             return None
 
         return wrapper
 
     return decorator
 
+
+def verify(times: Union[int, None] = None):
+    """验证装饰器：对函数执行结果进行多次验证"""
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if kwargs.get('times', times) is None:
+                return func(*args, **kwargs)
+            results = []
+            for _ in range(kwargs.get('times', times)):
+                res = func(*args, **kwargs)
+                results.append(res)
+                time.sleep(0.5)
+
+            if all(res is not None for res in results):
+                return results[-1]
+            return None
+
+        return wrapper
+
+    return decorator

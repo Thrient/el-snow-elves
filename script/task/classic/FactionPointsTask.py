@@ -42,10 +42,11 @@ class FactionPointsTask(ClassicTask):
                     self.setup = 4
                 case 4:
                     if self.event["advance_counter"] >= 5:
-                        self.setup = 0
+                        self.backToMain()
+                        self.setup = 3
                         continue
                     self.event["advance_counter"] += 1
-                    self.click_key(key="W", press_down_delay=0.05)
+                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=0.02)
 
                     self.setup = 5
                 case 5:

@@ -35,7 +35,7 @@ class ChefIngredientsTask(ClassicTask):
                     self.setup = 3
                 case 3:
                     self.resetLens()
-                    self.click_key(key="W", press_down_delay=0.2)
+                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=0.2)
                     self.setup = 4
                 case 4:
                     self.touch("按钮大世界对话")

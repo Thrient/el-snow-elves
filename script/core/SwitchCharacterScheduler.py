@@ -1,3 +1,6 @@
+from script.utils.Api import api
+
+
 class SwitchCharacterScheduler:
     def __init__(self):
         self.switchCharacterOne = True
@@ -7,7 +10,9 @@ class SwitchCharacterScheduler:
         self.switchCharacterFive = True
         self.switchCharacterDefault = True
 
-    def reset(self):
+        api.on("SWITCH:CHARACTER:SCHEDULER:CLEAR", self.clear)
+
+    def clear(self):
         self.switchCharacterOne = True
         self.switchCharacterTwo = True
         self.switchCharacterThree = True

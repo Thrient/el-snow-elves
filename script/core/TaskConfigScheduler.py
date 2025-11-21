@@ -7,16 +7,15 @@ class TaskConfigScheduler:
     def __init__(self):
         self.common = TaskConfig()
         self.config = TaskConfig()
-        api.on("TASK:CONFIG:SCHEDULER:SYNC", self.sync)
+        api.on("TASK:CONFIG:SCHEDULER:INIT", self.init)
+        api.on("TASK:CONFIG:SCHEDULER:LOAD", self.load)
 
-    def init(self, config, **kwargs):
+    def init(self, config, kwargs):
         self.common = TaskConfig(**kwargs) if config == "默认配置" else TaskConfig().loadConfig(config)
+        self.config = self.common
 
     def load(self, config):
-        self.config = TaskConfig().loadConfig(config)
-
-    def sync(self):
-        self.config = self.common
+        self.config = self.common if config == "默认配置" else TaskConfig().loadConfig(config)
 
 
 taskConfigScheduler = TaskConfigScheduler()

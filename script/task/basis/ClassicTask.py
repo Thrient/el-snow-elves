@@ -10,6 +10,7 @@ from airtest.aircv.utils import pil_2_cv2
 
 from script.config.Config import Config
 from script.task.basis.BasisTask import BasisTask
+from script.utils.Api import api
 from script.utils.Thread import thread
 
 
@@ -24,10 +25,12 @@ class ClassicTask(BasisTask, ABC):
         self.popCheck()
 
     def __enter__(self):
+        api.on("API:SCRIPT:FINISH", self.finish)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.finish()
+        api.emit("API:SCRIPT:FINISH")
+        api.off("API:SCRIPT:FINISH", self.finish)
 
     @thread(daemon=True)
     def popCheck(self):
@@ -261,7 +264,7 @@ class ClassicTask(BasisTask, ABC):
         该函数会持续循环执行，直到autoFightEvent事件被设置为止
         循环中会按照taskConfig中配置的按键列表依次执行按键点击操作
         """
-        __queue = deque([0, 1, 2, 3, 4, 5, 6, 7])
+        __queue = deque([0, 1, 2, 3, 4, 5, 6, 7, 13])
 
         while not self.autoFightEvent.is_set():
             index = __queue.popleft()
@@ -318,8 +321,7 @@ class ClassicTask(BasisTask, ABC):
         返回值:
             无返回值
         """
-        if self.wait("按钮世界挂机", seconds=30) is None:
-            return None
+        self.backToMain(exclude_branches=["副本退出"])
         if model == "江湖":
             self.logs("激活江湖栏")
             # 检查任务栏是否已经激活
@@ -486,8 +488,7 @@ class ClassicTask(BasisTask, ABC):
     def teamCreate(self, model):
         self.logs(f"创建{model}队伍")
 
-        self.backToMain()
-        if model == "日常":
+        def __team_1():
             self.logs("刷新当天日常")
             self.openBackpack()
             self.touch("按钮物品综合入口")
@@ -501,11 +502,12 @@ class ClassicTask(BasisTask, ABC):
             self.move_mouse(start=(258, 307), end=(258, 607))
             self.touch("按钮队伍无目标")
             self.touch("按钮队伍江湖纪事")
-            self.touch("按钮队伍自动匹配")
+            self.touch("按钮队伍确定", x=-100)
             self.touch("按钮队伍确定")
             self.touch("按钮队伍确定")
+            self.closeTeam()
 
-        if model == "江湖行商":
+        def __team_2():
             self.openTeam()
             self.touch("按钮队伍创建")
             self.touch("按钮队伍下拉")
@@ -513,10 +515,31 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮队伍无目标")
             self.touch("按钮队伍行当玩法")
             self.touch("按钮队伍江湖行商")
-            self.touch("按钮队伍自动匹配")
+            self.touch("按钮队伍确定", x=-100)
             self.touch("按钮队伍确定")
             self.touch("按钮队伍确定")
-        self.closeTeam()
+            self.closeTeam()
+
+        def __team_3():
+            self.openTeam()
+            self.touch("按钮队伍创建")
+            self.touch("按钮队伍下拉")
+            self.move_mouse(start=(258, 307), end=(258, 607))
+            self.touch("按钮队伍无目标")
+            self.touch("按钮队伍行当玩法")
+            self.touch("按钮队伍聚义平冤")
+            self.touch("按钮队伍确定", x=-100)
+            self.touch("按钮队伍确定")
+            self.touch("按钮队伍确定")
+            self.closeTeam()
+
+        _dict = {
+            "日常": __team_1,
+            "江湖行商": __team_2,
+            "聚义平冤": __team_3
+        }
+
+        _dict[model]()
 
     def buy(self, model):
         """
@@ -786,7 +809,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面帮派") is None:
             self.logs("打开帮派")
-            self.click_key(key="O")
+            self.click_key(key=self.taskConfig.keyList[21])
 
     def closeBuddy(self):
         """
@@ -824,7 +847,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面好友") is None:
             self.logs("打开好友")
-            self.click_key(key="H")
+            self.click_key(key=self.taskConfig.keyList[24])
 
     def closeMap(self):
         """
@@ -859,7 +882,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("标志地图当前坐标") is None:
             self.logs("打开地图")
-            self.click_key(key="M")
+            self.click_key(key=self.taskConfig.keyList[23])
 
     def closeTeam(self):
         """
@@ -889,7 +912,7 @@ class ClassicTask(BasisTask, ABC):
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
         if self.exits("界面队伍") is None:
             self.logs("打开队伍")
-            self.click_key(key="T")
+            self.click_key(key=self.taskConfig.keyList[22])
 
     def closeBackpack(self):
         """
@@ -922,7 +945,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("打开背包")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("界面物品") is None:
-            self.click_key(key="B")
+            self.click_key(key=self.taskConfig.keyList[20])
 
     def closeSetting(self):
         """
@@ -956,7 +979,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("打开设置")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
         if self.exits("界面设置") is None:
-            self.click_key(key="ESC")
+            self.click_key(key=self.taskConfig.keyList[25])
 
     def arrive(self):
         """
@@ -1154,7 +1177,7 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         self.logs("设置角色信息")
-        self.backToMain()
+        self.backToMain(exclude_branches=["副本退出"])
         self.openBackpack()
         self.touch("按钮物品属性")
         self.defer(count=3)
@@ -1177,5 +1200,4 @@ class ClassicTask(BasisTask, ABC):
                 )
             }
         )
-
-        self.backToMain()
+        self.backToMain(exclude_branches=["副本退出"])

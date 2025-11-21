@@ -97,7 +97,7 @@ class HeroListTask(ClassicTask):
 
                     self.touch("按钮江湖英雄榜准备")
                     self.event["is_prepare"] = True
-                    self.click_key(key="W", press_down_delay=3)
+                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=3)
                     self.autoFightStart()
                 case 8:
                     self.touch("按钮江湖英雄榜离开", seconds=15)

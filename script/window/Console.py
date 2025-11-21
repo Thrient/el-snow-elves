@@ -22,7 +22,7 @@ class Console:
         self.style = None
         self.vk_code = {
             "TAB": 0x09,
-            "ESC": 0x1B,
+            "ESCAPE": 0x1B,
             "SPACE": 0x20,
             "DIGIT0": 0x30,
             "DIGIT1": 0x31,

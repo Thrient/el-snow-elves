@@ -104,7 +104,7 @@ class SwordTask(ClassicTask):
 
                     self.touch("按钮华山论剑准备", post_delay=0)
                     self.event["is_prepare"] = True
-                    self.click_key(key="W", press_down_delay=3)
+                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=3)
                     self.autoFightStart()
                 case 8:
                     # 点击华山论剑离开按钮
