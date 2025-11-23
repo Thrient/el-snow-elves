@@ -41,7 +41,7 @@ class ActivityRewardTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
-                    if self.exits("界面活动") is None:
+                    if not self.exits("界面活动"):
                         self.setup = 3
                         continue
                     self.click_mouse(pos=(1270, 700), count=8)

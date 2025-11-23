@@ -39,7 +39,7 @@ class VientianeLikesTask(ClassicTask):
                     self.click_mouse(pos=(1240, 715))
                     self.setup = 4
                 case 4:
-                    if self.exits("界面场景") is None:
+                    if not self.exits("界面场景"):
                         self.setup = 3
                         continue
 

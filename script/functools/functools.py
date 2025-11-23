@@ -40,7 +40,7 @@ def during(seconds: Union[int, float, None] = 1.0):
             end_time = time.time() + kwargs.get('seconds', seconds)
             while time.time() < end_time:
                 result = func(*args, **kwargs)
-                if result is not None:
+                if result:
                     return result
                 time.sleep(0.05)
             return None
@@ -63,7 +63,7 @@ def verify(times: Union[int, None] = None):
                 results.append(res)
                 time.sleep(0.5)
 
-            if all(res is not None for res in results):
+            if all(results):
                 return results[-1]
             return None
 

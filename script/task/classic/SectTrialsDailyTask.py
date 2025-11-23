@@ -39,7 +39,7 @@ class SectTrialsDailyTask(ClassicTask):
                     self.touch("按钮物品天下宗师")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面天下宗师") is None:
+                    if not self.exits("界面天下宗师"):
                         self.backToMain()
                         self.setup = 3
                         continue
@@ -48,14 +48,14 @@ class SectTrialsDailyTask(ClassicTask):
                     self.touch("按钮天下宗师宗门试炼")
                     self.setup = 5
                 case 5:
-                    if self.exits("界面宗门试炼") is None:
+                    if not self.exits("界面宗门试炼"):
                         self.backToMain()
                         self.setup = 4
                         continue
 
                     _coord = self.exits("标志宗门试炼进度")
 
-                    if _coord is None:
+                    if not _coord:
                         self.backToMain()
                         self.setup = 4
                         continue

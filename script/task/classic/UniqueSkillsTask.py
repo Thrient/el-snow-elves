@@ -42,7 +42,7 @@ class UniqueSkillsTask(ClassicTask):
                     self.touch("按钮行当通用")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面行当通用") is None:
+                    if not self.exits("界面行当通用"):
                         self.setup = 3
                         continue
                     self.touch("按钮行当鉴宝", "按钮行当裁衣", "按钮行当缝裤", "按钮行当冶兵")
@@ -50,17 +50,17 @@ class UniqueSkillsTask(ClassicTask):
                     self.touch("按钮行当磨具打造", "按钮行当鞋裤制样", "按钮行当兵刃图样", "按钮行当服冠制样")
                     self.setup = 5
                 case 5:
-                    if self.exits("界面生产制作") is None:
+                    if not self.exits("界面生产制作"):
                         self.setup = 4
                         continue
                     self.touch("按钮生产制作炼制全部")
                     self.setup = 6
                 case 6:
-                    if self.exits("界面生产制作") is None:
+                    if not self.exits("界面生产制作"):
                         self.setup = 4
                         continue
 
-                    if self.exits("标志行当炼制中") is not None:
+                    if self.exits("标志行当炼制中"):
                         continue
 
                     self.setup = 0

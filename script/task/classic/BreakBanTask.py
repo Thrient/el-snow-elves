@@ -42,7 +42,7 @@ class BreakBanTask(ClassicTask):
                     self.touch("按钮物品活动")
                     self.touch("按钮活动帮派")
 
-                    if self.touch("按钮活动破阵设宴", y=45) is None:
+                    if not self.touch("按钮活动破阵设宴", y=45):
                         self.logs("破阵设宴已经完成")
                         self.setup = 0
                         continue
@@ -53,7 +53,7 @@ class BreakBanTask(ClassicTask):
                     self.touch("按钮破阵设宴确认邀约")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面破阵设宴") is None:
+                    if not self.exits("界面破阵设宴"):
                         self.setup = 3
                         continue
 
@@ -76,7 +76,7 @@ class BreakBanTask(ClassicTask):
 
                     self.click_mouse(pos=(633 + 172 * __x, 282 + 182 * __y))
 
-                    if self.exits("按钮破阵设宴获取") is None:
+                    if not self.exits("按钮破阵设宴获取"):
                         self.touch("按钮破阵设宴一键提交")
                         self.event["banquet_index"] += 1
                         self.event["banquet_counter"] = 0
@@ -90,19 +90,19 @@ class BreakBanTask(ClassicTask):
                     self.event["banquet_counter"] += 1
 
                     if self.event["banquet_counter"] in [1, 4, 6]:
-                        if self.exits("按钮帮派仓库") is None:
+                        if not self.exits("按钮帮派仓库"):
                             continue
                         self.touch("按钮帮派仓库", y=-75)
                         self.buy("帮派仓库")
 
                     elif self.event["banquet_counter"] in [2, 5, 7]:
-                        if self.exits("按钮摆摊购买") is None:
+                        if not self.exits("按钮摆摊购买"):
                             continue
                         self.touch("按钮摆摊购买", y=-75)
                         self.buy("摆摊购买")
 
                     elif self.event["banquet_counter"] in [3, 8, 9]:
-                        if self.exits("按钮商城购买") is None:
+                        if not self.exits("按钮商城购买"):
                             continue
                         self.touch("按钮商城购买", y=-75)
                         self.buy("商城购买")

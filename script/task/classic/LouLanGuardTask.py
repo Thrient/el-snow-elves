@@ -41,7 +41,7 @@ class LouLanGuardTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
-                    if self.exits("界面剑取楼兰") is None:
+                    if not self.exits("界面剑取楼兰"):
                         self.setup = 3
                         continue
                     self.touch("按钮剑取楼兰阵营")
@@ -52,7 +52,7 @@ class LouLanGuardTask(ClassicTask):
                     self.setup = 5
                 case 5:
                     self.move_mouse(start=(118, 300), end=(118, 452))
-                    if self.touch("标志剑取楼兰阵营守护", box=(0, 170, 265, 450)) is None:
+                    if not self.touch("标志剑取楼兰阵营守护", box=(0, 170, 265, 450)):
                         self.setup = 0
                         continue
                     self.arrive()

@@ -45,27 +45,27 @@ class BountyMissionsTask(ClassicTask):
                     self.teamCreate(model="日常")
                     self.setup = 3
                 case 3:
-                    if self.exits("界面悬赏") is None:
+                    if not self.exits("界面悬赏"):
                         self.openBackpack()
                         self.touch("按钮物品综合入口")
                         self.touch("按钮物品活动")
-                        if self.exits("界面活动") is None:
+                        if not self.exits("界面活动"):
                             continue
                         self.touch("按钮活动悬赏")
                         self.touch("按钮悬赏下页", x=50)
                         continue
 
-                    if self.exits("标志悬赏接满") is not None:
+                    if self.exits("标志悬赏接满"):
                         self.touch("按钮悬赏上页", x=-50)
                         self.setup = 4
                         continue
                     self.click_mouse(pos=(1100, 145), post_delay=0.5)
-                    if self.exits("标志悬赏江湖纪事", box=(265, 175, 1190, 565)) is None:
+                    if not self.exits("标志悬赏江湖纪事", box=(265, 175, 1190, 565)):
                         continue
                     self.touch("标志悬赏江湖纪事", y=325, post_delay=0)
                     self.touch("按钮悬赏押金", post_delay=0)
                 case 4:
-                    if self.exits("按钮悬赏前往") is None:
+                    if not self.exits("按钮悬赏前往"):
                         self.setup = 0
                         continue
                     self.backToMain()
@@ -77,7 +77,7 @@ class BountyMissionsTask(ClassicTask):
                         continue
                     self.touch("按钮队伍自动匹配")
 
-                    if self.touch("按钮队伍赛季喊话") is None:
+                    if not self.touch("按钮队伍赛季喊话"):
                         self.touch("按钮队伍普通喊话", x=80)
 
                     if time.time() - self.event["shout_timer"] > 32:
@@ -91,11 +91,11 @@ class BountyMissionsTask(ClassicTask):
                     self.setup = 7
                 case 7:
 
-                    if self.exits("界面日常") is None:
+                    if not self.exits("界面日常"):
                         self.setup = 8
                         continue
                     self.defer(count=5)
-                    if self.touch("按钮副本全体进入") is None:
+                    if not self.touch("按钮副本全体进入"):
                         self.setup = 6
                         continue
 
@@ -110,19 +110,19 @@ class BountyMissionsTask(ClassicTask):
 
                     if 360 < time.time() - self.event["activate_timer"]:
                         self.unstuck()
-                        if self.activatedTask("按钮任务副本", model="任务") is None:
+                        if not self.activatedTask("按钮任务副本", model="任务"):
                             continue
                         self.event["activate_timer"] = time.time()
                         continue
 
-                    if self.exits("按钮副本跳过剧情") is not None:
+                    if self.exits("按钮副本跳过剧情"):
                         self.touch("按钮副本跳过剧情")
 
                     self.checkExit()
         return None
 
     def checkExit(self):
-        if self.exits("标志副本完成", "标志副本完成_V1") is None:
+        if not self.exits("标志副本完成", "标志副本完成_V1"):
             self.event["exit_check_counter"] = 0
             return
         if 5 > self.event["exit_check_counter"]:

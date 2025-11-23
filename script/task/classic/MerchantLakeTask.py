@@ -69,7 +69,7 @@ class MerchantLakeTask(ClassicTask):
                 case 5:
                     # 对话行商NPC
                     self.touch("按钮大世界对话")
-                    if self.touch("按钮江湖行商参与") is None:
+                    if not self.touch("按钮江湖行商参与"):
                         self.setup = 3
                         continue
 
@@ -83,7 +83,7 @@ class MerchantLakeTask(ClassicTask):
                     self.touch("按钮江湖行商货单购买")
 
                     # 等待全部队员准备
-                    if self.wait("标志行商任务接取成功", seconds=20) is None:
+                    if not self.wait("标志行商任务接取成功", seconds=20):
                         self.backToMain()
                         self.setup = 4
                         continue
@@ -97,11 +97,11 @@ class MerchantLakeTask(ClassicTask):
                     self.touch("按钮确定")
 
                     if 360 < time.time() - self.event["任务激活计时器"]:
-                        if self.activatedTask("按钮任务行商", model="江湖") is not None:
+                        if self.activatedTask("按钮任务行商", model="江湖"):
                             self.event["任务激活计时器"] = time.time()
                         continue
 
-                    if self.exits("按钮江湖行商一键上缴") is not None:
+                    if self.exits("按钮江湖行商一键上缴"):
                         self.touch("按钮江湖行商一键上缴")
                         self.closeRewardUi(count=10)
                         self.logs(f"江湖行商完成{self.event["行商次数计数器"]}次")
@@ -109,7 +109,7 @@ class MerchantLakeTask(ClassicTask):
                         self.setup = 3
                         continue
 
-                    if self.exits("界面行商") is not None:
+                    if self.exits("界面行商"):
                         # 行商购买
                         if self.event["购买状态"]:
                             self.click_mouse(pos=(1175, 170))
@@ -126,18 +126,19 @@ class MerchantLakeTask(ClassicTask):
                         self.defer(count=5)
                         self.closeCurrentUi()
 
-                    if self.exits("界面地图") is not None:
-                        if self.exits("标志本体位置", "标志本体位置_V2") is not None:
+                    if self.exits("界面地图"):
+                        if self.exits("标志本体位置", "标志本体位置_V2"):
                             if self.event["购买状态"]:
                                 self.touch("标志本体位置", "标志本体位置_V2")
                             else:
                                 self.touch("标志江湖行商商人", box=(1020, 150, 1125, 255))
                             continue
 
-                        if self.exits("标志本体位置_V1") is not None:
+                        if self.exits("标志本体位置_V1"):
                             if self.event["购买状态"]:
                                 self.touch("标志本体位置_V1")
                             else:
                                 self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
                             continue
+                        self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
         return None

@@ -59,20 +59,20 @@ class RedressingInjusticesTask(ClassicTask):
                     self.touch("按钮物品活动")
                     self.touch("按钮活动行当")
 
-                    if self.touch("按钮活动聚义平冤", y=45) is None:
+                    if not self.touch("按钮活动聚义平冤", y=45):
                         self.setup = 0
                         continue
 
                     self.arrive()
                     self.setup = 5
                 case 5:
-                    if self.touch("按钮聚义平冤") is not None:
+                    if self.touch("按钮聚义平冤"):
                         self.touch("按钮确定", post_delay=0)
                         self.setup = 6
                         continue
                     self.setup = 7
                 case 6:
-                    if self.wait("标志聚义任务接取成功", seconds=5) is None:
+                    if not self.wait("标志聚义任务接取成功", seconds=5):
                         self.backToMain()
                         self.setup = 3
                         continue
@@ -80,11 +80,11 @@ class RedressingInjusticesTask(ClassicTask):
                 case 7:
                     if 360 < time.time() - self.event["任务激活计时器"]:
                         self.backToMain()
-                        if self.activatedTask("按钮任务聚义", model="江湖") is not None:
+                        if self.activatedTask("按钮任务聚义", model="江湖"):
                             self.event["任务激活计时器"] = time.time()
                         continue
 
-                    if self.exits("标志聚义破门中", times=3) is not None:
+                    if self.exits("标志聚义破门中", times=3):
                         self.defer(count=30)
                         self.setup = 0
                         continue

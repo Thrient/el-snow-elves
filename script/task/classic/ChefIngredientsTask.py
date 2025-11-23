@@ -40,7 +40,7 @@ class ChefIngredientsTask(ClassicTask):
                 case 4:
                     self.touch("按钮大世界对话")
                     self.touch("按钮商人购买食材")
-                    if self.exits("标志兑换商店批量购买") is not None:
+                    if self.exits("标志兑换商店批量购买"):
                         self.touch("按钮兑换商店批量购买")
 
                     for text in self.taskConfig.chefIngredientsTags:
@@ -57,7 +57,7 @@ class ChefIngredientsTask(ClassicTask):
 
                     self.touch("按钮大世界对话")
                     self.touch("按钮商人购买调料")
-                    if self.exits("标志兑换商店批量购买") is not None:
+                    if self.exits("标志兑换商店批量购买"):
                         self.touch("按钮兑换商店批量购买")
 
                     for text in self.taskConfig.chefSeasoningTags:

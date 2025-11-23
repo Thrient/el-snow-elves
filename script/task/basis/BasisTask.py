@@ -50,8 +50,9 @@ class BasisTask(ABC):
         """重置变量"""
         reset_config = self.state_reset_config.get(state, {})
         for var_name, value in reset_config.items():
-            if var_name in self.event:
-                self.event[var_name] = value() if callable(value) else value
+            if var_name not in self.event:
+                continue
+            self.event[var_name] = value() if callable(value) else value
 
     def stop(self):
         """暂停"""
@@ -157,14 +158,11 @@ class BasisTask(ABC):
     def input(self, **kwargs):
         """输入信息"""
         if self._finished.is_set():
-            return None
+            return False
 
         @delay(post_delay=self.taskConfig.delay)
         def _inner(**inner_kwargs):
             text = inner_kwargs.get('text')
-            # 如果已完成标志已设置，则直接返回
-            if self._finished.is_set():
-                return
             # 在停止锁的保护下执行控制台输入操作
             with self._stopped:
                 self.winConsole.input(text)
@@ -174,7 +172,7 @@ class BasisTask(ABC):
     def move_mouse(self, **kwargs):
         """鼠标从起始位置移动到结束位置"""
         if self._finished.is_set():
-            return None
+            return False
 
         @repeat()
         @delay(post_delay=self.taskConfig.delay)
@@ -192,7 +190,7 @@ class BasisTask(ABC):
         """鼠标点击"""
 
         if self._finished.is_set():
-            return None
+            return False
 
         @repeat()
         @delay(post_delay=self.taskConfig.delay)
@@ -242,7 +240,7 @@ class BasisTask(ABC):
         """键盘点击"""
 
         if self._finished.is_set():
-            return None
+            return False
 
         @repeat()
         @delay(post_delay=self.taskConfig.delay)
@@ -256,84 +254,40 @@ class BasisTask(ABC):
 
         return _inner(**kwargs)
 
-    # def touch_once(self, *args, **kwargs):
-    #     """只尝试查找一次"""
-    #     threshold = kwargs.get('threshold', Config.THRESHOLD)
-    #     box = kwargs.get('box', Config.BOX)
-    #     for image in args:
-    #         result = self.template(image, threshold=threshold, box=box)
-    #         if result is None:
-    #             continue
-    #         self.click_mouse(pos=result, **kwargs)
-    #         return result
-    #     return None
-
     def touch(self, *args, **kwargs):
         """查找并点击屏幕上的图像模板"""
         if self._finished.is_set():
-            return None
+            return []
 
         @during(seconds=Config.OVERTIME)
         def _inner(**inner_kwargs):
 
             for image in args:
                 results = self.template(image=image, **inner_kwargs)
-                if results is None:
+                if not results:
                     continue
                 self.click_mouse(pos=results, **kwargs)
                 return results
-            return None
+            return []
 
         return _inner(**kwargs)
 
     def wait(self, *args, **kwargs):
         """查找并点击屏幕上的图像模板"""
         if self._finished.is_set():
-            return None
+            return []
 
         @during(seconds=Config.OVERTIME)
         def _inner(**inner_kwargs):
 
             for image in args:
                 result = self.template(image=image, **inner_kwargs)
-                if result is not None:
-                    return result
-            return None
+                if not result:
+                    continue
+                return result
+            return []
 
         return _inner(**kwargs)
-
-    #
-    # def wait(self, *args, **kwargs):
-    #     """
-    #     等待指定图像出现在屏幕上，在超时时间内循环检测图像模板匹配结果
-    #
-    #     参数:
-    #         *args: 可变参数，传入需要等待的图像文件路径
-    #         **kwargs: 关键字参数
-    #             overTime: 超时时间，默认使用Config.OVERTIME配置
-    #             threshold: 匹配阈值，默认使用Config.THRESHOLD配置
-    #             box: 检测区域，默认使用Config.BOX配置
-    #
-    #     返回值:
-    #         如果在超时时间内找到匹配的图像，返回匹配结果坐标；否则返回None
-    #     """
-    #
-    #     __currentTIme = time.time()
-    #
-    #     # 从kwargs中获取配置参数，如果未提供则使用默认配置
-    #     overTime = kwargs.get('overTime', Config.OVERTIME)
-    #     threshold = kwargs.get('threshold', Config.THRESHOLD)
-    #     box = kwargs.get('box', Config.BOX)
-    #
-    #     # 在超时时间内循环检测图像匹配
-    #     while time.time() - __currentTIme < overTime and not self._finished.is_set():
-    #
-    #         # 遍历所有待检测的图像
-    #         for image in args:
-    #             result = self.template(image=image, threshold=threshold, box=box)
-    #             if result is not None:
-    #                 return result
-    #     return None
 
     def exits(self, *args, **kwargs):
         """在指定区域内查找图像模板，支持多次匹配和超时控制"""
@@ -341,80 +295,15 @@ class BasisTask(ABC):
         # 遍历所有待查找的图像模板
         for image in args:
             result = self.template(image=image, **kwargs)
-            if result is not None:
-                return result
-        return None
-
-    # def exitsAll(self, *args, **kwargs):
-    #     """
-    #     在指定区域内循环查找多个图像模板，返回第一个匹配到的结果
-    #
-    #     参数:
-    #         *args: 可变参数，包含待查找的图像模板路径
-    #         **kwargs: 关键字参数
-    #             threshold: 匹配阈值，默认使用Config.THRESHOLD
-    #             box: 查找区域，默认使用Config.BOX
-    #
-    #     返回值:
-    #         如果找到匹配的图像模板，返回匹配结果；否则返回None
-    #     """
-    #     threshold = kwargs.get('threshold', Config.THRESHOLD)
-    #     box = kwargs.get('box', Config.BOX)
-    #     findAll = kwargs.get('findAll', False)
-    #
-    #     results = []
-    #     # 遍历所有待查找的图像模板
-    #     for image in args:
-    #         results += self.imageTemplateAll(image, threshold, box)
-    #         if results is not None and not findAll:
-    #             return results
-    #
-    #     return results
-
-    # def ocr(self, box):
-    #     """ocr识别"""
-    #     with self._stopped:
-    #         screen = pil_2_cv2(self.windowConsole.captureWindow().crop(box))
-    #         ocr = CnOcr(
-    #             det_model_name="en_PP-OCRv3_det",
-    #             det_model_fp="resources/cnstd/1.2/ppocr/en_PP-OCRv3_det_infer.onnx",
-    #             rec_model_name="en_number_mobile_v2.0",
-    #             rec_model_fp="resources/cnocr/2.3/ppocr/en_number_mobile_v2.0_rec_infer.onnx"
-    #         )
-    #         res = ocr.ocr_for_single_line(screen)
-    #         return res
-
-    # def imageTemplate(self, image, threshold, box):
-    #     """
-    #     在指定窗口区域中查找模板图像的位置
-    #
-    #     参数:
-    #         image (str): 模板图像文件名（不包含扩展名）
-    #         threshold (float): 图像匹配阈值，用于判断匹配程度
-    #         box (tuple): 截图区域的坐标元组 (left, top, right, bottom)
-    #
-    #     返回:
-    #         tuple: 匹配成功时返回相对于原始窗口的坐标 (x, y)，匹配失败时返回 None
-    #     """
-    #
-    #     threshold = Config.THRESHOLD_IMAGE[image] if Config.THRESHOLD_IMAGE.get(image) else threshold
-    #
-    #     if self._finished.is_set():
-    #         return None
-    #     with self._stopped:
-    #         # 截取指定窗口的指定区域并转换为OpenCV格式
-    #         screen = pil_2_cv2(self.winConsole.capture.crop(box))
-    #         # 使用模板匹配算法在截图中查找指定图像
-    #         result = Template(f"resources/images/{self.taskConfig.model}/{image}.bmp", threshold=threshold).match_in(
-    #             screen)
-    #         print(f"{image}: {result}")
-    #         # 如果找到匹配结果，返回相对于原始窗口的绝对坐标
-    #         return (box[0] + result[0], box[1] + result[1]) if result else None
+            if not result:
+                continue
+            return result
+        return []
 
     def template(self, *args, **kwargs):
         """查找并点击屏幕上的图像模板"""
         if self._finished.is_set():
-            return None
+            return []
 
         @verify()
         def _inner(**inner_kwargs):
@@ -434,7 +323,7 @@ class BasisTask(ABC):
                 results = template.match_all_in(screen) if find_all else template.match_in(screen)
                 print(f"{image}: {results}")
                 if results is None:
-                    return None
+                    return []
                 if not isinstance(results, list):
                     return [(box[0] + results[0], box[1] + results[1])]
 
@@ -445,35 +334,7 @@ class BasisTask(ABC):
 
             except Exception as e:
                 logging.error(e)
-                return None
+                return []
 
         return _inner(**kwargs)
-#
-# def imageTemplate(self, image, threshold, box):
-#     """
-#     在指定区域内查找所有匹配的图像模板位置
-#
-#     参数:
-#         image: 要匹配的图像模板名称
-#         threshold: 图像匹配的阈值
-#         box: 截图区域的坐标框 (left, top, right, bottom)
-#
-#     返回值:
-#         list: 匹配到的所有位置坐标列表，每个坐标为相对于原始窗口的绝对坐标
-#     """
-#     threshold =
-#     if self._finished.is_set():
-#         return None
-#     with self._stopped:
-#         # 截取指定区域的屏幕图像并转换为OpenCV格式
-#         screen = pil_2_cv2(self.winConsole.capture.crop(box))
-#         # 在屏幕截图中查找所有匹配的模板图像
-#         results = Template(f"resources/images/{self.taskConfig.model}/{image}.bmp",
-#                            threshold=threshold).match_all_in(screen)
-#
-#         print(f"{image}: {results}")
-#         # 将相对坐标转换为绝对坐标并返回
-#         return sorted([
-#             (box[0] + result['result'][0], box[1] + result['result'][1])
-#             for result in results
-#         ], key=lambda pos: (-pos[0], pos[1])) if results is not None else None
+

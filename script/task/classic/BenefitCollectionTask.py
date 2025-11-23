@@ -62,28 +62,4 @@ class BenefitCollectionTask(ClassicTask):
                     self.closeRewardUi(count=10)
                     self.backToMain()
                     self.setup = 0
-
-                    #
-                    # self.touch("按钮特惠的标志拍照", x=-84, y=-642)
-                    # self.touch("按钮周卡礼包")
-                    # self.touch("按钮周卡每日领取的标志", x=-458)
-                    # self.backToMain()
-                    #
-                    # self.openBackpack()
-                    # self.touch("按钮物品综合入口")
-                    # self.touch("按钮物品活动")
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.touch("标志活动活跃度", x=30, y=-30)
-                    # self.backToMain()
-
-                    pass
-
         return None

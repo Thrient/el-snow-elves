@@ -141,7 +141,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮物品社交")
 
                         self.touch("按钮物品桃李值", x=350)
-                        if self.exits("标志兑换商店批量购买") is not None:
+                        if self.exits("标志兑换商店批量购买"):
                             self.touch("按钮兑换商店批量购买")
                         self.touch("标志兑换商店输入名称搜索")
                         self.input(text="锦芳绣残片")
@@ -181,7 +181,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮大世界对话")
                         self.touch("按钮商人小蟹小虾")
 
-                        if self.exits("标志兑换商店批量购买") is not None:
+                        if self.exits("标志兑换商店批量购买"):
                             self.touch("按钮兑换商店批量购买")
 
                         if self.exits("标志杂货商人莲子", box=(750, 140, 1150, 270)):
@@ -197,7 +197,7 @@ class DailyRedemptionTask(ClassicTask):
                         self.touch("按钮大世界对话")
                         self.touch("按钮商人新鲜蔬菜")
 
-                        if self.exits("标志兑换商店批量购买") is not None:
+                        if self.exits("标志兑换商店批量购买"):
                             self.touch("按钮兑换商店批量购买")
 
                         if self.exits("标志杂货商人艾草", box=(750, 140, 1150, 270)):

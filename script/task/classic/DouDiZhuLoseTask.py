@@ -34,23 +34,23 @@ class DouDiZhuLoseTask(ClassicTask):
                     # self.teamDetection()
                     self.setup = 4
                 case 3:
-                    if self.touch("按钮大世界上桌") is None:
+                    if not self.touch("按钮大世界上桌"):
                         self.setup = 0
                         continue
                     self.setup = 4
                 case 4:
-                    if self.exits("界面斗地主") is None:
+                    if not self.exits("界面斗地主"):
                         self.backToMain(exclude_branches=["副本退出"])
                         self.setup = 3
                         continue
 
-                    if self.exits("按钮斗地主准备") is not None:
+                    if self.exits("按钮斗地主准备"):
                         self.touch("按钮斗地主准备")
 
-                    if self.exits("按钮斗地主不叫", "按钮斗地主不抢", "按钮斗地主不加倍") is not None:
+                    if self.exits("按钮斗地主不叫", "按钮斗地主不抢", "按钮斗地主不加倍"):
                         self.touch("按钮斗地主不叫", "按钮斗地主不抢", "按钮斗地主不加倍")
 
-                    if self.exits("按钮斗地主不出", "按钮斗地主要不起") is not None:
+                    if self.exits("按钮斗地主不出", "按钮斗地主要不起"):
                         self.touch("按钮斗地主不出", "按钮斗地主要不起")
 
         return None

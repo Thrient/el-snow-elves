@@ -42,12 +42,12 @@ class MansionCheckInTask(ClassicTask):
                     self.touch("按钮宅邸排行榜")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面排行榜") is None:
+                    if not self.exits("界面排行榜"):
                         self.backToMain()
                         self.setup = 3
                         continue
 
-                    if self.exits("标志宅邸打卡完成") is not None:
+                    if self.exits("标志宅邸打卡完成"):
                         self.backToMain()
                         self.setup = 0
                         continue
@@ -60,7 +60,7 @@ class MansionCheckInTask(ClassicTask):
                     self.event["decline_counter"] += 1
 
                     self.touch("标志宅邸打卡经典")
-                    if self.touch("标志宅邸打卡参观") is None:
+                    if not self.touch("标志宅邸打卡参观"):
                         self.closeCurrentUi()
                         continue
                     self.backToMain(exclude_branches=["副本退出"])

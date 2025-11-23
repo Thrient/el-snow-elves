@@ -70,7 +70,7 @@ class AcquisitionTask(ClassicTask):
 
     def buyTools(self):
         """购买工具"""
-        if self.exits("界面交易") is None:
+        if not self.exits("界面交易"):
             return False
         if not self.taskConfig.autoBuyTool:
             self.setup = 0
@@ -90,7 +90,7 @@ class AcquisitionTask(ClassicTask):
             None
         """
 
-        if self.exits("标志大世界体力上限") is None:
+        if not self.exits("标志大世界体力上限"):
             return
 
         self.logs("吃鸡蛋")
@@ -115,9 +115,9 @@ class AcquisitionTask(ClassicTask):
             bool: 采集操作是否成功完成
         """
 
-        if self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取",
+        if not self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取",
                       "按钮大世界搜查", "按钮大世界垂钓", "按钮大世界市井喧闹",
-                      "按钮大世界繁花似锦", "按钮大世界空山鸟语") is None:
+                      "按钮大世界繁花似锦", "按钮大世界空山鸟语"):
             # 换线更新坐标
             if self.taskConfig.collectionSwitch == 1:
                 self.toCollectionLocation()
@@ -134,7 +134,7 @@ class AcquisitionTask(ClassicTask):
             self.event["collect_change_line"] += 1
             return False
 
-        if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), seconds=8, times=None) is not None:
+        if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), seconds=8, times=None):
             self.click_mouse(pos=(665, 470))
 
         self.logs(f"采集 {self.event["collect_counter"]}次")

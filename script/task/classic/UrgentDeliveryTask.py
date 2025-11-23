@@ -39,7 +39,7 @@ class UrgentDeliveryTask(ClassicTask):
                     self.touch("按钮帮派势力")
                     self.touch("按钮帮派江湖急送")
 
-                    if self.exits("标志江湖急送订单上限") is not None:
+                    if self.exits("标志江湖急送订单上限"):
                         self.setup = 0
                         continue
                     self.touch("按钮帮派抢单")
@@ -48,7 +48,7 @@ class UrgentDeliveryTask(ClassicTask):
                 case 4:
                     self.activatedTask("按钮任务外卖", model="江湖")
 
-                    if self.exits("按钮江湖急送菜品送达") is not None:
+                    if self.exits("按钮江湖急送菜品送达"):
                         self.touch("按钮江湖急送菜品送达")
                         self.defer(7)
                         self.touch("按钮江湖急送确认")
@@ -56,7 +56,7 @@ class UrgentDeliveryTask(ClassicTask):
                         self.setup = 3
                         continue
 
-                    if self.exits("按钮江湖急送前往购买") is not None:
+                    if self.exits("按钮江湖急送前往购买"):
                         if self.event["buy_counter"] >= 3:
                             self.touch("按钮江湖急送放弃订单")
                             self.touch("按钮确定")
@@ -72,7 +72,7 @@ class UrgentDeliveryTask(ClassicTask):
                         self.click_mouse(pos=(1330, 745))
 
                         for index in range(len(results) + 1):
-                            if self.exits("标志江湖急送符合") is not None:
+                            if self.exits("标志江湖急送符合"):
                                 self.touch("标志江湖急送符合", x=10, y=10)
                                 self.touch("按钮江湖急送购买")
                                 self.touch("按钮确定")
@@ -86,7 +86,7 @@ class UrgentDeliveryTask(ClassicTask):
                         self.backToMain()
                         self.event["buy_counter"] += 1
 
-                    if self.exits("按钮江湖急送领取食盆") is not None:
+                    if self.exits("按钮江湖急送领取食盆"):
                         self.touch("按钮江湖急送领取食盆")
 
                         self.arrive()

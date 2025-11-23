@@ -43,7 +43,7 @@ class FactionTask(ClassicTask):
                     self.touch("按钮物品活动")
                     self.touch("按钮活动帮派")
 
-                    if self.touch("按钮活动帮派任务", y=45) is None:
+                    if not self.touch("按钮活动帮派任务", y=45):
                         self.logs("帮派任务已经完成")
                         self.setup = 0
                         continue
@@ -59,18 +59,18 @@ class FactionTask(ClassicTask):
                         self.event["last_activated_time"] = time.time()
                         self.activatedTask("按钮任务帮派", model="江湖")
 
-                    if self.exits("标志帮派任务下一轮") is not None:
+                    if self.exits("标志帮派任务下一轮"):
                         self.touch("按钮取消")
                         self.click_mouse(pos=(0, 0))
                         self.closeRewardUi(5)
                         self.setup = 0
 
                     # 商城购买
-                    if self.exits("按钮商城购买") is not None:
+                    if self.exits("按钮商城购买"):
                         self.touch("按钮商城购买", y=-75)
 
                     # 摆摊购买
-                    if self.exits("按钮摆摊购买") is not None:
+                    if self.exits("按钮摆摊购买"):
                         self.touch("按钮摆摊购买", y=-75)
 
                     # 检查商城购买
@@ -81,7 +81,7 @@ class FactionTask(ClassicTask):
 
                     self.touch("按钮帮派任务一键提交")
 
-                    if self.exits("标志帮派任务完成") is not None:
+                    if self.exits("标志帮派任务完成"):
                         self.click_mouse(pos=(0, 0))
                         self.closeRewardUi(5)
                         self.setup = 0

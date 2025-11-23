@@ -42,15 +42,15 @@ class LouLanCollectionTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
-                    if self.exits("界面剑取楼兰") is None:
+                    if not self.exits("界面剑取楼兰"):
                         self.setup = 3
                         continue
                     self.touch("按钮剑取楼兰阵营")
-                    if self.exits("标志楼兰王室") is not None:
+                    if self.exits("标志楼兰王室"):
                         self.event["camp_coord"] = (3626, 502)
-                    elif self.exits("标志小西天") is not None:
+                    elif self.exits("标志小西天"):
                         self.event["camp_coord"] = (1426, 2930)
-                    elif self.exits("标志天狼会") is not None:
+                    elif self.exits("标志天狼会"):
                         self.event["camp_coord"] = (2365, 2991)
                     self.touch("按钮剑取楼兰前往地图")
                     self.arrive()
@@ -59,7 +59,7 @@ class LouLanCollectionTask(ClassicTask):
                     self.setup = 5
                 case 5:
                     self.move_mouse(start=(118, 300), end=(118, 452))
-                    if self.exits("标志剑取楼兰阵营采集", box=(0, 170, 265, 450)) is None:
+                    if not self.exits("标志剑取楼兰阵营采集", box=(0, 170, 265, 450)):
                         self.setup = 0
                         continue
                     self.setup = 6
@@ -71,7 +71,7 @@ class LouLanCollectionTask(ClassicTask):
                     self.arrive()
                     self.setup = 7
                 case 7:
-                    if self.touch("按钮大世界收集") is None or 10 < self.event["collect_counter"]:
+                    if not self.touch("按钮大世界收集") or 10 < self.event["collect_counter"]:
                         self.setup = 5
                         self.unstuck()
                         continue

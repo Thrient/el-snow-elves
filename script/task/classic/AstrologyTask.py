@@ -39,7 +39,7 @@ class AstrologyTask(ClassicTask):
                     self.touch("按钮物品紫薇斗数")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面紫薇斗数") is None:
+                    if not self.exits("界面紫薇斗数"):
                         self.backToMain()
                         self.setup = 3
                         continue

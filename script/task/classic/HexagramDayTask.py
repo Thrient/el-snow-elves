@@ -40,7 +40,7 @@ class HexagramDayTask(ClassicTask):
                     self.touch("按钮物品活动")
                     self.touch("按钮活动游历")
 
-                    if self.touch("按钮活动每日一挂", y=45) is None:
+                    if not self.touch("按钮活动每日一挂", y=45):
                         self.logs("每日一卦已经完成")
                         self.setup = 0
                         continue
@@ -50,7 +50,7 @@ class HexagramDayTask(ClassicTask):
                     self.touch("按钮每日一卦确定")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面每日一卦") is None:
+                    if not self.exits("界面每日一卦"):
                         self.setup = 3
                         continue
 

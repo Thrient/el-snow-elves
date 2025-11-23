@@ -50,14 +50,14 @@ class SwordTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
-                    if self.exits("界面单人论剑") is None:
+                    if not self.exits("界面单人论剑"):
                         self.setup = 5
                         continue
 
-                    if self.exits("按钮单人论剑取消匹配") is None:
+                    if not self.exits("按钮单人论剑取消匹配"):
                         self.touch("按钮单人论剑匹配", seconds=None)
 
-                    if self.exits("按钮确认") is not None:
+                    if self.exits("按钮确认"):
                         self.touch("按钮确认", seconds=None)
 
                 case 5:
@@ -66,19 +66,19 @@ class SwordTask(ClassicTask):
                         continue
 
                     if time.time() - self.event["check_timer"] > 20:
-                        if self.exits("界面单人论剑") is not None:
+                        if self.exits("界面单人论剑"):
                             self.setup = 4
                             continue
                         self.setup = 3
                         continue
 
-                    if self.exits("标志单人论剑匹配成功") is not None:
+                    if self.exits("标志单人论剑匹配成功"):
                         self.defer(count=2)
                         self.waitMapLoading()
                         self.setup = 6
                         continue
 
-                    if self.exits("标志单人论剑我方", "标志单人论剑敌方", "标志单人论剑我方_V1", "标志单人论剑敌方_V1") is not None:
+                    if self.exits("标志单人论剑我方", "标志单人论剑敌方", "标志单人论剑我方_V1", "标志单人论剑敌方_V1"):
                         self.setup = 6
                         continue
                 case 6:
@@ -87,7 +87,7 @@ class SwordTask(ClassicTask):
                     self.setup = 7
                 case 7:
                     # 检查是否处于论剑场景
-                    if self.exits("标志单人论剑我方", "标志单人论剑敌方","标志单人论剑我方_V1", "标志单人论剑敌方_V1") is None:
+                    if not self.exits("标志单人论剑我方", "标志单人论剑敌方","标志单人论剑我方_V1", "标志单人论剑敌方_V1"):
                         self.setup = 8
                         continue
 

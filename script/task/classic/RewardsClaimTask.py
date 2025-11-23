@@ -47,7 +47,7 @@ class RewardsClaimTask(ClassicTask):
                         continue
 
                     for image in ["标志茶馆说书宝箱", "标志帮派任务宝箱", "标志江湖缥缈录宝箱"]:
-                        if self.touch(image) is None:
+                        if not self.touch(image):
                             continue
                         self.click_mouse(pos=(1120, 495), count=5, post_delay=0.1)
 

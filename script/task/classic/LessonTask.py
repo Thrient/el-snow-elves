@@ -42,9 +42,9 @@ class LessonTask(ClassicTask):
                     self.touch("按钮物品活动")
                     self.touch("按钮活动江湖")
 
-                    if self.touch("按钮活动止杀", "按钮活动锻心", "按钮活动问卜", "按钮活动漱尘", "按钮活动归义",
-                                  "按钮活动濯剑", "按钮活动吟风", "按钮活动悟禅", "按钮活动含灵", "按钮活动寻道",
-                                  "按钮活动观梦", "按钮活动起茶", y=45) is None:
+                    if not self.touch("按钮活动止杀", "按钮活动锻心", "按钮活动问卜", "按钮活动漱尘", "按钮活动归义",
+                                      "按钮活动濯剑", "按钮活动吟风", "按钮活动悟禅", "按钮活动含灵", "按钮活动寻道",
+                                      "按钮活动观梦", "按钮活动起茶", y=45):
                         self.logs("课业任务已经完成")
                         self.setup = 0
                         continue
@@ -55,21 +55,21 @@ class LessonTask(ClassicTask):
                     self.touch("按钮课业确定")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面止杀", "界面锻心", "界面问卜", "界面漱尘", "界面归义",
-                                  "界面濯剑", "界面吟风", "界面悟禅", "界面含灵", "界面寻道",
-                                  "界面观梦", "界面起茶") is None:
+                    if not self.exits("界面止杀", "界面锻心", "界面问卜", "界面漱尘", "界面归义",
+                                      "界面濯剑", "界面吟风", "界面悟禅", "界面含灵", "界面寻道",
+                                      "界面观梦", "界面起茶"):
                         self.logs("前往接取课业")
                         self.backToMain()
                         self.setup = 3
                         continue
 
-                    if self.exits("标志课业已接取") is not None:
+                    if self.exits("标志课业已接取"):
                         self.logs("课业任务已接取")
                         self.setup = 5
                         self.backToMain()
                         continue
 
-                    if self.exits("按钮课业困难") is not None:
+                    if self.exits("按钮课业困难"):
                         self.logs("选择困难课业")
                         self.touch("按钮课业困难")
                         self.setup = 5
@@ -87,11 +87,11 @@ class LessonTask(ClassicTask):
                                            "按钮任务含灵", "按钮任务寻道", "按钮任务观梦", "按钮任务起茶", model="江湖")
 
                     # 商城购买
-                    if self.exits("按钮商城购买") is not None:
+                    if self.exits("按钮商城购买"):
                         self.touch("按钮商城购买", y=-75)
 
                     # 摆摊购买
-                    if self.exits("按钮摆摊购买") is not None:
+                    if self.exits("按钮摆摊购买"):
                         self.touch("按钮摆摊购买", y=-75)
 
                     # 检查商城购买
@@ -99,33 +99,31 @@ class LessonTask(ClassicTask):
                         self.event["last_activated_time"] = time.time() - 90
 
                     # 杂货商人
-                    if self.exits("界面杂货商人") is not None:
+                    if self.exits("界面杂货商人"):
                         self.click_mouse(pos=(1018, 625))
 
                     # 答题
-                    if self.exits("标志课业答题") is not None:
+                    if self.exits("标志课业答题"):
                         self.closeCurrentUi()
 
                     # 对话
-                    if self.exits("标志对话卷轴") is not None:
+                    if self.exits("标志对话卷轴"):
                         self.touch("标志对话卷轴")
 
                     # 担水
-                    if self.exits("标志课业一大桶水") is not None:
+                    if self.exits("标志课业一大桶水"):
                         self.touch("按钮使用")
 
                     # 华山课业排序
-                    if self.exits("标志课业倒计时") is not None:
+                    if self.exits("标志课业倒计时"):
                         results = self.exits("标志课业诗词", find_all=True)
-                        if results is None:
-                            continue
                         selected = random.sample(results, 2)
                         self.move_mouse(start=selected[0], end=selected[1])
 
-                    if self.exits("按钮课业一键提交") is not None:
+                    if self.exits("按钮课业一键提交"):
                         self.touch("按钮课业一键提交")
 
-                    if self.exits("标志课业完成") is not None:
+                    if self.exits("标志课业完成"):
                         self.touch("按钮确定")
                         self.closeRewardUi(5)
                         self.setup = 0

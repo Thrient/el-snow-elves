@@ -34,7 +34,7 @@ class RiverTask(ClassicTask):
                     self.teamDetection()
                     self.setup = 3
                 case 3:
-                    if self.exits("界面山河器") is not None:
+                    if self.exits("界面山河器"):
                         self.setup = 4
                         continue
                     self.openBackpack()
@@ -42,7 +42,7 @@ class RiverTask(ClassicTask):
                     self.touch("按钮物品山河器")
 
                 case 4:
-                    if self.touch("按钮山河器前往探索") is not None:
+                    if self.touch("按钮山河器前往探索"):
                         self.logs("前往探索山河器")
                         self.arrive()
                         self.touch("按钮大世界拾取")
@@ -53,7 +53,7 @@ class RiverTask(ClassicTask):
                         self.setup = 3
                         continue
 
-                    if self.touch("按钮山河器免费搜索") is not None:
+                    if self.touch("按钮山河器免费搜索"):
                         self.logs("搜索免费山河器")
                         self.defer(count=5)
                         self.touch("标志山河器日晷")

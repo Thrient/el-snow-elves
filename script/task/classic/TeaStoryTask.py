@@ -42,7 +42,7 @@ class TeaStoryTask(ClassicTask):
                     self.touch("按钮物品活动")
                     self.touch("按钮活动江湖")
 
-                    if self.touch("按钮活动茶馆说书", y=45) is None:
+                    if not self.touch("按钮活动茶馆说书", y=45):
                         self.logs("茶馆说书已经完成")
                         self.setup = 0
                         continue
@@ -52,15 +52,15 @@ class TeaStoryTask(ClassicTask):
                     self.defer(5)
                     self.setup = 4
                 case 4:
-                    if self.exits("界面茶馆") is None:
+                    if not self.exits("界面茶馆"):
                         self.setup = 3
                         continue
 
-                    if self.exits("标志茶馆发布题目") is not None:
+                    if self.exits("标志茶馆发布题目"):
                         self.event["answer_sign"] = True
                         continue
 
-                    if self.exits("标志茶馆答题时间") is not None and self.event["answer_sign"]:
+                    if self.exits("标志茶馆答题时间") and self.event["answer_sign"]:
                         self.logs("随机答题")
                         self.event["answer_sign"] = False
 
@@ -74,10 +74,8 @@ class TeaStoryTask(ClassicTask):
                         # 随机选择并执行一个操作
                         self.touch(random.choice(actions))
 
-                    if self.exits("按钮茶馆退出", times=3) is not None:
-                        self.closeRewardUi(count=5)
-                        if self.touch("按钮茶馆退出") is None:
-                            continue
+                    if self.touch("按钮茶馆退出", times=3):
+                        self.closeRewardUi(count=10)
                         self.setup = 0
                         continue
         return None

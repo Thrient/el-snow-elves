@@ -46,11 +46,11 @@ class HeroListTask(ClassicTask):
                     self.touch("按钮活动江湖英雄榜", y=45)
                     self.setup = 4
                 case 4:
-                    if self.exits("界面江湖英雄榜") is None:
+                    if not self.exits("界面江湖英雄榜"):
                         self.setup = 3
                         continue
 
-                    if self.exits("标志江湖英雄榜挑战次数", box=(767, 543, 1007, 674)) is not None:
+                    if self.exits("标志江湖英雄榜挑战次数", box=(767, 543, 1007, 674)):
                         self.setup = 0
                         continue
 
@@ -63,19 +63,19 @@ class HeroListTask(ClassicTask):
                         continue
 
                     if time.time() - self.event["check_timer"] > 30:
-                        if self.exits("界面江湖英雄榜") is not None:
+                        if self.exits("界面江湖英雄榜"):
                             self.setup = 4
                             continue
                         self.setup = 3
                         continue
 
-                    if self.exits("标志江湖英雄榜匹配成功") is not None:
+                    if self.exits("标志江湖英雄榜匹配成功"):
                         self.defer(count=2)
                         self.waitMapLoading()
                         self.setup = 6
                         continue
 
-                    if self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方") is not None:
+                    if self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方"):
                         self.setup = 6
 
                 case 6:
@@ -83,7 +83,7 @@ class HeroListTask(ClassicTask):
                     self.event["hero_list_counter"] += 1
                     self.setup = 7
                 case 7:
-                    if self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方") is None:
+                    if not self.exits("标志江湖英雄榜我方", "标志江湖英雄榜敌方"):
                         self.setup = 8
                         continue
 

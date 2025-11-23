@@ -37,7 +37,7 @@ class ClassicTask(BasisTask, ABC):
         while not self._finished.is_set():
             self.closeDreamCub()
 
-            if self.exits("标志副本提示") is not None:
+            if self.exits("标志副本提示"):
                 self.touch("按钮取消")
 
             self.defer()
@@ -52,40 +52,6 @@ class ClassicTask(BasisTask, ABC):
             self: 当前实例对象
         """
         return self
-
-    def verifyTouch(self, *args, **kwargs):
-        """
-        验证并执行触摸操作的函数
-
-        该函数首先尝试执行触摸操作，如果触摸失败则根据配置执行相应的验证或动作操作，
-        然后递归调用自身继续验证触摸操作。
-
-        参数:
-            image: 图像标识符，用于在配置字典中查找相关参数
-            **kwargs: 可变关键字参数，传递给touch方法的额外参数
-
-        返回值:
-            无返回值
-        """
-        if self._finished.is_set():
-            return
-        for image in args:
-            # 检查图像配置中的前缀是否存在，如果存在则验证其是否可用
-            b = False if Config.IMAGE_PARAMETER_DICT[image]["prefix"] is None else self.exits(
-                *Config.IMAGE_PARAMETER_DICT[image]["prefix"]) is not None
-
-            # 如果触摸操作成功或者前缀验证通过，则直接返回
-            if self.touch(image, **kwargs) is not None or b:
-                return
-
-            # 根据配置执行验证操作或动作操作
-            if Config.IMAGE_PARAMETER_DICT[image]["verify"] is not None:
-                self.verifyTouch(*Config.IMAGE_PARAMETER_DICT[image]["verify"])
-            elif Config.IMAGE_PARAMETER_DICT[image]["action"] is not None:
-                self.action(Config.IMAGE_PARAMETER_DICT[image]["action"])
-
-            # 递归调用自身继续验证触摸操作
-            self.verifyTouch(image, **kwargs)
 
     def resetLens(self):
         """
@@ -126,7 +92,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.openTeam()
         # 检查一键召回按钮是否存在，如果不存在则直接返回
-        if self.exits("按钮队伍一键召回") is None:
+        if not self.exits("按钮队伍一键召回"):
             self.closeTeam()
             return
         self.logs("召回队员")
@@ -153,7 +119,7 @@ class ClassicTask(BasisTask, ABC):
         self.touch("按钮搜索")
 
         # 检查道具是否存在，如果不存在则返回False
-        if self.exits(f"标志物品{articles}") is not None:
+        if self.exits(f"标志物品{articles}"):
             # 循环使用指定次数的道具
             for _ in range(UsageTimes):
                 self.touch(f"标志物品{articles}")
@@ -171,7 +137,7 @@ class ClassicTask(BasisTask, ABC):
             """内部判断方法"""
             for index in range(len(args)):
                 x = 0 if index == 0 else 5 if digits[0] in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] else 0
-                if self.exits(
+                if not self.exits(
                         args[index],
                         box=(
                                 result[0] + 25 * index - 13 - x,
@@ -179,7 +145,7 @@ class ClassicTask(BasisTask, ABC):
                                 result[0] + 25 * index + 13 - x,
                                 result[1] + 13
                         )
-                ) is None:
+                ):
                     return False
             return True
 
@@ -211,19 +177,15 @@ class ClassicTask(BasisTask, ABC):
 
         for _ in range(index // 7 + 5):
             results = self.exits("标志线", find_all=True)
-            if results is None:
-                continue
             for result in results:
                 if len(digits) == 1:
-                    if self.exits(args[0],
-                                  box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)) is not None:
+                    if self.exits(args[0], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
                         self.click_mouse(pos=(result[0] - 30, result[1]))
                         return
                 if len(digits) == 2:
                     if self.exits(args[0],
-                                  box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) is not None and \
-                            self.exits(args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15,
-                                                     result[1] + 20)) is not None:
+                                  box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) and self.exits(
+                            args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
                         self.click_mouse(pos=(result[0] - 50, result[1]))
                         return
             self.move_mouse(start=(1050, 555), end=(1050, 355))
@@ -325,11 +287,11 @@ class ClassicTask(BasisTask, ABC):
         if model == "江湖":
             self.logs("激活江湖栏")
             # 检查任务栏是否已经激活
-            if self.exits("按钮主界面江湖-激活") is not None:
+            if self.exits("按钮主界面江湖-激活"):
                 self.move_mouse(start=(118, 300), end=(118, 452))
                 return self.touch(*args, threshold=0.8)
             # 检查任务图标是否激活，如果激活则点击江湖按钮
-            if self.exits("按钮主界面任务图标-激活") is not None:
+            if self.exits("按钮主界面任务图标-激活"):
                 self.touch("按钮主界面江湖-未激活")
                 return self.touch(*args, threshold=0.8)
             # 任务图标未激活时的处理流程
@@ -340,10 +302,10 @@ class ClassicTask(BasisTask, ABC):
         if model == "任务":
             self.logs("激活任务栏")
             # 检查任务栏是否已经激活
-            if self.exits("按钮主界面任务-激活") is not None:
+            if self.exits("按钮主界面任务-激活"):
                 return self.touch(*args, threshold=0.8)
             # 检查任务图标是否激活，如果激活则点击江湖按钮
-            if self.exits("按钮主界面任务图标-激活") is not None:
+            if self.exits("按钮主界面任务图标-激活"):
                 self.touch("按钮主界面任务-未激活")
                 return self.touch(*args, threshold=0.8)
             # 任务图标未激活时的处理流程
@@ -372,7 +334,7 @@ class ClassicTask(BasisTask, ABC):
             if __count > 3:
                 break
             # 检查是否正在加载地图，如果是则继续等待
-            if self.exits("标志地图加载", "标志地图加载_V1") is not None:
+            if self.exits("标志地图加载", "标志地图加载_V1"):
                 __count = 0
                 continue
             __count += 1
@@ -428,7 +390,7 @@ class ClassicTask(BasisTask, ABC):
         self.openMap()
 
         # 检查是否已经处于目标区域
-        if exits and self.exits(f"标志地图{area}坐标", box=(125, 660, 300, 750)) is not None:
+        if exits and self.exits(f"标志地图{area}坐标", box=(125, 660, 300, 750)):
             self.logs(f"当前已处于{area}区域")
             self.closeMap()
             return
@@ -480,7 +442,7 @@ class ClassicTask(BasisTask, ABC):
         self.logs("队伍检测")
         self.openTeam()
         # 检查队伍是否已创建，如果已创建则直接返回
-        if self.exits("标志队伍未创建") is None:
+        if not self.exits("标志队伍未创建"):
             self.touch("按钮队伍退出")
             self.touch("按钮队伍确定")
         self.closeTeam()
@@ -551,14 +513,14 @@ class ClassicTask(BasisTask, ABC):
         if model == "摆摊购买":
 
             # 检查交易界面是否存在
-            if self.exits("界面交易") is None:
+            if not self.exits("界面交易"):
                 return False
 
             self.logs("摆摊购买")
 
             # 点击交易需求按钮并执行购买流程
             self.touch("按钮交易需求", x=130, y=35)
-            if self.touch("按钮交易购买") is not None:
+            if self.touch("按钮交易购买"):
                 self.touch("按钮交易确定")
 
             self.touch("按钮交易查看全服", seconds=None)
@@ -569,7 +531,7 @@ class ClassicTask(BasisTask, ABC):
 
         if model == "商城购买":
             # 检查商城界面是否存在
-            if self.exits("界面珍宝阁") is None:
+            if not self.exits("界面珍宝阁"):
                 return False
             # 记录商城购买日志并执行购买操作
             self.logs("商城购买")
@@ -581,7 +543,7 @@ class ClassicTask(BasisTask, ABC):
             return True
 
         if model == "帮派仓库":
-            if self.exits("界面帮派仓库") is None:
+            if not self.exits("界面帮派仓库"):
                 return False
             self.logs("帮派仓库提交")
             self.touch("按钮帮派仓库提交")
@@ -589,7 +551,7 @@ class ClassicTask(BasisTask, ABC):
             self.defer(count=3)
 
             return True
-        return None
+        return False
 
     def closeRewardUi(self, count=1):
         """
@@ -612,9 +574,9 @@ class ClassicTask(BasisTask, ABC):
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
             results = self.exits("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box, find_all=True)
-            if results is None:
-                return
-            self.click_mouse(pos=(results[-1][0], results[-1][1]), post_delay=0)
+            if not results:
+                continue
+            self.click_mouse(pos=results, click_mode="last", post_delay=0)
 
     def backToMain(self, exclude_branches=None):
         """
@@ -634,25 +596,25 @@ class ClassicTask(BasisTask, ABC):
         # 循环关闭当前界面直到返回主界面或任务完成
         while not self._finished.is_set():
             # 副本退出分支（可屏蔽）
-            if "副本退出" not in exclude and self.exits("按钮副本退出") is not None:
+            if "副本退出" not in exclude and self.exits("按钮副本退出"):
                 self.touch("按钮副本退出")
                 self.touch("按钮回到坊间", "按钮确定", "按钮离开")
                 continue
 
             # 物品界面关闭分支（可屏蔽）
-            if "物品界面" not in exclude and self.exits("界面物品") is not None:
+            if "物品界面" not in exclude and self.exits("界面物品"):
                 self.click_mouse(pos=(0, 0))
 
             # 购买确认关闭分支（可屏蔽）
-            if "购买确认" not in exclude and self.exits("标志购买确认") is not None:
+            if "购买确认" not in exclude and self.exits("标志购买确认"):
                 self.touch("按钮取消")
 
             # 聊天窗口关闭分支（可屏蔽）
-            if "聊天窗口" not in exclude and self.exits("按钮聊天退出") is not None:
+            if "聊天窗口" not in exclude and self.exits("按钮聊天退出"):
                 self.touch("按钮聊天退出")
 
             # 检查是否已经回到主界面
-            if self.exits("按钮世界挂机") is not None:
+            if self.exits("按钮世界挂机"):
                 _count += 1
                 if _count >= 3:
                     break
@@ -676,7 +638,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查当前是否已处于梦崽界面，如果不是则直接返回
-        if self.exits("标志限时礼包") is None:
+        if not self.exits("标志限时礼包"):
             return
         self.logs("关闭梦崽礼包")
         # 关闭当前用户界面
@@ -696,7 +658,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查帮派仓库界面是否存在，不存在则直接返回
-        if self.exits("界面帮派仓库") is None:
+        if not self.exits("界面帮派仓库"):
             return
         self.logs("关闭帮派仓库")
         # 关闭当前界面
@@ -716,7 +678,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查交易界面是否存在，如果不存在则直接返回
-        if self.exits("界面交易") is None:
+        if not self.exits("界面交易"):
             return
         self.logs("关闭摆摊")
         # 关闭当前用户界面
@@ -736,7 +698,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查珍宝阁界面是否存在，不存在则直接返回
-        if self.exits("界面珍宝阁") is None:
+        if not self.exits("界面珍宝阁"):
             return
         self.logs("关闭珍宝阁")
         # 执行关闭当前界面的操作
@@ -744,14 +706,14 @@ class ClassicTask(BasisTask, ABC):
 
     def closeExchangeShop(self):
         """关闭兑换商店"""
-        if self.exits("界面兑换商店") is None:
+        if not self.exits("界面兑换商店"):
             return
         self.logs("关闭兑换商店")
         self.closeCurrentUi()
 
     def openExchangeShop(self):
         """打开兑换商店"""
-        if self.exits("界面兑换商店") is not None:
+        if self.exits("界面兑换商店"):
             return
         self.logs("打开兑换商店")
         self.openBackpack()
@@ -760,14 +722,14 @@ class ClassicTask(BasisTask, ABC):
 
     def closeFlyingEagle(self):
         """关闭飞鹰界面"""
-        if self.exits("界面飞鹰") is None:
+        if not self.exits("界面飞鹰"):
             return
         self.logs("关闭飞鹰")
         self.closeCurrentUi()
 
     def openFlyingEagle(self):
         """打开飞鹰界面"""
-        if self.exits("界面飞鹰") is not None:
+        if self.exits("界面飞鹰"):
             return
         self.logs("打开飞鹰")
         self.openBuddy()
@@ -787,7 +749,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查当前是否已处于帮派界面，如果不是则直接返回
-        if self.exits("界面帮派") is None:
+        if not self.exits("界面帮派"):
             return
         self.logs("关闭帮派")
         self.closeCurrentUi()
@@ -807,7 +769,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
-        if self.exits("界面帮派") is None:
+        if not self.exits("界面帮派"):
             self.logs("打开帮派")
             self.click_key(key=self.taskConfig.keyList[21])
 
@@ -825,7 +787,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if self.exits("界面好友") is None:
+        if not self.exits("界面好友"):
             return
         self.logs("关闭好友")
         self.closeCurrentUi()
@@ -845,7 +807,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
-        if self.exits("界面好友") is None:
+        if not self.exits("界面好友"):
             self.logs("打开好友")
             self.click_key(key=self.taskConfig.keyList[24])
 
@@ -860,7 +822,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if self.exits("标志地图当前坐标") is None:
+        if not self.exits("标志地图当前坐标"):
             return
         self.logs("关闭地图")
         self.closeCurrentUi()
@@ -880,7 +842,7 @@ class ClassicTask(BasisTask, ABC):
         """
 
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
-        if self.exits("标志地图当前坐标") is None:
+        if not self.exits("标志地图当前坐标"):
             self.logs("打开地图")
             self.click_key(key=self.taskConfig.keyList[23])
 
@@ -897,7 +859,7 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if self.exits("界面队伍") is None:
+        if not self.exits("界面队伍"):
             return
         self.logs("关闭队伍")
         self.closeCurrentUi()
@@ -910,7 +872,7 @@ class ClassicTask(BasisTask, ABC):
         该函数用于打开游戏中的队伍界面，如果队伍界面未开启则通过按键T来打开
         """
         # 检查队伍界面是否已存在，如果不存在则按下T键打开
-        if self.exits("界面队伍") is None:
+        if not self.exits("界面队伍"):
             self.logs("打开队伍")
             self.click_key(key=self.taskConfig.keyList[22])
 
@@ -925,7 +887,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("关闭背包")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if self.exits("界面物品") is None:
+        if not self.exits("界面物品"):
             return
         self.closeCurrentUi()
 
@@ -944,7 +906,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("打开背包")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if self.exits("界面物品") is None:
+        if not self.exits("界面物品"):
             self.click_key(key=self.taskConfig.keyList[20])
 
     def closeSetting(self):
@@ -959,7 +921,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("关闭设置")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if self.exits("界面设置") is None:
+        if not self.exits("界面设置"):
             return
         self.closeCurrentUi()
 
@@ -978,7 +940,7 @@ class ClassicTask(BasisTask, ABC):
         """
         self.logs("打开设置")
         # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if self.exits("界面设置") is None:
+        if not self.exits("界面设置"):
             self.click_key(key=self.taskConfig.keyList[25])
 
     def arrive(self):
@@ -1000,7 +962,7 @@ class ClassicTask(BasisTask, ABC):
         while not self._finished.is_set():
             # 检查是否正在寻路中，如果是则继续等待
             # 检查是否正在加载地图，如果是则继续等待
-            if self.exits("标志寻路中") is not None or self.exits("标志地图加载", "标志地图加载_V1") is not None:
+            if self.exits("标志寻路中") or self.exits("标志地图加载", "标志地图加载_V1"):
                 __count = 0
                 continue
             if time.time() - __start > 360:

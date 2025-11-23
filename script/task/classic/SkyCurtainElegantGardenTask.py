@@ -48,11 +48,11 @@ class SkyCurtainElegantGardenTask(ClassicTask):
 
                     self.setup = 4
                 case 4:
-                    if self.exits("按钮展馆时装试穿进行中") is None:
+                    if not self.exits("按钮展馆时装试穿进行中"):
                         self.setup = 6
                         continue
 
-                    if self.exits("标志普通展厅任务") is None:
+                    if not self.exits("标志普通展厅任务"):
                         self.setup = 5
                         continue
 
@@ -68,7 +68,7 @@ class SkyCurtainElegantGardenTask(ClassicTask):
                     self.touch("按钮大世界试穿")
                     self.setup = 6
                 case 6:
-                    if self.exits("按钮展馆盖章打卡进行中") is None:
+                    if not self.exits("按钮展馆盖章打卡进行中"):
                         self.setup = 7
                         continue
                     self.touch("按钮展馆盖章打卡进行中")

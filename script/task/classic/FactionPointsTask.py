@@ -46,11 +46,11 @@ class FactionPointsTask(ClassicTask):
                         self.setup = 3
                         continue
                     self.event["advance_counter"] += 1
-                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=0.02)
+                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=0.1)
 
                     self.setup = 5
                 case 5:
-                    if self.touch("按钮大世界清扫") is None:
+                    if not self.touch("按钮大世界清扫"):
                         self.setup = 4
                         continue
                     self.setup = 6
