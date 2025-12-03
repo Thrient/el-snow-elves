@@ -1,6 +1,6 @@
 import time
 
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 
 
 class MerchantLakeTask(ClassicTask):
@@ -85,7 +85,7 @@ class MerchantLakeTask(ClassicTask):
                     # 等待全部队员准备
                     if not self.wait("标志行商任务接取成功", seconds=20):
                         self.backToMain()
-                        self.setup = 4
+                        self.setup = 7
                         continue
                     self.setup = 6
                 case 6:
@@ -141,4 +141,9 @@ class MerchantLakeTask(ClassicTask):
                                 self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
                             continue
                         self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
+                case 7:
+                    if self.activatedTask("按钮任务行商", model="江湖"):
+                        self.setup = 6
+                        continue
+                    self.setup = 4
         return None

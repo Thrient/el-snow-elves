@@ -11,6 +11,7 @@ from script.config.Config import Config
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.Timer import Timer
 from script.functools.functools import delay, repeat, during, verify
+from script.utils.Api import api
 
 
 class BasisTask(ABC):
@@ -71,6 +72,14 @@ class BasisTask(ABC):
         """结束"""
         self.resume()
         self._finished.set()
+
+    def __enter__(self):
+        api.on("API:SCRIPT:FINISH", self.finish)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        api.off("API:SCRIPT:FINISH", self.finish)
+        self.finish()
 
     @abstractmethod
     def instance(self):
@@ -337,4 +346,3 @@ class BasisTask(ABC):
                 return []
 
         return _inner(**kwargs)
-

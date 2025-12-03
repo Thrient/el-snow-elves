@@ -1,4 +1,4 @@
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 
 
 class LouLanGuardTask(ClassicTask):
@@ -62,7 +62,5 @@ class LouLanGuardTask(ClassicTask):
                     self.defer(count=18)
                     self.autoFightStop()
                     self.setup = 5
-
-
 
         return None

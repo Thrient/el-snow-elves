@@ -1,3 +1,4 @@
+import logging
 import multiprocessing as mp
 import os
 import time
@@ -7,22 +8,27 @@ import webview
 from script.config.Config import Config
 from script.core.HotkeyManager import hot_key_manager
 from script.core.Script import Script
-from script.core.Server import Server
+from script.core.Url import Url
 from script.utils.Api import api
 from script.utils.JsApi import js
 from script.utils.QueueListener import QueueListener
 from script.utils.TaskConfig import TaskConfig
 from script.utils.Utils import Utils
 
-
-# logger = logging.getLogger('airtest')
-# logger.setLevel(logging.ERROR)
+logger = logging.getLogger('airtest')
+logger.setLevel(logging.ERROR)
 
 
 class Elves:
     def __init__(self, url):
-        server = Server(url=url, port=34452, host="localhost")
-        self.window = webview.create_window('时雪', server.app, js_api=api, confirm_close=True, width=1335, height=750)
+        self.window = webview.create_window(
+            '时雪',
+            Url(url).findBestUrl(),
+            js_api=api,
+            confirm_close=True,
+            width=1335,
+            height=750
+        )
         self.js = js
         self.winList = {}
         self.init()
@@ -40,6 +46,8 @@ class Elves:
         返回值:
             无
         """
+        # 注册脚本版本监听器
+        api.on("API:SCRIPT:VERSION", lambda: Config.VERSION)
         # 注册脚本更新事件监听器
         api.on("API:SCRIPT:UPDATE", self.update)
         # 注册脚本启动事件监听器
@@ -342,7 +350,7 @@ class Elves:
             }
         )
 
-    def start(self, hwnd, config):
+    def start(self, hwnd, config, parameter):
         """
         启动脚本执行函数
 
@@ -366,6 +374,7 @@ class Elves:
                 'event': 'API:SCRIPT:LAUNCH',
                 'args': (
                     config,
+                    parameter
                 )
             }
         )

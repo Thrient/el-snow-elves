@@ -133,7 +133,3 @@ class Server(Thread):
             threaded=True
         )
 
-
-if __name__ == '__main__':
-    server = Server(url='E:\Code\snow-elves\el-snow-elves-vue\dist', host='0.0.0.0', port=8080)
-    server.start()

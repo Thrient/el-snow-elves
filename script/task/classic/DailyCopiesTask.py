@@ -1,6 +1,6 @@
 import time
 
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 
 
 class DailyCopiesTask(ClassicTask):
@@ -18,8 +18,7 @@ class DailyCopiesTask(ClassicTask):
             5: {"shout_timer": 0.0},
             8: {
                 "activate_timer": 0.0,
-                "stuck_timer": lambda: time.time(),
-                "exit_check_counter": 0
+                "stuck_timer": lambda: time.time()
             }
         }
 
@@ -120,13 +119,7 @@ class DailyCopiesTask(ClassicTask):
         return None
 
     def checkExit(self):
-        if not self.exits("标志副本完成", "标志副本完成_V1"):
-            self.event["exit_check_counter"] = 0
+        if not self.exits("标志副本完成", "标志副本完成_V1", times=5):
             return
-        if 5 > self.event["exit_check_counter"]:
-            self.event["exit_check_counter"] += 1
-            self.defer()
-            return
-
-        self.backToMain()
+        self.exitInstance()
         self.setup = 0

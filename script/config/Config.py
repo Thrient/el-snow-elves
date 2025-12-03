@@ -1,7 +1,7 @@
 import os
 
-
 class Config:
+    VERSION = "v4.5.3"
     APP_NAME = "Elves"
     APP_DATA = os.getenv("LOCALAPPDATA") + fr"\{APP_NAME}"
     USER_CONFIG_PATH = APP_DATA + r"\Config\User"
@@ -34,8 +34,7 @@ class Config:
         "按钮活动摇钱树": 0.9,
         "标志悬赏接满": 0.9,
         "按钮课业确定": 0.8,
-        "按钮江湖急送菜品送达": 0.8,
-        "按钮江湖急送菜品打包": 0.8,
+        "按钮江湖急送菜品打包": 0.9,
         "标志本体位置": 0.8,
         "标志本体位置_V2": 0.8,
         "标志本体位置_V3": 0.8,

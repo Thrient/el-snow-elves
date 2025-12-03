@@ -9,12 +9,11 @@ import cv2
 from airtest.aircv.utils import pil_2_cv2
 
 from script.config.Config import Config
-from script.task.basis.BasisTask import BasisTask
-from script.utils.Api import api
+from script.task.basis.classic.ClassicTeamTask import ClassicTeamTask
 from script.utils.Thread import thread
 
 
-class ClassicTask(BasisTask, ABC):
+class ClassicTask(ClassicTeamTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # 自动战斗
@@ -23,14 +22,6 @@ class ClassicTask(BasisTask, ABC):
         self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
         self.WorldShoutsIndex = 0
         self.popCheck()
-
-    def __enter__(self):
-        api.on("API:SCRIPT:FINISH", self.finish)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        api.emit("API:SCRIPT:FINISH")
-        api.off("API:SCRIPT:FINISH", self.finish)
 
     @thread(daemon=True)
     def popCheck(self):
@@ -185,7 +176,7 @@ class ClassicTask(BasisTask, ABC):
                 if len(digits) == 2:
                     if self.exits(args[0],
                                   box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) and self.exits(
-                            args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
+                        args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
                         self.click_mouse(pos=(result[0] - 50, result[1]))
                         return
             self.move_mouse(start=(1050, 555), end=(1050, 355))
@@ -219,6 +210,16 @@ class ClassicTask(BasisTask, ABC):
         self.defer(count=5)
         # 关闭设置界面
         self.closeSetting()
+
+    def exitInstance(self):
+        """退出场景"""
+        while not self._finished.is_set():
+            self.backToMain()
+            if not self.exits("按钮副本退出", "按钮副本退出_V1"):
+                return
+            self.logs("退出副本场景")
+            self.touch("按钮副本退出", "按钮副本退出_V1")
+            self.touch("按钮回到坊间", "按钮确定", "按钮离开")
 
     def autoFight(self):
         """
@@ -313,7 +314,7 @@ class ClassicTask(BasisTask, ABC):
             self.touch("按钮主界面任务-未激活")
             self.move_mouse(start=(118, 300), end=(118, 452))
             return self.touch(*args, threshold=0.8)
-        return None
+        return []
 
     def waitMapLoading(self):
         """
@@ -354,6 +355,7 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         self.logs("位置检测")
+        self.exitInstance()
         self.areaGo("金陵", exits=True, unstuck=True)
 
     def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, area_switch=True):
@@ -564,19 +566,17 @@ class ClassicTask(BasisTask, ABC):
         self.closeCurrentUi(count=count, box=(905, 201, 1118, 454))
 
     def closeCurrentUi(self, count=1, box=Config.BOX):
-        """
-        关闭当前用户界面
-
-        :param count: 关闭次数，默认为1次
-        :param box: 搜索区域配置，默认使用Config.BOX
-        :return: 无返回值
-        """
+        """关闭当前界面"""
         # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
         for i in range(count):
-            results = self.exits("按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3", box=box, find_all=True)
-            if not results:
-                continue
-            self.click_mouse(pos=results, click_mode="last", post_delay=0)
+            if not self.touch(
+                    "按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3",
+                    box=box,
+                    find_all=True,
+                    click_mode="last",
+                    post_delay=0.5
+            ):
+                break
 
     def backToMain(self, exclude_branches=None):
         """
@@ -594,30 +594,18 @@ class ClassicTask(BasisTask, ABC):
         exclude = exclude_branches or []
         _count = 0
         # 循环关闭当前界面直到返回主界面或任务完成
-        while not self._finished.is_set():
-            # 副本退出分支（可屏蔽）
-            if "副本退出" not in exclude and self.exits("按钮副本退出"):
-                self.touch("按钮副本退出")
-                self.touch("按钮回到坊间", "按钮确定", "按钮离开")
-                continue
-
-            # 物品界面关闭分支（可屏蔽）
-            if "物品界面" not in exclude and self.exits("界面物品"):
+        while not self._finished.is_set() and _count < 3:
+            if self.exits("界面物品"):
                 self.click_mouse(pos=(0, 0))
 
-            # 购买确认关闭分支（可屏蔽）
-            if "购买确认" not in exclude and self.exits("标志购买确认"):
+            if self.exits("标志购买确认"):
                 self.touch("按钮取消")
 
-            # 聊天窗口关闭分支（可屏蔽）
-            if "聊天窗口" not in exclude and self.exits("按钮聊天退出"):
+            if self.exits("按钮聊天退出"):
                 self.touch("按钮聊天退出")
 
-            # 检查是否已经回到主界面
             if self.exits("按钮世界挂机"):
                 _count += 1
-                if _count >= 3:
-                    break
                 continue
             _count = 0
 
@@ -845,36 +833,6 @@ class ClassicTask(BasisTask, ABC):
         if not self.exits("标志地图当前坐标"):
             self.logs("打开地图")
             self.click_key(key=self.taskConfig.keyList[23])
-
-    def closeTeam(self):
-        """
-        关闭队伍界面
-
-        该函数用于关闭当前打开的队伍界面
-
-        参数:
-            无
-
-        返回值:
-            无
-        """
-        # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if not self.exits("界面队伍"):
-            return
-        self.logs("关闭队伍")
-        self.closeCurrentUi()
-        self.defer(count=2)
-
-    def openTeam(self):
-        """
-        打开队伍界面函数
-
-        该函数用于打开游戏中的队伍界面，如果队伍界面未开启则通过按键T来打开
-        """
-        # 检查队伍界面是否已存在，如果不存在则按下T键打开
-        if not self.exits("界面队伍"):
-            self.logs("打开队伍")
-            self.click_key(key=self.taskConfig.keyList[22])
 
     def closeBackpack(self):
         """
@@ -1139,7 +1097,7 @@ class ClassicTask(BasisTask, ABC):
             无
         """
         self.logs("设置角色信息")
-        self.backToMain(exclude_branches=["副本退出"])
+        self.backToMain()
         self.openBackpack()
         self.touch("按钮物品属性")
         self.defer(count=3)

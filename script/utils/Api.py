@@ -41,7 +41,6 @@ class Api:
             return self._events[event][0](*args)
 
         for callback in self._events[event]:
-            # 如果有参数则传递，没有则不传递
             callback(*args)
         return None
 

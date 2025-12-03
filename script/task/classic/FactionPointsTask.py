@@ -1,4 +1,4 @@
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 
 
 class FactionPointsTask(ClassicTask):
@@ -41,16 +41,16 @@ class FactionPointsTask(ClassicTask):
                     self.resetLens()
                     self.setup = 4
                 case 4:
-                    if self.event["advance_counter"] >= 5:
+                    if self.event["advance_counter"] >= 8:
                         self.backToMain()
                         self.setup = 3
                         continue
                     self.event["advance_counter"] += 1
-                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=0.1)
+                    self.click_key(key=self.taskConfig.keyList[16], press_down_delay=0.08)
 
                     self.setup = 5
                 case 5:
-                    if not self.touch("按钮大世界清扫"):
+                    if not self.touch("按钮大世界清扫", "按钮大世界清扫_V1", times=3):
                         self.setup = 4
                         continue
                     self.setup = 6

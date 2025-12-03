@@ -1,4 +1,4 @@
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 
 
 class RewardsClaimTask(ClassicTask):
@@ -41,7 +41,7 @@ class RewardsClaimTask(ClassicTask):
                     self.touch("按钮活动招领")
                     self.setup = 4
                 case 4:
-                    if self.exits("界面奖励招领") is None:
+                    if not self.exits("界面奖励招领"):
                         self.backToMain()
                         self.setup = 3
                         continue

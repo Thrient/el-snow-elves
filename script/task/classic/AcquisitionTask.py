@@ -2,7 +2,7 @@ import re
 import time
 
 from script.config.Config import Config
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 from script.utils.Thread import thread
 
 

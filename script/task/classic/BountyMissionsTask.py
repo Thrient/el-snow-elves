@@ -1,6 +1,6 @@
 import time
 
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 
 
 class BountyMissionsTask(ClassicTask):
@@ -12,15 +12,13 @@ class BountyMissionsTask(ClassicTask):
             "shout_timer": 0.0,  # 副本喊话时间计数器
             "activate_timer": 0.0,  # 副本激活计时器
             "stuck_timer": 0.0,  # 副本卡死计时器
-            "exit_check_counter": 0  # 副本退出判断计数器
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
             5: {"shout_timer": 0.0},
             8: {
                 "activate_timer": 0.0,
-                "stuck_timer": lambda: time.time(),
-                "exit_check_counter": 0
+                "stuck_timer": lambda: time.time()
             }
         }
 
@@ -122,13 +120,7 @@ class BountyMissionsTask(ClassicTask):
         return None
 
     def checkExit(self):
-        if not self.exits("标志副本完成", "标志副本完成_V1"):
-            self.event["exit_check_counter"] = 0
+        if not self.exits("标志副本完成", "标志副本完成_V1", times=5):
             return
-        if 5 > self.event["exit_check_counter"]:
-            self.event["exit_check_counter"] += 1
-            self.defer()
-            return
-
-        self.backToMain()
+        self.exitInstance()
         self.setup = 3

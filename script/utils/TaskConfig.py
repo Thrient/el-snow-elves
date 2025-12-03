@@ -62,7 +62,7 @@ class TaskConfig:
         # 斗地主
         self.douDiZhuMode = kwargs.get('douDiZhuMode', "赢")
         # 五点重启
-        self.reStart = kwargs.get('reStart', False)
+        self.restart = kwargs.get('restart', False)
 
     def loadConfig(self, config):
         if config == "":

@@ -1,4 +1,4 @@
-from script.task.basis.ClassicTask import ClassicTask
+from script.task.basis.classic.ClassicTask import ClassicTask
 
 
 class EmailReceiveTask(ClassicTask):
