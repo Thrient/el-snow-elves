@@ -24,7 +24,7 @@ class LouLanCollectionTask(ClassicTask):
             match self.setup:
                 # 任务结束
                 case 0:
-                    self.backToMain()
+                    self.exitInstance()
                     self.logs("楼兰采集完成")
                     return 0
                 # 位置检测

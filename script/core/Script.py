@@ -1,5 +1,5 @@
+import logging
 import time
-import traceback
 from multiprocessing import Process, Event
 
 from script.core.Scheduler import Scheduler
@@ -9,6 +9,8 @@ from script.core.TaskScheduler import taskScheduler
 from script.utils.Api import api
 from script.utils.QueueListener import QueueListener
 from script.window.Console import Console
+
+logger = logging.getLogger(__name__)
 
 
 class Script(Process):
@@ -29,7 +31,31 @@ class Script(Process):
     def run(self):
         """运行主任务循环"""
         try:
-            self.init()
+
+            self.winConsole = Console(hwnd=self.hwnd)
+            self.queueListener = QueueListener(self.queue, self.hwnd, "script")
+            self.scheduler = Scheduler(queueListener=self.queueListener)
+
+            api.on("API:SCRIPT:STOP", self.stop)
+            api.on("API:SCRIPT:RESUME", self.resume)
+            api.on("API:SCRIPT:LOCK", self.lock)
+            api.on("API:SCRIPT:UNLOCK", self.unlock)
+            api.on("API:SCRIPT:FULLSCREEN", self.fullScreen)
+            api.on("API:SCRIPT:TRANSPARENT", self.transparent)
+            api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
+            api.on("API:SCRIPT:UNBIND", self.unbind)
+
+            api.on("API:SCRIPT:END", self.end)
+            api.on("API:SCRIPT:LAUNCH", self.launch)
+
+            self.borderless()
+            self.transparent(255)
+
+            self.queueListener.start()
+            self.scheduler.sched.start()
+
+            api.emit("TASK:SCHEDULER:INIT")
+
             while not self._unbind.is_set():
                 try:
                     task = taskScheduler.pop()
@@ -80,61 +106,9 @@ class Script(Process):
                         self.obj.execute()
 
                 except Exception as e:
-                    traceback.print_exc()  # 直接打印到控制台
-                    self.queueListener.emit(
-                        {
-                            "event": "JS:EMIT",
-                            "args": (
-                                "API:ADD:LOGS",
-                                {
-                                    "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                                    "info": "错误",
-                                    "data": e
-                                }
-                            )
-                        }
-                    )
+                    logger.error(e)
         except Exception as e:
-            traceback.print_exc()
-            self.queueListener.emit(
-                {
-                    "event": "JS:EMIT",
-                    "args": (
-                        "API:ADD:LOGS",
-                        {
-                            "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                            "info": "错误",
-                            "data": e
-                        }
-                    )
-                }
-            )
-
-    def init(self):
-        """初始化"""
-        self.winConsole = Console(hwnd=self.hwnd)
-        self.queueListener = QueueListener(self.queue, self.hwnd, "script")
-        self.scheduler = Scheduler(queueListener=self.queueListener)
-
-        api.on("API:SCRIPT:STOP", self.stop)
-        api.on("API:SCRIPT:RESUME", self.resume)
-        api.on("API:SCRIPT:LOCK", self.lock)
-        api.on("API:SCRIPT:UNLOCK", self.unlock)
-        api.on("API:SCRIPT:FULLSCREEN", self.fullScreen)
-        api.on("API:SCRIPT:TRANSPARENT", self.transparent)
-        api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
-        api.on("API:SCRIPT:UNBIND", self.unbind)
-
-        api.on("API:SCRIPT:END", self.end)
-        api.on("API:SCRIPT:LAUNCH", self.launch)
-
-        self.borderless()
-        self.transparent(255)
-
-        self.queueListener.start()
-        self.scheduler.sched.start()
-
-        api.emit("TASK:SCHEDULER:INIT")
+            logger.error(e)
 
     def launch(self, config, parameter):
         """启动"""
@@ -158,26 +132,26 @@ class Script(Process):
         try:
             self.winConsole.enable_click_through()
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def unlock(self):
         """解锁当前窗口="""
         try:
             self.winConsole.disable_click_through()
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def reset_win(self):
         try:
             self.winConsole.rest_style()
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def borderless(self):
         try:
             self.winConsole.set_style_no_menu()
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def fullScreen(self):
         """全屏窗口"""
@@ -188,21 +162,21 @@ class Script(Process):
             self.stop()
             self.winConsole.full_screen()
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def transparent(self, transparent):
         """设置窗口透明度"""
         try:
             self.winConsole.set_transparent(transparent)
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def stop(self):
         """停止脚本运行"""
         try:
             self.obj.stop()
         except Exception as e:
-            print(e)
+            logger.error(e)
         finally:
             # 恢复原本窗口
             self.reset_win()
@@ -214,7 +188,7 @@ class Script(Process):
         try:
             self.obj.resume()
         except Exception as e:
-            print(e)
+            logger.error(e)
         finally:
             self._full.clear()
             # 去除窗口菜单
@@ -229,7 +203,7 @@ class Script(Process):
             api.emit("TASK:SCHEDULER:CLEAR")
             api.emit("API:SCRIPT:FINISH")
         except Exception as e:
-            print(e)
+            logger.error(e)
         finally:
             self.reset_win()
             self.unlock()

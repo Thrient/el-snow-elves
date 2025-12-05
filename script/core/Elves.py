@@ -15,8 +15,7 @@ from script.utils.QueueListener import QueueListener
 from script.utils.TaskConfig import TaskConfig
 from script.utils.Utils import Utils
 
-logger = logging.getLogger('airtest')
-logger.setLevel(logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 class Elves:

@@ -1,6 +1,5 @@
 import requests
 
-
 class Url:
     def __init__(self, url):
         self.urls = [url]
@@ -27,6 +26,9 @@ class Url:
 
         # 捕获域名解析失败（核心异常）
         except requests.exceptions.ConnectionError as e:
+            print(e)
+            return None
+        except requests.exceptions.Timeout as e:
             print(e)
             return None
 

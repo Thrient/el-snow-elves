@@ -1,7 +1,41 @@
 import argparse
+import logging
+from logging.handlers import RotatingFileHandler
 from multiprocessing import freeze_support
+from pathlib import Path
 
+import webview
+
+from script.config.Config import Config
 from script.core.Elves import Elves
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(formatter)
+
+Path(Config.LOGS_PATH).mkdir(parents=True, exist_ok=True)
+
+file_handler = RotatingFileHandler(
+    f'{Config.LOGS_PATH}/app.log',  # 日志文件名
+    maxBytes=1024 * 1024 * 5,  # 5MB
+    backupCount=5,  # 保留5个备份文件
+    encoding='utf-8'  # 避免中文乱码
+)
+
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
+webview.settings['WEBVIEW2_RUNTIME_PATH'] = "WebView2"
 
 if __name__ == '__main__':
     freeze_support()

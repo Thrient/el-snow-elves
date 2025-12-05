@@ -23,7 +23,7 @@ class LouLanGuardTask(ClassicTask):
             match self.setup:
                 # 任务结束
                 case 0:
-                    self.backToMain()
+                    self.exitInstance()
                     self.logs("楼兰守护完成")
                     return 0
                 # 位置检测
@@ -53,7 +53,7 @@ class LouLanGuardTask(ClassicTask):
                 case 5:
                     self.move_mouse(start=(118, 300), end=(118, 452))
                     if not self.touch("标志剑取楼兰阵营守护", box=(0, 170, 265, 450)):
-                        self.setup = 0
+                        self.setup = 7
                         continue
                     self.arrive()
                     self.setup = 6
@@ -62,5 +62,9 @@ class LouLanGuardTask(ClassicTask):
                     self.defer(count=18)
                     self.autoFightStop()
                     self.setup = 5
+                case 7:
+                    self.touch("标志剑取楼兰阵营守护", box=(0, 170, 265, 450))
+                    self.arrive()
+                    self.setup = 0
 
         return None

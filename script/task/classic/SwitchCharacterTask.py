@@ -9,9 +9,6 @@ class SwitchCharacterTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def instance(self):
-        return self
-
     def execute(self):
         if "characterOne" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterOne:
             switchCharacterScheduler.switchCharacterOne = False

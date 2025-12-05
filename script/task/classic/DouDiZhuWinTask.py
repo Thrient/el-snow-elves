@@ -40,7 +40,7 @@ class DouDiZhuWinTask(ClassicTask):
                     self.setup = 4
                 case 4:
                     if not self.exits("界面斗地主"):
-                        self.backToMain(exclude_branches=["副本退出"])
+                        self.backToMain()
                         self.setup = 3
                         continue
 

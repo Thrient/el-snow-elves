@@ -63,7 +63,7 @@ class MansionCheckInTask(ClassicTask):
                     if not self.touch("标志宅邸打卡参观"):
                         self.closeCurrentUi()
                         continue
-                    self.backToMain(exclude_branches=["副本退出"])
+                    self.backToMain()
                     self.setup = 5
                 case 5:
                     self.defer(count=40)

@@ -1,6 +1,7 @@
 from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.ActivityRewardTask import ActivityRewardTask
 from script.task.classic.AstrologyTask import AstrologyTask
+from script.task.classic.BackInstanceTask import BackInstanceTask
 from script.task.classic.BenefitCollectionTask import BenefitCollectionTask
 from script.task.classic.BountyMissionsTask import BountyMissionsTask
 from script.task.classic.BreakBanTask import BreakBanTask
@@ -113,6 +114,7 @@ class TaskFactory:
         self.register("classic", "斗地主赢", DouDiZhuWinTask)
         self.register("classic", "斗地主输", DouDiZhuLoseTask)
         self.register("classic", "斗地主", DouDiZhuTask)
+        self.register("classic", "界面返回", BackInstanceTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

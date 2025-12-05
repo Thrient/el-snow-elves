@@ -1,9 +1,11 @@
 import os
 
+
 class Config:
-    VERSION = "v4.5.3"
+    VERSION = "v4.5.4"
     APP_NAME = "Elves"
-    APP_DATA = os.getenv("LOCALAPPDATA") + fr"\{APP_NAME}"
+    APP_DATA = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}"
+    LOGS_PATH = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}" + "/logs"
     USER_CONFIG_PATH = APP_DATA + r"\Config\User"
     SYS_CONFIG_PATH = APP_DATA + r"\Config\Sys"
     STORAGE_PATH = APP_DATA + r"\pywebview"

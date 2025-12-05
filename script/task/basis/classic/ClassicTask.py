@@ -8,12 +8,13 @@ from threading import Event
 import cv2
 from airtest.aircv.utils import pil_2_cv2
 
-from script.config.Config import Config
+from script.task.basis.classic.ClassicBackpackTask import ClassicBackpackTask
+from script.task.basis.classic.ClassicInstanceTask import ClassicInstanceTask
 from script.task.basis.classic.ClassicTeamTask import ClassicTeamTask
 from script.utils.Thread import thread
 
 
-class ClassicTask(ClassicTeamTask, ABC):
+class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # 自动战斗
@@ -49,24 +50,10 @@ class ClassicTask(ClassicTeamTask, ABC):
             重置镜头
         :return:
         """
-        self.backToMain(exclude_branches=["副本退出"])
+        self.backToMain()
         self.click_mouse(pos=(1330, 715))
         self.touch("按钮大世界镜头重置")
         self.click_mouse(pos=(1330, 715))
-
-    def action(self, action):
-        """
-        执行指定的动作
-
-        参数:
-            action (str): 要执行的动作名称
-
-        返回值:
-            无
-        """
-        # 检查是否为打开背包动作
-        if "打开背包" == action:
-            self.openBackpack()
 
     def followDetection(self):
         """
@@ -149,40 +136,6 @@ class ClassicTask(ClassicTeamTask, ABC):
                 return True
         return False
 
-    def switchBranchLine(self, index):
-        """
-        切换游戏副本的分线
-
-        参数:
-            index (int): 目标分线的索引号
-
-        返回值:
-            None
-        """
-        self.logs(f"切换分线{index}")
-        digits = [int(d) for d in str(index)]
-        args = [f"标志{i}" for i in digits]
-
-        self.click_mouse(pos=(1230, 25))
-        # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
-
-        for _ in range(index // 7 + 5):
-            results = self.exits("标志线", find_all=True)
-            for result in results:
-                if len(digits) == 1:
-                    if self.exits(args[0], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
-                        self.click_mouse(pos=(result[0] - 30, result[1]))
-                        return
-                if len(digits) == 2:
-                    if self.exits(args[0],
-                                  box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) and self.exits(
-                        args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
-                        self.click_mouse(pos=(result[0] - 50, result[1]))
-                        return
-            self.move_mouse(start=(1050, 555), end=(1050, 355))
-
-        self.click_mouse(pos=(1335, 750))
-
     def unstuck(self):
         """
         执行脱离卡死操作的函数
@@ -200,7 +153,7 @@ class ClassicTask(ClassicTeamTask, ABC):
         # 模拟空格键点击
         self.keepAlive()
         # 返回主界面操作
-        self.backToMain(exclude_branches=["副本退出"])
+        self.backToMain()
         # 打开设置界面
         self.openSetting()
         # 点击设置界面中的脱离卡死按钮
@@ -284,7 +237,7 @@ class ClassicTask(ClassicTeamTask, ABC):
         返回值:
             无返回值
         """
-        self.backToMain(exclude_branches=["副本退出"])
+        self.backToMain()
         if model == "江湖":
             self.logs("激活江湖栏")
             # 检查任务栏是否已经激活
@@ -472,6 +425,7 @@ class ClassicTask(ClassicTeamTask, ABC):
             self.closeTeam()
 
         def __team_2():
+            self.startInterconnected()
             self.openTeam()
             self.touch("按钮队伍创建")
             self.touch("按钮队伍下拉")
@@ -485,6 +439,7 @@ class ClassicTask(ClassicTeamTask, ABC):
             self.closeTeam()
 
         def __team_3():
+            self.startInterconnected()
             self.openTeam()
             self.touch("按钮队伍创建")
             self.touch("按钮队伍下拉")
@@ -554,63 +509,6 @@ class ClassicTask(ClassicTeamTask, ABC):
 
             return True
         return False
-
-    def closeRewardUi(self, count=1):
-        """
-        关闭奖励界面
-
-        参数:
-            count (int): 关闭界面的操作次数，默认为1
-        """
-        # 关闭当前界面，指定奖励界面的坐标区域
-        self.closeCurrentUi(count=count, box=(905, 201, 1118, 454))
-
-    def closeCurrentUi(self, count=1, box=Config.BOX):
-        """关闭当前界面"""
-        # 循环执行关闭操作，直到达到指定次数或无法找到关闭按钮
-        for i in range(count):
-            if not self.touch(
-                    "按钮关闭", "按钮关闭_V1", "按钮关闭_V2", "按钮关闭_V3",
-                    box=box,
-                    find_all=True,
-                    click_mode="last",
-                    post_delay=0.5
-            ):
-                break
-
-    def backToMain(self, exclude_branches=None):
-        """
-        返回主界面函数
-
-        该函数用于从当前界面返回到主界面，通过不断关闭当前UI直到检测到主界面按钮
-
-        参数:
-            self: 类实例本身
-
-        返回值:
-            无返回值
-        """
-        self.logs("返回主界面")
-        exclude = exclude_branches or []
-        _count = 0
-        # 循环关闭当前界面直到返回主界面或任务完成
-        while not self._finished.is_set() and _count < 3:
-            if self.exits("界面物品"):
-                self.click_mouse(pos=(0, 0))
-
-            if self.exits("标志购买确认"):
-                self.touch("按钮取消")
-
-            if self.exits("按钮聊天退出"):
-                self.touch("按钮聊天退出")
-
-            if self.exits("按钮世界挂机"):
-                _count += 1
-                continue
-            _count = 0
-
-            self.closeCurrentUi()
-            self.keepAlive()
 
     def closeDreamCub(self):
         """
@@ -833,39 +731,6 @@ class ClassicTask(ClassicTeamTask, ABC):
         if not self.exits("标志地图当前坐标"):
             self.logs("打开地图")
             self.click_key(key=self.taskConfig.keyList[23])
-
-    def closeBackpack(self):
-        """
-        关闭背包界面
-
-        该函数用于关闭当前打开的背包界面
-
-        Returns:
-            无返回值
-        """
-        self.logs("关闭背包")
-        # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if not self.exits("界面物品"):
-            return
-        self.closeCurrentUi()
-
-    def openBackpack(self):
-        """
-        打开背包界面
-
-        该函数用于打开游戏中的背包界面，如果当前未处于物品界面，
-        则通过按键'B'来打开背包。
-
-        参数:
-            self: 类实例本身
-
-        返回值:
-            无
-        """
-        self.logs("打开背包")
-        # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if not self.exits("界面物品"):
-            self.click_key(key=self.taskConfig.keyList[20])
 
     def closeSetting(self):
         """
@@ -1120,4 +985,4 @@ class ClassicTask(ClassicTeamTask, ABC):
                 )
             }
         )
-        self.backToMain(exclude_branches=["副本退出"])
+        self.backToMain()
