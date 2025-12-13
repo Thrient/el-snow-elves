@@ -33,7 +33,7 @@ class FactionPointsDanceTask(ClassicTask):
                     self.setup = "队伍检测"
                 # 队伍检测
                 case "队伍检测":
-                    self.teamDetection()
+                    # self.teamDetection()
                     self.setup = "帮派领地"
                 case "帮派领地":
                     self.openFaction()

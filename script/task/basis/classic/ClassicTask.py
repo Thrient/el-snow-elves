@@ -10,11 +10,12 @@ from airtest.aircv.utils import pil_2_cv2
 
 from script.task.basis.classic.ClassicBackpackTask import ClassicBackpackTask
 from script.task.basis.classic.ClassicInstanceTask import ClassicInstanceTask
+from script.task.basis.classic.ClassicMapTask import ClassicMapTask
 from script.task.basis.classic.ClassicTeamTask import ClassicTeamTask
 from script.utils.Thread import thread
 
 
-class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC):
+class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ClassicMapTask, ABC):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # 自动战斗
@@ -312,73 +313,7 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC
         """
         self.logs("位置检测")
         self.exitInstance()
-        self.areaGo("金陵", exits=True, unstuck=True)
-
-    def areaGo(self, area, x=None, y=None, exits=False, unstuck=False, area_switch=True):
-        """
-        前往指定区域
-
-        :param exits: 是否检测当前区域
-        :param unstuck: 执行前是否脱离卡死
-        :param area_switch: 当前区域前往
-        :param area: 目标区域名称
-        :param x: 目标区域的x坐标，如果为None则使用默认坐标
-        :param y: 目标区域的y坐标，如果为None则使用默认坐标
-        :return: 无返回值
-        """
-        __coordinate = {
-            "金陵": (571, 484),
-            "江南": (1095, 1117),
-            "风雷岛": (970, 542),
-            "中原": (1080, 996),
-            "塞北": (1277, 718),
-            "华山": (344, 206),
-            "少林": (239, 326),
-        }
-
-        # 如果未指定坐标，则使用默认坐标
-        x = __coordinate[area][0] if x is None else x
-        y = __coordinate[area][1] if y is None else y
-
-        self.logs(f"{area}区域坐标前往 {x}:{y}")
-        self.openMap()
-
-        # 检查是否已经处于目标区域
-        if exits and self.exits(f"标志地图{area}坐标", box=(125, 660, 300, 750)):
-            self.logs(f"当前已处于{area}区域")
-            self.closeMap()
-            return
-
-        # 执行前往区域的操作流程
-        if area_switch:
-            self.touch("按钮地图世界区域")
-            self.touch(f"按钮地图{area}区域")
-        self.coordinateInput(x, y)
-        self.touch("按钮地图前往区域")
-        self.closeMap()
-        self.arrive()
-
-    def coordinateInput(self, x, y):
-        """
-        输入坐标值到地图坐标输入框中
-
-        参数:
-            x: 横坐标值
-            y: 纵坐标值
-        """
-        # 停止自动寻路功能
-        self.touch("按钮地图停止寻路")
-
-        # 展开坐标输入面板
-        self.touch("按钮地图坐标展开")
-
-        # 输入横坐标值
-        self.touch("按钮地图横坐标")
-        self.input(text=x)
-
-        # 输入纵坐标值
-        self.touch("按钮地图纵坐标")
-        self.input(text=y)
+        # self.areaGo("金陵", exits=True, unstuck=True)
 
     def teamDetection(self):
         """
@@ -696,41 +631,6 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC
             self.logs("打开好友")
             self.click_key(key=self.taskConfig.keyList[24])
 
-    def closeMap(self):
-        """
-        关闭地图界面
-
-        该函数用于关闭当前打开的地图界面
-
-        Returns:
-            None
-        """
-
-        # 检查当前是否已处于物品界面，如果不是则按键打开背包
-        if not self.exits("标志地图当前坐标"):
-            return
-        self.logs("关闭地图")
-        self.closeCurrentUi()
-
-    def openMap(self):
-        """
-        打开地图界面函数
-
-        该函数用于打开游戏中的地图界面，首先记录日志，然后检查地图界面是否已经打开，
-        如果未打开则通过按键操作来打开地图界面
-
-        参数:
-            self: 类实例本身
-
-        返回值:
-            无
-        """
-
-        # 检查队伍界面是否已存在，如果不存在则按下T键打开
-        if not self.exits("标志地图当前坐标"):
-            self.logs("打开地图")
-            self.click_key(key=self.taskConfig.keyList[23])
-
     def closeSetting(self):
         """
         关闭设置界面
@@ -789,11 +689,9 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC
                 continue
             if time.time() - __start > 360:
                 self.logs("寻路超时")
-                __start = time.time()
-                self.unstuck()
-                self.touch("按钮继续寻路")
+                break
             # 限制循环次数，防止无限等待
-            if __count > 3:
+            if __count > 6:
                 break
             __count += 1
             time.sleep(1)

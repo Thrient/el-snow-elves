@@ -337,47 +337,50 @@ class BasisTask(ABC):
         @verify()
         def _inner(**inner_kwargs):
             try:
-                with self._paused:
-                    # import cv2
-                    x = inner_kwargs.get('x', 0)
-                    y = inner_kwargs.get('y', 0)
-                    target_color = inner_kwargs.get('target_color', (255, 255, 255))
-                    tolerance = inner_kwargs.get('tolerance', 10)
+                # import cv2
+                x = inner_kwargs.get('x', 0)
+                y = inner_kwargs.get('y', 0)
+                target_color = inner_kwargs.get('target_color', (255, 255, 255))
+                tolerance = inner_kwargs.get('tolerance', 10)
 
-                    # PIL转OpenCV
-                    img = pil_2_cv2(self.winConsole.capture)
-                    # # 复制原图用于绘制（不修改原图）
-                    # img_marked = img.copy()
-                    #
-                    # # ========== 直接绘制目标像素位置（无坐标检查） ==========
-                    # height, width = img.shape[:2]
-                    # # 红色十字线（贯穿整图，醒目定位）
-                    # cv2.line(img_marked, (0, y), (width, y), (0, 0, 255), 2)  # 水平线（y轴）
-                    # cv2.line(img_marked, (x, 0), (x, height), (0, 0, 255), 2)  # 垂直线（x轴）
-                    # # 红色方框（目标像素周围5像素）
-                    # box_size = 5
-                    # cv2.rectangle(img_marked, (x - box_size, y - box_size), (x + box_size, y + box_size), (0, 0, 255), 2)
-                    # 标注像素信息（坐标+实际颜色+目标颜色）
-                    pixel_b, pixel_g, pixel_r = img[y, x]
-                    # text = f"X:{x} Y:{y} | 实际BGR:({pixel_b},{pixel_g},{pixel_r}) | 目标:{target_color}"
-                    # # 文本位置（固定在左上角，避免越界）
-                    # cv2.rectangle(img_marked, (10, 10), (500, 40), (0, 0, 255), -1)
-                    # cv2.putText(img_marked, text, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-                    #
-                    # # ========== 显示标记后的图像 ==========
-                    # cv2.namedWindow("Target Pixel Position (ESC to close)", cv2.WINDOW_NORMAL)
-                    # cv2.resizeWindow("Target Pixel Position (ESC to close)", min(width, 1200), min(height, 800))
-                    # cv2.imshow("Target Pixel Position (ESC to close)", img_marked)
-                    # cv2.waitKey(0)  # 按ESC关闭窗口
-                    # cv2.destroyAllWindows()
+                coord = self.exits(*args)
 
-                    # ========== 原有颜色校验逻辑 ==========
-                    target_b, target_g, target_r = target_color
-                    max_diff = max(abs(pixel_b - target_b), abs(pixel_g - target_g), abs(pixel_r - target_r))
-                    return max_diff <= tolerance
+                if not coord:
+                    return False
+
+                # PIL转OpenCV
+                img = pil_2_cv2(self.winConsole.capture)
+                # # 复制原图用于绘制（不修改原图）
+                # img_marked = img.copy()
+                #
+                # # ========== 直接绘制目标像素位置（无坐标检查） ==========
+                # height, width = img.shape[:2]
+                # # 红色十字线（贯穿整图，醒目定位）
+                # cv2.line(img_marked, (0, y), (width, y), (0, 0, 255), 2)  # 水平线（y轴）
+                # cv2.line(img_marked, (x, 0), (x, height), (0, 0, 255), 2)  # 垂直线（x轴）
+                # # 红色方框（目标像素周围5像素）
+                # box_size = 5
+                # cv2.rectangle(img_marked, (x - box_size, y - box_size), (x + box_size, y + box_size), (0, 0, 255), 2)
+                # 标注像素信息（坐标+实际颜色+目标颜色）
+                pixel_b, pixel_g, pixel_r = img[coord[-1][1] + y, coord[-1][0] + x]
+                # text = f"X:{x} Y:{y} | 实际BGR:({pixel_b},{pixel_g},{pixel_r}) | 目标:{target_color}"
+                # # 文本位置（固定在左上角，避免越界）
+                # cv2.rectangle(img_marked, (10, 10), (500, 40), (0, 0, 255), -1)
+                # cv2.putText(img_marked, text, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                #
+                # # ========== 显示标记后的图像 ==========
+                # cv2.namedWindow("Target Pixel Position (ESC to close)", cv2.WINDOW_NORMAL)
+                # cv2.resizeWindow("Target Pixel Position (ESC to close)", min(width, 1200), min(height, 800))
+                # cv2.imshow("Target Pixel Position (ESC to close)", img_marked)
+                # cv2.waitKey(0)  # 按ESC关闭窗口
+                # cv2.destroyAllWindows()
+
+                # ========== 原有颜色校验逻辑 ==========
+                target_b, target_g, target_r = target_color
+                max_diff = max(abs(pixel_b - target_b), abs(pixel_g - target_g), abs(pixel_r - target_r))
+                return max_diff <= tolerance
             except Exception as e:
                 logging.error(e)
-                return []
 
         return _inner(**kwargs)
 
@@ -389,47 +392,50 @@ class BasisTask(ABC):
         @verify()
         def _inner(**inner_kwargs):
             try:
-                with self._paused:
-                    # import cv2
-                    x = inner_kwargs.get('x', 0)
-                    y = inner_kwargs.get('y', 0)
-                    target_color = inner_kwargs.get('target_color', (255, 255, 255))
-                    tolerance = inner_kwargs.get('tolerance', 10)
+                # import cv2
+                x = inner_kwargs.get('x', 0)
+                y = inner_kwargs.get('y', 0)
+                target_color = inner_kwargs.get('target_color', (255, 255, 255))
+                tolerance = inner_kwargs.get('tolerance', 10)
 
-                    # PIL转OpenCV
-                    img = pil_2_cv2(self.winConsole.capture)
-                    # # 复制原图用于绘制（不修改原图）
-                    # img_marked = img.copy()
-                    #
-                    # # ========== 直接绘制目标像素位置（无坐标检查） ==========
-                    # height, width = img.shape[:2]
-                    # # 红色十字线（贯穿整图，醒目定位）
-                    # cv2.line(img_marked, (0, y), (width, y), (0, 0, 255), 2)  # 水平线（y轴）
-                    # cv2.line(img_marked, (x, 0), (x, height), (0, 0, 255), 2)  # 垂直线（x轴）
-                    # # 红色方框（目标像素周围5像素）
-                    # box_size = 5
-                    # cv2.rectangle(img_marked, (x - box_size, y - box_size), (x + box_size, y + box_size), (0, 0, 255), 2)
-                    # 标注像素信息（坐标+实际颜色+目标颜色）
-                    pixel_b, pixel_g, pixel_r = img[y, x]
-                    # text = f"X:{x} Y:{y} | 实际BGR:({pixel_b},{pixel_g},{pixel_r}) | 目标:{target_color}"
-                    # # 文本位置（固定在左上角，避免越界）
-                    # cv2.rectangle(img_marked, (10, 10), (500, 40), (0, 0, 255), -1)
-                    # cv2.putText(img_marked, text, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-                    #
-                    # # ========== 显示标记后的图像 ==========
-                    # cv2.namedWindow("Target Pixel Position (ESC to close)", cv2.WINDOW_NORMAL)
-                    # cv2.resizeWindow("Target Pixel Position (ESC to close)", min(width, 1200), min(height, 800))
-                    # cv2.imshow("Target Pixel Position (ESC to close)", img_marked)
-                    # cv2.waitKey(0)  # 按ESC关闭窗口
-                    # cv2.destroyAllWindows()
+                coord = self.exits(*args)
 
-                    # ========== 原有颜色校验逻辑 ==========
-                    target_b, target_g, target_r = target_color
-                    max_diff = max(abs(pixel_b - target_b), abs(pixel_g - target_g), abs(pixel_r - target_r))
-                    return max_diff > tolerance
+                if not coord:
+                    return True
+
+                # PIL转OpenCV
+                img = pil_2_cv2(self.winConsole.capture)
+                # # 复制原图用于绘制（不修改原图）
+                # img_marked = img.copy()
+                #
+                # # ========== 直接绘制目标像素位置（无坐标检查） ==========
+                # height, width = img.shape[:2]
+                # # 红色十字线（贯穿整图，醒目定位）
+                # cv2.line(img_marked, (0, y), (width, y), (0, 0, 255), 2)  # 水平线（y轴）
+                # cv2.line(img_marked, (x, 0), (x, height), (0, 0, 255), 2)  # 垂直线（x轴）
+                # # 红色方框（目标像素周围5像素）
+                # box_size = 5
+                # cv2.rectangle(img_marked, (x - box_size, y - box_size), (x + box_size, y + box_size), (0, 0, 255), 2)
+                # 标注像素信息（坐标+实际颜色+目标颜色）
+                pixel_b, pixel_g, pixel_r = img[coord[-1][1] + y, coord[-1][0] + x]
+                # text = f"X:{x} Y:{y} | 实际BGR:({pixel_b},{pixel_g},{pixel_r}) | 目标:{target_color}"
+                # # 文本位置（固定在左上角，避免越界）
+                # cv2.rectangle(img_marked, (10, 10), (500, 40), (0, 0, 255), -1)
+                # cv2.putText(img_marked, text, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                #
+                # # ========== 显示标记后的图像 ==========
+                # cv2.namedWindow("Target Pixel Position (ESC to close)", cv2.WINDOW_NORMAL)
+                # cv2.resizeWindow("Target Pixel Position (ESC to close)", min(width, 1200), min(height, 800))
+                # cv2.imshow("Target Pixel Position (ESC to close)", img_marked)
+                # cv2.waitKey(0)  # 按ESC关闭窗口
+                # cv2.destroyAllWindows()
+
+                # ========== 原有颜色校验逻辑 ==========
+                target_b, target_g, target_r = target_color
+                max_diff = max(abs(pixel_b - target_b), abs(pixel_g - target_g), abs(pixel_r - target_r))
+                return max_diff > tolerance
             except Exception as e:
                 logging.error(e)
-                return []
 
         return _inner(**kwargs)
 

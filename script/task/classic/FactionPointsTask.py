@@ -7,7 +7,8 @@ class FactionPointsTask(ClassicTask):
         self.setup = "位置检测"
         # 事件类型定义
         self.event = {
-            "advance_counter": 0
+            "advance_counter": 0,
+            "is_dance": False,
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
@@ -17,7 +18,7 @@ class FactionPointsTask(ClassicTask):
     def execute(self):
         while not self._finished.is_set():
 
-            if self.timer.getElapsedTime() > 1800:
+            if self.timer.getElapsedTime() > 3600:
                 self.logs("帮派积分超时")
                 return 0
 
@@ -29,12 +30,12 @@ class FactionPointsTask(ClassicTask):
                     return 0
                 # 位置检测
                 case "位置检测":
-                    # self.locationDetection()
+                    self.locationDetection()
                     self.setup = "队伍检测"
                 # 队伍检测
                 case "队伍检测":
-                    # self.teamDetection()
-                    self.setup = "帮派共舞"
+                    self.teamDetection()
+                    self.setup = "帮派领地"
                 case "帮派共舞":
                     from script.core.TaskFactory import TaskFactory
                     cls = TaskFactory.instance().create(self.taskConfig.model, "帮派积分跳舞")
@@ -63,12 +64,9 @@ class FactionPointsTask(ClassicTask):
                         continue
                     self.setup = "等待清扫结束"
                 case "等待清扫结束":
-                    coord = self.exits("按钮大世界清扫_V1", times=5)
-                    if not coord:
-                        continue
-                    if self.exits_not_color(x=coord[-1][0] + 30, y=coord[-1][1], target_color=(255, 255, 255),
-                                            tolerance=10, times=5):
-                        self.setup = "任务结束"
+                    if self.exits_not_color("按钮大世界清扫_V1", x=30, target_color=(255, 255, 255), tolerance=10, times=5):
+                        self.setup = "任务结束" if self.event["is_dance"] else "帮派共舞"
+                        self.event["is_dance"] = True
                         continue
 
         return None

@@ -9,12 +9,15 @@ from script.utils.Thread import thread
 class AcquisitionTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.setup = "位置检测"
         self.event = {
-            "collect_coord": [],  # 采集坐标 任务开始根据模式赋值采集坐标
-            "collect_coord_index": 0,  # 采集坐标索引 用于切换采集坐标
-            "collect_map": '',  # 采集地图 任务开始根据模式赋值采集地图
-            "collect_change_line": 1,  # 采集换线 用于切换下一分线
-            "collect_counter": 1  # 采集次数 用于记录采集次数
+            "采集方式": ["按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取", "按钮大世界搜查",
+                         "按钮大世界垂钓", "按钮大世界市井喧闹", "按钮大世界繁花似锦", "按钮大世界空山鸟语"],
+            "采集坐标": [],
+            "采集坐标索引": 0,
+            "采集地图": '',
+            "采集换线计数": 1,
+            "采集次数计数": 1
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
@@ -31,150 +34,105 @@ class AcquisitionTask(ClassicTask):
     def execute(self):
         while not self._finished.is_set():
 
-            if self.timer.getElapsedTime() > 600000:
+            if self.timer.getElapsedTime() > 1800 * 2 * 12:
                 self.logs("采集任务超时")
                 return 0
 
             match self.setup:
                 # 任务结束
-                case 0:
+                case "任务结束":
                     self.backToMain()
                     self.logs("采集任务完成")
                     return 0
                 # 位置检测
-                case 1:
+                case "位置检测":
                     # self.locationDetection()
-                    self.setup = 2
+                    self.setup = "队伍检测"
                 # 队伍检测
-                case 2:
+                case "队伍检测":
                     self.teamDetection()
-                    self.setup = 3
-                case 3:
+                    self.setup = "采集信息解析"
+                case "采集信息解析":
                     if self.taskConfig.collectionMode == "默认模式":
-                        self.event["collect_map"] = Config.COLLECTION_ARTICLES_DICt[self.taskConfig.collectionArticles][0]
-                        self.event["collect_coord"] = Config.COLLECTION_ARTICLES_DICt[self.taskConfig.collectionArticles][1]
+                        self.event["采集地图"] = Config.COLLECTION_ARTICLES_DICt[self.taskConfig.collectionArticles][0]
+                        self.event["采集坐标"] = Config.COLLECTION_ARTICLES_DICt[self.taskConfig.collectionArticles][1]
                     elif self.taskConfig.collectionMode == "自定义模式":
-                        self.event["collect_map"] = self.taskConfig.collectionMap
-                        self.event["collect_coord"] = self.taskConfig.customCoordinatesTags
+                        self.event["采集地图"] = self.taskConfig.collectionMap
+                        self.event["采集坐标"] = self.taskConfig.customCoordinatesTags
+                    self.setup = "前往采集坐标"
+                case "前往采集坐标":
+                    if len(self.event["采集坐标"]) == 0:
+                        self.setup = "采集工具判断"
+                        continue
+                    if self.event["采集坐标索引"] == 0:
+                        self.event["采集坐标索引"] = 1
+                        self.areaGo(self.event["采集地图"])
+                        continue
 
-                    self.setup = 4
-                case 4:
-                    self.toCollectionLocation()
-                    self.setup = 5
-                case 5:
-                    self.checkPhysicalStrength()
-                    self.buyTools()
-                    self.collect()
+                    # 验证索引长度是否超过坐标列表长度
+                    self.event["采集坐标索引"] = self.event["采集坐标索引"] if self.event["采集坐标索引"] < len(
+                        self.event["采集坐标"]) + 1 else 1
+                    __coord = self.event["采集坐标"][self.event["采集坐标索引"] - 1]
+
+                    # 更新坐标计数器
+                    self.event["采集坐标索引"] += 1
+
+                    #  验证坐标格式
+                    if not bool(re.match(r'^\d+#\d+$', str(__coord))):
+                        continue
+                    # self.logs(f"前往采集坐标 {__coord.split("#")[0]}:{__coord.split("#")[1]}")
+                    self.coordGo(__coord.split("#")[0], __coord.split("#")[1])
+                    self.setup = "采集工具判断"
+                case "采集换线":
+                    if self.event["采集换线计数"] == self.taskConfig.collectionSwitch + 1:
+                        self.event["采集换线计数"] = 1
+                        self.setup = "前往采集坐标"
+                        continue
+
+                    self.switchBranchLine(self.event["采集换线计数"])
+                    self.event["采集换线计数"] += 1
+                    self.setup = "采集工具判断"
+                case "采集工具判断":
+                    if not self.exits("标志无采集工具"):
+                        self.setup = "采集体力判断"
+                        continue
+                    if not self.taskConfig.autoBuyTool:
+                        self.setup = "任务结束"
+                        continue
+                    self.touch("标志无采集工具")
+                    self.buy("摆摊购买")
+                    self.setup = "采集体力判断"
+                case "采集体力判断":
+                    if not self.exits("标志大世界体力上限"):
+                        self.setup = "开始采集"
+                        continue
+                    if not self.taskConfig.autoEatEgg:
+                        self.logs("无体力 结束任务")
+                        self.setup = "任务结束"
+                        continue
+                    self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount)
+                    self.setup = "开始采集"
+                case "开始采集":
+                    if not self.touch(*self.event["采集方式"]):
+                        self.setup = "采集换线"
+                        continue
+                    self.setup = "采集加速"
+                case "采集加速":
+                    if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), seconds=8):
+                        self.click_mouse(pos=(665, 470))
+                    self.setup = "采集完成判断"
+                case "采集完成判断":
+                    if self.exits_not_color(*self.event["采集方式"], x=-25, target_color=(255, 255, 255), tolerance=10):
+                        self.setup = "采集次数判断"
+                        continue
+                    self.setup = "采集加速"
+                case "采集次数判断":
+                    self.logs(f"采集 {self.event["采集次数计数"]}次")
+                    self.event["采集次数计数"] += 1
+
+                    if self.event["采集次数计数"] >= self.taskConfig.collectionCount:
+                        self.setup = "任务结束"
+                        continue
+                    self.setup = "开始采集"
 
         return None
-
-    def buyTools(self):
-        """购买工具"""
-        if not self.exits("界面交易"):
-            return False
-        if not self.taskConfig.autoBuyTool:
-            self.setup = 0
-            return False
-        if self.buy("摆摊购买"):
-            return False
-        return True
-
-    def checkPhysicalStrength(self):
-        """
-        体力检测
-        该函数用于检测当前角色的体力状态，判断是否需要进行补充体力操作。
-
-        :param
-
-        :return
-            None
-        """
-
-        if not self.exits("标志大世界体力上限"):
-            return
-
-        self.logs("吃鸡蛋")
-        if not self.taskConfig.autoEatEgg:
-            self.logs("无体力 结束任务")
-            self.setup = 0
-            return
-        if not self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount):
-            self.logs("缺少道具一筐鸡蛋 结束任务")
-            self.setup = 0
-            return
-
-    def collect(self):
-        """
-        采集操作
-        该函数执行采集任务的主要操作步骤，包括选择采集类型、购买采集加速、记录采集次数等。
-        主要功能包括界面元素检测、按钮点击、等待操作和任务完成判断
-
-        :param
-
-        :return
-            bool: 采集操作是否成功完成
-        """
-
-        if not self.touch("按钮大世界采集", "按钮大世界砍伐", "按钮大世界挖矿", "按钮大世界拾取",
-                      "按钮大世界搜查", "按钮大世界垂钓", "按钮大世界市井喧闹",
-                      "按钮大世界繁花似锦", "按钮大世界空山鸟语"):
-            # 换线更新坐标
-            if self.taskConfig.collectionSwitch == 1:
-                self.toCollectionLocation()
-                return False
-
-            # 重置换线计数器
-            if self.event["collect_change_line"] == self.taskConfig.collectionSwitch + 1:
-                self.event["collect_change_line"] = 1
-                self.toCollectionLocation()
-                return False
-
-            # 换线操作
-            self.switchBranchLine(self.event["collect_change_line"])
-            self.event["collect_change_line"] += 1
-            return False
-
-        if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), seconds=8, times=None):
-            self.click_mouse(pos=(665, 470))
-
-        self.logs(f"采集 {self.event["collect_counter"]}次")
-        self.event["collect_counter"] += 1
-
-        if self.event["collect_counter"] >= self.taskConfig.collectionCount:
-            self.setup = 0
-        return True
-
-    def toCollectionLocation(self):
-        """
-        前往采集坐标位置
-
-        该函数根据事件数据中的坐标信息，验证坐标格式并前往指定的采集位置。
-        主要功能包括坐标有效性检查、坐标格式验证和角色移动控制。
-
-        参数:
-            self.event[0]: 当前坐标索引
-            self.event[1]: 坐标列表
-            self.event[2]: 区域信息
-            self.event[3]: 是否已处理标记
-
-        返回值:
-            无返回值
-        """
-        # 如果坐标长度为0则跳过
-        if len(self.event["collect_coord"]) == 0:
-            return
-        if len(self.event["collect_coord"]) == 1 and self.event["collect_coord_index"] != 0:
-            return
-
-        # 验证索引长度是否超过坐标列表长度
-        self.event["collect_coord_index"] = self.event["collect_coord_index"] if self.event["collect_coord_index"] < len(self.event["collect_coord"]) else 0
-        __coord = self.event["collect_coord"][self.event["collect_coord_index"]]
-        # 更新坐标计数器
-        self.event["collect_coord_index"] += 1
-        pattern = r'^\d+#\d+$'
-        #  验证坐标格式
-        if not bool(re.match(pattern, str(__coord))):
-            return
-        # 前往坐标
-        self.logs(f"前往采集坐标 {__coord.split("#")[0]}:{__coord.split("#")[1]}")
-        self.areaGo(self.event["collect_map"], __coord.split("#")[0], __coord.split("#")[1], area_switch=self.event["collect_coord_index"] != 0)

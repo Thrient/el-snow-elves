@@ -4,6 +4,7 @@ from script.task.basis.classic.ClassicTask import ClassicTask
 class VientianeLikesTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.setup = "位置检测"
         # 事件类型定义
         self.event = {
             "like_counter": 1
@@ -23,24 +24,25 @@ class VientianeLikesTask(ClassicTask):
 
             match self.setup:
                 # 任务结束
-                case 0:
+                case "任务结束":
+                    self.backToMain()
                     self.logs("万象刷赞完成")
                     return 0
                 # 位置检测
-                case 1:
+                case "位置检测":
                     self.areaGo(area="金陵", x=324, y=384, unstuck=True)
                     self.resetLens()
-                    self.setup = 2
+                    self.setup = "队伍检测"
                 # 队伍检测
-                case 2:
+                case "队伍检测":
                     self.teamDetection()
-                    self.setup = 3
-                case 3:
+                    self.setup = "打开拍照界面"
+                case "打开拍照界面":
                     self.click_mouse(pos=(1240, 715))
-                    self.setup = 4
-                case 4:
+                    self.setup = "上传打卡"
+                case "上传打卡":
                     if not self.exits("界面场景"):
-                        self.setup = 3
+                        self.setup = "打开拍照界面"
                         continue
 
                     self.touch("按钮场景万象")
@@ -50,17 +52,17 @@ class VientianeLikesTask(ClassicTask):
                     self.touch("按钮确定")
                     self.defer(count=5)
                     self.closeRewardUi()
-                    self.setup = 5
-                case 5:
+                    self.setup = "拍照点赞"
+                case "拍照点赞":
                     self.touch("按钮拍照打卡立刻拍照", x=-235, y=-60)
                     self.touch("按钮拍照打卡立刻拍照")
                     self.logs(f"万象刷赞 {self.event["like_counter"]} 次")
 
                     if 30 <= self.event["like_counter"]:
-                        self.setup = 0
+                        self.setup = "任务结束"
                         continue
 
                     self.event["like_counter"] += 1
-                    self.setup = 4
+                    self.setup = "上传打卡"
 
         return None

@@ -1,5 +1,6 @@
 from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.ActivityRewardTask import ActivityRewardTask
+from script.task.classic.ArrivalDetectionTask import ArrivalDetectionTask
 from script.task.classic.AstrologyTask import AstrologyTask
 from script.task.classic.BackInstanceTask import BackInstanceTask
 from script.task.classic.BenefitCollectionTask import BenefitCollectionTask
@@ -116,6 +117,7 @@ class TaskFactory:
         self.register("classic", "斗地主输", DouDiZhuLoseTask)
         self.register("classic", "斗地主", DouDiZhuTask)
         self.register("classic", "界面返回", BackInstanceTask)
+        self.register("classic", "到达检测", ArrivalDetectionTask)
         self.register("classic", "帮派积分跳舞", FactionPointsDanceTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
