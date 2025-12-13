@@ -16,7 +16,6 @@ pyinstaller Elves.spec --distpath dist --workpath build --noconfirm --clean
 Remove-Item script.pyd -Force
 Remove-Item script.pyi -Force
 robocopy "resources" "dist\Elves\resources" /E
-robocopy "..\el-snow-elves-vue\dist" "dist\Elves\_internal\dist" /E
 copy "E:\Code\snow-elves\Tools\dist\Update.exe" "dist\Elves\Update.exe"
 Remove-Item 'dist\Elves.zip'  -Force
 ```

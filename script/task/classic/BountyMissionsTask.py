@@ -60,7 +60,7 @@ class BountyMissionsTask(ClassicTask):
                     self.click_mouse(pos=(1100, 145), post_delay=0.5)
                     if not self.exits("标志悬赏江湖纪事", box=(265, 175, 1190, 565)):
                         continue
-                    self.touch("标志悬赏江湖纪事", y=325, post_delay=0)
+                    self.touch("标志悬赏江湖纪事", y=325, post_delay=0.2)
                     self.touch("按钮悬赏押金", post_delay=0)
                 case 4:
                     if not self.exits("按钮悬赏前往"):

@@ -1,7 +1,6 @@
 import logging
 import multiprocessing as mp
 import os
-import time
 
 import webview
 
@@ -9,6 +8,7 @@ from script.config.Config import Config
 from script.core.HotkeyManager import hot_key_manager
 from script.core.Script import Script
 from script.core.Url import Url
+from script.functools.functools import delay
 from script.utils.Api import api
 from script.utils.JsApi import js
 from script.utils.QueueListener import QueueListener
@@ -45,6 +45,13 @@ class Elves:
         返回值:
             无
         """
+        # === 1. 生命周期控制（核心） ===
+        api.on("API:SCRIPT:BIND", self.bind)
+        api.on("API:SCRIPT:SEARCH", self.search)
+        api.on("API:SCRIPT:START", self.start)
+        api.on("API:SCRIPT:END", self.end)
+        api.on("API:SCRIPT:UNBIND", self.unbind)
+
         # 注册脚本版本监听器
         api.on("API:SCRIPT:VERSION", lambda: Config.VERSION)
         # 注册脚本更新事件监听器
@@ -52,13 +59,11 @@ class Elves:
         # 注册脚本启动事件监听器
         api.on("API:SCRIPT:START", self.start)
         # 注册脚本结束事件监听器
-        api.on("API:SCRIPT:END", self.end)
+
         # 注册脚本查找事件监听器
-        api.on("API:SCRIPT:SEARCH", self.search)
-        # 注册脚本绑定监听器
-        api.on("API:SCRIPT:BIND", self.bind)
+
         # 注册脚本解绑事件监听器
-        api.on("API:SCRIPT:UNBIND", self.unbind)
+
         # 注册脚本停止事件监听器
         api.on("API:SCRIPT:STOP", self.stop)
         # 注册脚本恢复事件监听器
@@ -113,7 +118,7 @@ class Elves:
                 }
             )
 
-            queueListener.end()
+            queueListener.terminate()
 
         hot_key_manager.stop()
 
@@ -144,9 +149,7 @@ class Elves:
             }
         )
 
-        script.join()
-
-        queueListener.end()
+        queueListener.terminate()
 
         # 从窗口列表中删除该窗口句柄对应的项
         del self.winList[hwnd]
@@ -324,7 +327,7 @@ class Elves:
         queueListener = QueueListener(queue, hwnd, "elves")
 
         script = Script(hwnd=hwnd, queue=queue)
-        Utils.sendEmit(self.window, 'API:ADD:CHARACTER', state='初始化', hwnd=hwnd, config="默认配置")
+        Utils.sendEmit(self.window, 'API:CHARACTERS:ADD', state='初始化', hwnd=hwnd, config="当前配置")
         self.winList[hwnd] = [script, queueListener]
 
         # 启动监听器
@@ -350,15 +353,7 @@ class Elves:
         )
 
     def start(self, hwnd, config, parameter):
-        """
-        启动脚本执行函数
-
-        参数:
-            **kwargs: 传递给任务配置的键值对参数
-
-        返回值:
-            无
-        """
+        """启动"""
 
         # 如果该窗口不在监控列表中，则直接返回
         if hwnd not in self.winList:
@@ -378,26 +373,17 @@ class Elves:
             }
         )
 
+    @delay(pre_delay=2000)
     def bind(self, config):
-        """
-        启动脚本执行函数
-
-        参数:
-            **kwargs: 传递给任务配置的键值对参数
-
-        返回值:
-            无
-        """
-        # 等待2秒后获取鼠标位置对应的窗口句柄
-        time.sleep(2)
+        """绑定"""
         hwnd = Utils.getHwndByMouseAndTitle()
 
         if hwnd in self.winList:
             return
 
         self.launch_script(hwnd=hwnd)
-
-        self.start(hwnd, {**config, "config": "默认配置"})
+        #
+        # self.start(hwnd, {**config, "config": "默认配置"})
 
     def hot_key_bind(self):
         """

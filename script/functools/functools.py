@@ -65,8 +65,10 @@ def verify(times: Union[int, None] = None):
 
             if all(results):
                 return results[-1]
-            return None
+            return []
 
         return wrapper
 
     return decorator
+
+

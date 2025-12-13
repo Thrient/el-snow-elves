@@ -15,6 +15,7 @@ from script.task.classic.DouDiZhuTask import DouDiZhuTask
 from script.task.classic.DouDiZhuWinTask import DouDiZhuWinTask
 from script.task.classic.EmailReceiveTask import EmailReceiveTask
 from script.task.classic.ExchangeShopTask import ExchangeShopTask
+from script.task.classic.FactionPointsDanceTask import FactionPointsDanceTask
 from script.task.classic.FactionPointsTask import FactionPointsTask
 from script.task.classic.FactionTask import FactionTask
 from script.task.classic.HeroListTask import HeroListTask
@@ -115,6 +116,7 @@ class TaskFactory:
         self.register("classic", "斗地主输", DouDiZhuLoseTask)
         self.register("classic", "斗地主", DouDiZhuTask)
         self.register("classic", "界面返回", BackInstanceTask)
+        self.register("classic", "帮派积分跳舞", FactionPointsDanceTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

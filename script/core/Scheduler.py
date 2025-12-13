@@ -19,10 +19,9 @@ class Scheduler:
             {
                 "event": "JS:EMIT",
                 "args": (
-                    "API:ADD:LOGS",
+                    "API:LOGS:ADD",
                     {
                         "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                        "info": "信息",
                         "data": "五点重启任务"
                     }
                 )

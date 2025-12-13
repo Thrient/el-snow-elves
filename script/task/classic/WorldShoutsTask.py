@@ -48,7 +48,6 @@ class WorldShoutsTask(ClassicTask):
                             if self.WorldShoutsIndex >= len(self.WorldShoutsTextList) \
                             else self.WorldShoutsIndex
 
-                        self.backToMain()
                         self.keepAlive()
                         self.worldShouts(self.WorldShoutsTextList[self.WorldShoutsIndex],
                                          ordinary=self.taskConfig.ordinaryWorldShouts,

@@ -13,6 +13,8 @@ from script.core.Timer import Timer
 from script.functools.functools import delay, repeat, during, verify
 from script.utils.Api import api
 
+logger = logging.getLogger(__name__)
+
 
 class BasisTask(ABC):
     def __init__(self, hwnd, winConsole, queueListener):
@@ -20,11 +22,13 @@ class BasisTask(ABC):
         self.hwnd = hwnd
         self.winConsole = winConsole
         self.queueListener = queueListener
-        self._stopped = Lock()
-        self._finished = Event()
         self.taskConfig = taskConfigScheduler.config
 
         self.timer = Timer()
+
+        self._paused = Lock()
+        self._finished = Event()
+
         # 流程控制变量, 默认值1
         self._setup = 1
         # 事件变量字典
@@ -44,6 +48,7 @@ class BasisTask(ABC):
     def setup(self, state):
         if state == self._setup:
             return
+        self.logs(state)
         self._reset_state_variables(state)
         self._setup = state
 
@@ -57,16 +62,16 @@ class BasisTask(ABC):
 
     def stop(self):
         """暂停"""
-        self._stopped.acquire()
         self.timer.stop()
+        self._paused.acquire()
 
     def resume(self):
         """恢复"""
         try:
             self.timer.resume()
-            self._stopped.release()
+            self._paused.release()
         except Exception as e:
-            print(e)
+            logger.error(e)
 
     def finish(self):
         """结束"""
@@ -74,11 +79,15 @@ class BasisTask(ABC):
         self._finished.set()
 
     def __enter__(self):
-        api.on("API:SCRIPT:FINISH", self.finish)
+        api.on("API:SCRIPT:TASK:STOP", self.stop)
+        api.on("API:SCRIPT:TASK:RESUME", self.resume)
+        api.on("API:SCRIPT:TASK:FINISH", self.finish)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        api.off("API:SCRIPT:FINISH", self.finish)
+        api.off("API:SCRIPT:TASK:STOP", self.stop)
+        api.off("API:SCRIPT:TASK:RESUME", self.resume)
+        api.off("API:SCRIPT:TASK:FINISH", self.finish)
         self.finish()
 
     @abstractmethod
@@ -123,7 +132,7 @@ class BasisTask(ABC):
         返回值:
             无
         """
-        self.click_mouse(pos=(1335, 750), post_delay=0)
+        self.click_mouse(pos=(1335, 750), post_delay=2)
 
     def defer(self, count=1):
         """
@@ -154,11 +163,22 @@ class BasisTask(ABC):
             {
                 "event": "JS:EMIT",
                 "args": (
-                    "API:ADD:LOGS",
+                    "API:LOGS:ADD",
                     {
                         "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                        "info": "信息",
                         "data": message
+                    }
+                )
+            }
+        )
+        self.queueListener.emit(
+            {
+                "event": "JS:EMIT",
+                "args": (
+                    "API:CHARACTERS:UPDATE",
+                    {
+                        "info": message,
+                        "hwnd": self.hwnd
                     }
                 )
             }
@@ -173,7 +193,7 @@ class BasisTask(ABC):
         def _inner(**inner_kwargs):
             text = inner_kwargs.get('text')
             # 在停止锁的保护下执行控制台输入操作
-            with self._stopped:
+            with self._paused:
                 self.winConsole.input(text)
 
         return _inner(**kwargs)
@@ -189,7 +209,7 @@ class BasisTask(ABC):
             start = inner_kwargs.get('start', (0, 0))
             end = inner_kwargs.get('end', (0, 0))
 
-            with self._stopped:
+            with self._paused:
                 # 执行窗口控制台的鼠标移动操作
                 self.winConsole.mouse_move(start, end)
 
@@ -240,7 +260,7 @@ class BasisTask(ABC):
                 'all_reverse': click_all_reverse
             }
 
-            with self._stopped:
+            with self._paused:
                 mode_handlers.get(click_mode, click_first)()
 
         return _inner(**kwargs)
@@ -258,7 +278,7 @@ class BasisTask(ABC):
             press_down_delay = inner_kwargs.get('press_down_delay', 0)
 
             # 执行按键操作
-            with self._stopped:
+            with self._paused:
                 self.winConsole.click_key(key=key, press_down_delay=press_down_delay)
 
         return _inner(**kwargs)
@@ -309,6 +329,110 @@ class BasisTask(ABC):
             return result
         return []
 
+    def exits_color(self, *args, **kwargs):
+
+        if self._finished.is_set():
+            return False
+
+        @verify()
+        def _inner(**inner_kwargs):
+            try:
+                with self._paused:
+                    # import cv2
+                    x = inner_kwargs.get('x', 0)
+                    y = inner_kwargs.get('y', 0)
+                    target_color = inner_kwargs.get('target_color', (255, 255, 255))
+                    tolerance = inner_kwargs.get('tolerance', 10)
+
+                    # PIL转OpenCV
+                    img = pil_2_cv2(self.winConsole.capture)
+                    # # 复制原图用于绘制（不修改原图）
+                    # img_marked = img.copy()
+                    #
+                    # # ========== 直接绘制目标像素位置（无坐标检查） ==========
+                    # height, width = img.shape[:2]
+                    # # 红色十字线（贯穿整图，醒目定位）
+                    # cv2.line(img_marked, (0, y), (width, y), (0, 0, 255), 2)  # 水平线（y轴）
+                    # cv2.line(img_marked, (x, 0), (x, height), (0, 0, 255), 2)  # 垂直线（x轴）
+                    # # 红色方框（目标像素周围5像素）
+                    # box_size = 5
+                    # cv2.rectangle(img_marked, (x - box_size, y - box_size), (x + box_size, y + box_size), (0, 0, 255), 2)
+                    # 标注像素信息（坐标+实际颜色+目标颜色）
+                    pixel_b, pixel_g, pixel_r = img[y, x]
+                    # text = f"X:{x} Y:{y} | 实际BGR:({pixel_b},{pixel_g},{pixel_r}) | 目标:{target_color}"
+                    # # 文本位置（固定在左上角，避免越界）
+                    # cv2.rectangle(img_marked, (10, 10), (500, 40), (0, 0, 255), -1)
+                    # cv2.putText(img_marked, text, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                    #
+                    # # ========== 显示标记后的图像 ==========
+                    # cv2.namedWindow("Target Pixel Position (ESC to close)", cv2.WINDOW_NORMAL)
+                    # cv2.resizeWindow("Target Pixel Position (ESC to close)", min(width, 1200), min(height, 800))
+                    # cv2.imshow("Target Pixel Position (ESC to close)", img_marked)
+                    # cv2.waitKey(0)  # 按ESC关闭窗口
+                    # cv2.destroyAllWindows()
+
+                    # ========== 原有颜色校验逻辑 ==========
+                    target_b, target_g, target_r = target_color
+                    max_diff = max(abs(pixel_b - target_b), abs(pixel_g - target_g), abs(pixel_r - target_r))
+                    return max_diff <= tolerance
+            except Exception as e:
+                logging.error(e)
+                return []
+
+        return _inner(**kwargs)
+
+    def exits_not_color(self, *args, **kwargs):
+
+        if self._finished.is_set():
+            return False
+
+        @verify()
+        def _inner(**inner_kwargs):
+            try:
+                with self._paused:
+                    # import cv2
+                    x = inner_kwargs.get('x', 0)
+                    y = inner_kwargs.get('y', 0)
+                    target_color = inner_kwargs.get('target_color', (255, 255, 255))
+                    tolerance = inner_kwargs.get('tolerance', 10)
+
+                    # PIL转OpenCV
+                    img = pil_2_cv2(self.winConsole.capture)
+                    # # 复制原图用于绘制（不修改原图）
+                    # img_marked = img.copy()
+                    #
+                    # # ========== 直接绘制目标像素位置（无坐标检查） ==========
+                    # height, width = img.shape[:2]
+                    # # 红色十字线（贯穿整图，醒目定位）
+                    # cv2.line(img_marked, (0, y), (width, y), (0, 0, 255), 2)  # 水平线（y轴）
+                    # cv2.line(img_marked, (x, 0), (x, height), (0, 0, 255), 2)  # 垂直线（x轴）
+                    # # 红色方框（目标像素周围5像素）
+                    # box_size = 5
+                    # cv2.rectangle(img_marked, (x - box_size, y - box_size), (x + box_size, y + box_size), (0, 0, 255), 2)
+                    # 标注像素信息（坐标+实际颜色+目标颜色）
+                    pixel_b, pixel_g, pixel_r = img[y, x]
+                    # text = f"X:{x} Y:{y} | 实际BGR:({pixel_b},{pixel_g},{pixel_r}) | 目标:{target_color}"
+                    # # 文本位置（固定在左上角，避免越界）
+                    # cv2.rectangle(img_marked, (10, 10), (500, 40), (0, 0, 255), -1)
+                    # cv2.putText(img_marked, text, (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                    #
+                    # # ========== 显示标记后的图像 ==========
+                    # cv2.namedWindow("Target Pixel Position (ESC to close)", cv2.WINDOW_NORMAL)
+                    # cv2.resizeWindow("Target Pixel Position (ESC to close)", min(width, 1200), min(height, 800))
+                    # cv2.imshow("Target Pixel Position (ESC to close)", img_marked)
+                    # cv2.waitKey(0)  # 按ESC关闭窗口
+                    # cv2.destroyAllWindows()
+
+                    # ========== 原有颜色校验逻辑 ==========
+                    target_b, target_g, target_r = target_color
+                    max_diff = max(abs(pixel_b - target_b), abs(pixel_g - target_g), abs(pixel_r - target_r))
+                    return max_diff > tolerance
+            except Exception as e:
+                logging.error(e)
+                return []
+
+        return _inner(**kwargs)
+
     def template(self, *args, **kwargs):
         """查找并点击屏幕上的图像模板"""
         if self._finished.is_set():
@@ -317,29 +441,30 @@ class BasisTask(ABC):
         @verify()
         def _inner(**inner_kwargs):
             try:
-                image = inner_kwargs.get('image', None)
-                box = inner_kwargs.get('box', Config.BOX)
-                find_all = inner_kwargs.get('find_all', False)
-                threshold = Config.THRESHOLD_IMAGE[image] \
-                    if Config.THRESHOLD_IMAGE.get(image) \
-                    else inner_kwargs.get('threshold', Config.THRESHOLD)
+                with self._paused:
+                    image = inner_kwargs.get('image', None)
+                    box = inner_kwargs.get('box', Config.BOX)
+                    find_all = inner_kwargs.get('find_all', False)
+                    threshold = Config.THRESHOLD_IMAGE[image] \
+                        if Config.THRESHOLD_IMAGE.get(image) \
+                        else inner_kwargs.get('threshold', Config.THRESHOLD)
 
-                screen = pil_2_cv2(self.winConsole.capture.crop(box))
-                template = Template(
-                    f"resources/images/{self.taskConfig.model}/{image}.bmp",
-                    threshold=threshold
-                )
-                results = template.match_all_in(screen) if find_all else template.match_in(screen)
-                print(f"{image}: {results}")
-                if results is None:
-                    return []
-                if not isinstance(results, list):
-                    return [(box[0] + results[0], box[1] + results[1])]
+                    screen = pil_2_cv2(self.winConsole.capture.crop(box))
+                    template = Template(
+                        f"resources/images/{self.taskConfig.model}/{image}.bmp",
+                        threshold=threshold
+                    )
+                    results = template.match_all_in(screen) if find_all else template.match_in(screen)
+                    print(f"{image}: {results}")
+                    if results is None:
+                        return []
+                    if not isinstance(results, list):
+                        return [(box[0] + results[0], box[1] + results[1])]
 
-                return sorted([
-                    (box[0] + result['result'][0], box[1] + result['result'][1])
-                    for result in results
-                ], key=lambda pos: (-pos[0], pos[1]))
+                    return sorted([
+                        (box[0] + result['result'][0], box[1] + result['result'][1])
+                        for result in results
+                    ], key=lambda pos: (-pos[0], pos[1]))
 
             except Exception as e:
                 logging.error(e)

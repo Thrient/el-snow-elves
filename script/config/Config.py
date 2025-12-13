@@ -2,7 +2,7 @@ import os
 
 
 class Config:
-    VERSION = "v4.5.4"
+    VERSION = "v4.5.8"
     APP_NAME = "Elves"
     APP_DATA = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}"
     LOGS_PATH = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}" + "/logs"
@@ -17,6 +17,7 @@ class Config:
     SWITCH_CHARACTER_STATE = {}
     THRESHOLD_IMAGE = {
         "标志副本完成": 0.7,
+        "标志江湖行商商人": 0.7,
         "标志寻路中": 0.7,
         "按钮世界挂机": 0.75,
         "标志地图加载": 0.65,

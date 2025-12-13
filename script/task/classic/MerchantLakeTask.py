@@ -49,7 +49,7 @@ class MerchantLakeTask(ClassicTask):
                         self.setup = 0
                         continue
 
-                    self.areaGo("江南", x=986, y=1190)
+                    self.areaGo("江南", x=990, y=1190)
                     self.setup = 4
                 case 4:
                     self.openTeam()
@@ -90,15 +90,10 @@ class MerchantLakeTask(ClassicTask):
                     self.setup = 6
                 case 6:
 
-                    self.touch("按钮江湖行商威逼行商交易", y=85)
-
-                    self.touch("按钮地图江南区域")
-
-                    self.touch("按钮确定")
-
-                    if 360 < time.time() - self.event["任务激活计时器"]:
+                    if 720 < time.time() - self.event["任务激活计时器"]:
                         if self.activatedTask("按钮任务行商", model="江湖"):
                             self.event["任务激活计时器"] = time.time()
+                            continue
                         continue
 
                     if self.exits("按钮江湖行商一键上缴"):
@@ -108,6 +103,12 @@ class MerchantLakeTask(ClassicTask):
                         self.event["行商次数计数器"] += 1
                         self.setup = 3
                         continue
+
+                    self.touch("按钮江湖行商威逼行商交易", y=85)
+
+                    self.touch("按钮地图江南区域")
+
+                    self.touch("按钮确定")
 
                     if self.exits("界面行商"):
                         # 行商购买
@@ -140,7 +141,7 @@ class MerchantLakeTask(ClassicTask):
                             else:
                                 self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
                             continue
-                        self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
+                        self.touch("标志江湖行商商人", box=(960, 25, 1125, 255))
                 case 7:
                     if self.activatedTask("按钮任务行商", model="江湖"):
                         self.setup = 6

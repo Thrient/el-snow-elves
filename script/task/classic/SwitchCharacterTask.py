@@ -34,5 +34,5 @@ class SwitchCharacterTask(ClassicTask):
         if all(switchCharacterScheduler.__list__):
             switchCharacterScheduler.switchCharacterDefault = False
             self.switchCharacterDefault()
-            api.emit("TASK:CONFIG:SCHEDULER:LOAD", "默认配置")
+            api.emit("TASK:CONFIG:SCHEDULER:LOAD", "当前配置")
             return

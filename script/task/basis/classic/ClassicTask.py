@@ -32,6 +32,9 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC
             if self.exits("标志副本提示"):
                 self.touch("按钮取消")
 
+            if self.exits("标志特殊弹窗_V1"):
+                self.touch("按钮确定")
+
             self.defer()
 
     def instance(self):
@@ -336,10 +339,6 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC
         # 如果未指定坐标，则使用默认坐标
         x = __coordinate[area][0] if x is None else x
         y = __coordinate[area][1] if y is None else y
-
-        # 是否脱离卡死
-        if unstuck:
-            self.unstuck()
 
         self.logs(f"{area}区域坐标前往 {x}:{y}")
         self.openMap()
@@ -977,7 +976,7 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, ABC
             {
                 "event": "JS:EMIT",
                 "args": (
-                    "API:UPDATE:CHARACTER",
+                    "API:CHARACTERS:UPDATE",
                     {
                         "character": f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
                         "hwnd": self.hwnd

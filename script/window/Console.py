@@ -2,6 +2,7 @@ import ctypes
 import math
 import time
 from ctypes import wintypes
+from typing import Optional, Tuple
 
 import win32api
 import win32con
@@ -12,301 +13,95 @@ from PIL import Image
 from script.utils.Utils import Utils
 
 
-
 class Console:
     """窗口控制"""
 
+    # 常用虚拟键码缓存（避免重复定义）
+    VK_CODE = {
+        "TAB": 0x09, "ESCAPE": 0x1B, "SPACE": 0x20,
+        "DIGIT0": 0x30, "DIGIT1": 0x31, "DIGIT2": 0x32, "DIGIT3": 0x33,
+        "DIGIT4": 0x34, "DIGIT5": 0x35, "DIGIT6": 0x36, "DIGIT7": 0x37,
+        "DIGIT8": 0x38, "DIGIT9": 0x39,
+        "NUMPAD0": 0x60, "NUMPAD1": 0x61, "NUMPAD2": 0x62, "NUMPAD3": 0x63,
+        "NUMPAD4": 0x64, "NUMPAD5": 0x65, "NUMPAD6": 0x66, "NUMPAD7": 0x67,
+        "NUMPAD8": 0x68, "NUMPAD9": 0x69,
+    }
+
     def __init__(self, hwnd):
         self.hwnd = hwnd
-        self.rect = None
-        self.style = None
-        self.vk_code = {
-            "TAB": 0x09,
-            "ESCAPE": 0x1B,
-            "SPACE": 0x20,
-            "DIGIT0": 0x30,
-            "DIGIT1": 0x31,
-            "DIGIT2": 0x32,
-            "DIGIT3": 0x33,
-            "DIGIT4": 0x34,
-            "DIGIT5": 0x35,
-            "DIGIT6": 0x36,
-            "DIGIT7": 0x37,
-            "DIGIT8": 0x38,
-            "DIGIT9": 0x39,
-            "NUMPAD0": 0x60,
-            "NUMPAD1": 0x61,
-            "NUMPAD2": 0x62,
-            "NUMPAD3": 0x63,
-            "NUMPAD4": 0x64,
-            "NUMPAD5": 0x65,
-            "NUMPAD6": 0x66,
-            "NUMPAD7": 0x67,
-            "NUMPAD8": 0x68,
-            "NUMPAD9": 0x69,
-        }
-        self.init()
+        self._original_style: Optional[int] = None
+        self._original_exstyle: Optional[int] = None
+        self._original_rect: Optional[Tuple[int, int, int, int]] = None
 
-    def init(self):
-        """初始化参数"""
-        # 保存窗口默认值
-        self.rect = win32gui.GetWindowRect(self.hwnd)
-        # 储存窗口默认样式
-        self.style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_STYLE)
+        self._init_window_state()
 
-    def click_mouse(self, pos, press_down_delay):
-        """鼠标左键单击"""
-        x, y = pos
-        position = win32api.MAKELONG(x, y)
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, position)
-        time.sleep(press_down_delay)
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, position)
-
-    def mouse_move(self, start, end, duration=None):
-        """模拟鼠标拖拽操作
-
-        Args:
-            start: 起始坐标 (x, y)
-            end: 结束坐标 (x, y)
-            duration: 拖拽总时长(秒)，为None时根据距离自动计算
-        """
-        start_x, start_y = start
-        end_x, end_y = end
-
-        # 计算移动距离
-        dx = end_x - start_x
-        dy = end_y - start_y
-        distance = math.sqrt(dx ** 2 + dy ** 2)
-
-        # 自动计算持续时间（如果未指定）
-        duration = max(0.1, min(1.0, distance * 0.005)) if duration is None else duration
-
-        # 计算步数（基于时间和距离）
-        min_steps = max(5, int(distance * 0.05))  # 最少5步或距离的10%
-        max_steps = 60  # 最大步数限制
-        steps = min(max_steps, max(min_steps, int(duration * 30)))
-
-        try:
-            # 按下左键
-            start_position = win32api.MAKELONG(start_x, start_y)
-            win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, start_position)
-
-            # 平滑移动
-            start_time = time.time()
-
-            for step in range(steps + 1):
-                # 使用缓动函数实现平滑移动
-                progress = step / steps
-                # 使用三次缓动函数，更自然的移动效果
-                t = progress ** 2
-
-                current_x = int(start_x + dx * t)
-                current_y = int(start_y + dy * t)
-
-                # 发送鼠标移动消息
-                current_position = win32api.MAKELONG(current_x, current_y)
-                win32api.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, current_position)
-
-                # 精确控制时间间隔
-                elapsed = time.time() - start_time
-                expected_time = step * duration / steps
-                time.sleep(max(0.0, expected_time - elapsed))
-
-        except Exception as e:
-            raise e
-        finally:
-            # 释放左键
-            win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, win32api.MAKELONG(end_x, end_y))
-
-    def mouse_wheel(self, pos, delta):
-        """鼠标滚轮滚动"""
-        x, y = pos
-        position = win32api.MAKELONG(x, y)
-
-        wparam = (delta & 0xFFFF) << 16
-
-        win32api.PostMessage(self.hwnd, win32con.WM_MOUSEWHEEL, wparam, position)
-
-    def get_rect(self):
+    def _init_window_state(self):
         # noinspection PyUnresolvedReferences
-        f = ctypes.windll.dwmapi.DwmGetWindowAttribute
-        rect = wintypes.RECT()
-        f(wintypes.HWND(self.hwnd),
-          wintypes.DWORD(9),
-          ctypes.byref(rect),
-          ctypes.sizeof(rect)
-          )
-        return rect.left, rect.top, rect.right, rect.bottom
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        """初始化时保存窗口原始状态（用于恢复）"""
+        self._original_style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_STYLE)
+        self._original_exstyle = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
+        self._original_rect = win32gui.GetWindowRect(self.hwnd)
 
-    def get_vk_code(self, key):
-        """获取虚拟按键码"""
-        if len(key) == 1:
-            # noinspection PyUnresolvedReferences
+    # ====================== 鼠标操作 ======================
+    def click_mouse(self, pos: Tuple[int, int], press_down_delay: float = 0.05):
+        """精准左键单击"""
+        x, y = pos
+        lparam = win32api.MAKELONG(x, y)
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lparam)
+        if press_down_delay > 0:
+            time.sleep(press_down_delay)
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, lparam)
+
+    def mouse_move(self, start: Tuple[int, int], end: Tuple[int, int], duration: float = None):
+        """平滑拖拽（三次缓动，更自然）"""
+        sx, sy = start
+        ex, ey = end
+        dx, dy = ex - sx, ey - sy
+        distance = math.hypot(dx, dy)
+
+        duration = duration or max(0.15, min(0.8, distance * 0.004))
+        steps = min(60, max(8, int(duration * 60)))  # 60fps 左右
+
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON,
+                             win32api.MAKELONG(sx, sy))
+
+        start_time = time.perf_counter()
+        for i in range(1, steps + 1):
+            progress = i / steps
+            t = progress * progress * progress  # cubic ease-out
+            x = int(sx + dx * t)
+            y = int(sy + dy * t)
+            win32api.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON,
+                                 win32api.MAKELONG(x, y))
+
+            expected = i * duration / steps
+            elapsed = time.perf_counter() - start_time
+            if expected > elapsed:
+                time.sleep(expected - elapsed)
+
+        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, win32api.MAKELONG(ex, ey))
+
+    # ====================== 键盘操作 ======================
+    def get_vk_code(self, key: str) -> int:
+        if len(key) == 1 and key.isascii():
             return ctypes.windll.user32.VkKeyScanA(ord(key)) & 0xFF
-        # 如果key是字符串，则从vkCode字典中获取对应的虚拟键码
-        else:
-            return self.vk_code[key]
+        return self.VK_CODE.get(key.upper(), 0)
 
-    def click_key(self, key, press_down_delay):
-        """键盘点击"""
-        if key is None:
+    def click_key(self, key: str, press_down_delay: float = 0.05):
+        vk = self.get_vk_code(key)
+        if vk == 0:
             return
-        wparam = self.get_vk_code(key)
-        # noinspection PyUnresolvedReferences
-        lparam = (ctypes.windll.user32.MapVirtualKeyW(wparam, 0) << 16) | 1
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYDOWN, wparam, lparam)
+        scan = ctypes.windll.user32.MapVirtualKeyW(vk, 0)
+        lparam_down = (scan << 16) | 1
+        lparam_up = (scan << 16) | 0xC0000001
+
+        win32api.PostMessage(self.hwnd, win32con.WM_KEYDOWN, vk, lparam_down)
         time.sleep(press_down_delay)
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYUP, wparam, lparam)
+        win32api.PostMessage(self.hwnd, win32con.WM_KEYUP, vk, lparam_up)
 
-    def set_style_no_menu(self):
-        """设置窗口无菜单"""
-        # 设置进程DPI感知级别
-        # noinspection PyUnresolvedReferences
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
-
-        # 扩展窗口新样式
-        style = self.style & ~(win32con.WS_CAPTION | win32con.WS_THICKFRAME | win32con.WS_SYSMENU)
-
-        # 应用窗口样式
-        win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, style)
-
-        # 重绘窗口
-        win32gui.SetWindowPos(
-            self.hwnd,
-            0,
-            self.rect[0],
-            self.rect[1],
-            1335,
-            750,
-            win32con.SWP_FRAMECHANGED,
-        )
-
-    def rest_style(self):
-        """重置窗口样式"""
-        # 设置窗口原始样式
-        win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, self.style)
-        # 重绘窗口
-        win32gui.SetWindowPos(
-            self.hwnd,
-            0,
-            self.rect[0],
-            self.rect[1],
-            1335,
-            750,
-            win32con.SWP_FRAMECHANGED
-        )
-
-    def enable_click_through(self):
-        """激活窗口点击穿透"""
-
-        # 获取当前窗口样式
-        style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
-        # 添加分层和透明扩展样式标志
-        style |= win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT
-        # 应用窗口样式
-        win32gui.SetWindowLong(self.hwnd, win32con.GWL_EXSTYLE, style)
-        # 重绘窗口
-        win32gui.SetWindowPos(
-            self.hwnd,
-            0,
-            0,
-            0,
-            0,
-            0,
-            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED
-        )
-
-    def disable_click_through(self):
-        """取消窗口点击穿透"""
-
-        # 获取当前窗口样式
-        style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
-
-        # 移除分层和透明扩展样式
-        style &= ~(win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT)
-
-        # 应用窗口样式
-        win32gui.SetWindowLong(self.hwnd, win32con.GWL_EXSTYLE, style)
-
-        # 重绘窗口
-        win32gui.SetWindowPos(
-            self.hwnd,
-            0,
-            0,
-            0,
-            0,
-            0,
-            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED
-        )
-
-    def set_transparent(self, transparent):
-        """设置透明度"""
-
-        # 获取当前窗口的扩展样式
-        style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
-
-        # 添加WS_EX_LAYERED样式
-        style |= win32con.WS_EX_LAYERED
-
-        # 修改窗口样式
-        win32gui.SetWindowLong(self.hwnd, win32con.GWL_EXSTYLE, style)
-
-        # 设置窗口透明度（LWA_ALPHA表示使用alpha值控制透明度）
-        win32gui.SetLayeredWindowAttributes(self.hwnd, 0, transparent, win32con.LWA_ALPHA)
-
-        # 重绘窗口
-        win32gui.SetWindowPos(
-            self.hwnd,
-            0,
-            0,
-            0,
-            0,
-            0,
-            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED
-        )
-
-    def full_screen(self):
-        """全屏窗口"""
-
-        # 设置系统级别DPI感知
-        # noinspection PyUnresolvedReferences
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
-
-        # 获取窗口左上角所在屏幕的设备上下文
-        screen_dc = win32api.MonitorFromWindow(self.hwnd, win32con.MONITOR_DEFAULTTONEAREST)
-        # 屏幕完整矩形（x1,y1,x2,y2）
-        monitor_info = win32api.GetMonitorInfo(screen_dc)
-        screen_rect = monitor_info["Monitor"]
-        screen_width = screen_rect[2] - screen_rect[0]
-        screen_height = screen_rect[3] - screen_rect[1]
-
-        # 获取当前窗口样式
-        style = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
-
-        style &= ~(
-                win32con.WS_CAPTION |  # 移除标题栏
-                win32con.WS_THICKFRAME |  # 移除可调整大小边框
-                win32con.WS_MINIMIZE |  # 禁用最小化
-                win32con.WS_MAXIMIZEBOX |  # 移除最大化按钮
-                win32con.WS_SYSMENU  # 移除系统菜单（右键菜单）
-        )
-
-        # 应用窗口样式
-        win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, style)
-
-        # 重绘窗口
-        win32gui.SetWindowPos(
-            self.hwnd,
-            win32con.HWND_TOPMOST,
-            screen_rect[0],
-            screen_rect[1],
-            screen_width,
-            screen_height,
-            win32con.SWP_NOZORDER | win32con.SWP_SHOWWINDOW | win32con.SWP_FRAMECHANGED
-        )
-
-    def input(self, text):
-        """输入消息"""
+    def input(self, text: str, delay: float = 0.05):
+        """输入文本（支持中文）"""
         wideText = str(text).encode('utf-16-le')
 
         # 逐个处理每个宽字符
@@ -319,7 +114,81 @@ class Console:
             ctypes.windll.user32.PostMessageW(self.hwnd, 0x0102, char_code, 0)
 
             # 模拟键入延迟
-            time.sleep(0.05)
+            time.sleep(delay)
+
+    # ====================== 窗口样式控制 ======================
+    def borderless(self):
+        """无边框窗口（保留任务栏图标）"""
+        style = self._original_style & ~(
+                win32con.WS_CAPTION | win32con.WS_THICKFRAME | win32con.WS_SYSMENU
+        )
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, style)
+        win32gui.SetWindowPos(
+            self.hwnd,
+            0,
+            self._original_rect[0],
+            self._original_rect[1],
+            1335,
+            750,
+            win32con.SWP_FRAMECHANGED,
+        )
+
+    def restore_style(self):
+        """恢复原始窗口样式"""
+        if self._original_style is not None:
+            win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, self._original_style)
+            win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
+                                  win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_FRAMECHANGED)
+
+    def enable_click_through(self):
+        exstyle = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
+        exstyle |= win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_EXSTYLE, exstyle)
+        win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
+                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_FRAMECHANGED)
+
+    def disable_click_through(self):
+        exstyle = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
+        exstyle &= ~(win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT)
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_EXSTYLE, exstyle)
+        win32gui.SetWindowPos(self.hwnd, 0, 0, 0, 0, 0,
+                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_FRAMECHANGED)
+
+    def set_transparent(self, alpha: int = 255):
+        exstyle = win32gui.GetWindowLong(self.hwnd, win32con.GWL_EXSTYLE)
+        exstyle |= win32con.WS_EX_LAYERED
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_EXSTYLE, exstyle)
+        win32gui.SetLayeredWindowAttributes(self.hwnd, 0, alpha, win32con.LWA_ALPHA)
+
+    def full_screen(self):
+        monitor = win32api.MonitorFromWindow(self.hwnd, win32con.MONITOR_DEFAULTTONEAREST)
+        monitor_info = win32api.GetMonitorInfo(monitor)
+        left, top, right, bottom = monitor_info["Monitor"]
+
+        style = self._original_style & ~(
+                win32con.WS_CAPTION | win32con.WS_THICKFRAME | win32con.WS_SYSMENU
+        )
+        win32gui.SetWindowLong(self.hwnd, win32con.GWL_STYLE, style)
+
+        win32gui.SetWindowPos(
+            self.hwnd,
+            win32con.HWND_NOTOPMOST,
+            left,
+            top,
+            right - left,
+            bottom - top,
+            win32con.SWP_SHOWWINDOW | win32con.SWP_FRAMECHANGED
+        )
+
+    def get_rect(self) -> Tuple[int, int, int, int]:
+        f = ctypes.windll.dwmapi.DwmGetWindowAttribute
+        rect = wintypes.RECT()
+        f(wintypes.HWND(self.hwnd),
+          wintypes.DWORD(9),
+          ctypes.byref(rect),
+          ctypes.sizeof(rect)
+          )
+        return rect.left, rect.top, rect.right, rect.bottom
 
     @property
     def capture(self):
