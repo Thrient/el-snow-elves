@@ -2,7 +2,7 @@ import os
 
 
 class Config:
-    VERSION = "v4.5.9"
+    VERSION = "v4.6.0"
     APP_NAME = "Elves"
     APP_DATA = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}"
     LOGS_PATH = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}" + "/logs"

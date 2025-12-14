@@ -27,7 +27,8 @@ class ChefIngredientsTask(ClassicTask):
                     return 0
                 # 位置检测
                 case 1:
-                    self.areaGo("中原", x=1272, y=1725)
+                    self.areaGo("中原")
+                    self.coordGo(x=1272, y=1725)
                     self.setup = 2
                 # 队伍检测
                 case 2:

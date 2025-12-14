@@ -22,7 +22,7 @@ class Elves:
     def __init__(self, url):
         self.window = webview.create_window(
             '时雪',
-            Url(url).findBestUrl(),
+            Url(primary_url=url, txt_url=None).find_best_url_by_latency(),
             js_api=api,
             confirm_close=True,
             width=1335,
@@ -58,13 +58,7 @@ class Elves:
         api.on("API:SCRIPT:UPDATE", self.update)
         # 注册脚本启动事件监听器
         api.on("API:SCRIPT:START", self.start)
-        # 注册脚本结束事件监听器
 
-        # 注册脚本查找事件监听器
-
-        # 注册脚本解绑事件监听器
-
-        # 注册脚本停止事件监听器
         api.on("API:SCRIPT:STOP", self.stop)
         # 注册脚本恢复事件监听器
         api.on("API:SCRIPT:RESUME", self.resume)
@@ -86,6 +80,7 @@ class Elves:
         api.on("API:TASK:CONFIG:lOAD", TaskConfig.loadConfigDict)
         # 注册配置列表获取事件处理函数
         api.on("API:TASK:CONFIG:LIST", TaskConfig.getTaskList)
+        api.on("API:TASK:CONFIG:EXECUTE:LIST", TaskConfig.getConfigExecuteList)
 
         hot_key_manager.register("ctrl+shift+e", self.hot_key_bind, "快捷键启动")
 
@@ -352,7 +347,7 @@ class Elves:
             }
         )
 
-    def start(self, hwnd, config, parameter):
+    def start(self, hwnd, config, task, parameter):
         """启动"""
 
         # 如果该窗口不在监控列表中，则直接返回
@@ -368,6 +363,7 @@ class Elves:
                 'event': 'API:SCRIPT:LAUNCH',
                 'args': (
                     config,
+                    task,
                     parameter
                 )
             }
@@ -382,8 +378,8 @@ class Elves:
             return
 
         self.launch_script(hwnd=hwnd)
-        #
-        # self.start(hwnd, {**config, "config": "默认配置"})
+
+        self.start(hwnd, "当前配置", "", **config)
 
     def hot_key_bind(self):
         """
@@ -401,8 +397,6 @@ class Elves:
             return
 
         self.launch_script(hwnd=hwnd)
-
-        # self.start(hwnd, "默认配置")
 
     @staticmethod
     def run(debug=False):

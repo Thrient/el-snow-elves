@@ -177,7 +177,8 @@ class DailyRedemptionTask(ClassicTask):
                     if "莲子购买" in self.taskConfig.dailyExchangeList:
                         self.locationDetection()
                         self.defer()
-                        self.areaGo("江南", x=670, y=1700)
+                        self.areaGo("江南")
+                        self.coordGo(x=670, y=1700)
                         self.touch("按钮大世界对话")
                         self.touch("按钮商人小蟹小虾")
 
@@ -193,7 +194,8 @@ class DailyRedemptionTask(ClassicTask):
                     if "艾草购买" in self.taskConfig.dailyExchangeList:
                         self.locationDetection()
                         self.defer()
-                        self.areaGo("江南", x=673, y=1722)
+                        self.areaGo("江南")
+                        self.coordGo(x=673, y=1722)
                         self.touch("按钮大世界对话")
                         self.touch("按钮商人新鲜蔬菜")
 

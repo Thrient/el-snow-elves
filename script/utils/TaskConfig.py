@@ -168,3 +168,8 @@ class TaskConfig:
             if file.endswith(".json"):
                 taskList.append(file[:-5])
         return taskList
+
+    @staticmethod
+    def getConfigExecuteList(config):
+        """获取配置任务列表"""
+        return TaskConfig().loadConfig(config).executeList

@@ -38,6 +38,7 @@ class MerchantLakeTask(ClassicTask):
                 # 位置检测
                 case 1:
                     self.locationDetection()
+                    self.areaGo("江南")
                     self.setup = 2
                 # 队伍检测
                 case 2:
@@ -49,8 +50,8 @@ class MerchantLakeTask(ClassicTask):
                         self.setup = 0
                         continue
 
-                    self.areaGo("江南", x=990, y=1190)
-                    self.setup = 4
+                    self.coordGo(x=990, y=1190)
+                    self.setup = 5
                 case 4:
                     self.openTeam()
 
@@ -93,8 +94,6 @@ class MerchantLakeTask(ClassicTask):
                     if 720 < time.time() - self.event["任务激活计时器"]:
                         if self.activatedTask("按钮任务行商", model="江湖"):
                             self.event["任务激活计时器"] = time.time()
-                            continue
-                        continue
 
                     if self.exits("按钮江湖行商一键上缴"):
                         self.touch("按钮江湖行商一键上缴")

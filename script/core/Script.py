@@ -130,7 +130,7 @@ class Script(Process):
             })
         })
 
-    def launch(self, config, parameter):
+    def launch(self, config, task, parameter):
         if not self._is_state(ScriptState.STOPPED, ScriptState.INIT):
             logger.info("[HWND:%s] 重复调用 launch，已忽略", self.hwnd)
             return
@@ -140,7 +140,7 @@ class Script(Process):
 
         api.emit("TASK:CONFIG:SCHEDULER:INIT", config, parameter)
         api.emit("SWITCH:CHARACTER:SCHEDULER:CLEAR")
-        api.emit("TASK:SCHEDULER:INIT")
+        api.emit("TASK:SCHEDULER:INIT", task)
 
     def end(self):
         self._set_state(ScriptState.STOPPED)

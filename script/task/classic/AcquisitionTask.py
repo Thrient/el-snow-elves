@@ -113,6 +113,7 @@ class AcquisitionTask(ClassicTask):
                     self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount)
                     self.setup = "开始采集"
                 case "开始采集":
+                    self.backToMain()
                     if not self.touch(*self.event["采集方式"]):
                         self.setup = "采集换线"
                         continue

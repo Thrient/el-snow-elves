@@ -300,17 +300,7 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         self.logs("地图加载结束")
 
     def locationDetection(self):
-        """
-        位置检测函数
-
-        该函数用于执行位置检测操作，记录日志并移动到指定区域
-
-        参数:
-            self: 类实例对象
-
-        返回值:
-            无
-        """
+        """位置检测函数"""
         self.logs("位置检测")
         self.exitInstance()
         # self.areaGo("金陵", exits=True, unstuck=True)

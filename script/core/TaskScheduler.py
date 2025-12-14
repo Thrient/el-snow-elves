@@ -12,17 +12,21 @@ class TaskScheduler:
         api.on("TASK:SCHEDULER:CLEAR", self.clear)
         api.on("TASK:SCHEDULER:INIT", self.init)
 
-    def init(self):
+    def init(self, start_task=""):
         self.clear()
         if len(taskConfigScheduler.common.switchCharacterList) == 0:
             self.add(0, "切换角色")
-            for task in taskConfigScheduler.common.executeList:
-                self.add(0, task["data"])
+            if start_task == "":
+                for task in [task["data"] for task in taskConfigScheduler.common.executeList]:
+                    self.add(0, task)
+            else:
+                for task in [task["data"] for task in taskConfigScheduler.common.executeList][[task["data"] for task in taskConfigScheduler.common.executeList].index(start_task):] :
+                    self.add(0, task)
         else:
             for _ in taskConfigScheduler.common.switchCharacterList:
                 self.add(0, "切换角色")
-                for task in taskConfigScheduler.common.executeList:
-                    self.add(0, task["data"])
+                for task in [task["data"] for task in taskConfigScheduler.common.executeList]:
+                    self.add(0, task)
 
     def clear(self):
         self.queue = queue.PriorityQueue()

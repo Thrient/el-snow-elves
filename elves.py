@@ -1,5 +1,7 @@
 import argparse
+import io
 import logging
+import sys
 from logging.handlers import RotatingFileHandler
 from multiprocessing import freeze_support
 from pathlib import Path
@@ -8,6 +10,9 @@ import webview
 
 from script.config.Config import Config
 from script.core.Elves import Elves
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
