@@ -17,7 +17,8 @@ class AcquisitionTask(ClassicTask):
             "采集坐标索引": 0,
             "采集地图": '',
             "采集换线计数": 1,
-            "采集次数计数": 1
+            "采集次数计数": 1,
+            "吃鸡蛋": False
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
@@ -84,11 +85,11 @@ class AcquisitionTask(ClassicTask):
                     self.coordGo(__coord.split("#")[0], __coord.split("#")[1])
                     self.setup = "采集工具判断"
                 case "采集换线":
+                    self.backToMain()
                     if self.event["采集换线计数"] == self.taskConfig.collectionSwitch + 1:
                         self.event["采集换线计数"] = 1
                         self.setup = "前往采集坐标"
                         continue
-
                     self.switchBranchLine(self.event["采集换线计数"])
                     self.event["采集换线计数"] += 1
                     self.setup = "采集工具判断"
@@ -106,14 +107,23 @@ class AcquisitionTask(ClassicTask):
                     if not self.exits("标志大世界体力上限"):
                         self.setup = "开始采集"
                         continue
+                        
                     if not self.taskConfig.autoEatEgg:
                         self.logs("无体力 结束任务")
                         self.setup = "任务结束"
                         continue
-                    self.useBackpackArticles("一筐鸡蛋", self.taskConfig.autoEatEggCount)
+
+                    if not self.event["吃鸡蛋"]:
+                        self.useBackpackArticles("行当", "甲鱼蒸蛋", 3)
+                        self.event["吃鸡蛋"] = True
+                        self.setup = "开始采集"
+                        continue
+
+                    if not self.useBackpackArticles("道具", "一筐鸡蛋", self.taskConfig.autoEatEggCount):
+                        self.setup = "任务结束"
+                        continue
                     self.setup = "开始采集"
                 case "开始采集":
-                    self.backToMain()
                     if not self.touch(*self.event["采集方式"]):
                         self.setup = "采集换线"
                         continue
@@ -134,6 +144,6 @@ class AcquisitionTask(ClassicTask):
                     if self.event["采集次数计数"] >= self.taskConfig.collectionCount:
                         self.setup = "任务结束"
                         continue
-                    self.setup = "开始采集"
+                    self.setup = "采集工具判断"
 
         return None

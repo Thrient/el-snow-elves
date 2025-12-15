@@ -1,5 +1,5 @@
 import time
-
+from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from script.core.TaskConfigScheduler import taskConfigScheduler
@@ -8,7 +8,7 @@ from script.utils.Api import api
 
 class Scheduler:
     def __init__(self, queueListener):
-        self.sched = BackgroundScheduler(daemon=True)
+        self.sched = BackgroundScheduler(daemon=True, timezone=ZoneInfo('Asia/Shanghai'))
         self.queueListener = queueListener
         self.addScheduledTasks()
 

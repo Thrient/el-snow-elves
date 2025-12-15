@@ -83,35 +83,6 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         # 延迟20秒等待操作完成
         self.defer(20)
 
-    def useBackpackArticles(self, articles, UsageTimes):
-        """
-        使用背包中的指定道具
-
-        参数:
-            articles (str): 要使用的道具名称
-            UsageTimes (int): 使用次数
-
-        返回值:
-            bool: 如果道具不存在返回False，否则无返回值(None)
-        """
-        self.openBackpack()
-        self.touch("按钮搜索")
-        self.touch("标志输入道具名称")
-        self.input(text=articles)
-        self.touch("按钮搜索")
-
-        # 检查道具是否存在，如果不存在则返回False
-        if self.exits(f"标志物品{articles}"):
-            # 循环使用指定次数的道具
-            for _ in range(UsageTimes):
-                self.touch(f"标志物品{articles}")
-                self.touch("按钮背包使用")
-            self.closeBackpack()
-            return True
-        self.logs(f"道具{articles}不存在")
-        self.closeBackpack()
-        return False
-
     def exchange(self, **kwargs):
         """查找文字"""
 

@@ -50,7 +50,7 @@ class MerchantLakeTask(ClassicTask):
                         self.setup = 0
                         continue
 
-                    self.coordGo(x=990, y=1190)
+                    self.coordGo(x=986, y=1190)
                     self.setup = 5
                 case 4:
                     self.openTeam()

@@ -23,7 +23,7 @@ class SwordThreeTask(ClassicTask):
     def execute(self):
         while not self._finished.is_set():
 
-            if self.timer.getElapsedTime() > 1800 * 2 * 3:
+            if self.timer.getElapsedTime() > 1800 * 2 * 12:
                 self.logs("多人论剑超时")
                 return 0
 

@@ -461,7 +461,7 @@ class BasisTask(ABC):
                         threshold=threshold
                     )
                     results = template.match_all_in(screen) if find_all else template.match_in(screen)
-                    print(f"{image}: {results}")
+                    logger.info(f"{image}: {results}")
                     if results is None:
                         return []
                     if not isinstance(results, list):

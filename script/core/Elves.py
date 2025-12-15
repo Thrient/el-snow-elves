@@ -1,6 +1,7 @@
 import logging
 import multiprocessing as mp
 import os
+import time
 
 import webview
 
@@ -22,7 +23,7 @@ class Elves:
     def __init__(self, url):
         self.window = webview.create_window(
             '时雪',
-            Url(primary_url=url, txt_url=None).find_best_url_by_latency(),
+            f"{Url(primary_url=url, txt_url=None).find_best_url_by_latency()}/?timestamp=${time.time_ns()}",
             js_api=api,
             confirm_close=True,
             width=1335,
