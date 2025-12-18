@@ -7,6 +7,7 @@ class MerchantLakeTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.setup = "位置检测"
         # 事件变量字典
         self.event = {
             "行商次数计数器": 1,
@@ -16,10 +17,9 @@ class MerchantLakeTask(ClassicTask):
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
-            4: {"喊话计时器": 0.0},
-            6: {
+            "接取行商任务": {
                 "购买状态": True,
-                "任务激活计时器": lambda: time.time()
+                "任务激活计时器": 0
             }
         }
 
@@ -32,75 +32,82 @@ class MerchantLakeTask(ClassicTask):
 
             match self.setup:
                 # 任务结束
-                case 0:
+                case "任务结束":
                     self.logs("江湖行商完成")
                     return 0
                 # 位置检测
-                case 1:
-                    self.locationDetection()
+                case "位置检测":
+                    self.instance()
                     self.areaGo("江南")
-                    self.setup = 2
+                    self.setup = "队伍检测"
                 # 队伍检测
-                case 2:
+                case "队伍检测":
                     self.teamCreate(model="江湖行商")
-                    self.setup = 3
-                case 3:
+                    self.setup = "行商次数检测"
+                case "行商次数检测":
                     # 江湖行商剩余次数检测
                     if self.event["行商次数计数器"] > self.taskConfig.merchantLakeCount:
-                        self.setup = 0
+                        self.setup = "任务结束"
                         continue
-
+                    self.setup = "前往行商NPC"
+                case "前往行商NPC":
                     self.coordGo(x=986, y=1190)
-                    self.setup = 5
-                case 4:
+                    self.setup = "接取行商任务"
+                case "队伍人数检测":
                     self.openTeam()
 
                     # 检查队伍人数
                     if len(self.exits("标志队伍空位", find_all=True)) <= 10 - 3:
-                        # 一键召回
-                        self.followDetection()
-                        self.setup = 5
+                        self.staffDetection()
+                        self.setup = "接取行商任务"
                         continue
-                    self.touch("按钮队伍自动匹配")
 
-                    # 世界喊话
                     if 34 < time.time() - self.event["喊话计时器"]:
                         self.event["喊话计时器"] = time.time()
-                        self.worldShouts(self.taskConfig.merchantLakeWordShout, ordinary=True, connected=True)
-                case 5:
+                        self.setup = "行商队员喊话"
+                        continue
+
+                    self.touch("按钮队伍自动匹配")
+                case "行商队员喊话":
+                    self.worldShouts(self.taskConfig.merchantLakeWordShout, ordinary=True, connected=True)
+                    self.setup = "队伍人数检测"
+                case "接取行商任务":
                     # 对话行商NPC
                     self.touch("按钮大世界对话")
                     if not self.touch("按钮江湖行商参与"):
-                        self.setup = 3
+                        self.setup = "前往行商NPC"
                         continue
 
                     # 检测行商参与条件
                     if 3 != len(self.exits("标志江湖行商参与条件", find_all=True)):
                         self.backToMain()
-                        self.setup = 4
+                        self.setup = "队伍人数检测"
                         continue
 
                     self.touch("按钮江湖行商确认发起")
                     self.touch("按钮江湖行商货单购买")
 
                     # 等待全部队员准备
-                    if not self.wait("标志行商任务接取成功", seconds=20):
+                    if not self.wait("标志行商任务次数耗尽", seconds=5):
                         self.backToMain()
-                        self.setup = 7
+                        self.setup = "任务结束"
                         continue
-                    self.setup = 6
-                case 6:
+                    self.defer(count=20)
+                    self.setup = "等待任务完成"
+                case "任务检测":
+                    if not self.activatedTask("按钮任务行商", model="江湖"):
+                        self.setup = "行商次数检测"
+                        continue
+                    self.setup = "等待任务完成"
+                case "等待任务完成":
 
                     if 720 < time.time() - self.event["任务激活计时器"]:
-                        if self.activatedTask("按钮任务行商", model="江湖"):
-                            self.event["任务激活计时器"] = time.time()
+                        self.event["任务激活计时器"] = time.time()
+                        self.setup = "任务检测"
+                        continue
 
                     if self.exits("按钮江湖行商一键上缴"):
-                        self.touch("按钮江湖行商一键上缴")
-                        self.closeRewardUi(count=10)
-                        self.logs(f"江湖行商完成{self.event["行商次数计数器"]}次")
-                        self.event["行商次数计数器"] += 1
-                        self.setup = 3
+                        self.setup = "任务完成"
                         continue
 
                     self.touch("按钮江湖行商威逼行商交易", y=85)
@@ -141,9 +148,11 @@ class MerchantLakeTask(ClassicTask):
                                 self.touch("标志江湖行商商人", box=(960, 25, 1020, 110))
                             continue
                         self.touch("标志江湖行商商人", box=(960, 25, 1125, 255))
-                case 7:
-                    if self.activatedTask("按钮任务行商", model="江湖"):
-                        self.setup = 6
-                        continue
-                    self.setup = 4
+                case "任务完成":
+                    self.touch("按钮江湖行商一键上缴")
+                    self.closeRewardUi(count=10)
+                    self.logs(f"江湖行商完成{self.event["行商次数计数器"]}次")
+                    self.event["行商次数计数器"] += 1
+                    self.setup = "行商次数检测"
+
         return None

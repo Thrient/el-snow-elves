@@ -49,21 +49,19 @@ class ClassicInstanceTask(ClassicBasisTask, ABC):
         args = [f"标志{i}" for i in digits]
 
         self.click_mouse(pos=(1230, 25))
-        # 循环滑动屏幕查找目标分线按钮，每次向上滑动一定距离
 
-        for _ in range(index // 7 + 5):
-            results = self.exits("标志线", find_all=True)
-            for result in results:
-                if len(digits) == 1:
-                    if self.exits(args[0], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
-                        self.click_mouse(pos=(result[0] - 30, result[1]))
-                        return
-                if len(digits) == 2:
-                    if self.exits(args[0],
-                                  box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) and self.exits(
-                        args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
-                        self.click_mouse(pos=(result[0] - 50, result[1]))
-                        return
-            self.move_mouse(start=(1050, 555), end=(1050, 355))
+        self.move_mouse(start=(1050, 555), end=(1050, 150), count=1 if index == 7 else index // 8 + index % 8 // 7)
+        results = self.exits("标志线", find_all=True)
+        for result in results:
+            if len(digits) == 1:
+                if self.exits(args[0], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
+                    self.click_mouse(pos=(result[0] - 30, result[1]))
+                    return
+            if len(digits) == 2:
+                if self.exits(args[0],
+                              box=(result[0] - 50, result[1] - 20, result[0] - 30, result[1] + 20)) and self.exits(
+                    args[1], box=(result[0] - 35, result[1] - 20, result[0] - 15, result[1] + 20)):
+                    self.click_mouse(pos=(result[0] - 50, result[1]))
+                    return
 
         self.keepAlive()

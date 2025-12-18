@@ -33,7 +33,7 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
             if self.exits("标志副本提示"):
                 self.touch("按钮取消")
 
-            if self.exits("标志特殊弹窗_V1"):
+            if self.exits("标志特殊弹窗_V1", "标志特殊弹窗_V2"):
                 self.touch("按钮确定")
 
             self.defer()

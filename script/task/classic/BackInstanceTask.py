@@ -33,13 +33,14 @@ class BackInstanceTask(ClassicTask):
                 # 队伍检测
                 case "队伍检测":
                     # self.teamDetection()
-                    self.setup = "主界面判断"
+                    self.setup = "关闭窗口"
                 case "主界面判断":
                     if not self.exits("按钮世界挂机", times=5):
                         self.setup = "关闭窗口"
                         continue
                     self.setup = "任务结束"
                 case "关闭窗口":
+                    self.touch("按钮取消")
                     self.closeBackpack()
                     self.closeCurrentUi()
                     self.keepAlive()

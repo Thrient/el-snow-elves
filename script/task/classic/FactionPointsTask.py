@@ -18,7 +18,7 @@ class FactionPointsTask(ClassicTask):
     def execute(self):
         while not self._finished.is_set():
 
-            if self.timer.getElapsedTime() > 3600:
+            if self.timer.getElapsedTime() > 1800 * 2 * 6:
                 self.logs("帮派积分超时")
                 return 0
 

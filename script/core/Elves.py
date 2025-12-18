@@ -57,8 +57,6 @@ class Elves:
         api.on("API:SCRIPT:VERSION", lambda: Config.VERSION)
         # 注册脚本更新事件监听器
         api.on("API:SCRIPT:UPDATE", self.update)
-        # 注册脚本启动事件监听器
-        api.on("API:SCRIPT:START", self.start)
 
         api.on("API:SCRIPT:STOP", self.stop)
         # 注册脚本恢复事件监听器
@@ -380,7 +378,9 @@ class Elves:
 
         self.launch_script(hwnd=hwnd)
 
-        self.start(hwnd, "当前配置", "", **config)
+        time.sleep(3)
+
+        api.emit("JS:EMIT", "API:JS:SCRIPT:START", {})
 
     def hot_key_bind(self):
         """
@@ -398,6 +398,10 @@ class Elves:
             return
 
         self.launch_script(hwnd=hwnd)
+
+        time.sleep(3)
+
+        api.emit("JS:EMIT", "API:JS:SCRIPT:START", {})
 
     @staticmethod
     def run(debug=False):

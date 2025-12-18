@@ -83,31 +83,20 @@ class AcquisitionTask(ClassicTask):
                         continue
                     # self.logs(f"前往采集坐标 {__coord.split("#")[0]}:{__coord.split("#")[1]}")
                     self.coordGo(__coord.split("#")[0], __coord.split("#")[1])
-                    self.setup = "采集工具判断"
+                    self.setup = "采集体力判断"
                 case "采集换线":
-                    self.backToMain()
                     if self.event["采集换线计数"] == self.taskConfig.collectionSwitch + 1:
                         self.event["采集换线计数"] = 1
                         self.setup = "前往采集坐标"
                         continue
                     self.switchBranchLine(self.event["采集换线计数"])
                     self.event["采集换线计数"] += 1
-                    self.setup = "采集工具判断"
-                case "采集工具判断":
-                    if not self.exits("标志无采集工具"):
-                        self.setup = "采集体力判断"
-                        continue
-                    if not self.taskConfig.autoBuyTool:
-                        self.setup = "任务结束"
-                        continue
-                    self.touch("标志无采集工具")
-                    self.buy("摆摊购买")
                     self.setup = "采集体力判断"
                 case "采集体力判断":
                     if not self.exits("标志大世界体力上限"):
-                        self.setup = "开始采集"
+                        self.setup = "采集工具判断"
                         continue
-                        
+
                     if not self.taskConfig.autoEatEgg:
                         self.logs("无体力 结束任务")
                         self.setup = "任务结束"
@@ -116,12 +105,21 @@ class AcquisitionTask(ClassicTask):
                     if not self.event["吃鸡蛋"]:
                         self.useBackpackArticles("行当", "甲鱼蒸蛋", 3)
                         self.event["吃鸡蛋"] = True
-                        self.setup = "开始采集"
                         continue
 
                     if not self.useBackpackArticles("道具", "一筐鸡蛋", self.taskConfig.autoEatEggCount):
                         self.setup = "任务结束"
                         continue
+                    self.setup = "采集工具判断"
+                case "采集工具判断":
+                    if not self.exits("标志无采集工具"):
+                        self.setup = "开始采集"
+                        continue
+                    if not self.taskConfig.autoBuyTool:
+                        self.setup = "任务结束"
+                        continue
+                    self.touch("标志无采集工具")
+                    self.buy("摆摊购买")
                     self.setup = "开始采集"
                 case "开始采集":
                     if not self.touch(*self.event["采集方式"]):
@@ -129,7 +127,7 @@ class AcquisitionTask(ClassicTask):
                         continue
                     self.setup = "采集加速"
                 case "采集加速":
-                    if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), seconds=8):
+                    if self.wait("标志大世界采集加速", box=(625, 380, 655, 435), seconds=6):
                         self.click_mouse(pos=(665, 470))
                     self.setup = "采集完成判断"
                 case "采集完成判断":
@@ -144,6 +142,6 @@ class AcquisitionTask(ClassicTask):
                     if self.event["采集次数计数"] >= self.taskConfig.collectionCount:
                         self.setup = "任务结束"
                         continue
-                    self.setup = "采集工具判断"
+                    self.setup = "采集体力判断"
 
         return None

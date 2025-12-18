@@ -20,3 +20,13 @@ class ClassicTeamTask(ClassicBasisTask, ABC):
             return
         self.logs("打开队伍")
         self.click_key(key=self.taskConfig.keyList[22])
+
+    def staffDetection(self):
+        """队员检测"""
+        if self._finished.is_set():
+            return
+        from script.core.TaskFactory import TaskFactory
+
+        cls = TaskFactory.instance().create(self.taskConfig.model, "队员检测")
+        with cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as obj:
+            obj.execute()
