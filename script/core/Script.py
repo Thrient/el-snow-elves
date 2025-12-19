@@ -222,6 +222,6 @@ class Script(Process):
         self._set_state(ScriptState.UNBINDING)
         api.emit("TASK:SCHEDULER:CLEAR")
         api.emit("API:SCRIPT:TASK:FINISH")
-        self.reset_win()
         self.unlock()
+        self.reset_win()
         self.transparent(255)

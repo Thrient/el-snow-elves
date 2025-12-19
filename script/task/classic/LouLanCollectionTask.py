@@ -64,8 +64,7 @@ class LouLanCollectionTask(ClassicTask):
                         continue
                     self.setup = 6
                 case 6:
-                    self.openMap()
-                    self.coordinateInput(self.event["camp_coord"][0], self.event["camp_coord"][1])
+                    self.coordGo(self.event["camp_coord"][0], self.event["camp_coord"][1])
                     self.touch("按钮地图前往区域")
                     self.closeMap()
                     self.arrive()

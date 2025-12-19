@@ -63,7 +63,7 @@ class LouLanGuardTask(ClassicTask):
                     self.autoFightStop()
                     self.setup = 5
                 case 7:
-                    self.touch("标志剑取楼兰阵营守护", box=(0, 170, 265, 450))
+                    self.touch("标志剑取楼兰阵营协助", box=(0, 170, 265, 450))
                     self.arrive()
                     self.setup = 0
 

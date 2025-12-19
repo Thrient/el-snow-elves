@@ -88,7 +88,7 @@ class MerchantLakeTask(ClassicTask):
                     self.touch("按钮江湖行商货单购买")
 
                     # 等待全部队员准备
-                    if not self.wait("标志行商任务次数耗尽", seconds=5):
+                    if self.wait("标志行商任务次数耗尽", seconds=5):
                         self.backToMain()
                         self.setup = "任务结束"
                         continue

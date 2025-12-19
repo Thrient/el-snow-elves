@@ -112,6 +112,9 @@ class AcquisitionTask(ClassicTask):
                         continue
                     self.setup = "采集工具判断"
                 case "采集工具判断":
+                    if self.exits("按钮大世界合成"):
+                        self.setup = "采集换线"
+                        continue
                     if not self.exits("标志无采集工具"):
                         self.setup = "开始采集"
                         continue

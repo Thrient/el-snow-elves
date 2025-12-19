@@ -4,6 +4,7 @@ from script.task.basis.classic.ClassicTask import ClassicTask
 class DouDiZhuWinTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.setup = "位置检测"
         # 事件类型定义
         self.event = {
 
@@ -22,28 +23,23 @@ class DouDiZhuWinTask(ClassicTask):
 
             match self.setup:
                 # 任务结束
-                case 0:
+                case "任务结束":
                     self.logs("课业任务完成")
                     return 0
                 # 位置检测
-                case 1:
+                case "位置检测":
                     # self.locationDetection()
-                    self.setup = 2
+                    self.setup = "队伍检测"
                 # 队伍检测
-                case 2:
+                case "队伍检测":
                     # self.teamDetection()
-                    self.setup = 4
-                case 3:
+                    self.setup = "准备上桌"
+                case "准备上桌":
                     if not self.touch("按钮大世界上桌"):
-                        self.setup = 0
+                        self.setup = "任务结束"
                         continue
-                    self.setup = 4
-                case 4:
-                    if not self.exits("界面斗地主"):
-                        self.backToMain()
-                        self.setup = 3
-                        continue
-
+                    self.setup = "斗地主中"
+                case "斗地主中":
                     if self.exits("按钮斗地主准备"):
                         self.touch("按钮斗地主准备")
 
