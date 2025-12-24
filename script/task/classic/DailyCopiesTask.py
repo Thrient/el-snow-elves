@@ -7,18 +7,20 @@ class DailyCopiesTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.setup = "位置检测"
         # 事件变量字典
         self.event = {
-            "shout_timer": 0.0,  # 副本喊话时间计数器
-            "activate_timer": 0.0,  # 副本激活计时器
-            "stuck_timer": 0.0,  # 副本卡死计时器
+            "喊话计时器": 0.0,
+            "脱离卡死计时器": 0.0,
+            "任务激活计时器": 0.0,
+            "脱离卡死计数器": 1
         }
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
-            5: {"shout_timer": 0.0},
-            8: {
-                "activate_timer": 0.0,
-                "stuck_timer": lambda: time.time()
+            "进入副本": {
+                "任务激活计时器": 0.0,
+                "脱离卡死计时器": lambda: time.time(),
+                "脱离卡死计数器": 1
             }
         }
 
@@ -31,95 +33,98 @@ class DailyCopiesTask(ClassicTask):
 
             match self.setup:
                 # 任务结束
-                case 0:
+                case "任务结束":
                     self.logs("日常副本完成")
                     return 0
                 # 位置检测
-                case 1:
-                    self.locationDetection()
-                    self.setup = 2
+                case "位置检测":
+                    self.instance()
+                    self.setup = "队伍检测"
                 # 队伍检测
-                case 2:
+                case "队伍检测":
                     self.teamCreate(model="日常")
-                    self.setup = 5
-                case 3:
-                    if not self.exits("界面悬赏"):
-                        self.openBackpack()
-                        self.touch("按钮物品综合入口")
-                        self.touch("按钮物品活动")
-                        if not self.exits("界面活动"):
-                            continue
-                        self.touch("按钮活动悬赏")
-                        self.touch("按钮悬赏下页", x=50)
+                    self.setup = "队员检测"
+                case "检查悬赏":
+                    self.openBounty()
+                    if self.exits("标志悬赏接满") and not self.exits("按钮悬赏前往"):
+                        self.setup = "任务结束"
                         continue
 
-                    if self.exits("标志悬赏接满"):
-                        self.touch("按钮悬赏上页", x=-50)
-                        self.setup = 4
+                    if self.exits("标志悬赏接满") and self.exits("按钮悬赏前往"):
+                        self.setup = "队员检测"
                         continue
+                    self.touch("按钮悬赏下页", x=50)
+                    self.setup = "接取悬赏"
+                case "接取悬赏":
                     self.click_mouse(pos=(1100, 145), timeout=0.1)
                     if not self.exits("标志悬赏江湖纪事", box=(265, 175, 1190, 565)):
                         continue
                     self.touch("标志悬赏江湖纪事", y=325, timeout=0)
                     self.touch("按钮悬赏押金", timeout=0)
-                case 4:
-                    if not self.exits("按钮悬赏前往"):
-                        self.setup = 0
-                        continue
-                    self.backToMain()
-                    self.setup = 5
-                case 5:
+                    self.setup = "检查悬赏"
+                case "队员检测":
                     self.openTeam()
                     if len(self.exits("标志队伍空位", find_all=True)) <= 10 - self.taskConfig.copiesPeoples:
-                        self.setup = 6
+                        self.setup = "进入副本"
+                        continue
+
+                    if time.time() - self.event["喊话计时器"] > 32:
+                        self.event["喊话计时器"] = time.time()
+                        self.setup = "世界喊话"
                         continue
                     self.touch("按钮队伍自动匹配")
-
-                    if not self.touch("按钮队伍赛季喊话"):
-                        self.touch("按钮队伍普通喊话", x=80)
-
-                    if time.time() - self.event["shout_timer"] > 32:
-                        self.event["shout_timer"] = time.time()
-                        self.worldShouts(self.taskConfig.copiesShoutText, connected=True)
-                case 6:
+                case "世界喊话":
+                    self.worldShouts(self.taskConfig.copiesShoutText, connected=True, ordinary=True)
+                    self.setup = "队员检测"
+                case "进入副本":
                     self.openTeam()
                     self.touch("按钮队伍进入副本")
                     self.touch("按钮确认")
-                    self.setup = 7
-                case 7:
-
+                    self.setup = "等待队员确认"
+                case "等待队员确认":
                     if not self.exits("界面日常"):
-                        self.setup = 8
+                        self.setup = "等待任务完成"
                         continue
-                    self.defer(count=5)
-                    if not self.touch("按钮副本全体进入"):
-                        self.setup = 6
-                        continue
-
+                    self.defer(5)
+                    self.logs("全体进入")
+                    self.touch("按钮副本全体进入")
                     self.waitMapLoading()
-
-                    self.setup = 8
-                case 8:
-                    if 360 * 2 - 20 < time.time() - self.event["stuck_timer"]:
-                        self.teamDetection()
-                        self.setup = 2
+                    self.setup = "等待任务完成"
+                case "任务检测":
+                    if not self.activatedTask("按钮任务副本", model="任务"):
+                        self.setup = "队员检测"
+                        continue
+                    self.setup = "等待任务完成"
+                case "等待任务完成":
+                    if time.time() - self.event["任务激活计时器"] > 360:
+                        self.event["任务激活计时器"] = time.time()
+                        self.setup = "任务检测"
                         continue
 
-                    if 360 < time.time() - self.event["activate_timer"]:
+                    if time.time() - self.event["脱离卡死计时器"] > 360:
+                        self.event["脱离卡死计时器"] = time.time()
+                        self.event["脱离卡死计数器"] += 1
                         self.unstuck()
-                        if not self.activatedTask("按钮任务副本", model="任务"):
-                            continue
-                        self.event["activate_timer"] = time.time()
                         continue
+
+                    if self.event["脱离卡死计数器"] > 3:
+                        self.setup = "中止副本"
+                        continue
+
+                    self.closeStalls()
 
                     if self.exits("按钮副本跳过剧情"):
                         self.touch("按钮副本跳过剧情")
 
-                    self.checkExit()
+                    if self.exits("标志副本完成", "标志副本完成_V1", times=5):
+                        self.setup = "副本完成"
+                        continue
+                case "中止副本":
+                    self.staffDetection()
+                    self.exitInstance()
+                    self.defer(count=300)
+                    self.setup = "队员检测"
+                case "副本完成":
+                    self.exitInstance()
+                    self.setup = "任务结束"
         return None
-
-    def checkExit(self):
-        if not self.exits("标志副本完成", "标志副本完成_V1", times=5):
-            return
-        self.exitInstance()
-        self.setup = 0

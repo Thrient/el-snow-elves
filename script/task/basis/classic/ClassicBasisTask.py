@@ -22,3 +22,13 @@ class ClassicBasisTask(BasisTask, ABC):
     def backToMain(self):
         """返回主界面"""
         pass
+
+    @abstractmethod
+    def openBackpack(self):
+        """打开包裹"""
+        pass
+
+    @abstractmethod
+    def startInterconnected(self):
+        """切换互联分线"""
+        pass

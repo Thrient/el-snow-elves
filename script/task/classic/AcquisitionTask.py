@@ -30,6 +30,9 @@ class AcquisitionTask(ClassicTask):
         while not self._finished.is_set():
             self.closeRewardUi()
 
+            if self.exits("界面特惠"):
+                self.closeCurrentUi()
+
             time.sleep(1)
 
     def execute(self):

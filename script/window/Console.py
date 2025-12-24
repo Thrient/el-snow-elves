@@ -48,10 +48,10 @@ class Console:
         """精准左键单击"""
         x, y = pos
         lparam = win32api.MAKELONG(x, y)
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lparam)
+        win32api.SendMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lparam)
         if press_down_delay > 0:
             time.sleep(press_down_delay)
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, lparam)
+        win32api.SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, lparam)
 
     def mouse_move(self, start: Tuple[int, int], end: Tuple[int, int], duration: float = None):
         """平滑拖拽（三次缓动，更自然）"""
@@ -63,8 +63,7 @@ class Console:
         duration = duration or max(0.15, min(0.8, distance * 0.004))
         steps = min(60, max(8, int(duration * 60)))  # 60fps 左右
 
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON,
-                             win32api.MAKELONG(sx, sy))
+        win32api.SendMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, win32api.MAKELONG(sx, sy))
 
         start_time = time.perf_counter()
         for i in range(1, steps + 1):
@@ -72,15 +71,14 @@ class Console:
             t = progress * progress * progress  # cubic ease-out
             x = int(sx + dx * t)
             y = int(sy + dy * t)
-            win32api.PostMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON,
-                                 win32api.MAKELONG(x, y))
+            win32api.SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, win32api.MAKELONG(x, y))
 
             expected = i * duration / steps
             elapsed = time.perf_counter() - start_time
             if expected > elapsed:
                 time.sleep(expected - elapsed)
 
-        win32api.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, win32api.MAKELONG(ex, ey))
+        win32api.SendMessage(self.hwnd, win32con.WM_LBUTTONUP, 0, win32api.MAKELONG(ex, ey))
 
     # ====================== 键盘操作 ======================
     def get_vk_code(self, key: str) -> int:
@@ -96,9 +94,9 @@ class Console:
         lparam_down = (scan << 16) | 1
         lparam_up = (scan << 16) | 0xC0000001
 
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYDOWN, vk, lparam_down)
+        win32api.SendMessage(self.hwnd, win32con.WM_KEYDOWN, vk, lparam_down)
         time.sleep(press_down_delay)
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYUP, vk, lparam_up)
+        win32api.SendMessage(self.hwnd, win32con.WM_KEYUP, vk, lparam_up)
 
     def input(self, text: str, delay: float = 0.05):
         """输入文本（支持中文）"""
@@ -111,7 +109,7 @@ class Console:
 
             # 发送WM_CHAR消息 (WM_CHAR的值为0x0102)
             # noinspection PyUnresolvedReferences
-            ctypes.windll.user32.PostMessageW(self.hwnd, 0x0102, char_code, 0)
+            win32api.SendMessage(self.hwnd, win32con.WM_CHAR, char_code, 0)
 
             # 模拟键入延迟
             time.sleep(delay)
@@ -130,7 +128,7 @@ class Console:
             self._original_rect[1],
             1335,
             750,
-            win32con.SWP_FRAMECHANGED,
+            win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE
         )
 
     def restore_style(self):

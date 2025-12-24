@@ -36,16 +36,19 @@ class StaffDetectionTask(ClassicTask):
                     # self.teamDetection()
                     self.setup = "召唤队员"
                 case "召唤队员":
+                    self.openTeam()
                     if self.touch("按钮队伍一键召回"):
                         self.defer(count=20)
                     self.setup = "清理暂离队员"
                 case "清理暂离队员":
-                    if not self.touch("标志队伍暂离"):
+                    self.openTeam()
+                    if not self.touch("标志队伍暂离", y=45):
                         self.setup = "清理离线队员"
                         continue
                     self.touch("按钮队伍请离队伍")
                 case "清理离线队员":
-                    if not self.touch("标志队伍离线"):
+                    self.openTeam()
+                    if not self.touch("标志队伍离线", y=45):
                         self.setup = "任务结束"
                         continue
                     self.touch("按钮队伍请离队伍")

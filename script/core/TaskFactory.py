@@ -2,6 +2,7 @@ from script.task.classic.AcquisitionTask import AcquisitionTask
 from script.task.classic.ActivityRewardTask import ActivityRewardTask
 from script.task.classic.ArrivalDetectionTask import ArrivalDetectionTask
 from script.task.classic.AstrologyTask import AstrologyTask
+from script.task.classic.AutoExpandBackpackTask import AutoExpandBackpackTask
 from script.task.classic.BackInstanceTask import BackInstanceTask
 from script.task.classic.BenefitCollectionTask import BenefitCollectionTask
 from script.task.classic.BountyMissionsTask import BountyMissionsTask
@@ -120,6 +121,7 @@ class TaskFactory:
         self.register("classic", "界面返回", BackInstanceTask)
         self.register("classic", "到达检测", ArrivalDetectionTask)
         self.register("classic", "队员检测", StaffDetectionTask)
+        self.register("classic", "扩展背包", AutoExpandBackpackTask)
         self.register("classic", "帮派积分跳舞", FactionPointsDanceTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 

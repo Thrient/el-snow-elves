@@ -151,7 +151,6 @@ class Script(Process):
     def stop(self):
         self._set_state(ScriptState.PAUSED)
         api.emit("API:SCRIPT:TASK:STOP")
-        self.reset_win()
         self.unlock()
 
     def resume(self):

@@ -20,15 +20,15 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         super().__init__(**kwargs)
         # 自动战斗
         self.autoFightEvent = Event()
-        # 世界喊话设置
-        self.WorldShoutsTextList = self.taskConfig.worldShoutsText.split("\n")
-        self.WorldShoutsIndex = 0
         self.popCheck()
 
     @thread(daemon=True)
     def popCheck(self):
         while not self._finished.is_set():
             self.closeDreamCub()
+
+            if self.exits("界面特惠"):
+                self.closeCurrentUi()
 
             if self.exits("标志副本提示"):
                 self.touch("按钮取消")
@@ -181,27 +181,6 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         # 创建并启动自动战斗的后台线程
         threading.Thread(target=self.autoFight, daemon=True).start()
 
-    def worldShouts(self, text, ordinary=True, connected=False):
-        # 返回主界面并点击世界聊天入口
-        self.backToMain()
-        self.click_mouse(pos=(305, 600))
-
-        # 检查普通世界按钮是否存在，如果存在且允许在普通世界发送则执行发送操作
-        if ordinary:
-            self.touch("按钮大世界普通世界", "按钮大世界普通世界_V1", box=(0, 0, 150, 750))
-            self.touch("标志点击输入文字")
-            self.input(text=text)
-            self.touch("按钮大世界发送")
-
-        if connected:
-            self.touch("按钮大世界互联世界", box=(0, 0, 150, 750))
-            self.touch("标志点击输入文字")
-            self.input(text=text)
-            self.touch("按钮大世界发送")
-
-        # 退出聊天界面
-        self.touch("按钮聊天退出")
-
     def activatedTask(self, *args, model):
         """
         激活江湖任务栏功能
@@ -296,64 +275,6 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
             self.touch("按钮队伍退出")
             self.touch("按钮队伍确定")
         self.closeTeam()
-
-    def teamCreate(self, model):
-        self.logs(f"创建{model}队伍")
-
-        def __team_1():
-            self.logs("刷新当天日常")
-            self.openBackpack()
-            self.touch("按钮物品综合入口")
-            self.touch("按钮物品活动")
-            self.touch("按钮活动江湖")
-            self.touch("按钮活动江湖纪事", y=45)
-            self.backToMain()
-            self.openTeam()
-            self.touch("按钮队伍创建")
-            self.touch("按钮队伍下拉")
-            self.move_mouse(start=(258, 307), end=(258, 607))
-            self.touch("按钮队伍无目标")
-            self.touch("按钮队伍江湖纪事")
-            self.touch("按钮队伍确定", x=-100)
-            self.touch("按钮队伍确定")
-            self.touch("按钮队伍确定")
-            self.closeTeam()
-
-        def __team_2():
-            self.startInterconnected()
-            self.openTeam()
-            self.touch("按钮队伍创建")
-            self.touch("按钮队伍下拉")
-            self.move_mouse(start=(258, 307), end=(258, 607))
-            self.touch("按钮队伍无目标")
-            self.touch("按钮队伍行当玩法")
-            self.touch("按钮队伍江湖行商")
-            self.touch("按钮队伍确定", x=-100)
-            self.touch("按钮队伍确定")
-            self.touch("按钮队伍确定")
-            self.closeTeam()
-
-        def __team_3():
-            self.startInterconnected()
-            self.openTeam()
-            self.touch("按钮队伍创建")
-            self.touch("按钮队伍下拉")
-            self.move_mouse(start=(258, 307), end=(258, 607))
-            self.touch("按钮队伍无目标")
-            self.touch("按钮队伍行当玩法")
-            self.touch("按钮队伍聚义平冤")
-            self.touch("按钮队伍确定", x=-100)
-            self.touch("按钮队伍确定")
-            self.touch("按钮队伍确定")
-            self.closeTeam()
-
-        _dict = {
-            "日常": __team_1,
-            "江湖行商": __team_2,
-            "聚义平冤": __team_3
-        }
-
-        _dict[model]()
 
     def buy(self, model):
         """
@@ -626,6 +547,23 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         if not self.exits("界面设置"):
             self.click_key(key=self.taskConfig.keyList[25])
 
+    def openActivity(self):
+        """打开活动"""
+        if self.exits("界面活动"):
+            return
+        self.openBackpack()
+        self.touch("按钮物品综合入口")
+        self.logs("打开活动")
+        self.touch("按钮物品活动")
+
+    def openBounty(self):
+        if self.exits("界面悬赏"):
+            return
+        self.backToMain()
+        self.openActivity()
+        self.logs("打开悬赏")
+        self.touch("按钮活动悬赏")
+
     def arrive(self):
         """
         等待到达目标位置的函数
@@ -657,6 +595,24 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
             __count += 1
             time.sleep(1)
         self.logs("寻路结束")
+
+    def ordinary_shout(self, text):
+        self.backToMain()
+        self.click_mouse(pos=(305, 600))
+        self.touch("按钮大世界普通世界", "按钮大世界普通世界_V1", box=(0, 0, 150, 750))
+        self.touch("标志点击输入文字")
+        self.input(text=text)
+        self.touch("按钮大世界发送")
+        self.touch("按钮聊天退出")
+
+    def connect_shout(self, text):
+        self.backToMain()
+        self.click_mouse(pos=(305, 600))
+        self.touch("按钮大世界互联世界", box=(0, 0, 150, 750))
+        self.touch("标志点击输入文字")
+        self.input(text=text)
+        self.touch("按钮大世界发送")
+        self.touch("按钮聊天退出")
 
     def switchCharacter(self):
         """

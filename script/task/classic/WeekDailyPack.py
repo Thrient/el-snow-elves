@@ -1,4 +1,5 @@
 from script.task.basis.classic.ClassicTask import ClassicTask
+from script.utils.Thread import thread
 
 
 class WeekDailyPack(ClassicTask):
@@ -12,6 +13,19 @@ class WeekDailyPack(ClassicTask):
         self.state_reset_config = {
 
         }
+
+    @thread(daemon=True)
+    def popCheck(self):
+        while not self._finished.is_set():
+            self.closeDreamCub()
+
+            if self.exits("标志副本提示"):
+                self.touch("按钮取消")
+
+            if self.exits("标志特殊弹窗_V1", "标志特殊弹窗_V2"):
+                self.touch("按钮确定")
+
+            self.defer()
 
     def execute(self):
         while not self._finished.is_set():

@@ -2,7 +2,7 @@ import os
 
 
 class Config:
-    VERSION = "v4.6.5"
+    VERSION = "v4.6.7"
     APP_NAME = "Elves"
     APP_DATA = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}"
     LOGS_PATH = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}" + "/logs"
@@ -43,6 +43,7 @@ class Config:
         "标志本体位置_V3": 0.8,
         "按钮大世界对话": 0.8,
         "标志江湖英雄榜敌方": 0.9,
+        "按钮大世界坐骑": 0.9,
         "按钮课业课业": 0.9,
         "按钮课业悟禅": 0.9,
         "标志单人论剑我方": 0.9,

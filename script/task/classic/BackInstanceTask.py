@@ -4,7 +4,7 @@ from script.task.basis.classic.ClassicTask import ClassicTask
 class BackInstanceTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = "位置检测"
+        self.setup = "关闭窗口"
         # 事件类型定义
         self.event = {
 
@@ -18,13 +18,11 @@ class BackInstanceTask(ClassicTask):
         while not self._finished.is_set():
 
             if self.timer.getElapsedTime() > 1800:
-                self.logs("界面返回超时")
                 return 0
 
             match self.setup:
                 # 任务结束
                 case "任务结束":
-                    self.logs("界面返回完成")
                     return 0
                 # 位置检测
                 case "位置检测":
@@ -41,6 +39,7 @@ class BackInstanceTask(ClassicTask):
                     self.setup = "任务结束"
                 case "关闭窗口":
                     self.touch("按钮取消")
+                    self.touch("按钮聊天退出")
                     self.closeBackpack()
                     self.closeCurrentUi()
                     self.keepAlive()

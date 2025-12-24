@@ -1,3 +1,4 @@
+import random
 import time
 
 from script.task.basis.classic.ClassicTask import ClassicTask
@@ -71,11 +72,15 @@ class MerchantLakeTask(ClassicTask):
                 case "行商队员喊话":
                     self.worldShouts(self.taskConfig.merchantLakeWordShout, ordinary=True, connected=True)
                     self.setup = "队伍人数检测"
+                case "换线中":
+                    self.backToMain()
+                    self.switchBranchLine(random.randint(1, 10))
+                    self.setup = "前往行商NPC"
                 case "接取行商任务":
                     # 对话行商NPC
                     self.touch("按钮大世界对话")
                     if not self.touch("按钮江湖行商参与"):
-                        self.setup = "前往行商NPC"
+                        self.setup = "换线中"
                         continue
 
                     # 检测行商参与条件
