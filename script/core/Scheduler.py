@@ -7,26 +7,14 @@ from script.utils.Api import api
 
 
 class Scheduler:
-    def __init__(self, queueListener):
+    def __init__(self):
         self.sched = BackgroundScheduler(daemon=True, timezone=ZoneInfo('Asia/Shanghai'))
-        self.queueListener = queueListener
         self.addScheduledTasks()
 
-    def restart(self):
+    @staticmethod
+    def restart():
         if not taskConfigScheduler.common.restart:
             return
-        self.queueListener.emit(
-            {
-                "event": "JS:EMIT",
-                "args": (
-                    "API:LOGS:ADD",
-                    {
-                        "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                        "data": "五点重启任务"
-                    }
-                )
-            }
-        )
         api.emit("API:SCRIPT:END")
         api.emit("API:SCRIPT:LAUNCH", "默认配置", taskConfigScheduler.common.__dict__)
 

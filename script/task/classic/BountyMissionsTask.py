@@ -38,7 +38,7 @@ class BountyMissionsTask(ClassicTask):
                     return 0
                 # 位置检测
                 case "位置检测":
-                    self.instance()
+                    self.exitInstance()
                     self.setup = "队伍检测"
                 # 队伍检测
                 case "队伍检测":
@@ -46,6 +46,17 @@ class BountyMissionsTask(ClassicTask):
                     self.setup = "检查悬赏"
                 case "检查悬赏":
                     self.openBounty()
+                    if not self.exits("标志悬赏接满") and self.exits("按钮悬赏前往"):
+                        self.touch("按钮悬赏下页", x=50)
+                        self.setup = "接取悬赏"
+                        continue
+
+                    if not self.exits("标志悬赏接满") and not self.exits("按钮悬赏前往"):
+                        self.setup = "接取悬赏"
+                        continue
+
+                    self.touch("按钮悬赏上页", x=-50)
+
                     if self.exits("标志悬赏接满") and not self.exits("按钮悬赏前往"):
                         self.setup = "任务结束"
                         continue
@@ -53,8 +64,6 @@ class BountyMissionsTask(ClassicTask):
                     if self.exits("标志悬赏接满") and self.exits("按钮悬赏前往"):
                         self.setup = "队员检测"
                         continue
-                    self.touch("按钮悬赏下页", x=50)
-                    self.setup = "接取悬赏"
                 case "接取悬赏":
                     self.click_mouse(pos=(1100, 145), timeout=0.1)
                     if not self.exits("标志悬赏江湖纪事", box=(265, 175, 1190, 565)):
@@ -74,7 +83,8 @@ class BountyMissionsTask(ClassicTask):
                         continue
                     self.touch("按钮队伍自动匹配")
                 case "世界喊话":
-                    self.worldShouts(self.taskConfig.copiesShoutText, connected=True, ordinary=True)
+                    self.ordinary_shout(self.taskConfig.copiesShoutText)
+                    self.connect_shout(self.taskConfig.copiesShoutText)
                     self.setup = "队员检测"
                 case "进入副本":
                     self.openTeam()
@@ -105,6 +115,7 @@ class BountyMissionsTask(ClassicTask):
                         self.event["脱离卡死计时器"] = time.time()
                         self.event["脱离卡死计数器"] += 1
                         self.unstuck()
+                        self.staffDetection()
                         continue
 
                     if self.event["脱离卡死计数器"] > 3:
@@ -126,5 +137,5 @@ class BountyMissionsTask(ClassicTask):
                     self.setup = "队员检测"
                 case "副本完成":
                     self.exitInstance()
-                    self.setup = "任务结束"
+                    self.setup = "检查悬赏"
         return None

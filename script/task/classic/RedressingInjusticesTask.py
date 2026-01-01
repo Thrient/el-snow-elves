@@ -52,7 +52,8 @@ class RedressingInjusticesTask(ClassicTask):
                     # 世界喊话
                     if 34 < time.time() - self.event["喊话计时器"]:
                         self.event["喊话计时器"] = time.time()
-                        self.worldShouts(self.taskConfig.merchantLakeWordShout, ordinary=True, connected=True)
+                        self.ordinary_shout(self.taskConfig.merchantLakeWordShout)
+                        self.connect_shout(self.taskConfig.merchantLakeWordShout)
                 case 4:
                     self.openBackpack()
                     self.touch("按钮物品综合入口")

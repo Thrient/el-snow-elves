@@ -38,7 +38,7 @@ class DailyCopiesTask(ClassicTask):
                     return 0
                 # 位置检测
                 case "位置检测":
-                    self.instance()
+                    self.exitInstance()
                     self.setup = "队伍检测"
                 # 队伍检测
                 case "队伍检测":
@@ -74,7 +74,8 @@ class DailyCopiesTask(ClassicTask):
                         continue
                     self.touch("按钮队伍自动匹配")
                 case "世界喊话":
-                    self.worldShouts(self.taskConfig.copiesShoutText, connected=True, ordinary=True)
+                    self.ordinary_shout(self.taskConfig.copiesShoutText)
+                    self.connect_shout(self.taskConfig.copiesShoutText)
                     self.setup = "队员检测"
                 case "进入副本":
                     self.openTeam()
@@ -105,6 +106,7 @@ class DailyCopiesTask(ClassicTask):
                         self.event["脱离卡死计时器"] = time.time()
                         self.event["脱离卡死计数器"] += 1
                         self.unstuck()
+                        self.staffDetection()
                         continue
 
                     if self.event["脱离卡死计数器"] > 3:

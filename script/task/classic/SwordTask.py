@@ -34,7 +34,7 @@ class SwordTask(ClassicTask):
                     return 0
                 # 位置检测
                 case 1:
-                    self.locationDetection()
+                    self.exitInstance()
                     self.setup = 2
                 # 队伍检测
                 case 2:

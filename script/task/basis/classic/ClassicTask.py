@@ -155,7 +155,7 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         该函数会持续循环执行，直到autoFightEvent事件被设置为止
         循环中会按照taskConfig中配置的按键列表依次执行按键点击操作
         """
-        __queue = deque([0, 1, 2, 3, 4, 5, 6, 7, 13])
+        __queue = deque([0, 1, 2, 3, 4, 5, 6, 7, 12, 13])
 
         while not self.autoFightEvent.is_set():
             index = __queue.popleft()

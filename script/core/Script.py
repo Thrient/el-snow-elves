@@ -1,6 +1,6 @@
 import logging
 import time
-from multiprocessing import Process, Value
+from threading import Thread
 from typing import Optional
 
 from script.core.Scheduler import Scheduler
@@ -15,18 +15,19 @@ from script.window.Console import Console
 logger = logging.getLogger(__name__)
 
 
-class Script(Process):
+class Script(Thread):
     def __init__(self, hwnd, queue):
         super().__init__(daemon=True)
         self.hwnd = hwnd
         self.queue = queue
 
-        self._state = Value('i', ScriptState.INIT.value)
+        self._state = ScriptState.INIT
 
         # 组件
-        self.winConsole: Optional[Console] = None
-        self.queueListener: Optional[QueueListener] = None
-        self.scheduler: Optional[Scheduler] = None
+        self.winConsole: Optional[Console] = Console(hwnd=self.hwnd)
+        self.scheduler: Optional[Scheduler] = Scheduler()
+
+        self.scheduler.sched.start()
 
     # 线程/进程安全的属性读写
     @property
@@ -43,42 +44,14 @@ class Script(Process):
 
     def run(self) -> None:
         try:
-            self._initialize_components()
-            self._register_events()
             self._apply_initial_window_style()
 
             api.emit("TASK:SCHEDULER:INIT")
             self._main_loop()
 
         except Exception as e:
-            logger.exception("[HWND:%s] Script 进程异常崩溃: %s", self.hwnd, e)
+            logger.exception("[HWND:%s] Script 线程异常崩溃: %s", self.hwnd, e)
 
-    def _initialize_components(self):
-        self.winConsole = Console(hwnd=self.hwnd)
-        self.queueListener = QueueListener(self.queue, self.hwnd, "script")
-        self.scheduler = Scheduler(queueListener=self.queueListener)
-
-        self.queueListener.start()
-        self.scheduler.sched.start()
-
-    def _register_events(self):
-        # === 1. 生命周期控制（核心） ===
-        api.on("API:SCRIPT:LAUNCH", self.launch)  # 启动整个脚本进程
-        api.on("API:SCRIPT:END", self.end)  # 结束脚本（停止任务）
-        api.on("API:SCRIPT:UNBIND", self.unbind)  # 彻底解绑并退出进程
-
-        # === 2. 运行状态切换 ===
-        api.on("API:SCRIPT:STOP", self.stop)  # 暂停（玩家要手动操作）
-        api.on("API:SCRIPT:RESUME", self.resume)  # 恢复自动运行
-
-        # === 3. 窗口交互控制 ===
-        api.on("API:SCRIPT:LOCK", self.lock)  # 启用点击穿透
-        api.on("API:SCRIPT:UNLOCK", self.unlock)  # 禁用点击穿透
-        api.on("API:SCRIPT:FULLSCREEN", self.fullScreen)  # 进入全屏
-        api.on("API:SCRIPT:TRANSPARENT", self.transparent)  # 设置透明度
-
-        # === 4. 辅助工具 ===
-        api.on("API:SCRIPT:SCREENSHOT", self.screenshot)  # 手动截图
 
     def _apply_initial_window_style(self):
         self.borderless()
@@ -218,9 +191,11 @@ class Script(Process):
 
     def unbind(self):
         """彻底解绑并准备退出进程"""
-        self._set_state(ScriptState.UNBINDING)
-        api.emit("TASK:SCHEDULER:CLEAR")
-        api.emit("API:SCRIPT:TASK:FINISH")
-        self.unlock()
-        self.reset_win()
-        self.transparent(255)
+        try:
+            self._set_state(ScriptState.UNBINDING)
+            api.emit("TASK:SCHEDULER:CLEAR")
+            api.emit("API:SCRIPT:TASK:FINISH")
+        finally:
+            self.reset_win()
+            self.unlock()
+            self.transparent(255)

@@ -50,7 +50,7 @@ class FactionPointsTask(ClassicTask):
                     self.resetLens()
                     self.setup = "等待清扫按钮"
                 case "等待清扫按钮":
-                    if self.event["advance_counter"] >= 8:
+                    if self.event["advance_counter"] >= 14:
                         self.exitInstance()
                         self.setup = "帮派领地"
                         continue

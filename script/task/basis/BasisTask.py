@@ -329,6 +329,16 @@ class BasisTask(ABC):
             return result
         return []
 
+    def exits_not(self, *args, **kwargs):
+        """在指定区域内查找图像模板，支持多次匹配和超时控制"""
+
+        # 遍历所有待查找的图像模板
+        for image in args:
+            result = self.template(image=image, **kwargs)
+            if result:
+                return False
+        return True
+
     def exits_color(self, *args, **kwargs):
 
         if self._finished.is_set():

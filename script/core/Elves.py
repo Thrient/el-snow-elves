@@ -68,7 +68,7 @@ class Elves:
         # 注册窗口解锁事件监听器
         api.on("API:SCRIPT:UNLOCK", self.unlock)
         # 注册设置窗口透明度事件监听器
-        api.on("API:SCRIPT:SET_TRANSPARENT", self.setTransparent)
+        api.on("API:SCRIPT:SET_TRANSPARENT", self.set_transparent)
         # 注册脚本截图事件监听器
         api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
         # 注册配置保存事件处理函数
@@ -100,6 +100,7 @@ class Elves:
         返回值:
             无
         """
+        print(self.window.get_cookies())
         # 遍历所有脚本对象并执行解绑操作
         for script, queueListener in self.winList.values():
             # 调用脚本对象的解绑方法
@@ -115,6 +116,7 @@ class Elves:
             queueListener.terminate()
 
         hot_key_manager.stop()
+
 
     def update(self):
         """更新"""
@@ -254,7 +256,7 @@ class Elves:
             }
         )
 
-    def setTransparent(self, hwnd, transparent):
+    def set_transparent(self, hwnd, transparent):
         """
         设置指定窗口的透明度
 

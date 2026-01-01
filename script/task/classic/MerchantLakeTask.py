@@ -20,7 +20,7 @@ class MerchantLakeTask(ClassicTask):
         self.state_reset_config = {
             "接取行商任务": {
                 "购买状态": True,
-                "任务激活计时器": 0
+                "任务激活计时器": lambda : time.time()
             }
         }
 
@@ -63,14 +63,15 @@ class MerchantLakeTask(ClassicTask):
                         self.setup = "接取行商任务"
                         continue
 
+                    self.touch("按钮队伍自动匹配")
+
                     if 34 < time.time() - self.event["喊话计时器"]:
                         self.event["喊话计时器"] = time.time()
                         self.setup = "行商队员喊话"
                         continue
-
-                    self.touch("按钮队伍自动匹配")
                 case "行商队员喊话":
-                    self.worldShouts(self.taskConfig.merchantLakeWordShout, ordinary=True, connected=True)
+                    self.ordinary_shout(self.taskConfig.merchantLakeWordShout)
+                    self.connect_shout(self.taskConfig.merchantLakeWordShout)
                     self.setup = "队伍人数检测"
                 case "换线中":
                     self.backToMain()

@@ -1,11 +1,19 @@
-"""日志配置模块"""
+"""
+日志配置模块
+"""
 import logging
+import sys
+import io
 from logging.handlers import RotatingFileHandler
 
 from script.config.Settings import settings
 
 
-def setup_logging(log_level=logging.INFO, console_level=logging.DEBUG, enable_file_logging=True):
+def setup_logging(
+    log_level=logging.INFO,
+    console_level=logging.DEBUG,
+    enable_file_logging=True,
+):
     """
     配置日志系统
 
@@ -18,22 +26,32 @@ def setup_logging(log_level=logging.INFO, console_level=logging.DEBUG, enable_fi
     logger = logging.getLogger()
     logger.setLevel(log_level)
 
-    # 清除现有的处理器（避免重复添加）
-    logger.handlers.clear()
+    # 移除已有 handler（避免重复日志）
+    for handler in list(logger.handlers):
+        logger.removeHandler(handler)
 
-    # 创建格式化器
+    # 日志格式
     formatter = logging.Formatter(
         settings.LOG_FORMAT,
-        datefmt=settings.LOG_DATE_FORMAT
+        datefmt=settings.LOG_DATE_FORMAT,
     )
 
-    # 控制台处理器
-    console_handler = logging.StreamHandler()
+    # =========================
+    # 控制台日志（UTF-8，关键）
+    # =========================
+    console_stream = io.TextIOWrapper(
+        sys.stderr.buffer,
+        encoding="utf-8",
+        errors="replace",  # 防止任何编码异常导致程序崩溃
+    )
+    console_handler = logging.StreamHandler(stream=console_stream)
     console_handler.setLevel(console_level)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # 文件处理器（可选）
+    # =========================
+    # 文件日志（可选）
+    # =========================
     if enable_file_logging:
         setup_file_logging(logger, formatter, log_level)
 
@@ -46,22 +64,22 @@ def setup_file_logging(logger, formatter, log_level):
     settings.LOGS_PATH.mkdir(parents=True, exist_ok=True)
 
     try:
-        # 使用 ConcurrentRotatingFileHandler（如果可用）
+        # 多进程安全的日志轮转（如果可用）
         from concurrent_log_handler import ConcurrentRotatingFileHandler
+
         file_handler = ConcurrentRotatingFileHandler(
-            str(settings.LOG_FILE),
+            filename=str(settings.LOG_FILE),
             maxBytes=settings.LOG_MAX_BYTES,
             backupCount=settings.LOG_BACKUP_COUNT,
-            encoding=settings.LOG_ENCODING
+            encoding=settings.LOG_ENCODING,
         )
     except ImportError:
-        # 回退到标准的 RotatingFileHandler
-        print("未找到 cloghandler，使用标准 RotatingFileHandler")
+        # 回退到标准 RotatingFileHandler
         file_handler = RotatingFileHandler(
-            str(settings.LOG_FILE),
+            filename=str(settings.LOG_FILE),
             maxBytes=settings.LOG_MAX_BYTES,
             backupCount=settings.LOG_BACKUP_COUNT,
-            encoding=settings.LOG_ENCODING
+            encoding=settings.LOG_ENCODING,
         )
 
     file_handler.setLevel(log_level)
@@ -71,7 +89,7 @@ def setup_file_logging(logger, formatter, log_level):
     return file_handler
 
 
-def get_logger(name: str = None):
+def get_logger(name: str | None = None) -> logging.Logger:
     """
     获取指定名称的日志记录器
 
@@ -79,6 +97,6 @@ def get_logger(name: str = None):
         name: 日志记录器名称，None 表示根记录器
 
     Returns:
-        logging.Logger: 日志记录器实例
+        logging.Logger
     """
     return logging.getLogger(name) if name else logging.getLogger()
