@@ -59,21 +59,7 @@ class Utils:
             raise ValueError(f"Unsupported color depth: {bits_pixel} bits per pixel")
 
     @staticmethod
-    def getWinRect(hwnd):
-        """
-        获取窗口的精确边界矩形坐标
-
-        参数:
-            hwnd: 窗口句柄，用于标识要获取边界的窗口
-
-        返回值:
-            tuple: 包含四个整数值的元组(left, top, right, bottom)，表示窗口的左、上、右、下边界坐标
-
-        说明:
-            该函数通过调用Windows DWM(Desktop Window Manager) API来获取窗口的实际显示边界，
-            包括窗口的阴影和边框等视觉效果所占用的空间
-        """
-        # 调用DWM API获取窗口属性
+    def get_rect(hwnd):
         f = ctypes.windll.dwmapi.DwmGetWindowAttribute
         rect = wintypes.RECT()
         f(wintypes.HWND(hwnd),

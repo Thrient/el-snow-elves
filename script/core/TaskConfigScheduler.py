@@ -1,21 +1,24 @@
-from script.utils.Api import api
 from script.utils.TaskConfig import TaskConfig
 
 
 class TaskConfigScheduler:
 
     def __init__(self):
-        self.common = TaskConfig()
-        self.config = TaskConfig()
-        api.on("TASK:CONFIG:SCHEDULER:INIT", self.init)
-        api.on("TASK:CONFIG:SCHEDULER:LOAD", self.load)
+        self.config = {}
 
-    def init(self, config, kwargs):
-        self.common = TaskConfig(**kwargs) if config == "当前配置" else TaskConfig().loadConfig(config)
-        self.config = self.common
+    def init(self, hwnd, config, kwargs):
+        cls = TaskConfig(**kwargs) if config == "当前配置" else TaskConfig().loadConfig(config)
+        self.config[hwnd] = {
+            "配置": cls,
+            "当前角色": "characterDefault",
+            "角色": [True, True, True, True, True, True],
+        }
 
-    def load(self, config):
-        self.config = self.common if config == "当前配置" else TaskConfig().loadConfig(config)
+    def setCharacter(self, hwnd, character):
+        self.config[hwnd]["当前角色"] = character
+
+    def loadConfig(self, hwnd):
+        return self.config[hwnd]["配置"]
 
 
 taskConfigScheduler = TaskConfigScheduler()

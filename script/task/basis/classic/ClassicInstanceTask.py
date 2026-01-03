@@ -32,7 +32,7 @@ class ClassicInstanceTask(ClassicBasisTask, ABC):
         from script.core.TaskFactory import TaskFactory
 
         cls = TaskFactory.instance().create(self.taskConfig.model, "界面返回")
-        with cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as obj:
+        with cls(hwnd=self.hwnd) as obj:
             obj.execute()
 
     def startInterconnected(self):

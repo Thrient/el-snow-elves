@@ -12,6 +12,7 @@ from script.task.basis.classic.ClassicBackpackTask import ClassicBackpackTask
 from script.task.basis.classic.ClassicInstanceTask import ClassicInstanceTask
 from script.task.basis.classic.ClassicMapTask import ClassicMapTask
 from script.task.basis.classic.ClassicTeamTask import ClassicTeamTask
+from script.utils.JsApi import js
 from script.utils.Thread import thread
 
 
@@ -36,7 +37,7 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
             if self.exits("标志特殊弹窗_V1", "标志特殊弹窗_V2"):
                 self.touch("按钮确定")
 
-            self.defer()
+            time.sleep(1.5)
 
     def instance(self):
         """
@@ -564,38 +565,6 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         self.logs("打开悬赏")
         self.touch("按钮活动悬赏")
 
-    def arrive(self):
-        """
-        等待到达目标位置的函数
-
-        该函数通过检查特定标志来判断是否正在寻路或加载地图，
-        如果检测到这些状态则继续等待，直到完成或超时。
-
-        参数:
-            self: 类实例对象
-
-        返回值:
-            无返回值
-        """
-        __count = 0
-        __start = time.time()
-        self.logs("等待寻路结束")
-        while not self._finished.is_set():
-            # 检查是否正在寻路中，如果是则继续等待
-            # 检查是否正在加载地图，如果是则继续等待
-            if self.exits("标志寻路中") or self.exits("标志地图加载", "标志地图加载_V1"):
-                __count = 0
-                continue
-            if time.time() - __start > 360:
-                self.logs("寻路超时")
-                break
-            # 限制循环次数，防止无限等待
-            if __count > 6:
-                break
-            __count += 1
-            time.sleep(1)
-        self.logs("寻路结束")
-
     def ordinary_shout(self, text):
         self.backToMain()
         self.click_mouse(pos=(305, 600))
@@ -781,22 +750,16 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         self.touch("按钮物品属性")
         self.defer(count=3)
         # 截取角色信息区域并转换图像格式
-        character = pil_2_cv2(self.winConsole.capture.crop((742, 158, 892, 186)))
+        character = pil_2_cv2(self.windowInteractor.capture.crop((742, 158, 892, 186)))
 
         # 将图像编码为PNG格式的二进制数据
         _, buffer = cv2.imencode('.png', character)
 
         # 将图像数据转换为base64编码并发送到前端界面
-        self.queueListener.emit(
-            {
-                "event": "JS:EMIT",
-                "args": (
-                    "API:CHARACTERS:UPDATE",
-                    {
-                        "character": f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
-                        "hwnd": self.hwnd
-                    }
-                )
-            }
-        )
+
+        js.emit("API:CHARACTERS:UPDATE", {
+            "character": f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
+            "hwnd": self.hwnd
+        })
+
         self.backToMain()

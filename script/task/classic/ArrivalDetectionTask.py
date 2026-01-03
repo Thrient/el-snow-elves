@@ -4,7 +4,7 @@ from script.task.basis.classic.ClassicTask import ClassicTask
 class ArrivalDetectionTask(ClassicTask):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.setup = "位置检测"
+        self.setup = "状态判断"
         # 事件类型定义
         self.event = {
             "到达检测计数": 0
@@ -23,18 +23,6 @@ class ArrivalDetectionTask(ClassicTask):
                 return 0
 
             match self.setup:
-                # 任务结束
-                case "任务结束":
-                    self.logs("到达检测完成")
-                    return 0
-                # 位置检测
-                case "位置检测":
-                    # self.locationDetection()
-                    self.setup = "队伍检测"
-                # 队伍检测
-                case "队伍检测":
-                    # self.teamDetection()
-                    self.setup = "状态判断"
                 case "状态判断":
                     if self.exits("标志寻路中"):
                         self.setup = "寻路中"
@@ -44,7 +32,7 @@ class ArrivalDetectionTask(ClassicTask):
                         continue
                     self.event["到达检测计数"] = self.event["到达检测计数"] + 1
                     if self.event["到达检测计数"] > 8:
-                        self.setup = "任务结束"
+                        return 0
                 case "寻路中":
                     if self.exits("标志寻路中"):
                         continue

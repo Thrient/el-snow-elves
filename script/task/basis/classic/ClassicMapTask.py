@@ -76,5 +76,5 @@ class ClassicMapTask(ClassicBasisTask, ABC):
         from script.core.TaskFactory import TaskFactory
 
         cls = TaskFactory.instance().create(self.taskConfig.model, "到达检测")
-        with cls(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as obj:
+        with cls(hwnd=self.hwnd) as obj:
             obj.execute()

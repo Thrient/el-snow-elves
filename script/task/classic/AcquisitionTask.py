@@ -124,7 +124,7 @@ class AcquisitionTask(ClassicTask):
                     if not self.taskConfig.autoBuyTool:
                         self.setup = "任务结束"
                         continue
-                    self.touch("标志无采集工具")
+                    self.touch("标志无采集工具", post_dealy=2)
                     self.buy("摆摊购买")
                     self.setup = "开始采集"
                 case "开始采集":

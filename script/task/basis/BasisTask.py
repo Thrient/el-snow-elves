@@ -1,28 +1,38 @@
 import logging
+import os
 import random
 import time
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
 from threading import Lock, Event
 
 from airtest.aircv.utils import pil_2_cv2
 from airtest.core.cv import Template
 
 from script.config.Config import Config
+from script.config.Settings import settings
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.Timer import Timer
 from script.functools.functools import delay, repeat, during, verify
 from script.utils.Api import api
+from script.utils.JsApi import js
+from script.window.WindowInteractor import WindowInteractor
 
 logger = logging.getLogger(__name__)
 
 
 class BasisTask(ABC):
-    def __init__(self, hwnd, winConsole, queueListener):
+    CV_POOL = ThreadPoolExecutor(
+        max_workers=max(2, min(6, os.cpu_count()))
+    )
+
+    def __init__(self, hwnd):
         super().__init__()
         self.hwnd = hwnd
-        self.winConsole = winConsole
-        self.queueListener = queueListener
-        self.taskConfig = taskConfigScheduler.config
+
+        self.taskConfig = taskConfigScheduler.loadConfig(self.hwnd)
+        self.windowInteractor = WindowInteractor(self.hwnd)
 
         self.timer = Timer()
 
@@ -35,6 +45,7 @@ class BasisTask(ABC):
         self.event = {
 
         }
+
         # 状态-重置配置表：key=状态值，value=需要重置的变量
         self.state_reset_config = {
 
@@ -60,48 +71,35 @@ class BasisTask(ABC):
                 continue
             self.event[var_name] = value() if callable(value) else value
 
-    def stop(self):
+    def _pause(self):
         """暂停"""
         self.timer.stop()
         self._paused.acquire()
 
-    def resume(self):
+    def _resume(self):
         """恢复"""
         try:
             self.timer.resume()
             self._paused.release()
         except Exception as e:
-            logger.error(e)
+            logger.info(e)
 
-    def finish(self):
+    def _end(self):
         """结束"""
-        self.resume()
+        self._resume()
         self._finished.set()
 
     def __enter__(self):
-        api.on("API:SCRIPT:TASK:STOP", self.stop)
-        api.on("API:SCRIPT:TASK:RESUME", self.resume)
-        api.on("API:SCRIPT:TASK:FINISH", self.finish)
+        api.on(f"API:SCRIPT:TASK:PAUSE:{self.hwnd}", self._paused)
+        api.on(f"API:SCRIPT:TASK:RESUME:{self.hwnd}", self._resume)
+        api.on(f"API:SCRIPT:TASK:END:{self.hwnd}", self._end)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        api.off("API:SCRIPT:TASK:STOP", self.stop)
-        api.off("API:SCRIPT:TASK:RESUME", self.resume)
-        api.off("API:SCRIPT:TASK:FINISH", self.finish)
-        self.finish()
-
-    @abstractmethod
-    def instance(self):
-        """
-        抽象静态方法，用于获取类的实例对象
-
-        该方法是一个抽象方法，需要在子类中实现具体的实例化逻辑。
-        通常用于实现单例模式或其他实例管理机制。
-
-        Returns:
-            返回类的实例对象，具体类型取决于子类的实现
-        """
-        pass
+        api.off(f"API:SCRIPT:TASK:PAUSE:{self.hwnd}", self._paused)
+        api.off(f"API:SCRIPT:TASK:RESUME:{self.hwnd}", self._resume)
+        api.off(f"API:SCRIPT:TASK:END:{self.hwnd}", self._end)
+        self._end()
 
     @abstractmethod
     def execute(self):
@@ -159,30 +157,15 @@ class BasisTask(ABC):
         返回值:
             无
         """
-        self.queueListener.emit(
-            {
-                "event": "JS:EMIT",
-                "args": (
-                    "API:LOGS:ADD",
-                    {
-                        "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
-                        "data": message
-                    }
-                )
-            }
-        )
-        self.queueListener.emit(
-            {
-                "event": "JS:EMIT",
-                "args": (
-                    "API:CHARACTERS:UPDATE",
-                    {
-                        "info": message,
-                        "hwnd": self.hwnd
-                    }
-                )
-            }
-        )
+        js.emit("API:LOGS:ADD", {
+            "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+            "data": message
+        })
+
+        js.emit("API:CHARACTERS:UPDATE", {
+            "info": message,
+            "hwnd": self.hwnd
+        })
 
     def input(self, **kwargs):
         """输入信息"""
@@ -194,7 +177,7 @@ class BasisTask(ABC):
             text = inner_kwargs.get('text')
             # 在停止锁的保护下执行控制台输入操作
             with self._paused:
-                self.winConsole.input(text)
+                self.windowInteractor.input(text)
 
         return _inner(**kwargs)
 
@@ -211,7 +194,7 @@ class BasisTask(ABC):
 
             with self._paused:
                 # 执行窗口控制台的鼠标移动操作
-                self.winConsole.mouse_move(start, end)
+                self.windowInteractor.mouse_move(start, end)
 
         return _inner(**kwargs)
 
@@ -235,21 +218,21 @@ class BasisTask(ABC):
 
             # 定义各种点击模式的处理函数
             def click_first():
-                self.winConsole.click_mouse(positions[0], press_down_delay=press_down_delay)
+                self.windowInteractor.click_mouse(positions[0], press_down_delay=press_down_delay)
 
             def click_last():
-                self.winConsole.click_mouse(positions[-1], press_down_delay=press_down_delay)
+                self.windowInteractor.click_mouse(positions[-1], press_down_delay=press_down_delay)
 
             def click_random():
-                self.winConsole.click_mouse(random.choice(positions), press_down_delay=press_down_delay)
+                self.windowInteractor.click_mouse(random.choice(positions), press_down_delay=press_down_delay)
 
             def click_all():
                 for p in positions:
-                    self.winConsole.click_mouse(p, press_down_delay=press_down_delay)
+                    self.windowInteractor.click_mouse(p, press_down_delay=press_down_delay)
 
             def click_all_reverse():
                 for p in reversed(positions):
-                    self.winConsole.click_mouse(p, press_down_delay=press_down_delay)
+                    self.windowInteractor.click_mouse(p, press_down_delay=press_down_delay)
 
             # 模式映射字典（键：模式名称，值：对应处理函数）
             mode_handlers = {
@@ -274,12 +257,12 @@ class BasisTask(ABC):
         @repeat()
         @delay(post_delay=self.taskConfig.delay)
         def _inner(**inner_kwargs):
-            key = inner_kwargs.get('key', None)
+            key = inner_kwargs.get('key', "")
             press_down_delay = inner_kwargs.get('press_down_delay', 0)
 
             # 执行按键操作
             with self._paused:
-                self.winConsole.click_key(key=key, press_down_delay=press_down_delay)
+                self.windowInteractor.click_key(key=key, press_down_delay=press_down_delay)
 
         return _inner(**kwargs)
 
@@ -290,14 +273,10 @@ class BasisTask(ABC):
 
         @during(seconds=Config.OVERTIME)
         def _inner(**inner_kwargs):
-
-            for image in args:
-                results = self.template(image=image, **inner_kwargs)
-                if not results:
-                    continue
+            results = self.template(*args, **inner_kwargs)
+            if results:
                 self.click_mouse(pos=results, **kwargs)
-                return results
-            return []
+            return results
 
         return _inner(**kwargs)
 
@@ -308,13 +287,7 @@ class BasisTask(ABC):
 
         @during(seconds=Config.OVERTIME)
         def _inner(**inner_kwargs):
-
-            for image in args:
-                result = self.template(image=image, **inner_kwargs)
-                if not result:
-                    continue
-                return result
-            return []
+            return self.template(*args, **inner_kwargs)
 
         return _inner(**kwargs)
 
@@ -322,22 +295,16 @@ class BasisTask(ABC):
         """在指定区域内查找图像模板，支持多次匹配和超时控制"""
 
         # 遍历所有待查找的图像模板
-        for image in args:
-            result = self.template(image=image, **kwargs)
-            if not result:
-                continue
-            return result
-        return []
+        return self.template(*args, **kwargs)
 
     def exits_not(self, *args, **kwargs):
         """在指定区域内查找图像模板，支持多次匹配和超时控制"""
 
         # 遍历所有待查找的图像模板
-        for image in args:
-            result = self.template(image=image, **kwargs)
-            if result:
-                return False
-        return True
+        result = self.template(*args, **kwargs)
+        if not result:
+            return True
+        return False
 
     def exits_color(self, *args, **kwargs):
 
@@ -359,7 +326,7 @@ class BasisTask(ABC):
                     return False
 
                 # PIL转OpenCV
-                img = pil_2_cv2(self.winConsole.capture)
+                img = pil_2_cv2(self.windowInteractor.capture)
                 # # 复制原图用于绘制（不修改原图）
                 # img_marked = img.copy()
                 #
@@ -414,7 +381,7 @@ class BasisTask(ABC):
                     return True
 
                 # PIL转OpenCV
-                img = pil_2_cv2(self.winConsole.capture)
+                img = pil_2_cv2(self.windowInteractor.capture)
                 # # 复制原图用于绘制（不修改原图）
                 # img_marked = img.copy()
                 #
@@ -455,28 +422,36 @@ class BasisTask(ABC):
             return []
 
         @verify()
-        def _inner(**inner_kwargs):
+        def _inner(*inner_args, **inner_kwargs):
             try:
                 with self._paused:
-                    image = inner_kwargs.get('image', None)
                     box = inner_kwargs.get('box', Config.BOX)
                     find_all = inner_kwargs.get('find_all', False)
-                    threshold = Config.THRESHOLD_IMAGE[image] \
-                        if Config.THRESHOLD_IMAGE.get(image) \
-                        else inner_kwargs.get('threshold', Config.THRESHOLD)
+                    screen = pil_2_cv2(self.windowInteractor.capture.crop(box))
 
-                    screen = pil_2_cv2(self.winConsole.capture.crop(box))
-                    template = Template(
-                        f"resources/images/{self.taskConfig.model}/{image}.bmp",
-                        threshold=threshold
-                    )
-                    results = template.match_all_in(screen) if find_all else template.match_in(screen)
-                    logger.info(f"{image}: {results}")
-                    if results is None:
-                        return []
-                    if not isinstance(results, list):
-                        return [(box[0] + results[0], box[1] + results[1])]
 
+
+
+                    futures = [
+                        self.CV_POOL.submit(
+                            self.cv_match_worker,
+                            screen,
+                            find_all,
+                            f"resources/images/{self.taskConfig.model}/{img}.bmp",
+                            threshold= inner_kwargs.get('threshold') if inner_kwargs.get('threshold') is not None else settings.THRESHOLD_IMAGE.get(img, settings.THRESHOLD)
+                        )
+                        for img in inner_args
+                    ]
+
+                    results = []
+
+                    for future in as_completed(futures):
+                        result = future.result()
+                        if result is None:
+                            continue
+                        results += result
+
+                    logging.info( f"{inner_args}:{results}")
                     return sorted([
                         (box[0] + result['result'][0], box[1] + result['result'][1])
                         for result in results
@@ -484,6 +459,22 @@ class BasisTask(ABC):
 
             except Exception as e:
                 logging.error(e)
-                return []
 
-        return _inner(**kwargs)
+
+        return _inner(*args, **kwargs)
+
+    @staticmethod
+    @lru_cache(maxsize=512)
+    def _get_template(path, threshold):
+        return Template(path, threshold=threshold)
+
+    def cv_match_worker(self, screen, find_all, path, threshold):
+        # return self._get_template(path, threshold).match_all_in(screen)
+        if find_all:
+            return self._get_template(path, threshold).match_all_in(screen)
+        result = self._get_template(path, threshold).match_in(screen)
+        if result:
+            return [{"result": result}]
+        return []
+
+

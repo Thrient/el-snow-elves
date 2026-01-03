@@ -1,5 +1,4 @@
 import logging
-import multiprocessing as mp
 import os
 import time
 
@@ -12,7 +11,6 @@ from script.core.Url import Url
 from script.functools.functools import delay
 from script.utils.Api import api
 from script.utils.JsApi import js
-from script.utils.QueueListener import QueueListener
 from script.utils.TaskConfig import TaskConfig
 from script.utils.Utils import Utils
 
@@ -100,23 +98,11 @@ class Elves:
         返回值:
             无
         """
-        print(self.window.get_cookies())
         # 遍历所有脚本对象并执行解绑操作
-        for script, queueListener in self.winList.values():
-            # 调用脚本对象的解绑方法
-            queueListener.emit(
-                {
-                    "event": "API:SCRIPT:UNBIND",
-                    "args": (
-
-                    )
-                }
-            )
-
-            queueListener.terminate()
+        for script in self.winList.values():
+            script.unbind()
 
         hot_key_manager.stop()
-
 
     def update(self):
         """更新"""
@@ -134,18 +120,9 @@ class Elves:
         # 检查窗口句柄是否存在于窗口列表中
         if hwnd not in self.winList:
             return
-        script, queueListener = self.winList.get(hwnd)
+        script = self.winList.get(hwnd)
 
-        queueListener.emit(
-            {
-                "event": "API:SCRIPT:UNBIND",
-                "args": (
-
-                )
-            }
-        )
-
-        queueListener.terminate()
+        script.unbind()
 
         # 从窗口列表中删除该窗口句柄对应的项
         del self.winList[hwnd]
@@ -245,16 +222,9 @@ class Elves:
         if hwnd not in self.winList:
             return
         # 获取窗口对应的脚本并解锁执行
-        script, queueListener = self.winList.get(hwnd)
+        script = self.winList.get(hwnd)
 
-        queueListener.emit(
-            {
-                "event": "API:SCRIPT:UNLOCK",
-                "args": (
-
-                )
-            }
-        )
+        script.unlock()
 
     def set_transparent(self, hwnd, transparent):
         """
@@ -295,16 +265,9 @@ class Elves:
         # 检查窗口是否在窗口列表中
         if hwnd not in self.winList:
             return
-        script, queueListener = self.winList.get(hwnd)
+        script = self.winList.get(hwnd)
 
-        queueListener.emit(
-            {
-                "event": "API:SCRIPT:SCREENSHOT",
-                "args": (
-
-                )
-            }
-        )
+        script.screenshot()
 
     def search(self):
         """
@@ -319,15 +282,10 @@ class Elves:
             self.launch_script(hwnd)
 
     def launch_script(self, hwnd):
-        queue = mp.Queue()
-        queueListener = QueueListener(queue, hwnd, "elves")
-
-        script = Script(hwnd=hwnd, queue=queue)
+        script = Script(hwnd=hwnd)
         Utils.sendEmit(self.window, 'API:CHARACTERS:ADD', state='初始化', hwnd=hwnd, config="当前配置")
-        self.winList[hwnd] = [script, queueListener]
+        self.winList[hwnd] = script
 
-        # 启动监听器
-        queueListener.start()
         # 运行脚本
         script.start()
 
@@ -337,16 +295,9 @@ class Elves:
             return
 
         # 创建新的脚本实例并添加到窗口列表中
-        script, queueListener = self.winList.get(hwnd)
+        script = self.winList.get(hwnd)
 
-        queueListener.emit(
-            {
-                "event": "API:SCRIPT:END",
-                "args": (
-
-                )
-            }
-        )
+        script.end()
 
     def start(self, hwnd, config, task, parameter):
         """启动"""
@@ -356,19 +307,10 @@ class Elves:
             return
 
         # 创建新的脚本实例并添加到窗口列表中
-        script, queueListener = self.winList[hwnd]
+        script = self.winList[hwnd]
 
-        # 通过队列向子进程发送启动命令
-        queueListener.emit(
-            {
-                'event': 'API:SCRIPT:LAUNCH',
-                'args': (
-                    config,
-                    task,
-                    parameter
-                )
-            }
-        )
+        script.launch(config, task, parameter)
+
 
     @delay(pre_delay=2000)
     def bind(self, config):

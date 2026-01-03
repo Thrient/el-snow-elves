@@ -1,31 +1,33 @@
 import queue
 
 from script.core.TaskConfigScheduler import taskConfigScheduler
-from script.utils.Api import api
 
 
 class TaskScheduler:
 
-    def __init__(self):
+    def __init__(self, hwnd):
         self.counter = 0
+        self.hwnd = hwnd
         self.queue = queue.PriorityQueue()
-        api.on("TASK:SCHEDULER:CLEAR", self.clear)
-        api.on("TASK:SCHEDULER:INIT", self.init)
 
-    def init(self, start_task=""):
+    def init(self, starter):
         self.clear()
-        if len(taskConfigScheduler.common.switchCharacterList) == 0:
+
+        config = taskConfigScheduler.config[self.hwnd]["配置"]
+
+        if len(config.switchCharacterList) == 0:
             self.add(0, "切换角色")
-            if start_task == "":
-                for task in [task["data"] for task in taskConfigScheduler.common.executeList]:
+            if starter is not None:
+                for task in [task["data"] for task in config.executeList][[task["data"] for task in config.executeList].index(starter):]:
                     self.add(0, task)
             else:
-                for task in [task["data"] for task in taskConfigScheduler.common.executeList][[task["data"] for task in taskConfigScheduler.common.executeList].index(start_task):] :
+                for task in [task["data"] for task in config.executeList]:
                     self.add(0, task)
+
         else:
-            for _ in taskConfigScheduler.common.switchCharacterList:
+            for _ in config.switchCharacterList:
                 self.add(0, "切换角色")
-                for task in [task["data"] for task in taskConfigScheduler.common.executeList]:
+                for task in [task["data"] for task in config.executeList]:
                     self.add(0, task)
 
     def clear(self):
@@ -54,5 +56,3 @@ class TaskScheduler:
         _, _, task = self.queue.get()
         return task
 
-
-taskScheduler = TaskScheduler()

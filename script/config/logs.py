@@ -26,6 +26,9 @@ def setup_logging(
     logger = logging.getLogger()
     logger.setLevel(log_level)
 
+    airtest_logger = logging.getLogger("airtest")
+    airtest_logger.setLevel(logging.ERROR)
+
     # 移除已有 handler（避免重复日志）
     for handler in list(logger.handlers):
         logger.removeHandler(handler)

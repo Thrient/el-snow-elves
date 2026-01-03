@@ -1,57 +1,56 @@
 import logging
 import time
 from threading import Thread
-from typing import Optional
 
 from script.core.Scheduler import Scheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.core.TaskFactory import TaskFactory
-from script.core.TaskScheduler import taskScheduler
+from script.core.TaskScheduler import TaskScheduler
 from script.state.ScriptState import ScriptState
 from script.utils.Api import api
-from script.utils.QueueListener import QueueListener
+from script.utils.JsApi import js
 from script.window.Console import Console
+from script.window.WindowInteractor import WindowInteractor
 
 logger = logging.getLogger(__name__)
 
 
 class Script(Thread):
-    def __init__(self, hwnd, queue):
+    def __init__(self, hwnd):
         super().__init__(daemon=True)
         self.hwnd = hwnd
-        self.queue = queue
 
         self._state = ScriptState.INIT
 
         # 组件
-        self.winConsole: Optional[Console] = Console(hwnd=self.hwnd)
-        self.scheduler: Optional[Scheduler] = Scheduler()
+        self.taskScheduler = TaskScheduler(self.hwnd)
+        self.winConsole: Console = Console(hwnd=self.hwnd)
+        self.scheduler: Scheduler = Scheduler()
 
-        self.scheduler.sched.start()
+        # self.scheduler.sched.start()
 
     # 线程/进程安全的属性读写
     @property
     def state(self) -> ScriptState:
-        return ScriptState(self._state.value)
+        return ScriptState(self._state)
 
     def _set_state(self, state: ScriptState):
         old = self.state
-        self._state.value = state.value
+        self._state = state
         logger.debug("Script[%s] 状态变更 %s → %s", self.hwnd, old.name, state.name)
 
     def _is_state(self, *states: ScriptState) -> bool:
         return self.state in states
 
-    def run(self) -> None:
+    def run(self):
         try:
             self._apply_initial_window_style()
+            taskConfigScheduler.init(self.hwnd, "默认配置", {})
+            self.taskScheduler.init(None)
 
-            api.emit("TASK:SCHEDULER:INIT")
             self._main_loop()
-
         except Exception as e:
             logger.exception("[HWND:%s] Script 线程异常崩溃: %s", self.hwnd, e)
-
 
     def _apply_initial_window_style(self):
         self.borderless()
@@ -60,16 +59,17 @@ class Script(Thread):
 
     def _main_loop(self):
         while not self._is_state(ScriptState.UNBINDING):
-            if not self._is_state(ScriptState.RUNNING, ScriptState.INIT):
-                time.sleep(0.5)
+            if not self._is_state(ScriptState.RUNNING, ScriptState.INIT, ScriptState.NOTASK):
                 continue
 
-            task = taskScheduler.pop()
+            task = self.taskScheduler.pop()
             if task is None:
-                self._update_character_state("无任务")
-                time.sleep(0.5)
+                if not self._is_state(ScriptState.NOTASK):
+                    self._set_state(ScriptState.NOTASK)
+                    self._update_character_state("无任务")
+                time.sleep(1)
                 continue
-
+            self._set_state(ScriptState.RUNNING)
             self._execute_task(task)
 
     def _execute_task(self, task_name: str):
@@ -77,30 +77,25 @@ class Script(Thread):
         self._log_task_start(task_name)
 
         try:
-            task_instance = TaskFactory.instance().create(taskConfigScheduler.common.model, task_name)
-            if task_instance is None:
+            cls = TaskFactory.instance().create(taskConfigScheduler.config[self.hwnd]["配置"].model, task_name)
+            if cls is None:
                 logger.warning("任务 %s 未注册或创建失败", task_name)
                 return
 
-            with task_instance(hwnd=self.hwnd, winConsole=self.winConsole, queueListener=self.queueListener) as obj:
+            with cls(hwnd=self.hwnd) as obj:
                 obj.execute()
 
         except Exception as e:
             logger.exception(f"执行任务 {task_name} 失败: {e}")
 
     def _update_character_state(self, state: str):
-        self.queueListener.emit({
-            "event": "JS:EMIT",
-            "args": ("API:CHARACTERS:UPDATE", {"hwnd": self.hwnd, "state": state})
-        })
+        js.emit("API:CHARACTERS:UPDATE", {"hwnd": self.hwnd, "state": state})
 
-    def _log_task_start(self, task_name: str):
-        self.queueListener.emit({
-            "event": "JS:EMIT",
-            "args": ("API:LOGS:ADD", {
-                "time": time.strftime('%Y-%m-%d %H:%M:%S'),
-                "data": f"{task_name} 开始"
-            })
+    @staticmethod
+    def _log_task_start(task_name: str):
+        js.emit("API:LOGS:ADD", {
+            "time": time.strftime('%Y-%m-%d %H:%M:%S'),
+            "data": f"{task_name} 开始"
         })
 
     def launch(self, config, task, parameter):
@@ -111,15 +106,14 @@ class Script(Thread):
         self._set_state(ScriptState.RUNNING)
         self.lock()
 
-        api.emit("TASK:CONFIG:SCHEDULER:INIT", config, parameter)
-        api.emit("SWITCH:CHARACTER:SCHEDULER:CLEAR")
-        api.emit("TASK:SCHEDULER:INIT", task)
+        taskConfigScheduler.init(self.hwnd, config, parameter)
+        self.taskScheduler.init(task)
 
     def end(self):
         self._set_state(ScriptState.STOPPED)
         self.unlock()
-        api.emit("TASK:SCHEDULER:CLEAR")
-        api.emit("API:SCRIPT:TASK:FINISH")
+        self.taskScheduler.clear()
+        api.emit(f"API:SCRIPT:TASK:END:{self.hwnd}")
 
     def stop(self):
         self._set_state(ScriptState.PAUSED)
@@ -180,9 +174,7 @@ class Script(Thread):
 
     def screenshot(self):
         try:
-            image = self.winConsole.capture
-            if not image:
-                return
+            image = WindowInteractor(self.hwnd).capture
             filename = f"temp/images/{time.time()}.bmp"
             image.save(filename)
             logger.info("截图保存 → %s", filename)
@@ -191,11 +183,9 @@ class Script(Thread):
 
     def unbind(self):
         """彻底解绑并准备退出进程"""
-        try:
-            self._set_state(ScriptState.UNBINDING)
-            api.emit("TASK:SCHEDULER:CLEAR")
-            api.emit("API:SCRIPT:TASK:FINISH")
-        finally:
-            self.reset_win()
-            self.unlock()
-            self.transparent(255)
+        self._set_state(ScriptState.UNBINDING)
+        self.taskScheduler.clear()
+        api.emit(f"API:SCRIPT:TASK:END:{self.hwnd}")
+        self.reset_win()
+        self.unlock()
+        self.transparent(255)

@@ -42,7 +42,7 @@ def during(seconds: Union[int, float, None] = 1.0):
                 result = func(*args, **kwargs)
                 if result:
                     return result
-                time.sleep(0.05)
+                time.sleep(0.5)
             return None
 
         return wrapper

@@ -10,8 +10,6 @@ class JsApi:
         """初始化"""
         self.window = window
 
-        api.on("JS:EMIT", self.emit)
-
     def emit(self, event, kwargs):
         """发送信息"""
         Utils.sendEmit(self.window, event=event, callback=self.callback, **kwargs)

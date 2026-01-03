@@ -1,38 +1,35 @@
-from script.core.SwitchCharacterScheduler import switchCharacterScheduler
 from script.core.TaskConfigScheduler import taskConfigScheduler
 from script.task.basis.classic.ClassicTask import ClassicTask
-from script.utils.Api import api
 
 
 class SwitchCharacterTask(ClassicTask):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.config = taskConfigScheduler.config[self.hwnd]["配置"]
 
     def execute(self):
-        if "characterOne" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterOne:
-            switchCharacterScheduler.switchCharacterOne = False
+        if "characterOne" in self.config.switchCharacterList and taskConfigScheduler.config[self.hwnd]["角色"][0]:
             self.switchCharacterOne()
-            return
-        if "characterTwo" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterTwo:
-            switchCharacterScheduler.switchCharacterTwo = False
+            taskConfigScheduler.config[self.hwnd]["角色"][0] = False
+            taskConfigScheduler.setCharacter(self.hwnd, "characterOne")
+        elif "characterTwo" in self.config.switchCharacterList and taskConfigScheduler.config[self.hwnd]["角色"][1]:
             self.switchCharacterTwo()
-            return
-        if "characterThree" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterThree:
-            switchCharacterScheduler.switchCharacterThree = False
+            taskConfigScheduler.config[self.hwnd]["角色"][1] = False
+            taskConfigScheduler.setCharacter(self.hwnd, "characterTwo")
+        elif "characterThree" in self.config.switchCharacterList and taskConfigScheduler.config[self.hwnd]["角色"][2]:
             self.switchCharacterThree()
-            return
-        if "characterFour" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterFour:
-            switchCharacterScheduler.switchCharacterFour = False
+            taskConfigScheduler.config[self.hwnd]["角色"][2] = False
+            taskConfigScheduler.setCharacter(self.hwnd, "characterThree")
+        elif "characterFour" in self.config.switchCharacterList and taskConfigScheduler.config[self.hwnd]["角色"][3]:
             self.switchCharacterFour()
-            return
-        if "characterFive" in taskConfigScheduler.common.switchCharacterList and switchCharacterScheduler.switchCharacterFive:
-            switchCharacterScheduler.switchCharacterFive = False
+            taskConfigScheduler.config[self.hwnd]["角色"][3] = False
+            taskConfigScheduler.setCharacter(self.hwnd, "characterFour")
+        elif "characterFive" in self.config.switchCharacterList and taskConfigScheduler.config[self.hwnd]["角色"][4]:
             self.switchCharacterFive()
-
-            return
-        if all(switchCharacterScheduler.__list__):
-            switchCharacterScheduler.switchCharacterDefault = False
+            taskConfigScheduler.config[self.hwnd]["角色"][4] = False
+            taskConfigScheduler.setCharacter(self.hwnd, "characterFive")
+        elif all(taskConfigScheduler.config[self.hwnd]["角色"]):
             self.switchCharacterDefault()
-            api.emit("TASK:CONFIG:SCHEDULER:LOAD", "当前配置")
-            return
+            taskConfigScheduler.config[self.hwnd]["角色"][5] = False
+            taskConfigScheduler.setCharacter(self.hwnd, "characterDefault")
