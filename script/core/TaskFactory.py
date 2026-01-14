@@ -29,6 +29,7 @@ from script.task.classic.LouLanDailyTask import LouLanDailyTask
 from script.task.classic.LouLanGuardTask import LouLanGuardTask
 from script.task.classic.MansionCheckInTask import MansionCheckInTask
 from script.task.classic.MerchantLakeTask import MerchantLakeTask
+from script.task.classic.NoTask import NoTask
 from script.task.classic.PostBountyTask import PostBountyTask
 from script.task.classic.RedressingInjusticesTask import RedressingInjusticesTask
 from script.task.classic.RewardsClaimTask import RewardsClaimTask
@@ -125,6 +126,7 @@ class TaskFactory:
         self.register("classic", "扩展背包", AutoExpandBackpackTask)
         self.register("classic", "烽火雁门关", BonfireBarrierTask)
         self.register("classic", "帮派积分跳舞", FactionPointsDanceTask)
+        self.register("classic", "无任务", NoTask)
         self.register("classic", "切换角色", SwitchCharacterTask)
 
     def register(self, model, name, task):

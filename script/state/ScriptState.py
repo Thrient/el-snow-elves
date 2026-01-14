@@ -9,7 +9,6 @@ class ScriptState(IntEnum):
     PAUSED     = 3  # 暂停
     FULLSCREEN = 4  # 全屏模式
     UNBINDING  = 5  # 解绑
-    NOTASK     = 6  # 无任务
 
     def __str__(self):
         return self.name

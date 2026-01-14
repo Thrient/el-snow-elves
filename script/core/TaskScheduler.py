@@ -52,7 +52,7 @@ class TaskScheduler:
 
     def pop(self):
         if self.queue.empty():
-            return None
+            return "无任务"
         _, _, task = self.queue.get()
         return task
 

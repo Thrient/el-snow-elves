@@ -48,7 +48,7 @@ class Url:
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
         })
 
-        for method in (session.head, session.get):
+        for method in (session.get, session.head):
             start_time = time.perf_counter()
             try:
                 # 正确传递参数的方式：url 作为关键字参数

@@ -31,7 +31,6 @@ class VientianeLikesTask(ClassicTask):
                 # 位置检测
                 case "位置检测":
                     self.areaGo("金陵")
-                    self.coordGo(x=324, y=384)
                     self.resetLens()
                     self.setup = "队伍检测"
                 # 队伍检测

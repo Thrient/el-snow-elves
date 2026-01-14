@@ -38,7 +38,7 @@ class MerchantLakeTask(ClassicTask):
                     return 0
                 # 位置检测
                 case "位置检测":
-                    self.instance()
+                    self.exitInstance()
                     self.areaGo("江南")
                     self.setup = "队伍检测"
                 # 队伍检测
@@ -90,7 +90,7 @@ class MerchantLakeTask(ClassicTask):
                         self.setup = "队伍人数检测"
                         continue
 
-                    self.touch("按钮江湖行商确认发起")
+                    self.touch("按钮江湖行商确认发起", )
                     self.touch("按钮江湖行商货单购买")
 
                     # 等待全部队员准备
@@ -98,7 +98,10 @@ class MerchantLakeTask(ClassicTask):
                         self.backToMain()
                         self.setup = "任务结束"
                         continue
-                    self.defer(count=20)
+                    if not self.wait("标志行商任务接取成功", seconds=15):
+                        self.backToMain()
+                        self.setup = "换线中"
+                        continue
                     self.setup = "等待任务完成"
                 case "任务检测":
                     if not self.activatedTask("按钮任务行商", model="江湖"):

@@ -50,6 +50,16 @@ class ClassicTask(ClassicTeamTask, ClassicInstanceTask, ClassicBackpackTask, Cla
         """
         return self
 
+
+    # 打开窗口
+    def openProudSword(self):
+        """打开傲剑"""
+        if self.exits("界面傲剑"):
+            return
+        self.openActivity()
+        self.touch("按钮活动纷争")
+        self.touch("按钮活动傲剑", y=45)
+
     def resetLens(self):
         """
             重置镜头

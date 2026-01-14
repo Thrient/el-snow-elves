@@ -59,22 +59,13 @@ class Script(Thread):
 
     def _main_loop(self):
         while not self._is_state(ScriptState.UNBINDING):
-            if not self._is_state(ScriptState.RUNNING, ScriptState.INIT, ScriptState.NOTASK):
+            if not self._is_state(ScriptState.RUNNING, ScriptState.INIT):
                 continue
 
-            task = self.taskScheduler.pop()
-            if task is None:
-                if not self._is_state(ScriptState.NOTASK):
-                    self._set_state(ScriptState.NOTASK)
-                    self._update_character_state("无任务")
-                time.sleep(1)
-                continue
-            self._set_state(ScriptState.RUNNING)
-            self._execute_task(task)
+            self._execute_task(self.taskScheduler.pop())
 
     def _execute_task(self, task_name: str):
         self._update_character_state(task_name)
-        self._log_task_start(task_name)
 
         try:
             cls = TaskFactory.instance().create(taskConfigScheduler.config[self.hwnd]["配置"].model, task_name)
@@ -90,13 +81,6 @@ class Script(Thread):
 
     def _update_character_state(self, state: str):
         js.emit("API:CHARACTERS:UPDATE", {"hwnd": self.hwnd, "state": state})
-
-    @staticmethod
-    def _log_task_start(task_name: str):
-        js.emit("API:LOGS:ADD", {
-            "time": time.strftime('%Y-%m-%d %H:%M:%S'),
-            "data": f"{task_name} 开始"
-        })
 
     def launch(self, config, task, parameter):
         if not self._is_state(ScriptState.STOPPED, ScriptState.INIT):
