@@ -190,6 +190,7 @@ class FlowEngine(Thread):
     def run(self):
         while not self._running.is_set() and self.step_name and self.step_name != "任务结束":
             step_def = self.process_step(self.step_name)
+            t0 = time.time()
 
             self._run_extra(step_def, "prefix")
             result = self._run_action(step_def)
@@ -199,5 +200,8 @@ class FlowEngine(Thread):
             if result:
                 self._run_extra(step_def, "success_extra")
 
+            prev = self.step_name
             self.step_name = self.process_result(result, step_def)
+            elapsed = (time.time() - t0) * 1000
+            print(f"[{self.name}] {prev} → {self.step_name} | result={len(result) if isinstance(result, list) else result} | vars={self.vp.variables} | {elapsed:.0f}ms")
         self._monitor_stop_event.set()
