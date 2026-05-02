@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 from threading import Thread, Event
 
 from script.config.Setting import PROJECT_ROOT
@@ -156,30 +157,33 @@ class FlowEngine(Thread):
     def loop(self):
         Thread(target=self._monitor_thread, daemon=True).start()
 
+    def _run_extra(self, step_def, key):
+        """执行附加子流程"""
+        for name in self._expand_subflow_list(step_def.get(key, [])):
+            self.run_subflow(name)
+
+    def _run_action(self, step_def):
+        retry = step_def.get("retry", {})
+        for attempt in range(retry.get("times", 1)):
+            result = self.action(self._hwnd, step_def)
+            if result:
+                return result
+            self._run_extra(step_def, "failure_extra")
+            time.sleep(retry.get("interval", 0) / 1000)
+
+        return []
+
     def run(self):
         while not self._running.is_set() and self.step_name and self.step_name != "任务结束":
             step_def = self.process_step(self.step_name)
 
-            # 执行前缀子流程
-            for prefix_step in self._expand_subflow_list(step_def.get("prefix", [])):
-                self.run_subflow(prefix_step)
-
-            # 执行主操作
-            result = self.action(self._hwnd, step_def)
-
-            # 应用变量
+            self._run_extra(step_def, "prefix")
+            result = self._run_action(step_def)
             self.vp.apply_set(step_def, result)
+            self._run_extra(step_def, "postfix")
 
-            # 执行后缀子流程
-            for postfix_step in self._expand_subflow_list(step_def.get("postfix", [])):
-                self.run_subflow(postfix_step)
+            if result:
+                self._run_extra(step_def, "success_extra")
 
-            # 执行失败附加子流程
-            if not result:
-                for failure_extra in self._expand_subflow_list(step_def.get("failure_extra", [])):
-                    self.run_subflow(failure_extra)
-            else:
-                for success_extra in self._expand_subflow_list(step_def.get("success_extra", [])):
-                    self.run_subflow(success_extra)
             self.step_name = self.process_result(result, step_def)
         self._monitor_stop_event.set()
