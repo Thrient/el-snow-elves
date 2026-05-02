@@ -32,6 +32,7 @@ class FlowEngine(Thread):
         self._monitor_interval = monitors.get("interval", 1)
         self._monitor_stop_event = Event()
         self._task = BaseTask()
+        self._validate()
 
     def _load_common(self):
         """
@@ -64,6 +65,50 @@ class FlowEngine(Thread):
                 base_common.update(work_common)
 
         return base_common
+
+    def _validate(self):
+        """校验工作流定义，发现错误时打印警告或抛出异常"""
+        errors = []
+
+        if not isinstance(self.work.get("steps", {}), dict):
+            errors.append("'steps' 必须为字典")
+
+        allowed_keys = {"action", "params", "prefix", "postfix", "success", "failure", "next",
+                        "set", "retry", "extends", "failure_extra", "success_extra"}
+        valid_names = {*self._all_steps, "任务结束"}
+
+        for name, step in self._all_steps.items():
+            if not isinstance(step, dict):
+                errors.append(f"步骤 '{name}' 不是字典")
+                continue
+            if "action" not in step:
+                errors.append(f"步骤 '{name}' 缺少 'action'")
+
+            for key, expected in [("prefix", list), ("postfix", list),
+                                  ("failure_extra", list), ("success_extra", list),
+                                  ("params", dict), ("retry", dict)]:
+                val = step.get(key)
+                if val is not None and not isinstance(val, expected):
+                    errors.append(f"步骤 '{name}' 的 '{key}' 应为 {expected.__name__}")
+
+            for key in ("success", "failure", "next"):
+                target = step.get(key)
+                if target and target not in valid_names:
+                    errors.append(f"步骤 '{name}' 的 '{key}' 指向未定义的 '{target}'")
+
+            base = step.get("extends")
+            if base and base not in self._all_steps:
+                errors.append(f"步骤 '{name}' extends 的 '{base}' 未定义")
+
+            if "retry" in step and not isinstance(step["retry"].get("times"), (int, type(None))):
+                errors.append(f"步骤 '{name}' retry.times 应为整数")
+
+            unknown = set(step) - allowed_keys
+            if unknown:
+                print(f"[警告] 步骤 '{name}' 含未知字段: {unknown}")
+
+        if errors:
+            raise ValueError("工作流定义错误:\n  " + "\n  ".join(errors))
 
     def process_step(self, name):
         try:
