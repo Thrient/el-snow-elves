@@ -1,0 +1,15 @@
+{
+  "values": {
+    "背包": "B"
+  },
+  "layout": [
+    [
+      {
+        "span": 1,
+        "text": "背包:",
+        "model": "el-key-input",
+        "store": "背包"
+      }
+    ]
+  ]
+}

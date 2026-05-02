@@ -1,0 +1,280 @@
+import re
+import ast
+import operator
+from abc import ABC, abstractmethod
+
+
+# ---------- 安全表达式求值器 ----------
+_EXPR_CACHE = {}
+
+
+class SafeExpressionEvaluator:
+    """安全求值 AST 表达式，仅允许常量、变量、基本算术和比较运算。"""
+    _BIN_OPS = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.FloorDiv: operator.floordiv,
+        ast.Mod: operator.mod,
+        ast.Pow: operator.pow,
+    }
+    _UNARY_OPS = {
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+    }
+
+    def __init__(self, variables):
+        self.variables = variables
+
+    def evaluate(self, expr):
+        if expr in _EXPR_CACHE:
+            return self._eval_node(_EXPR_CACHE[expr].body)
+
+        try:
+            tree = ast.parse(expr, mode='eval')
+        except SyntaxError as e:
+            raise ValueError("表达式语法错误: {}".format(expr)) from e
+
+        # 验证节点安全性（不依赖 NodeVisitor）
+        self._validate_node(tree.body)
+        _EXPR_CACHE[expr] = tree
+        # 求值
+        return self._eval_node(tree.body)
+
+    def _validate_node(self, node):
+        """递归验证节点是否安全（仅允许白名单节点类型）"""
+        allowed_types = (
+            ast.Constant, ast.Name, ast.BinOp, ast.UnaryOp, ast.Compare,
+            ast.Subscript, ast.Attribute,
+            ast.Load, ast.Store,
+            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow,
+            ast.USub, ast.UAdd,
+            ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
+        )
+        if not isinstance(node, allowed_types):
+            raise ValueError("表达式中包含不安全的节点类型: {}".format(type(node).__name__))
+
+        # 递归检查子节点
+        for child in ast.iter_child_nodes(node):
+            self._validate_node(child)
+
+    def _eval_node(self, node):
+        if isinstance(node, ast.Constant):
+            return node.value
+        if isinstance(node, ast.Name):
+            if node.id in self.variables:
+                return self.variables[node.id]
+            raise NameError("未定义变量: {}".format(node.id))
+        if isinstance(node, ast.BinOp):
+            left = self._eval_node(node.left)
+            right = self._eval_node(node.right)
+            op_type = type(node.op)
+            if op_type in self._BIN_OPS:
+                return self._BIN_OPS[op_type](left, right)
+            raise TypeError("不支持的二元运算符: {}".format(op_type.__name__))
+        if isinstance(node, ast.UnaryOp):
+            operand = self._eval_node(node.operand)
+            op_type = type(node.op)
+            if op_type in self._UNARY_OPS:
+                return self._UNARY_OPS[op_type](operand)
+            raise TypeError("不支持的一元运算符: {}".format(op_type.__name__))
+        if isinstance(node, ast.Compare):
+            left = self._eval_node(node.left)
+            for op, right_node in zip(node.ops, node.comparators):
+                right = self._eval_node(right_node)
+                if isinstance(op, ast.Eq):
+                    if left != right:
+                        return False
+                elif isinstance(op, ast.NotEq):
+                    if left == right:
+                        return False
+                elif isinstance(op, ast.Lt):
+                    if not left < right:
+                        return False
+                elif isinstance(op, ast.LtE):
+                    if not left <= right:
+                        return False
+                elif isinstance(op, ast.Gt):
+                    if not left > right:
+                        return False
+                elif isinstance(op, ast.GtE):
+                    if not left >= right:
+                        return False
+                else:
+                    raise TypeError("不支持的比较运算符: {}".format(type(op).__name__))
+                left = right
+            return True
+
+        # 新增：下标访问（列表、元组、字符串、字典）
+        if isinstance(node, ast.Subscript):
+            obj = self._eval_node(node.value)
+            idx = self._eval_node(node.slice)
+            if isinstance(obj, (list, tuple, str)):
+                if not isinstance(idx, int):
+                    raise TypeError("列表/字符串索引必须为整数")
+                return obj[idx]
+            elif isinstance(obj, dict):
+                return obj[idx]
+            else:
+                raise TypeError(f"不支持下标访问的类型: {type(obj)}")
+
+        # 新增：属性访问（仅支持字典的键访问，如 dict.key）
+        if isinstance(node, ast.Attribute):
+            obj = self._eval_node(node.value)
+            if isinstance(obj, dict):
+                return obj[node.attr]
+            raise TypeError(f"不支持属性访问，对象类型: {type(obj)}")
+
+        raise TypeError("不支持的 AST 节点类型: {}".format(type(node).__name__))
+
+
+# ---------- 可求值对象抽象 ----------
+class Evaluable(ABC):
+    @abstractmethod
+    def evaluate(self, result, variables):
+        pass
+
+
+class ConstantValue(Evaluable):
+    def __init__(self, value):
+        self.value = value
+
+    def evaluate(self, result, variables):
+        return self.value
+
+
+class ResultPlaceholder(Evaluable):
+    def evaluate(self, result, variables):
+        return result
+
+
+class ExpressionValue(Evaluable):
+    def __init__(self, expr_template, var_names):
+        self.expr_template = expr_template
+        self.var_names = var_names
+
+    def evaluate(self, result, variables):
+        evaluator = SafeExpressionEvaluator(variables)
+        return evaluator.evaluate(self.expr_template)
+
+
+class AutoIncrementDecrement(Evaluable):
+    def __init__(self, var_name, delta):
+        self.var_name = var_name
+        self.delta = delta
+
+    def evaluate(self, result, variables):
+        if self.var_name not in variables:
+            raise NameError("未定义变量: {}".format(self.var_name))
+        current = variables[self.var_name]
+        if not isinstance(current, (int, float)):
+            raise TypeError("变量 {} 不是数值类型，无法自增/自减".format(self.var_name))
+        return current + self.delta
+
+
+# ---------- 值解析器接口 ----------
+class ValueParser(ABC):
+    @abstractmethod
+    def parse(self, raw_value):
+        pass
+
+
+class ConstantParser(ValueParser):
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return ConstantValue(raw_value)
+        return None
+
+
+class ResultPlaceholderParser(ValueParser):
+    def parse(self, raw_value):
+        if isinstance(raw_value, str) and raw_value.strip() == "{result}":
+            return ResultPlaceholder()
+        return None
+
+
+class AutoIncrementDecrementParser(ValueParser):
+    _PATTERN = re.compile(r'^\{(\w+)}\+\+$|^\{(\w+)}--$')
+
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return None
+        match = self._PATTERN.match(raw_value.strip())
+        if not match:
+            return None
+        inc_var = match.group(1)
+        dec_var = match.group(2)
+        if inc_var:
+            return AutoIncrementDecrement(inc_var, +1)
+        else:
+            return AutoIncrementDecrement(dec_var, -1)
+
+
+class ExpressionParser(ValueParser):
+    _VAR_PATTERN = re.compile(r'\{(\w+)}')
+
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return None
+        if '{' not in raw_value and '}' not in raw_value:
+            return None
+        var_names = self._VAR_PATTERN.findall(raw_value)
+        if not var_names:
+            return None
+
+        def replacer(match):
+            return match.group(1)
+
+        expr_str = self._VAR_PATTERN.sub(replacer, raw_value)
+        return ExpressionValue(expr_str, var_names)
+
+
+class BraceExpressionParser(ValueParser):
+    """处理整个字符串被 {expr} 包裹的纯表达式，如 {a + b > 5}"""
+    _PATTERN = re.compile(r'^\{(.+)}$', re.DOTALL)
+
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return None
+        match = self._PATTERN.match(raw_value.strip())
+        if not match:
+            return None
+        return ExpressionValue(match.group(1), [])
+
+
+# ---------- 变量处理器 ----------
+class VariableProcessor:
+    def __init__(self, variables = None):
+        self.variables = variables or dict()
+        self._parsers = []
+        self._register_default_parsers()
+
+    def _register_default_parsers(self):
+        self._parsers.append(ConstantParser())
+        self._parsers.append(ResultPlaceholderParser())
+        self._parsers.append(AutoIncrementDecrementParser())
+        self._parsers.append(BraceExpressionParser())
+        self._parsers.append(ExpressionParser())
+
+    def register_parser(self, parser):
+        self._parsers.append(parser)
+
+    def process_value(self, raw_value, result):
+        for parser in self._parsers:
+            evaluable = parser.parse(raw_value)
+            if evaluable is not None:
+                try:
+                    return evaluable.evaluate(result, self.variables)
+                except Exception as e:
+                    raise ValueError("求值失败: {} -> {}".format(raw_value, e)) from e
+        return raw_value
+
+    def apply_set(self, op, result):
+        if 'set' not in op:
+            return
+        for item in op['set']:
+            name = item['name']
+            raw_value = item['value']
+            final_value = self.process_value(raw_value, result)
+            self.variables[name] = final_value

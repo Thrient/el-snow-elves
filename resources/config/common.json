@@ -1,0 +1,180 @@
+{
+  "检查背包": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面物品"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      "打开背包"
+    ],
+    "success": "任务结束",
+    "failure": "检查背包"
+  },
+  "打开背包": {
+    "action": "key_click",
+    "params": {
+      "key": "{CONFIG.背包}"
+    },
+    "next": "任务结束"
+  },
+  "打开综合入口": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮物品综合入口"
+      ]
+    },
+    "prefix": [
+      "检查背包"
+    ],
+    "next": "任务结束"
+  },
+  "检查活动": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面活动"
+      ]
+    },
+    "failure_extra": [
+      "打开综合入口",
+      "打开活动"
+    ],
+    "success": "任务结束",
+    "failure": "检查活动"
+  },
+  "打开活动": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮物品活动"
+      ]
+    },
+    "next": "任务结束"
+  },
+  "打开江湖": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮活动江湖"
+      ]
+    },
+    "prefix": [
+      "检查活动"
+    ],
+    "postfix": [
+    ],
+    "next": "任务结束"
+  },
+  "等待到达": {
+    "action": "wait_disappear",
+    "params": {
+      "args": [
+        "标志寻路中",
+        "标志寻路中_V1",
+        "标志战斗中",
+        "标志地图加载_V1",
+        "标志地图加载_V2"
+      ],
+      "threshold": 0.7,
+      "seconds": 180,
+      "k": 6
+    },
+    "next": "任务结束"
+  },
+  "检测主界面": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "标志大世界_V1"
+      ],
+      "threshold": 0.75
+    },
+    "failure_extra": [
+      "关闭复杂窗口",
+      "关闭窗口"
+    ],
+    "success": "任务结束",
+    "failure": "检测主界面"
+  },
+  "激活窗口": {
+    "action": "mouse_click",
+    "params": {
+      "pos": [
+        1334,
+        711
+      ]
+    },
+    "next": "任务结束"
+  },
+  "关闭复杂窗口": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮取消",
+        "按钮聊天退出"
+      ],
+      "seconds": null
+    },
+    "next": "任务结束"
+  },
+  "关闭窗口": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮关闭_V1",
+        "按钮关闭_V2",
+        "按钮关闭_V3",
+        "按钮关闭_V4",
+        "按钮关闭_V5"
+      ],
+      "threshold": 0.85,
+      "seconds": null
+    },
+    "next": "任务结束"
+  },
+  "关闭奖励弹窗": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮关闭_V1",
+        "按钮关闭_V2",
+        "按钮关闭_V3",
+        "按钮关闭_V4",
+        "按钮关闭_V5"
+      ],
+      "threshold": 0.85,
+      "seconds": null,
+      "box": [
+        905,
+        201,
+        1118,
+        900
+      ]
+    },
+    "next": "任务结束"
+  },
+  "激活主界面任务栏": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮主界面任务图标-未激活"
+      ],
+      "seconds": null
+    },
+    "next": "任务结束"
+  },
+  "激活江湖栏": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮主界面江湖-未激活"
+      ],
+      "seconds": null
+    },
+    "next": "任务结束"
+  }
+}
