@@ -197,7 +197,14 @@ class FlowEngine(Thread):
                 else:
                     expanded.append((item, {}))
             elif isinstance(item, dict):
-                expanded.append((item["step"], item.get("args", {})))
+                name = item["step"]
+                args = item.get("args", {})
+                match = pattern.match(name)
+                if match:
+                    base_name, count = match.groups()
+                    expanded.extend([(base_name, args)] * int(count))
+                else:
+                    expanded.append((name, args))
         return expanded
 
     def _monitor_thread(self):
