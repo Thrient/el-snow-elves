@@ -67,9 +67,19 @@ class FlowEngine(Thread):
 
     def process_step(self, name):
         try:
-            return self._all_steps[name]
+            step = dict(self._all_steps[name])
         except KeyError:
             raise KeyError(f"工作流 '{self.name}' 中步骤 '{name}' 未定义") from None
+
+        base_name = step.pop("extends", None)
+        if base_name:
+            try:
+                base = self._all_steps[base_name]
+            except KeyError:
+                raise KeyError(f"继承的步骤 '{base_name}' 未定义") from None
+            merged_params = {**base.get("params", {}), **step.get("params", {})}
+            step = {**base, **step, "params": merged_params}
+        return step
 
     def run_subflow(self, subflow_start_name, args={}):
         self.vp.variables.update(args)
