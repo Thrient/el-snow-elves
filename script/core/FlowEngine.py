@@ -71,7 +71,8 @@ class FlowEngine(Thread):
         except KeyError:
             raise KeyError(f"工作流 '{self.name}' 中步骤 '{name}' 未定义") from None
 
-    def run_subflow(self, subflow_start_name):
+    def run_subflow(self, subflow_start_name, args={}):
+        self.vp.variables.update(args)
         sub_engine = FlowEngine(
             start=subflow_start_name,
             hwnd=self._hwnd,
@@ -133,12 +134,15 @@ class FlowEngine(Thread):
         pattern = re.compile(r"(.+)\*(\d+)$")
         expanded = []
         for item in subflow_list:
-            match = pattern.match(item) if isinstance(item, str) else None
-            if match:
-                name, count = match.groups()
-                expanded.extend([name] * int(count))
-            else:
-                expanded.append(item)
+            if isinstance(item, str):
+                match = pattern.match(item)
+                if match:
+                    name, count = match.groups()
+                    expanded.extend([(name, {})] * int(count))
+                else:
+                    expanded.append((item, {}))
+            elif isinstance(item, dict):
+                expanded.append((item["step"], item.get("args", {})))
         return expanded
 
     def _monitor_thread(self):
@@ -159,8 +163,8 @@ class FlowEngine(Thread):
 
     def _run_extra(self, step_def, key):
         """执行附加子流程"""
-        for name in self._expand_subflow_list(step_def.get(key, [])):
-            self.run_subflow(name)
+        for name, args in self._expand_subflow_list(step_def.get(key, [])):
+            self.run_subflow(name, args)
 
     def _run_action(self, step_def):
         retry = step_def.get("retry", {})

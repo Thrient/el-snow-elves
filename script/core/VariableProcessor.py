@@ -1,3 +1,4 @@
+import json
 import re
 import ast
 import operator
@@ -246,6 +247,34 @@ class ExpressionParser(ValueParser):
         return ExpressionValue(expr_str, var_names)
 
 
+class DefaultValue(Evaluable):
+    def __init__(self, var_name, default_value):
+        self.var_name = var_name
+        self.default_value = default_value
+
+    def evaluate(self, result, variables):
+        return variables.get(self.var_name, self.default_value)
+
+
+class DefaultValueParser(ValueParser):
+    """处理 {变量:默认值} 语法，变量不存在时使用默认值"""
+    _PATTERN = re.compile(r'^\{([^{}:]+):(.+)}$', re.DOTALL)
+
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return None
+        match = self._PATTERN.match(raw_value.strip())
+        if not match:
+            return None
+        var_name = match.group(1)
+        default_str = match.group(2)
+        try:
+            default_value = json.loads(default_str)
+        except (json.JSONDecodeError, ValueError):
+            default_value = default_str
+        return DefaultValue(var_name, default_value)
+
+
 class BraceExpressionParser(ValueParser):
     """处理整个字符串被 {expr} 包裹的纯表达式，如 {a + b > 5}"""
     _PATTERN = re.compile(r'^\{(.+)}$', re.DOTALL)
@@ -270,6 +299,7 @@ class VariableProcessor:
         self._parsers.append(ConstantParser())
         self._parsers.append(ResultPlaceholderParser())
         self._parsers.append(AutoIncrementDecrementParser())
+        self._parsers.append(DefaultValueParser())
         self._parsers.append(BraceExpressionParser())
         self._parsers.append(ExpressionParser())
 
