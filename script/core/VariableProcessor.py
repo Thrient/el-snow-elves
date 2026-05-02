@@ -22,6 +22,7 @@ class SafeExpressionEvaluator:
     _UNARY_OPS = {
         ast.USub: operator.neg,
         ast.UAdd: operator.pos,
+        ast.Not: operator.not_,
     }
 
     def __init__(self, variables):
@@ -46,10 +47,11 @@ class SafeExpressionEvaluator:
         """递归验证节点是否安全（仅允许白名单节点类型）"""
         allowed_types = (
             ast.Constant, ast.Name, ast.BinOp, ast.UnaryOp, ast.Compare,
-            ast.Subscript, ast.Attribute,
+            ast.BoolOp, ast.Subscript, ast.Attribute,
             ast.Load, ast.Store,
             ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow,
-            ast.USub, ast.UAdd,
+            ast.USub, ast.UAdd, ast.Not,
+            ast.And, ast.Or,
             ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
         )
         if not isinstance(node, allowed_types):
@@ -63,6 +65,12 @@ class SafeExpressionEvaluator:
         if isinstance(node, ast.Constant):
             return node.value
         if isinstance(node, ast.Name):
+            if node.id == "True":
+                return True
+            if node.id == "False":
+                return False
+            if node.id == "None":
+                return None
             if node.id in self.variables:
                 return self.variables[node.id]
             raise NameError("未定义变量: {}".format(node.id))
@@ -105,6 +113,14 @@ class SafeExpressionEvaluator:
                     raise TypeError("不支持的比较运算符: {}".format(type(op).__name__))
                 left = right
             return True
+
+        if isinstance(node, ast.BoolOp):
+            values = [self._eval_node(v) for v in node.values]
+            if isinstance(node.op, ast.And):
+                return all(values)
+            if isinstance(node.op, ast.Or):
+                return any(values)
+            raise TypeError("不支持的布尔运算符: {}".format(type(node.op).__name__))
 
         # 新增：下标访问（列表、元组、字符串、字典）
         if isinstance(node, ast.Subscript):
