@@ -1,17 +1,20 @@
 import base64
 import ctypes
 import logging
+import os
+from datetime import datetime
 
 import cv2
 import webview
 
 from script.api.Api import api
 from script.api.JsApi import js
-from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH
+from script.config.Setting import APP_TITLE, PROJECT_ROOT, VERSION, STORAGE_PATH
 from script.core.LogManager import setup_logging, read_logs, get_log_files
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
 from script.core.StaticCommon import StaticCommon
+from script.core.Window import Window
 from script.util.Utils import Utils
 
 DESIGN_WIDTH = 1335
@@ -59,8 +62,11 @@ class App:
         api.on("API:SCRIPT:LOAD:LIST", StaticCommon.load_task_list)
         api.on("API:SCRIPT:SEARCH", self.search)
         api.on("API:SCRIPT:BIND", self.bind)
+        api.on("API:SCRIPT:UNBIND", self.unbind)
         api.on("API:SCRIPT:RESUME", self.resume)
         api.on("API:SCRIPT:PAUSE", self.pause)
+        api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
+        api.on("API:SCRIPT:SET_OPACITY", self.set_window_opacity)
         api.on("API:LOG:READ", read_logs)
         api.on("API:LOG:FILES", get_log_files)
         setup_logging()
@@ -77,6 +83,36 @@ class App:
             return
         script = self._script_instances[hwnd]
         script.pause()
+
+    @staticmethod
+    def screenshot(hwnd):
+        try:
+            img, _ = ScreenCapture.capture_gray(hwnd)
+        except (ValueError, Exception) as e:
+            logging.error(f"截图失败: hwnd={hwnd}, error={e}")
+            return None
+
+        temp_dir = os.path.join(PROJECT_ROOT, "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+
+        filename = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + ".bmp"
+        filepath = os.path.join(temp_dir, filename)
+        cv2.imwrite(filepath, img)
+        logging.info(f"截图已保存: {filepath}")
+        return filepath
+
+    @staticmethod
+    def set_window_opacity(hwnd, opacity):
+        try:
+            import win32con
+            import win32gui
+            hwnd_int = int(hwnd)
+            style = win32gui.GetWindowLong(hwnd_int, win32con.GWL_EXSTYLE)
+            if not (style & win32con.WS_EX_LAYERED):
+                win32gui.SetWindowLong(hwnd_int, win32con.GWL_EXSTYLE, style | win32con.WS_EX_LAYERED)
+            win32gui.SetLayeredWindowAttributes(hwnd_int, 0, int(opacity), win32con.LWA_ALPHA)
+        except Exception as e:
+            logging.error(f"设置透明度失败: hwnd={hwnd}, error={e}")
 
     def search(self):
         winList = []
@@ -99,7 +135,16 @@ class App:
             logging.warning(f"窗口已绑定，跳过: hwnd={hwnd}")
             return
         logging.info(f"绑定窗口: hwnd={hwnd}")
+        Window.set_window_size(hwnd)
         self._script(hwnd)
+
+    def unbind(self, hwnd):
+        if hwnd not in self._script_instances:
+            logging.warning(f"窗口未绑定: hwnd={hwnd}")
+            return
+        script = self._script_instances.pop(hwnd)
+        script.stop()
+        logging.info(f"解绑窗口: hwnd={hwnd}")
 
     def _script(self, hwnd):
         script = Script(hwnd)
