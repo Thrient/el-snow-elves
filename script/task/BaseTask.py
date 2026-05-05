@@ -1,7 +1,12 @@
+import base64
 import random
 
+import cv2
+
+from script.api.JsApi import js
 from script.config.Setting import OVERTIME
 from script.core.InputSimulator import InputSimulator
+from script.core.ScreenCapture import ScreenCapture
 from script.core.TemplateMatcher import TemplateMatcher
 from script.functools.Functools import during, wait_until
 
@@ -22,6 +27,15 @@ class BaseTask:
 
     def exits(self, *args, **kwargs):
         return self.batch_template_match(*args, **kwargs)
+
+    def wait(self, *args, **kwargs):
+        """等待屏幕出现"""
+
+        @wait_until(k=1)
+        def _inner(**inner_kwargs):
+            return self.batch_template_match(*args, **inner_kwargs)
+
+        return _inner(**kwargs)
 
     def wait_disappear(self, *args, **kwargs):
         @wait_until(k=1, is_valid=lambda x: not bool(x))
@@ -84,3 +98,20 @@ class BaseTask:
             return
         for pos in reversed(results):
             self.mouse_click(pos=pos, **kwargs)
+
+    @staticmethod
+    def set_character(*args, **kwargs):
+        hwnd = kwargs.get("hwnd")
+        assert hwnd is not None, "缺少窗口句柄"
+
+        box = kwargs.get("box", [158, 186, 742, 892])
+        img, _ = ScreenCapture.capture_gray(hwnd=hwnd)
+        character = img[box[0]:box[1], box[2]:box[3]]
+
+        # 将图像编码为PNG格式的二进制数据
+        _, buffer = cv2.imencode('.png', character)
+
+        js.update_character({
+            "character": f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
+            "hwnd": hwnd
+        })

@@ -28,6 +28,9 @@ class ScreenCapture:
             width = right - left
             height = bottom - top
 
+            if width <= 0 or height <= 0:
+                raise ValueError(f"Invalid window dimensions: {width}x{height}")
+
             hwndDC = win32gui.GetDC(hwnd)
             mfcDC = win32ui.CreateDCFromHandle(hwndDC)
             saveDC = mfcDC.CreateCompatibleDC()

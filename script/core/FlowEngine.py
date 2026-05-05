@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import time
@@ -48,10 +49,10 @@ class FlowEngine(Thread):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     _COMMON_CACHE = json.load(f)
             except FileNotFoundError:
-                print(f"警告：公共步骤文件 '{file_path}' 不存在，使用空基础")
+                logging.warning(f"公共步骤文件不存在，使用空基础: {file_path}")
                 _COMMON_CACHE = {}
             except json.JSONDecodeError as e:
-                print(f"错误：文件 '{file_path}' JSON 解析失败: {e}，使用空基础")
+                logging.error(f"公共步骤文件 JSON 解析失败，使用空基础: {file_path} | {e}")
                 _COMMON_CACHE = {}
 
         base_common = dict(_COMMON_CACHE)
@@ -60,7 +61,7 @@ class FlowEngine(Thread):
         work_common = self.work.get("common", {})
         if work_common is not None:
             if not isinstance(work_common, dict):
-                print("警告：work 中的 common 字段应为字典类型，将忽略")
+                logging.warning("work 中 common 字段类型错误，预期字典，已忽略")
             else:
                 base_common.update(work_common)
 
@@ -81,7 +82,7 @@ class FlowEngine(Thread):
             if not isinstance(step, dict):
                 errors.append(f"步骤 '{name}' 不是字典")
                 continue
-            if "action" not in step:
+            if "action" not in step and "extends" not in step:
                 errors.append(f"步骤 '{name}' 缺少 'action'")
 
             for key, expected in [("prefix", list), ("postfix", list),
@@ -105,7 +106,7 @@ class FlowEngine(Thread):
 
             unknown = set(step) - allowed_keys
             if unknown:
-                print(f"[警告] 步骤 '{name}' 含未知字段: {unknown}")
+                logging.warning(f"步骤含未知字段: {name} -> {unknown}")
 
         if errors:
             raise ValueError("工作流定义错误:\n  " + "\n  ".join(errors))
@@ -167,7 +168,7 @@ class FlowEngine(Thread):
                 result = self.vp.process_value(action_str, result=None)
                 return bool(result)
             except Exception as e:
-                print(f"表达式错误: {action_str}, {e}")
+                logging.error(f"表达式执行错误: {action_str} | {e}")
                 return False
         else:
             params = self._resolve_params(step.get("params", {}))
@@ -193,18 +194,19 @@ class FlowEngine(Thread):
                 match = pattern.match(item)
                 if match:
                     name, count = match.groups()
-                    expanded.extend([(name, {})] * int(count))
+                    expanded.extend([(name, {}, None)] * int(count))
                 else:
-                    expanded.append((item, {}))
+                    expanded.append((item, {}, None))
             elif isinstance(item, dict):
                 name = item["step"]
                 args = item.get("args", {})
+                when = item.get("when")
                 match = pattern.match(name)
                 if match:
                     base_name, count = match.groups()
-                    expanded.extend([(base_name, args)] * int(count))
+                    expanded.extend([(base_name, args, when)] * int(count))
                 else:
-                    expanded.append((name, args))
+                    expanded.append((name, args, when))
         return expanded
 
     def _monitor_thread(self):
@@ -221,11 +223,17 @@ class FlowEngine(Thread):
             self._monitor_stop_event.wait(timeout=self._monitor_interval)
 
     def loop(self):
+        logging.info(f"监控线程已启动: {self.name} | interval={self._monitor_interval}s")
         Thread(target=self._monitor_thread, daemon=True).start()
 
     def _run_extra(self, step_def, key):
-        """执行附加子流程"""
-        for name, args in self._expand_subflow_list(step_def.get(key, [])):
+        """执行附加子流程，支持 when 条件"""
+        for name, args, when in self._expand_subflow_list(step_def.get(key, [])):
+            if when:
+                cond = self.vp.process_value(when, result=None)
+                if not cond:
+                    logging.info(f"子流程跳过 [when={when}]: {name}")
+                    continue
             self.run_subflow(name, args)
 
     def _run_action(self, step_def):
@@ -240,6 +248,7 @@ class FlowEngine(Thread):
         return []
 
     def run(self):
+        logging.info(f"工作流开始: {self.name} v{self.version} | 起始步骤={self.step_name}")
         while not self._running.is_set() and self.step_name and self.step_name != "任务结束":
             step_def = self.process_step(self.step_name)
             t0 = time.time()
@@ -255,5 +264,6 @@ class FlowEngine(Thread):
             prev = self.step_name
             self.step_name = self.process_result(result, step_def)
             elapsed = (time.time() - t0) * 1000
-            print(f"[{self.name}] {prev} → {self.step_name} | result={len(result) if isinstance(result, list) else result} | vars={self.vp.variables} | {elapsed:.0f}ms")
+            logging.info(f"[{self.name}] {prev} → {self.step_name} | result={len(result) if isinstance(result, list) else result} | vars={self.vp.variables} | {elapsed:.0f}ms")
+        logging.info(f"工作流结束: {self.name} v{self.version}")
         self._monitor_stop_event.set()

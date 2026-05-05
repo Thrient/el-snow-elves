@@ -10,14 +10,19 @@
       "检测主界面",
       "打开背包"
     ],
-    "success": "任务结束",
-    "failure": "检查背包"
+    "next": "任务结束"
   },
-  "打开背包": {
-    "action": "key_click",
+  "检查设置": {
+    "action": "exits",
     "params": {
-      "key": "{CONFIG.背包}"
+      "args": [
+        "界面设置"
+      ]
     },
+    "failure_extra": [
+      "检测主界面",
+      "打开设置"
+    ],
     "next": "任务结束"
   },
   "打开综合入口": {
@@ -43,16 +48,6 @@
       "打开综合入口",
       "打开活动"
     ],
-    "success": "任务结束",
-    "failure": "检查活动"
-  },
-  "打开活动": {
-    "action": "touch",
-    "params": {
-      "args": [
-        "按钮物品活动"
-      ]
-    },
     "next": "任务结束"
   },
   "打开江湖": {
@@ -65,8 +60,29 @@
     "prefix": [
       "检查活动"
     ],
-    "postfix": [
-    ],
+    "next": "任务结束"
+  },
+  "打开活动": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮物品活动"
+      ]
+    },
+    "next": "任务结束"
+  },
+  "打开背包": {
+    "action": "key_click",
+    "params": {
+      "key": "{CONFIG.背包}"
+    },
+    "next": "任务结束"
+  },
+  "打开设置": {
+    "action": "key_click",
+    "params": {
+      "key": "{CONFIG.设置}"
+    },
     "next": "任务结束"
   },
   "等待到达": {
@@ -93,12 +109,15 @@
       ],
       "threshold": 0.75
     },
+    "retry": {
+      "times": 7,
+      "interval": 1000
+    },
     "failure_extra": [
       "关闭复杂窗口",
       "关闭窗口"
     ],
-    "success": "任务结束",
-    "failure": "检测主界面"
+    "next": "任务结束"
   },
   "激活窗口": {
     "action": "mouse_click",
@@ -137,17 +156,8 @@
     "next": "任务结束"
   },
   "关闭奖励弹窗": {
-    "action": "touch",
+    "extends": "关闭窗口",
     "params": {
-      "args": [
-        "按钮关闭_V1",
-        "按钮关闭_V2",
-        "按钮关闭_V3",
-        "按钮关闭_V4",
-        "按钮关闭_V5"
-      ],
-      "threshold": 0.85,
-      "seconds": null,
       "box": [
         905,
         201,
@@ -155,6 +165,19 @@
         900
       ]
     },
+    "next": "任务结束"
+  },
+  "激活状态栏": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮主界面{Modl:江湖}-未激活"
+      ],
+      "seconds": null
+    },
+    "prefix": [
+      "激活主界面任务栏"
+    ],
     "next": "任务结束"
   },
   "激活主界面任务栏": {
@@ -167,13 +190,15 @@
     },
     "next": "任务结束"
   },
-  "激活江湖栏": {
-    "action": "touch",
+  "设置角色信息": {
+    "action": "set_character",
     "params": {
-      "args": [
-        "按钮主界面江湖-未激活"
-      ],
-      "seconds": null
+      "box": [
+        158,
+        186,
+        742,
+        892
+      ]
     },
     "next": "任务结束"
   }

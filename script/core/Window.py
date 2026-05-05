@@ -1,3 +1,7 @@
+import logging
+
+import logging
+
 import win32con
 import win32gui
 
@@ -39,7 +43,7 @@ class Window:
 
             if not success:
                 # 函数失败时回退到直接设置窗口大小（可能不准）
-                print("AdjustWindowRectExForDpi failed, falling back")
+                logging.warning("DPI 窗口调整失败，使用后备方案")
                 current_rect = win32gui.GetWindowRect(hwnd)
                 x, y = current_rect[0], current_rect[1]
                 win32gui.SetWindowPos(
@@ -73,7 +77,7 @@ class Window:
             )
 
         except Exception as e:
-            print(f"设置窗口大小失败: {e}")
+            logging.error(f"设置窗口大小失败: {e}")
 
     @staticmethod
     def disable_Window(hwnd):

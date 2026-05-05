@@ -22,7 +22,8 @@ class InputSimulator:
         "ESC": 0x1B,
     }
 
-    def key_click(self, *args, **kwargs):
+    @staticmethod
+    def key_click(*args, **kwargs):
         """按下并抬起键盘按键"""
         hwnd = kwargs.get("hwnd")
 
@@ -32,16 +33,21 @@ class InputSimulator:
             key = inner_kwargs.get("key", "")
             if isinstance(key, str):
                 key_upper = key.upper()
-                vk_code = self.VK_CODE.get(key_upper, ord(key_upper))
+                if key_upper in InputSimulator.VK_CODE:
+                    vk_code = InputSimulator.VK_CODE[key_upper]
+                else:
+                    vk_code = ord(key_upper)
             else:
                 vk_code = key
             scan_code = win32api.MapVirtualKey(vk_code, 0)
             win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk_code, (scan_code << 16) | 1)
             win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk_code, (scan_code << 16) | 0xC0000001)
+            logging.debug(f"按键: {key} | hwnd={hwnd}")
 
         return _inner(**kwargs)
 
-    def mouse_click(self, *args, **kwargs):
+    @staticmethod
+    def mouse_click(*args, **kwargs):
         """鼠标点击"""
         hwnd = kwargs.get("hwnd")
 

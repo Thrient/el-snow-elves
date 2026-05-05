@@ -1,3 +1,4 @@
+import logging
 import time
 from threading import Thread, Event
 
@@ -14,10 +15,12 @@ class Script(Thread):
 
     def pause(self):
         """暂停任务"""
+        logging.info(f"脚本已暂停: hwnd={self._hwnd}")
         self._running.set()
 
     def resume(self):
         """恢复（继续）执行"""
+        logging.info(f"脚本已恢复: hwnd={self._hwnd}")
         self._running.clear()
 
     def _wait_while_paused(self):
@@ -27,8 +30,8 @@ class Script(Thread):
     def _wait_for_task(self):
         while not self._running.is_set():
             task = js.get_execute_task(self._hwnd)
-            print(task)
             if task is not None:
+                logging.info(f"获取到待执行任务: {task['name']} v{task.get('version', '?')}")
                 return task
             time.sleep(1)
         return None
@@ -41,6 +44,7 @@ class Script(Thread):
             if task is not None:
                 work = StaticCommon.get_task_config_by_id(task["id"])
                 work["values"] = task.get("values", work.get("values", {}))
+                logging.info(f"开始执行任务: {task['name']} v{task.get('version', '?')} | hwnd={self._hwnd}")
                 engine = FlowEngine(
                     work=work,
                     hwnd=self._hwnd,

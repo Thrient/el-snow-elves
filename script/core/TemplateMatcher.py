@@ -10,6 +10,8 @@ from script.config.Setting import BOX, THRESHOLD, PROJECT_ROOT
 from script.core.ScreenCapture import ScreenCapture
 from script.util.Utils import Utils
 
+logging.getLogger("airtest").setLevel(logging.WARNING)
+
 
 class TemplateMatcher:
     _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="Matcher")
@@ -64,10 +66,10 @@ class TemplateMatcher:
                 result = future.result()
                 results.extend(result)
             except Exception as e:
-                print(f"匹配模板时出错: {e}")
+                logging.error(f"模板匹配失败: {futures[future]} | {e}")
 
         results = sorted(Utils.clean_duplicate_points(results), key=lambda pos: (-pos[1], pos[0]))
-        logging.info(f"模板匹配完成，{args} 找到 {len(results)} 个位置: {results}")
+        logging.info(f"模板匹配完成，共 {len(results)} 个结果: {args}")
         return results
 
 

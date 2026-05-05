@@ -1,3 +1,5 @@
+import logging
+
 import win32api
 import win32gui
 
@@ -93,5 +95,5 @@ class Utils:
         items.sort(key=lambda pair: pair[0])
         # 应用映射并拼接
         text = ''.join(digit_map[digit] for _, digit in items)
-        print(text)
+        logging.debug(f"数字解析结果: {text}")
         return text

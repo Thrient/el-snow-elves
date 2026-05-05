@@ -1,14 +1,27 @@
 {
   "values": {
-    "背包": "B"
+    "背包": "B",
+    "设置": "ESC"
   },
   "layout": [
     [
       {
-        "span": 1,
+        "model": "el-text",
+        "text": "按键设置"
+      }
+    ],
+    [
+      {
+        "span": 6,
         "text": "背包:",
         "model": "el-key-input",
         "store": "背包"
+      },
+      {
+        "span": 6,
+        "text": "设置:",
+        "model": "el-key-input",
+        "store": "设置"
       }
     ]
   ]
