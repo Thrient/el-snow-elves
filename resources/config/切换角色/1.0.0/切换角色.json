@@ -43,169 +43,47 @@
       }
     ]
   ],
-  "monitors": {
-  },
+  "monitors": {},
   "common": {
     "打开属性": {
-      "action": "touch",
-      "params": {
-        "args": [
-          "按钮物品属性"
-        ]
-      },
-      "prefix": [
-        "检查背包"
-      ],
-      "next": "任务结束"
+      "action": "touch"
     },
     "按钮设置确定": {
-      "action": "touch",
-      "params": {
-        "args": [
-          "按钮设置确定"
-        ]
-      },
-      "next": "任务结束"
+      "action": "touch"
     },
     "等待切换角色界面": {
-      "action": "wait",
-      "params": {
-        "args": [
-          "按钮登录进入游戏"
-        ],
-        "seconds": 30
-      },
-      "postfix": [
-        "激活窗口"
-      ],
-      "next": "任务结束"
+      "action": "wait"
     },
     "按钮设置切换角色": {
-      "action": "touch",
-      "params": {
-        "args": [
-          "按钮设置切换角色"
-        ]
-      },
-      "prefix": [
-        "检查设置"
-      ],
-      "postfix": [
-        "按钮设置确定",
-        "等待切换角色界面"
-      ],
-      "next": "任务结束"
+      "action": "touch"
     },
     "切换角色1": {
       "action": "mouse_click",
-      "params": {
-        "pos": [
-          1245,
-          70
-        ]
-      },
-      "prefix": [
-        "按钮设置切换角色"
-      ],
       "next": "点击登录"
     },
     "切换角色2": {
       "action": "mouse_click",
-      "params": {
-        "pos": [
-          1245,
-          170
-        ]
-      },
-      "prefix": [
-        "按钮设置切换角色"
-      ],
       "next": "点击登录"
     },
     "切换角色3": {
       "action": "mouse_click",
-      "params": {
-        "pos": [
-          1245,
-          270
-        ]
-      },
-      "prefix": [
-        "按钮设置切换角色"
-      ],
       "next": "点击登录"
     },
     "切换角色4": {
       "action": "mouse_click",
-      "params": {
-        "pos": [
-          1245,
-          370
-        ]
-      },
-      "prefix": [
-        "按钮设置切换角色"
-      ],
       "next": "点击登录"
     },
     "切换角色5": {
       "action": "mouse_click",
-      "params": {
-        "pos": [
-          1245,
-          470
-        ]
-      },
-      "prefix": [
-        "按钮设置切换角色"
-      ],
       "next": "点击登录"
     },
     "点击登录": {
-      "action": "touch",
-      "params": {
-        "args": [
-          "按钮登录进入游戏"
-        ]
-      },
-      "postfix": [
-        "检测主界面"
-      ],
-      "next": "任务结束"
+      "action": "touch"
     }
   },
   "steps": {
     "切换角色": {
-      "action": "{True}",
-      "prefix": [
-        "检测主界面",
-        {
-          "step": "切换角色1",
-          "when": "{切换角色 == '角色1'}"
-        },
-        {
-          "step": "切换角色2",
-          "when": "{切换角色 == '角色2'}"
-        },
-        {
-          "step": "切换角色3",
-          "when": "{切换角色 == '角色3'}"
-        },
-        {
-          "step": "切换角色4",
-          "when": "{切换角色 == '角色4'}"
-        },
-        {
-          "step": "切换角色5",
-          "when": "{切换角色 == '角色5'}"
-        },
-        "打开属性",
-        "设置角色信息"
-      ],
-      "postfix": [
-        "检测主界面"
-      ],
-      "next": "任务结束"
+      "action": "{True}"
     }
   }
 }

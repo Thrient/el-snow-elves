@@ -45,6 +45,7 @@ class StaticCommon:
                 task_id = hashlib.sha256(f"{data.get('name')}_{data.get('version')}".encode('utf-8')).hexdigest()
                 data['id'] = task_id
                 # 缓存完整配置
+                data["_config_path"] = json_path
                 _TASK_CONFIG_CACHE[task_id] = dict(data)
 
                 # 移除不需要的字段（只影响返回给前端的列表）
@@ -127,5 +128,157 @@ class StaticCommon:
         with open(fr"{PROJECT_ROOT}\resources\config\settings.json", 'r', encoding='utf-8') as f:
             data = json.load(f)
         return data
+
+    @staticmethod
+    def get_full_task_config(task_id):
+        """返回完整任务配置（含 steps/common/monitors/start）"""
+        return _TASK_CONFIG_CACHE.get(task_id)
+
+    @staticmethod
+    def save_full_task_config(task_id, data):
+        """保存完整任务 JSON 回磁盘"""
+        config = _TASK_CONFIG_CACHE.get(task_id)
+        if not config:
+            raise ValueError(f"任务不存在: {task_id}")
+        name = config.get("name", "")
+        version = config.get("version", "")
+        if not name or not version:
+            raise ValueError("任务缺少 name 或 version")
+
+        filepath = os.path.join(PROJECT_ROOT, "resources", "config", name, version, f"{name}.json")
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(f"任务文件不存在: {filepath}")
+
+        # 合并数据：保留原有字段，用 data 中的字段覆盖
+        merged = {**config, **data}
+        merged.pop("id", None)
+        merged.pop("_config_path", None)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(merged, f, ensure_ascii=False, indent=2)
+
+        # 更新缓存
+        merged['id'] = task_id
+        merged["_config_path"] = filepath
+        _TASK_CONFIG_CACHE[task_id] = merged
+
+    @staticmethod
+    def list_actions():
+        """返回所有可用的 action 名称"""
+        return [
+            {"value": "touch", "label": "touch — 识别模板并点击"},
+            {"value": "exits", "label": "exits — 检测模板是否存在"},
+            {"value": "wait", "label": "wait — 等待模板出现"},
+            {"value": "wait_disappear", "label": "wait_disappear — 等待模板消失"},
+            {"value": "key_click", "label": "key_click — 发送按键"},
+            {"value": "mouse_click", "label": "mouse_click — 点击坐标"},
+            {"value": "set_character", "label": "set_character — 捕获角色头像"},
+            {"value": "{True}", "label": "{True} — 无条件通过"},
+        ]
+
+    @staticmethod
+    def list_template_images(task_name=None, version=None):
+        """扫描全局 + 项目模板图片，返回文件名列表（不含 .bmp 后缀）"""
+        images = set()
+        # 全局图片
+        global_dir = os.path.join(PROJECT_ROOT, "resources", "images")
+        if os.path.isdir(global_dir):
+            images.update(f[:-4] for f in os.listdir(global_dir) if f.endswith('.bmp'))
+        # 项目图片
+        if task_name and version:
+            task_img_dir = os.path.join(PROJECT_ROOT, "resources", "config", task_name, version, "images")
+            if os.path.isdir(task_img_dir):
+                images.update(f[:-4] for f in os.listdir(task_img_dir) if f.endswith('.bmp'))
+        return sorted(images)
+
+    @staticmethod
+    def list_global_common_steps():
+        """返回全局 common.json 中的步骤名列表"""
+        try:
+            file_path = os.path.join(PROJECT_ROOT, "resources", "config", "common.json")
+            if not os.path.exists(file_path):
+                return []
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return sorted(list(data.keys())) if isinstance(data, dict) else []
+        except Exception:
+            return []
+
+    @staticmethod
+    def load_positions(task_id):
+        """加载节点位置缓存"""
+        try:
+            config = _TASK_CONFIG_CACHE.get(task_id)
+            if not config:
+                return {}
+            task_dir = os.path.dirname(config.get("_config_path", ""))
+            if not task_dir or not os.path.isdir(task_dir):
+                return {}
+            pos_path = os.path.join(task_dir, "positions.json")
+            if not os.path.exists(pos_path):
+                return {}
+            with open(pos_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    @staticmethod
+    def save_positions(task_id, positions):
+        """保存节点位置缓存"""
+        try:
+            config = _TASK_CONFIG_CACHE.get(task_id)
+            if not config:
+                return False
+            task_dir = os.path.dirname(config.get("_config_path", ""))
+            if not task_dir or not os.path.isdir(task_dir):
+                return False
+            pos_path = os.path.join(task_dir, "positions.json")
+            with open(pos_path, "w", encoding="utf-8") as f:
+                json.dump(positions, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def list_steps_for_task(task_id):
+        """返回指定任务的所有步骤名（steps + common 的 key 列表）"""
+        config = _TASK_CONFIG_CACHE.get(task_id)
+        if not config:
+            return []
+        steps = list(config.get("steps", {}).keys())
+        common = list(config.get("common", {}).keys())
+        return sorted(steps + common)
+
+    @staticmethod
+    def create_task(name, version, author="", description=""):
+        """创建新任务骨架"""
+        task_dir = os.path.join(PROJECT_ROOT, "resources", "config", name, version)
+        if os.path.exists(task_dir):
+            raise FileExistsError(f"任务目录已存在: {task_dir}")
+
+        os.makedirs(task_dir, exist_ok=True)
+        os.makedirs(os.path.join(task_dir, "images"), exist_ok=True)
+
+        task_id = hashlib.sha256(f"{name}_{version}".encode('utf-8')).hexdigest()
+        task_json = {
+            "name": name,
+            "version": version,
+            "author": author,
+            "description": description,
+            "start": "",
+            "steps": {},
+            "common": {},
+            "monitors": {"loop": [], "interval": 1},
+            "values": {},
+            "layout": [],
+        }
+        filepath = os.path.join(task_dir, f"{name}.json")
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(task_json, f, ensure_ascii=False, indent=2)
+
+        task_json["id"] = task_id
+        task_json["_config_path"] = filepath
+        _TASK_CONFIG_CACHE[task_id] = task_json
+        return task_id
 
 
