@@ -11,28 +11,28 @@ class Script(Thread):
     def __init__(self, hwnd):
         super().__init__(daemon=True)
         self._hwnd = hwnd
-        self._running = Event()
+        self._paused = Event()
         self._stopped = Event()
 
     def pause(self):
         logging.info(f"脚本已暂停: hwnd={self._hwnd}")
-        self._running.set()
+        self._paused.set()
 
     def resume(self):
         logging.info(f"脚本已恢复: hwnd={self._hwnd}")
-        self._running.clear()
+        self._paused.clear()
 
     def stop(self):
         logging.info(f"脚本已停止: hwnd={self._hwnd}")
         self._stopped.set()
-        self._running.set()
+        self._paused.set()
 
     def _wait_while_paused(self):
-        while self._running.is_set() and not self._stopped.is_set():
+        while self._paused.is_set() and not self._stopped.is_set():
             time.sleep(0.2)
 
     def _wait_for_task(self):
-        while not self._running.is_set() and not self._stopped.is_set():
+        while not self._paused.is_set() and not self._stopped.is_set():
             task = js.get_execute_task(self._hwnd)
             if task is not None:
                 logging.info(f"获取到待执行任务: {task['name']} v{task.get('version', '?')}")
@@ -53,7 +53,7 @@ class Script(Thread):
                 engine = FlowEngine(
                     work=work,
                     hwnd=self._hwnd,
-                    running=self._running
+                    paused=self._paused
                 )
                 engine.loop()
                 engine.start()

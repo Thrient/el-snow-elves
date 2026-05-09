@@ -18,7 +18,7 @@ class FlowEngine(Thread):
     def __init__(self, **kwargs):
         super().__init__()
         self._hwnd = kwargs.get("hwnd")
-        self._running = kwargs.get("running")
+        self._paused = kwargs.get("paused")
         self.work = kwargs.get("work")
         self.name = self.work.get("name")
         self.version = self.work.get("version")
@@ -132,7 +132,7 @@ class FlowEngine(Thread):
         sub_engine = FlowEngine(
             start=subflow_start_name,
             hwnd=self._hwnd,
-            running=self._running,
+            paused=self._paused,
             work=self.work,
             vp=self.vp
 
@@ -172,7 +172,7 @@ class FlowEngine(Thread):
                 return False
         else:
             params = self._resolve_params(step.get("params", {}))
-            wrapper = self.to_action(step.get("action"), params, hwnd=hwnd, name=self.name, version=self.version, predicate=lambda: not self._running.is_set())
+            wrapper = self.to_action(step.get("action"), params, hwnd=hwnd, name=self.name, version=self.version, predicate=lambda: not self._paused.is_set())
             return wrapper.execute()
 
     @staticmethod
@@ -249,7 +249,7 @@ class FlowEngine(Thread):
 
     def run(self):
         logging.info(f"工作流开始: {self.name} v{self.version} | 起始步骤={self.step_name}")
-        while not self._running.is_set() and self.step_name and self.step_name != "任务结束":
+        while not self._paused.is_set() and self.step_name and self.step_name != "任务结束":
             step_def = self.process_step(self.step_name)
             t0 = time.time()
 
