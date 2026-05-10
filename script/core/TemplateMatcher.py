@@ -61,7 +61,7 @@ class TemplateMatcher:
                 self.match_single,
                 img=img,
                 image=image,
-                category=fr"{name}/{version}",
+                category=os.path.join(name, version),
                 box=box,
                 threshold=threshold,
                 preprocess=preprocess,

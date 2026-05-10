@@ -16,6 +16,7 @@ from script.core.LogManager import setup_logging, read_logs, get_log_files
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
 from script.core.StaticCommon import StaticCommon
+from script.core.TemplateMatcher import TemplateMatcher
 from script.core.Window import Window
 from script.util.Utils import Utils
 
@@ -159,7 +160,12 @@ class App:
 
         os.makedirs(target_dir, exist_ok=True)
         filepath = os.path.join(target_dir, f"{filename}.bmp")
-        cv2.imwrite(filepath, cropped)
+        ret, buf = cv2.imencode(".bmp", cropped)
+        if not ret:
+            raise RuntimeError(f"图像编码失败: {filename}")
+        with open(filepath, "wb") as f:
+            f.write(buf.tobytes())
+        TemplateMatcher.load_template.cache_clear()
         logging.info(f"模板图片已保存: {filepath}")
         return filepath
 
