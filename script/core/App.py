@@ -300,6 +300,12 @@ class App:
             # 获取搜索目标图
             search_img = App._get_search_image(original, mode, hwnd)
 
+            # recapture 模式下，capture_gray 会对截图做 GaussianBlur + equalizeHist，
+            # 这里对 original 也做同样的处理，保证模板和搜索图的预处理一致
+            if mode == "recapture":
+                original = cv2.GaussianBlur(original, (3, 3), 0)
+                original = cv2.equalizeHist(original)
+
             # 预处理 + 匹配
             pp = preprocess_cfg if preprocess_cfg else None
             processed = ScreenCapture.apply_preprocess(search_img, pp)
