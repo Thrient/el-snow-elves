@@ -9,7 +9,6 @@ class MonitorEngine(Thread):
         self.interval = monitors.get("interval", 1)
         self.loop = monitors.get("loop", [])
         self._stop_event = Event()
-        self.start()
 
     def stop(self):
         self._stop_event.set()
@@ -23,4 +22,4 @@ class MonitorEngine(Thread):
                 if self._stop_event.is_set():
                     break
                 self.engine.run_subflow(step)
-                time.sleep(self.interval)
+            self._stop_event.wait(timeout=self.interval)

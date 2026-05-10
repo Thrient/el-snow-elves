@@ -29,10 +29,14 @@ class TemplateMatcher:
         path = TemplateMatcher.get_template_path(category, image)
         return Template(path, threshold=threshold)
 
-    def match_single(self, img, image, category, box, threshold=THRESHOLD):
+    def match_single(self, img, image, category, box, threshold=THRESHOLD, preprocess=None):
         """匹配单个模板"""
+        import cv2
         x1, y1, x2, y2 = box
         img = img[y1:y2, x1:x2]
+        if preprocess is not None:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            img = ScreenCapture.apply_preprocess(gray, preprocess)
         result = self.load_template(category=category, image=image, threshold=threshold).match_in(img)
         return [] if result is None else [(result[0] + x1, result[1] + y1)]
 
@@ -43,6 +47,7 @@ class TemplateMatcher:
 
         box = kwargs.get("box", BOX)
         threshold = kwargs.get("threshold", THRESHOLD)
+        preprocess = kwargs.get("preprocess", None)
         name = kwargs.get("name", "default")
         version = kwargs.get("version", "1.0.0")
 
@@ -59,6 +64,7 @@ class TemplateMatcher:
                 category=fr"{name}/{version}",
                 box=box,
                 threshold=threshold,
+                preprocess=preprocess,
             )] = image
 
         for future in as_completed(futures):

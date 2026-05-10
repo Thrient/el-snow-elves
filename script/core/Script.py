@@ -49,12 +49,17 @@ class Script(Thread):
             if task is not None:
                 work = StaticCommon.get_task_config_by_id(task["id"])
                 work["values"] = task.get("values", work.get("values", {}))
-                logging.info(f"开始执行任务: {task['name']} v{task.get('version', '?')} | hwnd={self._hwnd}")
-                engine = FlowEngine(
-                    work=work,
-                    hwnd=self._hwnd,
-                    paused=self._paused
-                )
+                debug_start = task.get("debugStart")
+                debug_single = task.get("debugSingle", False)
+                logging.info(f"开始执行任务: {task['name']} v{task.get('version', '?')} | hwnd={self._hwnd}" +
+                             (f" | debug 起始={debug_start}" if debug_start else "") +
+                             (" | 单步" if debug_single else ""))
+                engine_kwargs = dict(work=work, hwnd=self._hwnd, paused=self._paused)
+                if debug_start:
+                    engine_kwargs["start"] = debug_start
+                if debug_single:
+                    engine_kwargs["single_step"] = True
+                engine = FlowEngine(**engine_kwargs)
                 engine.loop()
                 engine.start()
                 engine.join()

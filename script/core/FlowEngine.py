@@ -26,6 +26,7 @@ class FlowEngine(Thread):
         self._common = self._load_common()
         self._all_steps = {**self._common, **self._steps}
         self.step_name = kwargs.get("start") if "start" in kwargs else self.work.get("start")
+        self._single_step = kwargs.get("single_step", False)
         self.vp = kwargs.get("vp") if "vp" in kwargs else VariableProcessor(self.work.get("values"))
 
         monitors = self.work.get("monitors", {})
@@ -128,7 +129,7 @@ class FlowEngine(Thread):
         return step
 
     def run_subflow(self, subflow_start_name, args={}):
-        self.vp.variables.update(args)
+        self.vp.bulk_update(args)
         sub_engine = FlowEngine(
             start=subflow_start_name,
             hwnd=self._hwnd,
@@ -263,6 +264,8 @@ class FlowEngine(Thread):
 
             prev = self.step_name
             self.step_name = self.process_result(result, step_def)
+            if self._single_step:
+                self.step_name = "任务结束"
             elapsed = (time.time() - t0) * 1000
             logging.info(f"[{self.name}] {prev} → {self.step_name} | result={len(result) if isinstance(result, list) else result} | vars={self.vp.variables} | {elapsed:.0f}ms")
         logging.info(f"工作流结束: {self.name} v{self.version}")

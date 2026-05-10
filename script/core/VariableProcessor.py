@@ -293,6 +293,7 @@ class VariableProcessor:
     def __init__(self, variables = None):
         self.variables = variables or dict()
         self._parsers = []
+        self._lock = __import__('threading').Lock()
         self._register_default_parsers()
 
     def _register_default_parsers(self):
@@ -319,8 +320,13 @@ class VariableProcessor:
     def apply_set(self, op, result):
         if 'set' not in op:
             return
-        for item in op['set']:
-            name = item['name']
-            raw_value = item['value']
-            final_value = self.process_value(raw_value, result)
-            self.variables[name] = final_value
+        with self._lock:
+            for item in op['set']:
+                name = item['name']
+                raw_value = item['value']
+                final_value = self.process_value(raw_value, result)
+                self.variables[name] = final_value
+
+    def bulk_update(self, args):
+        with self._lock:
+            self.variables.update(args)
