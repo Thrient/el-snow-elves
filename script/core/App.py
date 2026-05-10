@@ -167,137 +167,151 @@ class App:
     _PREPROCESS_KEYS = {"binarize", "binarize_threshold", "binarize_invert",
                         "adaptive", "adaptive_block", "adaptive_c"}
 
+    # ---------- preprocess_apply helpers ----------
+
+    @staticmethod
+    def _decode_base64_image(b64: str):
+        """解码前端 data URL 为灰度 numpy 数组。失败返回 None。"""
+        b64_data = re.sub(r'^data:image/\w+;base64,', '', b64)
+        img_bytes = base64.b64decode(b64_data)
+        img_array = np.frombuffer(img_bytes, dtype=np.uint8)
+        img = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
+        if img is not None:
+            logging.info(f"[PREPROCESS] 解码原图: {img.shape[1]}x{img.shape[0]}")
+        return img
+
+    @staticmethod
+    def _get_search_image(original, mode: str, hwnd: str):
+        """mode='current' 返回原图，否则重新截图。返回灰度图或 None。"""
+        if mode == "current":
+            logging.info("[PREPROCESS] mode=current，在原图上搜索")
+            return original
+        _, img = ScreenCapture.capture_gray(hwnd)
+        logging.info(f"[PREPROCESS] mode=recapture，新截图: {img.shape[1]}x{img.shape[0]}")
+        return img
+
+    @staticmethod
+    def _non_max_suppression(matches, margin: int = 20, max_kept: int = 50):
+        """贪婪 NMS：按置信度降序保留不重叠的匹配点。"""
+        sorted_matches = sorted(matches, key=lambda m: -m[0])
+        kept = []
+        for conf, px, py in sorted_matches:
+            too_close = any(
+                abs(px - kx) < margin and abs(py - ky) < margin
+                for _, kx, ky in kept
+            )
+            if not too_close:
+                kept.append((conf, px, py))
+                if len(kept) >= max_kept:
+                    break
+        return kept
+
+    _MATCH_COLORS = [
+        (0.95, (0, 255, 0)),     # 绿色  ≥ 0.95
+        (0.9,  (0, 200, 255)),   # 橙色  ≥ 0.9
+        (0.0,  (0, 140, 255)),   # 蓝色  <  0.9
+    ]
+
+    @classmethod
+    def _run_match_template(cls, processed, original, crop, preprocess_cfg, match_threshold):
+        """在搜索图上运行模板匹配并标注结果。返回 (标注后图像, match_results 列表)。"""
+        x, y = int(crop["x"]), int(crop["y"])
+        w, h = int(crop["w"]), int(crop["h"])
+        ih, iw = original.shape
+        if not (w > 4 and h > 4 and 0 <= x and x + w <= iw and 0 <= y and y + h <= ih):
+            logging.warning(f"[PREPROCESS] 无效的 crop: {crop}")
+            return processed, []
+
+        # 从原图裁剪模板（与原图相同预处理）
+        template_raw = original[y:y+h, x:x+w]
+        template = ScreenCapture.apply_preprocess(template_raw, preprocess_cfg)
+        logging.info(f"[PREPROCESS] 模板: {template.shape[1]}x{template.shape[0]}，原图({x},{y})")
+
+        # 匹配 + NMS
+        result = cv2.matchTemplate(processed, template, cv2.TM_CCOEFF_NORMED)
+        locations = np.where(result >= match_threshold)
+        raw = [(float(result[py, px]), px, py) for py, px in zip(*locations)]
+        kept = cls._non_max_suppression(raw)
+
+        # 标注到彩色图
+        annotated = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
+        matches = []
+        for confidence, px, py in kept:
+            matches.append({"x": int(px), "y": int(py), "w": w, "h": h, "confidence": round(confidence, 4)})
+            for thresh, color in cls._MATCH_COLORS:
+                if confidence >= thresh:
+                    break
+            cv2.rectangle(annotated, (px, py), (px + w, py + h), color, 2)
+            label = f"{confidence:.3f}"
+            (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            cv2.rectangle(annotated, (px, py - th - 4), (px + tw + 4, py - 2), color, -1)
+            cv2.putText(annotated, label, (px + 2, py - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+        logging.info(f"[PREPROCESS] 匹配结果: {len(matches)} 个 (阈值={match_threshold})")
+        return annotated, matches
+
+    @staticmethod
+    def _encode_result(img, matches):
+        """将 numpy 图像编码为 base64 返回 dict。"""
+        _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        return {
+            "base64": f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}",
+            "width": img.shape[1],
+            "height": img.shape[0],
+            "matches": matches,
+        }
+
     @staticmethod
     def preprocess_apply(hwnd, args):
         """
         对截图应用预处理并运行模板匹配，返回标注后的图像。
 
-        args 字段:
+        args:
             mode: "current" | "recapture"
-            base64: 仅 mode="current" 时传入
-            crop: 框选区域 {x, y, w, h}（用作匹配模板）
+            base64: 原图 data URL（用于提取模板）
+            crop: {x, y, w, h} 框选区域
             match_threshold: 匹配阈值（默认 0.8）
             预处理参数: binarize, binarize_threshold, binarize_invert,
                         adaptive, adaptive_block, adaptive_c
-        返回: { base64, width, height, matches: [{x,y,w,h,confidence}] }
+        返回: { base64, width, height, matches } 或 { error }
         """
-        logging.info(f"[PREPROCESS] 收到请求: hwnd={hwnd}, args_keys={list(args.keys()) if isinstance(args, dict) else 'NOT_DICT'}")
+        logging.info(f"[PREPROCESS] 收到: hwnd={hwnd}, keys={list(args.keys()) if isinstance(args, dict) else type(args).__name__}")
 
         if not isinstance(args, dict):
-            logging.error(f"[PREPROCESS] args 不是字典: {type(args)}")
-            return None
+            return {"error": f"args 类型错误: {type(args).__name__}"}
 
         mode = args.get("mode", "current")
-        crop = args.get("crop", None)
-
-        preprocess_cfg = {k: v for k, v in args.items()
-                          if k in App._PREPROCESS_KEYS and v is not None}
-        logging.info(f"[PREPROCESS] mode={mode}, crop={crop}, 预处理: {preprocess_cfg if preprocess_cfg else '(空)'}")
+        crop = args.get("crop")
+        preprocess_cfg = {k: v for k, v in args.items() if k in App._PREPROCESS_KEYS and v is not None}
+        logging.info(f"[PREPROCESS] mode={mode}, crop={crop}, pp={preprocess_cfg if preprocess_cfg else '(空)'}")
 
         try:
-            # 始终解码前端传来的原图（用于提取模板）
-            b64 = args.get("base64", "")
-            if not b64:
-                logging.error("[PREPROCESS] 未提供 base64（模板提取需要原图）")
-                return None
-            b64_data = re.sub(r'^data:image/\w+;base64,', '', b64)
-            img_bytes = base64.b64decode(b64_data)
-            img_array = np.frombuffer(img_bytes, dtype=np.uint8)
-            original = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
+            # 解码原图 → 提取模板
+            original = App._decode_base64_image(args.get("base64", ""))
             if original is None:
-                logging.error("[PREPROCESS] 解码 base64 失败")
-                return None
-            logging.info(f"[PREPROCESS] 解码原图: {original.shape[1]}x{original.shape[0]}")
+                return {"error": "base64 解码失败"}
 
-            # 确定搜索目标图
-            if mode == "current":
-                search_img = original
-                logging.info("[PREPROCESS] mode=current，在原图上搜索")
-            else:
-                # 重新截图作为搜索目标，模板仍然用原图裁剪
-                _, search_img = ScreenCapture.capture_gray(hwnd)
-                logging.info(f"[PREPROCESS] mode=recapture，新截图搜索: {search_img.shape[1]}x{search_img.shape[0]}")
+            # 获取搜索目标图
+            search_img = App._get_search_image(original, mode, hwnd)
 
-            # 对搜索图应用预处理
-            processed = ScreenCapture.apply_preprocess(search_img, preprocess_cfg if preprocess_cfg else None)
-
-            # 模板匹配（模板从原图上裁剪）
-            match_results = []
+            # 预处理 + 匹配
+            pp = preprocess_cfg if preprocess_cfg else None
+            processed = ScreenCapture.apply_preprocess(search_img, pp)
             if crop and isinstance(crop, dict):
-                x = int(crop.get("x", 0)); y = int(crop.get("y", 0))
-                w = int(crop.get("w", 0)); h = int(crop.get("h", 0))
-                if w > 4 and h > 4 and x >= 0 and y >= 0 and x + w <= original.shape[1] and y + h <= original.shape[0]:
-                    # 从原图上裁剪模板（也应用同样的预处理）
-                    template_raw = original[y:y+h, x:x+w]
-                    template = ScreenCapture.apply_preprocess(template_raw, preprocess_cfg if preprocess_cfg else None)
-                    match_threshold = float(args.get("match_threshold", 0.8))
-                    logging.info(f"[PREPROCESS] 模板尺寸: {template.shape[1]}x{template.shape[0]}，从原图({x},{y})裁剪")
+                threshold = float(args.get("match_threshold", 0.8))
+                processed, matches = App._run_match_template(processed, original, crop, pp, threshold)
+            else:
+                matches = []
 
-                    # 用 matchTemplate 在搜索图上搜索
-                    result = cv2.matchTemplate(processed, template, cv2.TM_CCOEFF_NORMED)
-                    locations = np.where(result >= match_threshold)
-                    h_img, w_img = processed.shape
-
-                    # 转为彩色图以便标注
-                    processed_color = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
-
-                    # 非极大值抑制：按置信度排序，去重
-                    raw_matches = []
-                    for pt_y, pt_x in zip(*locations):
-                        confidence = float(result[pt_y, pt_x])
-                        raw_matches.append((confidence, pt_x, pt_y))
-
-                    raw_matches.sort(key=lambda m: -m[0])
-
-                    # 去重：距离太近的只保留置信度最高的
-                    def boxes_close(b1, b2, margin=20):
-                        return (abs(b1[1] - b2[1]) < margin and abs(b1[2] - b2[2]) < margin)
-
-                    kept = []
-                    for conf, px, py in raw_matches:
-                        too_close = False
-                        for _, kx, ky in kept:
-                            if boxes_close((conf, px, py), (_, kx, ky)):
-                                too_close = True
-                                break
-                        if not too_close:
-                            kept.append((conf, px, py))
-                            if len(kept) >= 50:  # 最多画 50 个匹配
-                                break
-
-                    for confidence, px, py in kept:
-                        match_results.append({
-                            "x": int(px), "y": int(py), "w": w, "h": h,
-                            "confidence": round(confidence, 4),
-                        })
-                        # 画矩形和置信度
-                        color = (0, 255, 0) if confidence >= 0.95 else (0, 200, 255) if confidence >= 0.9 else (0, 140, 255)
-                        cv2.rectangle(processed_color, (px, py), (px + w, py + h), color, 2)
-                        label = f"{confidence:.3f}"
-                        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-                        cv2.rectangle(processed_color, (px, py - th - 4), (px + tw + 4, py - 2), color, -1)
-                        cv2.putText(processed_color, label, (px + 2, py - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-
-                    processed = processed_color
-                    logging.info(f"[PREPROCESS] 匹配完成: 找到 {len(match_results)} 个匹配点（阈值={match_threshold}）")
-                else:
-                    logging.warning(f"[PREPROCESS] 无效的 crop 区域: {crop}")
-
-            _, buffer = cv2.imencode('.jpg', processed, [cv2.IMWRITE_JPEG_QUALITY, 90])
-            result = {
-                "base64": f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}",
-                "width": processed.shape[1],
-                "height": processed.shape[0],
-                "matches": match_results,
-            }
-            logging.info(f"[PREPROCESS] 返回: {len(result['base64'])}B, {result['width']}x{result['height']}, {len(match_results)}匹配")
+            result = App._encode_result(processed, matches)
+            logging.info(f"[PREPROCESS] 成功: {result['width']}x{result['height']}, {len(matches)}匹配")
             return result
 
         except (ValueError, Exception) as e:
-            logging.error(f"[PREPROCESS] 处理失败: {type(e).__name__}: {e}")
+            logging.error(f"[PREPROCESS] 异常: {type(e).__name__}: {e}")
             import traceback
             logging.error(traceback.format_exc())
-            return None
+            return {"error": f"{type(e).__name__}: {e}"}
 
     @staticmethod
     def set_window_opacity(hwnd, opacity):
