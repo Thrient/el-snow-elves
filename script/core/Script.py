@@ -60,6 +60,7 @@ class Script(Thread):
                 if debug_single:
                     engine_kwargs["single_step"] = True
                 engine = FlowEngine(**engine_kwargs)
-                engine.loop()
+                if not debug_single:
+                    engine.loop()
                 engine.start()
                 engine.join()
