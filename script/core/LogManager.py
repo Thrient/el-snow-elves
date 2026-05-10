@@ -86,22 +86,9 @@ def read_logs(page=1, page_size=50, level=None, search=None):
     if file_size == 0:
         return {"logs": [], "total": 0, "page": page, "page_size": page_size}
 
-    if level or search:
-        return _read_scan(LOG_FILE, page, page_size, level, search)
-
-    total = _get_total_lines(LOG_FILE)
-    skip = (page - 1) * page_size
-    need = skip + page_size
-
-    lines = _read_tail_lines(LOG_FILE, need)
-    entries = _parse_entries(lines[skip:skip + page_size])
-
-    return {
-        "logs": entries,
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-    }
+    # 统一走全量扫描，total 只统计当前文件的有效日志条数，
+    # 不包含已轮转的旧文件，保证分页与实际内容一致
+    return _read_scan(LOG_FILE, page, page_size, level, search)
 
 
 def _read_scan(filepath, page, page_size, level, search):
