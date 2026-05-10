@@ -11,7 +11,7 @@ import webview
 
 from script.api.Api import api
 from script.api.JsApi import js
-from script.config.Setting import APP_TITLE, PROJECT_ROOT, VERSION, STORAGE_PATH
+from script.config.Setting import APP_TITLE, PROJECT_ROOT, THRESHOLD, VERSION, STORAGE_PATH
 from script.core.LogManager import setup_logging, read_logs, get_log_files
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
@@ -298,7 +298,7 @@ class App:
             pp = preprocess_cfg if preprocess_cfg else None
             processed = ScreenCapture.apply_preprocess(search_img, pp)
             if crop and isinstance(crop, dict):
-                threshold = float(args.get("match_threshold", 0.8))
+                threshold = float(args.get("match_threshold", THRESHOLD))
                 processed, matches = App._run_match_template(processed, original, crop, pp, threshold)
             else:
                 matches = []
