@@ -1,20 +1,13 @@
 from threading import Lock
-import base64
-
 import cv2
 import numpy as np
 import win32con
 import win32gui
 import win32ui
 
-from script.api.JsApi import js
-
-
 class ScreenCapture:
     _screen_locks = {}
     _screen_locks_lock = Lock()
-    _frame_counts = {}
-
     @classmethod
     def get_screen_lock(cls, hwnd):
         with cls._screen_locks_lock:
@@ -63,8 +56,6 @@ class ScreenCapture:
                     mfcDC.DeleteDC()
                 if hwndDC is not None:
                     win32gui.ReleaseDC(hwnd, hwndDC)
-
-            cls._push_preview(hwnd, img)
 
             return img, gray
 
@@ -145,17 +136,3 @@ class ScreenCapture:
             result = cv2.bitwise_not(result)
 
         return result
-
-    @classmethod
-    def _push_preview(cls, hwnd, img):
-        """隔帧推送缩小后的JPEG预览到前端"""
-        count = cls._frame_counts.get(hwnd, 0) + 1
-        cls._frame_counts[hwnd] = count
-        if count % 10 != 0:
-            return
-        small = cv2.resize(img, (0, 0), fx=0.4, fy=0.4)
-        _, buffer = cv2.imencode('.jpg', small, [cv2.IMWRITE_JPEG_QUALITY, 85])
-        js.update_character({
-            "hwnd": hwnd,
-            "preview": f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
-        })

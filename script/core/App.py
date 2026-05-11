@@ -3,7 +3,6 @@ import ctypes
 import logging
 import os
 import re
-from datetime import datetime
 
 import cv2
 import numpy as np
@@ -68,7 +67,6 @@ class App:
         api.on("API:SCRIPT:UNBIND", self.unbind)
         api.on("API:SCRIPT:RESUME", self.resume)
         api.on("API:SCRIPT:PAUSE", self.pause)
-        api.on("API:SCRIPT:SCREENSHOT", self.screenshot)
         api.on("API:SCRIPT:SET_OPACITY", self.set_window_opacity)
         api.on("API:TASK:LOAD:FULL", StaticCommon.get_full_task_config)
         api.on("API:TASK:SAVE:FULL", StaticCommon.save_full_task_config)
@@ -98,23 +96,6 @@ class App:
             return
         script = self._script_instances[hwnd]
         script.pause()
-
-    @staticmethod
-    def screenshot(hwnd):
-        try:
-            img, _ = ScreenCapture.capture_gray(hwnd)
-        except (ValueError, Exception) as e:
-            logging.error(f"截图失败: hwnd={hwnd}, error={e}")
-            return None
-
-        temp_dir = os.path.join(PROJECT_ROOT, "temp")
-        os.makedirs(temp_dir, exist_ok=True)
-
-        filename = datetime.now().strftime("%Y%m%d_%H%M%S_%f") + ".bmp"
-        filepath = os.path.join(temp_dir, filename)
-        cv2.imwrite(filepath, img)
-        logging.info(f"截图已保存: {filepath}")
-        return filepath
 
     @staticmethod
     def capture_for_template(hwnd):
