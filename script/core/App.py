@@ -1,8 +1,11 @@
 import base64
 import ctypes
+import io
+import json
 import logging
 import os
 import re
+import zipfile
 
 import cv2
 import numpy as np
@@ -71,6 +74,8 @@ class App:
         api.on("API:TASK:LOAD:FULL", StaticCommon.get_full_task_config)
         api.on("API:TASK:SAVE:FULL", StaticCommon.save_full_task_config)
         api.on("API:TASK:CREATE", StaticCommon.create_task)
+        api.on("API:TASK:EXPORT", self.export_task)
+        api.on("API:TASK:IMPORT", StaticCommon.import_task)
         api.on("API:AUTOCOMPLETE:ACTIONS", StaticCommon.list_actions)
         api.on("API:AUTOCOMPLETE:TEMPLATES", StaticCommon.list_template_images)
         api.on("API:AUTOCOMPLETE:STEPS", StaticCommon.list_steps_for_task)
@@ -350,6 +355,64 @@ class App:
         script = self._script_instances.pop(hwnd)
         script.stop()
         logging.info(f"解绑窗口: hwnd={hwnd}")
+
+    def export_task(self, task_id):
+        """导出任务为 zip — 使用系统原生保存对话框"""
+        config = StaticCommon.get_task_config_by_id(task_id)
+        if not config:
+            return {"error": f"任务不存在: {task_id}"}
+
+        name = config.get("name", "")
+        version = config.get("version", "")
+        author = config.get("author", "")
+        if not name or not version:
+            return {"error": "任务缺少 name 或 version"}
+
+        task_dir = os.path.dirname(config.get("_config_path", ""))
+        if not task_dir or not os.path.isdir(task_dir):
+            return {"error": "任务目录不存在"}
+
+        # 构建 zip
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            clean = {k: v for k, v in config.items() if k not in ("id", "_config_path")}
+            zf.writestr(f"{name}.json", json.dumps(clean, ensure_ascii=False, indent=2))
+
+            pos_path = os.path.join(task_dir, "positions.json")
+            if os.path.isfile(pos_path):
+                zf.write(pos_path, "positions.json")
+
+            images_dir = os.path.join(task_dir, "images")
+            if os.path.isdir(images_dir):
+                for fname in os.listdir(images_dir):
+                    if fname.endswith(".bmp"):
+                        zf.write(os.path.join(images_dir, fname), f"images/{fname}")
+
+        # 生成建议文件名
+        safe = lambda s: re.sub(r'[\/\\:*?"<>|]', '_', s or "unknown")
+        default_name = f"{safe(name)}_{safe(version)}_{safe(author)}.zip"
+
+        # 系统原生保存对话框
+        result = self.window.create_file_dialog(
+            webview.FileDialog.SAVE,
+            directory="",
+            save_filename=default_name,
+            file_types=("ZIP 压缩包 (*.zip)",),
+        )
+
+        if not result:
+            return {"cancelled": True}
+
+        filepath = result[0] if isinstance(result, tuple) else result
+
+        try:
+            with open(filepath, "wb") as f:
+                f.write(buf.getvalue())
+            logging.info(f"任务导出成功: {filepath}")
+            return {"success": True, "path": filepath}
+        except OSError as e:
+            logging.error(f"导出写入失败: {e}")
+            return {"error": f"写入文件失败: {e}"}
 
     def _script(self, hwnd):
         script = Script(hwnd)

@@ -1,6 +1,11 @@
+import base64
 import hashlib
+import io
 import json
 import os
+import shutil
+import tempfile
+import zipfile
 from pathlib import Path
 
 from script.config.Setting import PROJECT_ROOT, USER_CONFIG_PATH
@@ -280,5 +285,88 @@ class StaticCommon:
         task_json["_config_path"] = filepath
         _TASK_CONFIG_CACHE[task_id] = task_json
         return task_id
+
+    @staticmethod
+    def import_task(zip_base64):
+        """从 base64 编码的 zip 导入任务"""
+        try:
+            zip_data = base64.b64decode(zip_base64)
+        except Exception:
+            return {"error": "base64 解码失败，请检查文件格式"}
+
+        tmpdir = tempfile.mkdtemp(prefix="elves_import_")
+        try:
+            with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+                zf.extractall(tmpdir)
+
+            # 在解压根目录查找任务 JSON（排除 images 子目录）
+            json_files = []
+            for fname in os.listdir(tmpdir):
+                p = os.path.join(tmpdir, fname)
+                if os.path.isfile(p) and fname.endswith(".json") and fname != "positions.json":
+                    json_files.append(p)
+
+            if not json_files:
+                return {"error": "压缩包中未找到任务配置文件"}
+            if len(json_files) > 1:
+                return {"error": f"压缩包中包含多个 JSON 文件，无法确定任务配置: {[os.path.basename(f) for f in json_files]}"}
+
+            config_path = json_files[0]
+            with open(config_path, "r", encoding="utf-8") as f:
+                task_data = json.load(f)
+
+            # 校验必填字段
+            name = (task_data.get("name") or "").strip()
+            version = (task_data.get("version") or "").strip()
+            author = (task_data.get("author") or "").strip()
+            if not name:
+                return {"error": "任务配置缺少 name 字段"}
+            if not version:
+                return {"error": "任务配置缺少 version 字段"}
+            if not author:
+                return {"error": "任务配置缺少 author 字段"}
+
+            # 冲突检测
+            dest_dir = os.path.join(PROJECT_ROOT, "resources", "config", name, version)
+            if os.path.exists(dest_dir):
+                return {"error": f"任务「{name}」版本 {version} 已存在，无法覆盖导入"}
+
+            # 创建目录结构
+            images_dir = os.path.join(dest_dir, "images")
+            os.makedirs(images_dir, exist_ok=True)
+
+            # 复制主配置 JSON
+            target_json = os.path.join(dest_dir, f"{name}.json")
+            with open(target_json, "w", encoding="utf-8") as f:
+                json.dump(task_data, f, ensure_ascii=False, indent=2)
+
+            # 复制 positions.json
+            src_pos = os.path.join(tmpdir, "positions.json")
+            if os.path.isfile(src_pos):
+                shutil.copy2(src_pos, os.path.join(dest_dir, "positions.json"))
+
+            # 复制 images
+            src_images = os.path.join(tmpdir, "images")
+            if os.path.isdir(src_images):
+                for fname in os.listdir(src_images):
+                    if fname.endswith(".bmp"):
+                        shutil.copy2(os.path.join(src_images, fname), os.path.join(images_dir, fname))
+
+            # 写入缓存
+            task_id = hashlib.sha256(f"{name}_{version}".encode('utf-8')).hexdigest()
+            task_data["id"] = task_id
+            task_data["_config_path"] = target_json
+            _TASK_CONFIG_CACHE[task_id] = task_data
+
+            return {"name": name, "version": version, "author": author}
+
+        except zipfile.BadZipFile:
+            return {"error": "文件不是有效的 ZIP 压缩包"}
+        except json.JSONDecodeError as e:
+            return {"error": f"JSON 解析失败: {e}"}
+        except OSError as e:
+            return {"error": f"文件系统错误: {e}"}
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
 
 
