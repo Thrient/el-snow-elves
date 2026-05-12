@@ -306,9 +306,7 @@ class App:
             return result
 
         except (ValueError, Exception) as e:
-            logging.error(f"[PREPROCESS] 异常: {type(e).__name__}: {e}")
-            import traceback
-            logging.error(traceback.format_exc())
+            logging.exception(f"[PREPROCESS] 异常: {type(e).__name__}: {e}")
             return {"error": f"{type(e).__name__}: {e}"}
 
     @staticmethod
@@ -332,6 +330,7 @@ class App:
             try:
                 img, _ = ScreenCapture.capture_gray(hwnd=hwnd)
             except (ValueError, Exception):
+                logging.debug(f"窗口截图跳过: {hwnd}")
                 continue
             _, buffer = cv2.imencode('.png', img)
             winList.append({

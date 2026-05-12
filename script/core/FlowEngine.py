@@ -27,6 +27,7 @@ class FlowEngine(Thread):
         self._all_steps = {**self._common, **self._steps}
         self.step_name = kwargs.get("start") if "start" in kwargs else self.work.get("start")
         self._single_step = kwargs.get("single_step", False)
+        self._is_subflow = kwargs.get("is_subflow", False)
         self.vp = kwargs.get("vp") if "vp" in kwargs else VariableProcessor(self.work.get("values"))
 
         monitors = self.work.get("monitors", {})
@@ -135,8 +136,8 @@ class FlowEngine(Thread):
             hwnd=self._hwnd,
             paused=self._paused,
             work=self.work,
-            vp=self.vp
-
+            vp=self.vp,
+            is_subflow=True,
         )
         sub_engine.run()
 
@@ -248,8 +249,50 @@ class FlowEngine(Thread):
 
         return []
 
+    @staticmethod
+    def _format_action(step_def):
+        action = step_def.get("action", "?")
+        params = step_def.get("params", {})
+        if not isinstance(params, dict):
+            params = {}
+        args = params.get("args", ())
+
+        if isinstance(action, str) and action.startswith("{") and action.endswith("}"):
+            return action
+
+        if action == "mouse_click":
+            pos = params.get("pos", (0, 0))
+            return f"mouse_click ({pos[0]}, {pos[1]})"
+        if action == "key_click":
+            key = params.get("key", "?")
+            return f"key_click {key}"
+        if action == "set_character":
+            return "set_character"
+
+        # touch / exits / wait / wait_disappear — show template args
+        if args:
+            return f"{action} {', '.join(str(a) for a in args)}"
+        return str(action)
+
+    @staticmethod
+    def _format_result(result):
+        if isinstance(result, list):
+            n = len(result)
+            if n == 0:
+                return "无匹配"
+            pts = ", ".join(f"({x},{y})" for x, y in result[:6])
+            more = f" +{n - 6}" if n > 6 else ""
+            return f"{n}匹配 [{pts}{more}]"
+        if result is True:
+            return "成功"
+        if result is False or result is None or result == []:
+            return "失败"
+        return str(result)
+
     def run(self):
-        logging.info(f"工作流开始: {self.name} v{self.version} | 起始步骤={self.step_name}")
+        t_start = time.time()
+        if not self._is_subflow:
+            logging.info(f"▶ {self.name} v{self.version}")
         while not self._paused.is_set() and self.step_name and self.step_name != "任务结束":
             step_def = self.process_step(self.step_name)
             t0 = time.time()
@@ -267,6 +310,11 @@ class FlowEngine(Thread):
             if self._single_step:
                 self.step_name = "任务结束"
             elapsed = (time.time() - t0) * 1000
-            logging.info(f"[{self.name}] {prev} → {self.step_name} | result={len(result) if isinstance(result, list) else result} | vars={self.vp.variables} | {elapsed:.0f}ms")
-        logging.info(f"工作流结束: {self.name} v{self.version}")
+            action_label = self._format_action(step_def)
+            result_label = self._format_result(result)
+            logging.info(f"{action_label} → {result_label} | {elapsed:.0f}ms")
+            logging.debug(f"[{self.name}] {prev} → {self.step_name} | vars={self.vp.variables}")
+        if not self._is_subflow:
+            total_elapsed = (time.time() - t_start) * 1000
+            logging.info(f"◀ {self.name} v{self.version} | 完成 | {total_elapsed:.0f}ms")
         self._monitor_stop_event.set()

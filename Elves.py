@@ -5,7 +5,7 @@ from script.config.Setting import APP_URL, PROJECT_ROOT
 from script.core.App import App
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)-5s] %(message)s')
 
 mimetypes.add_type("application/javascript", ".js")
 webview.settings['WEBVIEW2_RUNTIME_PATH'] = "WebView2"

@@ -2,6 +2,7 @@ import base64
 import hashlib
 import io
 import json
+import logging
 import os
 import shutil
 import tempfile
@@ -206,7 +207,8 @@ class StaticCommon:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             return sorted(list(data.keys())) if isinstance(data, dict) else []
-        except Exception:
+        except Exception as e:
+            logging.warning(f"获取全局公共步骤失败: {e}")
             return []
 
     @staticmethod
@@ -224,7 +226,8 @@ class StaticCommon:
                 return {}
             with open(pos_path, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
+        except Exception as e:
+            logging.warning(f"加载节点位置失败 (task_id={task_id}): {e}")
             return {}
 
     @staticmethod
@@ -241,7 +244,8 @@ class StaticCommon:
             with open(pos_path, "w", encoding="utf-8") as f:
                 json.dump(positions, f, indent=2, ensure_ascii=False)
             return True
-        except Exception:
+        except Exception as e:
+            logging.warning(f"保存节点位置失败 (task_id={task_id}): {e}")
             return False
 
     @staticmethod

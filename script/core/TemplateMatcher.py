@@ -75,7 +75,7 @@ class TemplateMatcher:
                 logging.error(f"模板匹配失败: {futures[future]} | {e}")
 
         results = sorted(Utils.clean_duplicate_points(results), key=lambda pos: (-pos[1], pos[0]))
-        logging.info(f"模板匹配完成，共 {len(results)} 个结果: {args}")
+        logging.debug(f"模板匹配完成，共 {len(results)} 个结果: {args}")
         return results
 
 

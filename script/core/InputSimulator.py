@@ -62,6 +62,6 @@ class InputSimulator:
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
 
-            logging.info(f"点击坐标: {pos}")
+            logging.debug(f"点击坐标: {pos}")
 
         return _inner(**kwargs)
