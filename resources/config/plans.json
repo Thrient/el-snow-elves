@@ -1,0 +1,32 @@
+[
+  {
+    "name": "五点重启",
+    "templateId": "restart",
+    "cron": "0 5 * * *",
+    "enabled": true,
+    "action": {
+      "type": "refill_queue",
+      "params": {
+        "source": "current_queue"
+      }
+    },
+    "id": "plan_1778626758042",
+    "createdAt": 1778626767100,
+    "updatedAt": 1778626767100
+  },
+  {
+    "name": "限时任务",
+    "templateId": "push_task",
+    "cron": "*/30 * * * *",
+    "enabled": true,
+    "action": {
+      "type": "push_task",
+      "params": {
+        "taskId": "c99efbbdc14df1fa1c9ee17ab65225e82ceec0f699408fba06129ead896e7f07"
+      }
+    },
+    "id": "plan_1778627071274",
+    "createdAt": 1778627181750,
+    "updatedAt": 1778627181750
+  }
+]

@@ -1,5 +1,7 @@
 import base64
+import logging
 import random
+import subprocess
 
 import cv2
 
@@ -9,6 +11,7 @@ from script.core.InputSimulator import InputSimulator
 from script.core.ScreenCapture import ScreenCapture
 from script.core.TemplateMatcher import TemplateMatcher
 from script.functools.Functools import during, wait_until
+from script.account import AccountManager, HostsManager, INJECTION, get_proxy
 
 
 class BaseTask:
@@ -115,3 +118,22 @@ class BaseTask:
             "character": f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}",
             "hwnd": hwnd
         })
+
+    @staticmethod
+    def switch_account(*args, **kwargs):
+        """启用代理注入，后续登录请求自动注入凭证"""
+        account_name = kwargs.get("account_name")
+        account = AccountManager.get_account(account_name)
+        token_info = account.get("token_info") if account else None
+
+        proxy = get_proxy()
+        proxy.mode = INJECTION
+        proxy.token_info = token_info
+        proxy.completed = False
+        HostsManager.hijack()
+        subprocess.run(["ipconfig", "/flushdns"], capture_output=True, creationflags=0x08000000)
+        return True
+
+    def input(self, *args, **kwargs):
+        return self._input.input(*args, **kwargs)
+

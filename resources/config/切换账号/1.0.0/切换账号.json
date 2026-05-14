@@ -1,0 +1,76 @@
+{
+  "name": "切换账号",
+  "version": "1.0.0",
+  "author": "Thrient",
+  "description": "切换账号",
+  "start": "",
+  "steps": {
+    "用户中心": {
+      "action": "mouse_click",
+      "params": {
+        "args": [
+          "按钮用户中心切换账号"
+        ],
+        "hwnd": "{ChildHwnd}",
+        "pos": [
+          100,
+          250
+        ]
+      },
+      "next": "其他账号登录"
+    },
+    "其他账号登录": {
+      "action": "mouse_click",
+      "params": {
+        "pos": [
+          180,
+          365
+        ],
+        "hwnd": "{ChildHwnd:登录}"
+      }
+    }
+  },
+  "common": {
+    "切换账号": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮设置用户中心"
+        ]
+      },
+      "prefix": [
+        {
+          "step": "回放账号"
+        },
+        {
+          "step": "检查设置"
+        }
+      ],
+      "success": "用户中心",
+      "postfix": []
+    },
+    "回放账号": {
+      "action": "switch_account",
+      "params": {
+        "account_name": "{账号名称}"
+      }
+    }
+  },
+  "monitors": {
+    "loop": [],
+    "interval": 1
+  },
+  "values": {
+    "账号名称": "打本"
+  },
+  "layout": [
+    [
+      {
+        "span": 12,
+        "model": "el-input",
+        "store": "账号名称",
+        "text": "账号名称"
+      }
+    ]
+  ]
+}

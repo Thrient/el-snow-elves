@@ -26,8 +26,9 @@ class SafeExpressionEvaluator:
         ast.Not: operator.not_,
     }
 
-    def __init__(self, variables):
+    def __init__(self, variables, computed=None):
         self.variables = variables
+        self.computed = computed or {}
 
     def evaluate(self, expr):
         if expr in _EXPR_CACHE:
@@ -74,6 +75,8 @@ class SafeExpressionEvaluator:
                 return None
             if node.id in self.variables:
                 return self.variables[node.id]
+            if node.id in self.computed:
+                return self.computed[node.id]()
             raise NameError("未定义变量: {}".format(node.id))
         if isinstance(node, ast.BinOp):
             left = self._eval_node(node.left)
@@ -157,12 +160,12 @@ class ConstantValue(Evaluable):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self, result, variables):
+    def evaluate(self, result, variables, computed=None):
         return self.value
 
 
 class ResultPlaceholder(Evaluable):
-    def evaluate(self, result, variables):
+    def evaluate(self, result, variables, computed=None):
         return result
 
 
@@ -171,8 +174,8 @@ class ExpressionValue(Evaluable):
         self.expr_template = expr_template
         self.var_names = var_names
 
-    def evaluate(self, result, variables):
-        evaluator = SafeExpressionEvaluator(variables)
+    def evaluate(self, result, variables, computed=None):
+        evaluator = SafeExpressionEvaluator(variables, computed)
         return evaluator.evaluate(self.expr_template)
 
 
@@ -181,7 +184,7 @@ class AutoIncrementDecrement(Evaluable):
         self.var_name = var_name
         self.delta = delta
 
-    def evaluate(self, result, variables):
+    def evaluate(self, result, variables, computed=None):
         if self.var_name not in variables:
             raise NameError("未定义变量: {}".format(self.var_name))
         current = variables[self.var_name]
@@ -252,7 +255,9 @@ class DefaultValue(Evaluable):
         self.var_name = var_name
         self.default_value = default_value
 
-    def evaluate(self, result, variables):
+    def evaluate(self, result, variables, computed=None):
+        if computed and self.var_name in computed:
+            return computed[self.var_name](self.default_value)
         return variables.get(self.var_name, self.default_value)
 
 
@@ -292,6 +297,7 @@ class BraceExpressionParser(ValueParser):
 class VariableProcessor:
     def __init__(self, variables = None):
         self.variables = variables or dict()
+        self._computed = {}
         self._parsers = []
         self._lock = __import__('threading').Lock()
         self._register_default_parsers()
@@ -307,12 +313,15 @@ class VariableProcessor:
     def register_parser(self, parser):
         self._parsers.append(parser)
 
+    def register_computed(self, name, fn):
+        self._computed[name] = fn
+
     def process_value(self, raw_value, result):
         for parser in self._parsers:
             evaluable = parser.parse(raw_value)
             if evaluable is not None:
                 try:
-                    return evaluable.evaluate(result, self.variables)
+                    return evaluable.evaluate(result, self.variables, self._computed)
                 except Exception as e:
                     raise ValueError("求值失败: {} -> {}".format(raw_value, e)) from e
         return raw_value

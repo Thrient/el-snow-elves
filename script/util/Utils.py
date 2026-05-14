@@ -1,4 +1,5 @@
 import logging
+import time
 
 import win32api
 import win32gui
@@ -46,6 +47,20 @@ class Utils:
 
         win32gui.EnumWindows(callback, None)
         return results
+
+    @staticmethod
+    def find_window_by_title_and_owner_hwnd(title: str, owner_hwnd: int) -> int | None:
+        """查找属于指定父窗口且标题匹配的子窗口句柄"""
+        result: int | None = None
+
+        def callback(target, _):
+            nonlocal result
+            if win32gui.GetWindow(target, 4) == owner_hwnd and win32gui.GetWindowText(target == title):
+                result = target
+            return True
+
+        win32gui.EnumWindows(callback, None)
+        return result
 
     @staticmethod
     def clean_duplicate_points(positions, threshold=10):

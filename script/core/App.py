@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import zipfile
 
 import cv2
@@ -18,6 +19,8 @@ from script.core.LogManager import setup_logging, read_logs, get_log_files
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
 from script.core.StaticCommon import StaticCommon
+from script.account import AccountManager, RECORDING, INJECTION, get_proxy
+from script.account.HostsManager import HostsManager
 from script.core.TemplateMatcher import TemplateMatcher
 from script.core.Window import Window
 from script.util.Utils import Utils
@@ -56,6 +59,8 @@ class App:
         )
         # 存储句柄和对应Script实例的字典
         self._script_instances = {}
+        self._recording_proxy = None
+        self._hosts_hijacked = False
         js.init(self.window)
         self.init()
 
@@ -87,6 +92,19 @@ class App:
         api.on("API:PREPROCESS:APPLY", self.preprocess_apply)
         api.on("API:LOG:READ", read_logs)
         api.on("API:LOG:FILES", get_log_files)
+        api.on("API:PLAN:LOAD", StaticCommon.load_plans)
+        api.on("API:PLAN:SAVE", StaticCommon.save_plans)
+        api.on("API:CRON:TRIGGER", self._on_cron_trigger)
+        api.on("API:ACCOUNT:LIST", AccountManager.list_accounts)
+        api.on("API:ACCOUNT:LIST:NAMES", AccountManager.list_account_names)
+        api.on("API:ACCOUNT:SAVE", AccountManager.save_account)
+        api.on("API:ACCOUNT:DELETE", AccountManager.delete_account)
+        api.on("API:ACCOUNT:RENAME", AccountManager.rename_account)
+        api.on("API:ACCOUNT:RECORD:START", self.start_recording)
+        api.on("API:ACCOUNT:RECORD:STOP", self.stop_recording)
+        api.on("API:ACCOUNT:RECORD:STATUS", self.recording_status)
+        api.on("API:ACCOUNT:REPLAY:START", self.start_replay)
+        api.on("API:ACCOUNT:REPLAY:STOP", self.stop_replay)
         setup_logging()
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
@@ -412,6 +430,78 @@ class App:
         except OSError as e:
             logging.error(f"导出写入失败: {e}")
             return {"error": f"写入文件失败: {e}"}
+
+    def _ensure_proxy(self):
+        """代理常驻，只启动一次"""
+        proxy = get_proxy()
+        proxy.completed = False
+        if proxy._addon and hasattr(proxy._addon, "captured"):
+            proxy._addon.captured = None
+        self._recording_proxy = proxy
+
+    def _start_session(self, mode, name="", token_info=None):
+        self._ensure_proxy()
+        self._recording_proxy.mode = mode
+        self._recording_proxy.token_info = token_info
+        self._recording_proxy.completed = False
+        self._hosts_hijacked = HostsManager.hijack()
+        subprocess.run(["ipconfig", "/flushdns"], capture_output=True, creationflags=0x08000000)
+        mode_label = "录制" if mode == RECORDING else "回放"
+        logging.info(f"[App] 开始{mode_label}: {name}")
+
+    def start_recording(self, name):
+        try:
+            self._start_session(RECORDING, name)
+            return {"status": "recording", "message": f"请在游戏中手动登录账号 '{name}'"}
+        except Exception as e:
+            logging.error(f"[App] 启动录制失败: {e}")
+            return {"error": str(e)}
+
+    def stop_recording(self, name):
+        if not self._recording_proxy:
+            return {"error": "未在录制"}
+        token = self._recording_proxy.captured
+        HostsManager.restore()
+        self._hosts_hijacked = False
+        self._recording_proxy.completed = False
+        if token:
+            AccountManager.save_account({"name": name, "token_info": token})
+            logging.info(f"[App] 账号录制完成: {name}")
+            return {"status": "done", "account": name}
+        logging.warning(f"[App] 录制未捕获到token: {name}")
+        return {"error": "未捕获到登录凭证"}
+
+    def recording_status(self):
+        if self._recording_proxy and self._hosts_hijacked:
+            if self._recording_proxy.completed:
+                return {"status": "done", "has_token": bool(self._recording_proxy.captured)}
+            return {"status": "recording", "has_token": False}
+        return {"status": "idle", "has_token": False}
+
+    def start_replay(self, account_name):
+        account = AccountManager.get_account(account_name)
+        if not account:
+            return {"error": f"账号不存在: {account_name}"}
+        token_info = account.get("token_info")
+        if not token_info:
+            return {"error": "账号未包含登录凭证"}
+        try:
+            self._start_session(INJECTION, account_name, token_info=token_info)
+            return {"status": "replaying", "message": f"正在回放「{account_name}」，请在游戏中触发登录"}
+        except Exception as e:
+            logging.error(f"[App] 启动回放失败: {e}")
+            return {"error": str(e)}
+
+    def stop_replay(self):
+        HostsManager.restore()
+        self._hosts_hijacked = False
+        if self._recording_proxy:
+            self._recording_proxy.completed = False
+        logging.info("[App] 回放停止")
+        return {"status": "stopped"}
+
+    def _on_cron_trigger(self, hwnd, action_type, params):
+        logging.info(f"[Cron] 定时触发 hwnd={hwnd} type={action_type} params={params}")
 
     def _script(self, hwnd):
         script = Script(hwnd)

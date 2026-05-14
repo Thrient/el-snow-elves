@@ -1,4 +1,5 @@
 import logging
+import time
 
 import win32api
 import win32con
@@ -63,5 +64,20 @@ class InputSimulator:
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
 
             logging.debug(f"点击坐标: {pos}")
+
+        return _inner(**kwargs)
+
+    @staticmethod
+    def input(*args, **kwargs):
+        """逐字输入文本"""
+        hwnd = kwargs.get("hwnd")
+
+        @delay(post_delay=DELAY)
+        def _inner(**inner_kwargs):
+            text = str(inner_kwargs.get("text", ""))
+            for char in text:
+                win32gui.PostMessage(hwnd, win32con.WM_CHAR, ord(char), None)
+                time.sleep(0.02)
+            logging.debug(f"输入文本: {text[:20]}{'...' if len(text) > 20 else ''} | hwnd={hwnd}")
 
         return _inner(**kwargs)

@@ -8,6 +8,7 @@ from threading import Thread, Event
 from script.config.Setting import PROJECT_ROOT
 from script.core.VariableProcessor import VariableProcessor
 from script.task.BaseTask import BaseTask
+from script.util.Utils import Utils
 
 _COMMON_CACHE = None
 
@@ -28,7 +29,9 @@ class FlowEngine(Thread):
         self.step_name = kwargs.get("start") if "start" in kwargs else self.work.get("start")
         self._single_step = kwargs.get("single_step", False)
         self._is_subflow = kwargs.get("is_subflow", False)
-        self.vp = kwargs.get("vp") if "vp" in kwargs else VariableProcessor(self.work.get("values"))
+        self.vp = kwargs.get("vp") if "vp" in kwargs else VariableProcessor({**(self.work.get("values") or {}), "hwnd": self._hwnd})
+        if "vp" not in kwargs:
+            self.vp.register_computed("ChildHwnd", lambda title="MPAY_USER_CENTER": Utils.find_window_by_title_and_owner_hwnd(title, self._hwnd) or "")
 
         monitors = self.work.get("monitors", {})
         self._monitor_loop = monitors.get("loop", [])
@@ -152,8 +155,8 @@ class FlowEngine(Thread):
 
     def to_action(self, action_type, params, **extra_kwargs):
         args = params.get('args', ()) if isinstance(params, dict) else ()
-        kwargs = {k: v for k, v in params.items() if k != 'args'} if isinstance(params, dict) else {}
-        kwargs.update(extra_kwargs)
+        user_kwargs = {k: v for k, v in params.items() if k != 'args'} if isinstance(params, dict) else {}
+        kwargs = {**extra_kwargs, **user_kwargs}
 
         method = getattr(self._task, action_type)
         class _ActionWrapper:

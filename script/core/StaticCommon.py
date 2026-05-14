@@ -177,8 +177,10 @@ class StaticCommon:
             {"value": "wait", "label": "wait — 等待模板出现"},
             {"value": "wait_disappear", "label": "wait_disappear — 等待模板消失"},
             {"value": "key_click", "label": "key_click — 发送按键"},
+            {"value": "input", "label": "input — 输入文本"},
             {"value": "mouse_click", "label": "mouse_click — 点击坐标"},
             {"value": "set_character", "label": "set_character — 捕获角色头像"},
+            {"value": "switch_account", "label": "switch_account — 切换游戏账号"},
             {"value": "{True}", "label": "{True} — 无条件通过"},
         ]
 
@@ -372,5 +374,31 @@ class StaticCommon:
             return {"error": f"文件系统错误: {e}"}
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
+
+    @staticmethod
+    def load_plans():
+        """加载计划任务列表"""
+        file_path = os.path.join(PROJECT_ROOT, "resources", "config", "plans.json")
+        if not os.path.isfile(file_path):
+            return []
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            logging.warning(f"加载计划列表失败: {e}")
+            return []
+
+    @staticmethod
+    def save_plans(data):
+        """保存计划任务列表"""
+        file_path = os.path.join(PROJECT_ROOT, "resources", "config", "plans.json")
+        try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            return True
+        except Exception as e:
+            logging.warning(f"保存计划列表失败: {e}")
+            return False
 
 
