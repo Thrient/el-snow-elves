@@ -1,7 +1,8 @@
 {
   "values": {
     "背包": "B",
-    "设置": "ESC"
+    "设置": "ESC",
+    "好友": "H"
   },
   "layout": [
     [
@@ -22,6 +23,12 @@
         "text": "设置:",
         "model": "el-key-input",
         "store": "设置"
+      },
+      {
+        "span": 6,
+        "text": "好友:",
+        "model": "el-key-input",
+        "store": "好友"
       }
     ]
   ]
