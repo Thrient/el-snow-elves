@@ -37,7 +37,8 @@ def setup_logging():
     handler.setFormatter(JsonFormatter())
 
     root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
+    level = os.environ.get("ELVES_LOG_LEVEL", "INFO").upper()
+    root.setLevel(getattr(logging, level, logging.INFO))
     root.addHandler(handler)
 
 

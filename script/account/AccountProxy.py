@@ -53,6 +53,36 @@ INJECTION = "injection"
 PROXY_PORT = 443
 
 
+def _create_handler(proxy: "AccountProxy", router: "ProxyRouter"):
+    """工厂：根据 proxy.mode + proxy.channel_fake 创建对应 handler（懒导入避免循环引用）"""
+    if proxy.mode == RECORDING:
+        from script.account.handler.QrScanRecordHandler import QrScanRecordHandler
+        return QrScanRecordHandler(proxy, router)
+
+    if proxy.mode == INJECTION:
+        if proxy.channel_fake:
+            ti = proxy.token_info or {}
+            ct = (ti.get("channel_auth", {})).get("channel_type", "")
+
+            if ct == "huawei":
+                from script.account.handler.HuaweiReplayHandler import HuaweiReplayHandler
+                return HuaweiReplayHandler(proxy, router)
+            if ct in ("vivo", "nearme_vivo"):
+                from script.account.handler.VivoReplayHandler import VivoReplayHandler
+                return VivoReplayHandler(proxy, router)
+            if ct == "bilibili":
+                from script.account.handler.BilibiliReplayHandler import BilibiliReplayHandler
+                return BilibiliReplayHandler(proxy, router)
+
+            logging.warning(f"[Proxy] 未支持的渠道回放类型: {ct}")
+            return None
+
+        from script.account.handler.QrScanReplayHandler import QrScanReplayHandler
+        return QrScanReplayHandler(proxy, router)
+
+    return None
+
+
 class _CompatAddon:
     """兼容模式 addon：根据 Host 头将请求路由到正确的上游服务器"""
 
@@ -83,69 +113,108 @@ class _RequestLogger:
             logging.info(f"[Proxy REQ] {key}")
 
 
-class _DynamicAddon:
-    """动态 addon：根据 proxy.mode 切换录制/注入行为"""
+class ProxyRouter:
+    """将代理事件路由到对应 handler。只做基础设施（提取 ID、Cookie 累积），
+    录制/回放/渠道逻辑全在 handler 中。"""
 
     def __init__(self, domains, proxy):
         self.domains = set(domains)
         self.proxy = proxy
-        self._stopping = False
+        self._cookie_jar: list[str] = []
+        self._delayed_stop: threading.Timer | None = None
+        self.captured: dict | None = None
+        self._handler_cache: dict = {}
+
+    # ── 供 handler 调用的公共 API ──
+
+    @property
+    def cookies(self) -> list[str]:
+        return list(self._cookie_jar)
+
+    def schedule(self, callback, delay: float = 3.0):
+        if self._delayed_stop:
+            self._delayed_stop.cancel()
+        self._delayed_stop = threading.Timer(delay, callback)
+        self._delayed_stop.start()
+
+    def reset(self):
+        if self._delayed_stop:
+            self._delayed_stop.cancel()
+            self._delayed_stop = None
+        self._cookie_jar.clear()
+        self.captured = None
+        self._handler_cache.clear()
+
+    # ── internal ──
+
+    def _get_handler(self):
+        key = (self.proxy.mode, self.proxy.channel_fake)
+        if key not in self._handler_cache:
+            h = _create_handler(self.proxy, self)
+            if h:
+                self._handler_cache[key] = h
+            return h
+        return self._handler_cache[key]
+
+    # ── mitmproxy addon 接口 ──
+
+    def request(self, flow):
+        host = flow.request.host
+        if host not in self.domains:
+            return
+        path = flow.request.path.split("?")[0]
+        if "/qrcode/create_login" in path:
+            self.proxy.game_id = flow.request.query.get("game_id", "")
+            self.proxy.process_id = flow.request.query.get("process_id", "")
+            logging.info(f"[Proxy] 提取 game_id={self.proxy.game_id} process_id={self.proxy.process_id}")
 
     def response(self, flow):
         host = flow.request.host
         if host not in self.domains:
             return
         path = flow.request.path.split("?")[0]
-        mode = self.proxy.mode
 
-        if mode == RECORDING:
-            self._handle_recording(flow, host, path)
-        elif mode == INJECTION:
-            self._handle_injection(flow, path)
-
-    def _handle_recording(self, flow, host, path):
-        if self.proxy.completed:
+        # create_login 响应：提取 scanner_uuid，然后交给 handler
+        if "/qrcode/create_login" in path:
+            self._extract_scanner_uuid(flow)
+            handler = self._get_handler()
+            if handler:
+                handler.on_create_login_response(flow)
             return
-        if "/exchange_token" in path:
-            try:
-                data = json.loads(flow.response.content)
 
-                # 注入 is_remember 延长 token 有效期（参考 idv-login NATIVE_SAVE）
-                ext = data.get("ext_info")
-                if isinstance(ext, dict):
-                    ext["is_remember"] = True
-                pc_ext = data.get("pc_ext") or data.get("pc_ext_info") or data.get("pcExtInfo")
-                if isinstance(pc_ext, dict):
-                    pc_ext["is_remember"] = True
-                flow.response.content = json.dumps(data, ensure_ascii=False).encode()
+        # 录制模式下始终累积 Cookie
+        if self.proxy.mode == RECORDING:
+            self._capture_cookies(flow)
 
-                user = data.get("user", {})
-                if user:
-                    self.proxy._addon.captured = {"source": "exchange_token", "response_data": data}
-                    self.proxy.completed = True
-                    name = user.get("client_username", user.get("name", ""))
-                    logging.info(f"[AccountProxy REC] 捕获登录信息 (is_remember): {name}")
-            except Exception as e:
-                logging.error(f"[AccountProxy REC] exchange_token解析失败: {e}")
+        handler = self._get_handler()
+        if not handler:
+            return
 
-    def _handle_injection(self, flow, path):
-        if path == "/mpay/api/qrcode/query":
-            try:
-                data = json.loads(flow.response.content)
-                data.setdefault("qrcode", {})["status"] = 2
-                flow.response.content = json.dumps(data, ensure_ascii=False).encode()
-                logging.info("[AccountProxy INJ] 伪造扫码状态")
-            except Exception:
-                pass
+        if "/qrcode/query" in path:
+            handler.on_qrcode_query(flow)
         elif "/exchange_token" in path:
-            t = self.proxy.token_info or {}
-            resp_data = t.get("response_data", {})
-            if resp_data:
-                flow.response.content = json.dumps(resp_data, ensure_ascii=False).encode()
-                flow.response.status_code = 200
-                self.proxy.completed = True
-                HostsManager.restore()
-                logging.info("[AccountProxy INJ] 注入exchange_token响应，已还原hosts")
+            handler.on_exchange_token(flow)
+
+    def _extract_scanner_uuid(self, flow):
+        try:
+            data = json.loads(flow.response.content)
+            scanners = data.get("qrcode_scanners") or []
+            if scanners:
+                logging.info(f"[Proxy] scanner keys: {list(scanners[0].keys())}")
+            top = {k: v for k, v in data.items() if k != "qrcode_scanners"}
+            logging.info(f"[Proxy] create_login top keys: {list(top.keys())}")
+            for k in ("uuid", "login_info", "qrcode_uuid", "qrcode_id"):
+                if data.get(k):
+                    self.proxy.scanner_uuid = str(data[k])
+                    logging.info(f"[Proxy] found scanner_uuid from {k}: {self.proxy.scanner_uuid}")
+                    break
+        except Exception:
+            pass
+
+    def _capture_cookies(self, flow):
+        for key, value in flow.response.headers.items(multi=True):
+            if key.lower() == "set-cookie" and value not in self._cookie_jar:
+                self._cookie_jar.append(value)
 
 
 # ---- 模块级单例 ----
@@ -179,6 +248,11 @@ class AccountProxy:
         self._ready = threading.Event()
         self._error = None
         self.completed = False
+        self.game_id: str = ""
+        self.channel_fake: bool = False
+        self.channel_done: bool = False
+        self.scanner_uuid: str = ""
+        self.process_id: str = ""
 
     @staticmethod
     def install_ca():
@@ -201,9 +275,20 @@ class AccountProxy:
 
     @property
     def captured(self):
-        if self._addon and hasattr(self._addon, "captured"):
+        if self._addon:
             return self._addon.captured
         return None
+
+    def reset(self):
+        """重置所有会话状态标志"""
+        self.completed = False
+        self.game_id = ""
+        self.process_id = ""
+        self.channel_fake = False
+        self.channel_done = False
+        self.scanner_uuid = ""
+        if self._addon:
+            self._addon.reset()
 
     @staticmethod
     def _port_free(port):
@@ -302,7 +387,7 @@ class AccountProxy:
 
         self._master.addons.add(_CompatAddon(LOGIN_DOMAINS))
         self._master.addons.add(_RequestLogger(LOGIN_DOMAINS))
-        self._addon = _DynamicAddon(LOGIN_DOMAINS, self)
+        self._addon = ProxyRouter(LOGIN_DOMAINS, self)
         self._master.addons.add(self._addon)
 
         self._ready.set()

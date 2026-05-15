@@ -22,7 +22,7 @@ class HostsManager:
                 content = f.read()
 
             if f"127.0.0.1 {domains[0]} {MARKER}" in content:
-                logging.info("[HostsManager] 已经劫持，跳过")
+                logging.debug("[HostsManager] 已经劫持，跳过")
                 return True
 
             entries = [f"127.0.0.1 {d} {MARKER}" for d in domains]
@@ -31,7 +31,7 @@ class HostsManager:
             with open(HostsManager.HOSTS_PATH, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
-            logging.info(f"[HostsManager] 劫持 {len(domains)} 个域名: {domains}")
+            logging.debug(f"[HostsManager] 劫持 {len(domains)} 个域名")
             return True
         except PermissionError:
             logging.error("[HostsManager] 权限不足，请以管理员身份运行")
@@ -50,13 +50,13 @@ class HostsManager:
             new_lines = [line for line in lines if MARKER not in line]
 
             if len(new_lines) == len(lines):
-                logging.info("[HostsManager] 无劫持条目需要还原")
+                logging.debug("[HostsManager] 无劫持条目需要还原")
                 return True
 
             with open(HostsManager.HOSTS_PATH, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
 
-            logging.info("[HostsManager] 已还原hosts")
+            logging.debug("[HostsManager] 已还原hosts")
             return True
         except PermissionError:
             logging.error("[HostsManager] 权限不足，请以管理员身份运行")

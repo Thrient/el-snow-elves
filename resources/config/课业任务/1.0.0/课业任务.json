@@ -4,31 +4,16 @@
   "version": "1.0.0",
   "author": "Thrient",
   "start": "查找课业任务",
-  "values": {
-
-  },
-  "layout": [
-
-  ],
+  "values": {},
+  "layout": [],
   "monitors": {
     "loop": [
-      "一键提交"
+      "一键提交",
+      "交易检测"
     ],
     "interval": 1
   },
   "common": {
-    "课业确定": {
-      "action": "touch",
-      "params": {
-        "args": [
-          "按钮确定"
-        ]
-      },
-      "postfix": [
-        "关闭奖励弹窗*12"
-      ],
-      "next": "任务结束"
-    },
     "一键提交": {
       "action": "touch",
       "params": {
@@ -36,8 +21,7 @@
           "按钮一键提交"
         ],
         "seconds": null
-      },
-      "next": "任务结束"
+      }
     },
     "课业对话确定": {
       "action": "touch",
@@ -45,8 +29,7 @@
         "args": [
           "按钮课业确定"
         ]
-      },
-      "next": "任务结束"
+      }
     },
     "前往课业NPC": {
       "action": "touch",
@@ -63,8 +46,7 @@
       },
       "postfix": [
         "等待到达"
-      ],
-      "next": "任务结束"
+      ]
     },
     "对话课业NPC": {
       "action": "touch",
@@ -80,8 +62,78 @@
       ],
       "postfix": [
         "课业对话确定"
+      ]
+    },
+    "交易检测": {
+      "action": "exits",
+      "params": {
+        "args": [
+          "界面交易"
+        ]
+      },
+      "success": "购买道具"
+    },
+    "购买道具": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮交易购买"
+        ]
+      },
+      "postfix": [
+        {
+          "step": "按钮确定"
+        }
       ],
-      "next": "任务结束"
+      "failure": "放弃任务"
+    },
+    "放弃任务": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮主界面任务图标-激活"
+        ]
+      },
+      "prefix": [
+        {
+          "step": "检测主界面"
+        }
+      ],
+      "success": "任务折叠"
+    },
+    "任务折叠": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮任务折叠"
+        ]
+      },
+      "success": "点击任务江湖"
+    },
+    "点击任务江湖": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮任务江湖"
+        ]
+      },
+      "success": "重新接取课业任务"
+    },
+    "重新接取课业任务": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮任务重新接取"
+        ]
+      },
+      "postfix": [
+        {
+          "step": "按钮确定"
+        },
+        {
+          "step": "检测主界面"
+        }
+      ]
     }
   },
   "steps": {
@@ -107,8 +159,7 @@
       "prefix": [
         "打开江湖"
       ],
-      "success": "接取课业任务",
-      "failure": "任务结束"
+      "success": "接取课业任务"
     },
     "接取课业任务": {
       "action": "touch",
@@ -133,8 +184,15 @@
         "threshold": 0.8,
         "seconds": 360
       },
-      "success": "课业确定",
-      "failure": "激活课业任务"
+      "failure": "激活课业任务",
+      "success_extra": [
+        {
+          "step": "按钮确定"
+        },
+        {
+          "step": "关闭奖励弹窗*12"
+        }
+      ]
     },
     "激活课业任务": {
       "action": "touch",

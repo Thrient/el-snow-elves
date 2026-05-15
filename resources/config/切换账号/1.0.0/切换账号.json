@@ -28,6 +28,15 @@
         ],
         "hwnd": "{ChildHwnd:登录}"
       }
+    },
+    "踏入江湖": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮首页踏入江湖"
+        ],
+        "seconds": 30
+      }
     }
   },
   "common": {
@@ -61,7 +70,12 @@
     "interval": 1
   },
   "values": {
-    "账号名称": "打本"
+    "账号名称": "拾忆",
+    "CONFIG": {
+      "背包": "B",
+      "设置": "ESC",
+      "好友": "H"
+    }
   },
   "layout": [
     [

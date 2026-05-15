@@ -3,7 +3,7 @@
     "name": "五点重启",
     "templateId": "restart",
     "cron": "0 5 * * *",
-    "enabled": true,
+    "enabled": false,
     "action": {
       "type": "refill_queue",
       "params": {
@@ -18,7 +18,7 @@
     "name": "限时任务",
     "templateId": "push_task",
     "cron": "*/30 * * * *",
-    "enabled": true,
+    "enabled": false,
     "action": {
       "type": "push_task",
       "params": {

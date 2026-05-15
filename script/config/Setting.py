@@ -5,12 +5,16 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 APP_URL = os.path.join(PROJECT_ROOT, 'dist', 'index.html')
 APP_NAME = "Elves"
 APP_TITLE = '时雪-创意工坊'
-VERSION = 'v1.0.0'
+VERSION = 'v1.0.1'
 APP_DATA = os.getenv("LOCALAPPDATA") + f"/{APP_NAME}"
 USER_CONFIG_PATH = APP_DATA + r"\Config\User"
 STORAGE_PATH = APP_DATA + r"\pywebview"
 THRESHOLD = 0.85
 BOX = (0, 0, 1335, 750)
+DESIGN_WIDTH = 1335
+DESIGN_HEIGHT = 750
+PREPROCESS_KEYS = {"binarize", "binarize_threshold", "binarize_invert",
+                   "adaptive", "adaptive_block", "adaptive_c"}
 OVERTIME = 1.8
 DELAY = 1500
 COLLECTION_ARTICLES_DICt = {

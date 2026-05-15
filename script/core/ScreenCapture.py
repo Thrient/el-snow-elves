@@ -1,3 +1,5 @@
+# pyright: reportUnresolvedReference=false
+import base64
 from threading import Lock
 import cv2
 import numpy as np
@@ -45,8 +47,7 @@ class ScreenCapture:
                 img = np.frombuffer(saveBitMap.GetBitmapBits(True), dtype=np.uint8).reshape((height, width, 4))
                 img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                gray = cv2.GaussianBlur(gray, (3, 3), 0)
-                gray = cv2.equalizeHist(gray)
+                gray = ScreenCapture.baseline_preprocess(gray)
             finally:
                 if saveBitMap is not None:
                     win32gui.DeleteObject(saveBitMap.GetHandle())
@@ -58,6 +59,26 @@ class ScreenCapture:
                     win32gui.ReleaseDC(hwnd, hwndDC)
 
             return img, gray
+
+    @staticmethod
+    def baseline_preprocess(gray):
+        """capture_gray 对灰度图做的基准预处理（GaussianBlur + equalizeHist）。
+        外部调用方可用此方法对齐预处理步骤。"""
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        return cv2.equalizeHist(gray)
+
+    @classmethod
+    def capture_base64(cls, hwnd, fmt: str = "jpg"):
+        """截图并返回 base64 data URL dict。fmt: 'jpg' | 'png'"""
+        img, _ = cls.capture_gray(hwnd)
+        ext = "." + fmt
+        params = [cv2.IMWRITE_PNG_COMPRESSION, 3] if fmt == "png" else [cv2.IMWRITE_JPEG_QUALITY, 90]
+        _, buffer = cv2.imencode(ext, img, params)
+        return {
+            "base64": f"data:image/{fmt};base64,{base64.b64encode(buffer).decode('utf-8')}",
+            "width": img.shape[1],
+            "height": img.shape[0],
+        }
 
     # ---- 图像预处理 ----
 
@@ -93,6 +114,10 @@ class ScreenCapture:
         """
         if config is None:
             return gray
+
+        # 自动转换 BGR → 灰度
+        if len(gray.shape) == 3:
+            gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
 
         if isinstance(config, str):
             # 旧版兼容：字符串 "binary" / "binary_inv" / "adaptive"

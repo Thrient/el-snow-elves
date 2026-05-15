@@ -55,7 +55,7 @@ class Utils:
 
         def callback(target, _):
             nonlocal result
-            if win32gui.GetWindow(target, 4) == owner_hwnd and win32gui.GetWindowText(target == title):
+            if win32gui.GetWindow(target, 4) == owner_hwnd and win32gui.GetWindowText(target) == title:
                 result = target
             return True
 
@@ -112,3 +112,30 @@ class Utils:
         text = ''.join(digit_map[digit] for _, digit in items)
         logging.debug(f"数字解析结果: {text}")
         return text
+
+    @staticmethod
+    def calc_window_size():
+        """根据设计尺寸和屏幕大小计算窗口宽高"""
+        import ctypes
+        from script.config.Setting import DESIGN_WIDTH, DESIGN_HEIGHT
+
+        try:
+            user32 = ctypes.windll.user32
+
+            sw, sh = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+        except Exception:
+            sw, sh = 1920, 1080
+
+        w = sw // 2
+        h = int(w * DESIGN_HEIGHT / DESIGN_WIDTH)
+        if h > sh // 2:
+            h = sh // 2
+            w = int(h * DESIGN_WIDTH / DESIGN_HEIGHT)
+        return w, h
+
+if __name__ == '__main__':
+    time.sleep(5)
+    hwnd = Utils.get_mouse_window_hwnd()
+
+    child = Utils.find_window_by_title_and_owner_hwnd("MPAY_USER_CENTER", hwnd)
+    print(f"parent={hwnd}, child={child}")

@@ -23,6 +23,42 @@ class StaticCommon:
         return _TASK_CONFIG_CACHE.get(task_id)
 
     @staticmethod
+    def build_task_zip(task_id):
+        """构建任务导出 zip 的 BytesIO 缓冲区和建议文件名。返回 (buf, default_name) 或错误 dict。"""
+        config = StaticCommon.get_task_config_by_id(task_id)
+        if not config:
+            return {"error": f"任务不存在: {task_id}"}
+
+        name = config.get("name", "")
+        version = config.get("version", "")
+        author = config.get("author", "")
+        if not name or not version:
+            return {"error": "任务缺少 name 或 version"}
+
+        task_dir = os.path.dirname(config.get("_config_path", ""))
+        if not task_dir or not os.path.isdir(task_dir):
+            return {"error": "任务目录不存在"}
+
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            clean = {k: v for k, v in config.items() if k not in ("id", "_config_path")}
+            zf.writestr(f"{name}.json", json.dumps(clean, ensure_ascii=False, indent=2))
+
+            pos_path = os.path.join(task_dir, "positions.json")
+            if os.path.isfile(pos_path):
+                zf.write(pos_path, "positions.json")
+
+            images_dir = os.path.join(task_dir, "images")
+            if os.path.isdir(images_dir):
+                for fname in os.listdir(images_dir):
+                    if fname.endswith(".bmp"):
+                        zf.write(os.path.join(images_dir, fname), f"images/{fname}")
+
+        import re as _re
+        safe = lambda s: _re.sub(r'[\/\\:*?"<>|]', '_', s or "unknown")
+        return buf, f"{safe(name)}_{safe(version)}_{safe(author)}.zip"
+
+    @staticmethod
     def load_task_list():
         config_dir = os.path.join(PROJECT_ROOT, "resources", "config")
         tasks = []

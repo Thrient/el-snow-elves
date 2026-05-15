@@ -1,5 +1,6 @@
-"""账号管理 — 每账号一个加密.dat文件"""
+"""账号管理 — 每账号一个加密.dat文件 + 明文.meta元数据"""
 
+import json
 import os
 import re
 import time
@@ -20,23 +21,43 @@ def _ensure_dir():
 
 
 class AccountManager:
+
+    # ── 元数据（明文，列表读取时不触发解密）──
+
+    @staticmethod
+    def _meta_path(name: str) -> str:
+        return os.path.join(ACCOUNTS_DIR, f"{_safe_name(name)}.meta")
+
+    @staticmethod
+    def _read_meta(name: str) -> dict | None:
+        p = AccountManager._meta_path(name)
+        if os.path.isfile(p):
+            try:
+                return json.loads(open(p, "r", encoding="utf-8").read())
+            except Exception:
+                return None
+        return None
+
+    @staticmethod
+    def _write_meta(name: str, meta: dict):
+        with open(AccountManager._meta_path(name), "w", encoding="utf-8") as f:
+            json.dump(meta, f, ensure_ascii=False)
+
+    # ── 账号 CRUD ──
+
     @staticmethod
     def list_accounts():
-        """返回账号名列表（不含敏感信息）"""
+        """返回账号列表（读.meta，不解密敏感数据）"""
         _ensure_dir()
         names = []
         for f in os.listdir(ACCOUNTS_DIR):
-            if f.endswith(".dat"):
+            if f.endswith(".meta"):
                 try:
-                    raw = open(os.path.join(ACCOUNTS_DIR, f), "rb").read()
-                    data = decrypt(raw)
-                    names.append({
-                        "name": data["name"],
-                        "createdAt": data.get("createdAt", 0),
-                    })
+                    meta = json.loads(open(os.path.join(ACCOUNTS_DIR, f), "r", encoding="utf-8").read())
+                    names.append(meta)
                 except Exception:
-                    # 文件损坏或密钥不匹配，跳过
                     continue
+        names.sort(key=lambda x: x.get("createdAt", 0), reverse=True)
         return names
 
     @staticmethod
@@ -71,19 +92,33 @@ class AccountManager:
                 existing = decrypt(open(path, "rb").read())
             except Exception:
                 pass
+        now = int(time.time() * 1000)
         if existing:
-            merged = {**existing, **data, "updatedAt": int(time.time() * 1000)}
+            merged = {**existing, **data, "updatedAt": now}
         else:
-            merged = {**data, "createdAt": int(time.time() * 1000)}
+            merged = {**data, "createdAt": now}
+
         open(path, "wb").write(encrypt(merged))
-        logging.info(f"[AccountManager] 保存账号: {name}")
+
+        ca = data.get("channel_auth") or (existing or {}).get("channel_auth")
+        acct_type = ca.get("channel_type", "官服") if ca else "官服"
+        AccountManager._write_meta(name, {
+            "name": name,
+            "createdAt": existing.get("createdAt", now) if existing else now,
+            "type": acct_type,
+            "port": 443,
+        })
+        logging.info(f"[AccountManager] 保存账号: {name} ({acct_type})")
 
     @staticmethod
     def delete_account(name: str):
         path = AccountManager._path(name)
+        meta = AccountManager._meta_path(name)
         if os.path.isfile(path):
             os.remove(path)
-            logging.info(f"[AccountManager] 删除账号: {name}")
+        if os.path.isfile(meta):
+            os.remove(meta)
+        logging.info(f"[AccountManager] 删除账号: {name}")
         return True
 
     @staticmethod
@@ -100,5 +135,15 @@ class AccountManager:
         new_path = AccountManager._path(new_name)
         open(new_path, "wb").write(encrypt(data))
         os.remove(old_path)
+
+        old_meta = AccountManager._meta_path(name)
+        if os.path.isfile(old_meta):
+            meta = json.loads(open(old_meta, "r", encoding="utf-8").read())
+        else:
+            meta = {}
+        meta["name"] = new_name
+        AccountManager._write_meta(new_name, meta)
+        if os.path.isfile(old_meta):
+            os.remove(old_meta)
         logging.info(f"[AccountManager] 重命名: {name} -> {new_name}")
         return True

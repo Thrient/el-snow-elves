@@ -1,55 +1,23 @@
-import base64
-import ctypes
-import io
-import json
 import logging
-import os
-import re
-import subprocess
-import zipfile
 
-import cv2
-import numpy as np
 import webview
 
 from script.api.Api import api
 from script.api.JsApi import js
-from script.config.Setting import APP_TITLE, PROJECT_ROOT, THRESHOLD, VERSION, STORAGE_PATH
+from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH
 from script.core.LogManager import setup_logging, read_logs, get_log_files
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
 from script.core.StaticCommon import StaticCommon
-from script.account import AccountManager, RECORDING, INJECTION, get_proxy
-from script.account.HostsManager import HostsManager
+from script.account import AccountManager
+from script.account.SessionManager import get_session
 from script.core.TemplateMatcher import TemplateMatcher
 from script.core.Window import Window
 from script.util.Utils import Utils
 
-DESIGN_WIDTH = 1335
-DESIGN_HEIGHT = 750
-
-
-def _get_screen_size():
-    try:
-        user32 = ctypes.windll.user32
-        return user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-    except Exception:
-        return 1920, 1080
-
-
-def _calc_window_size():
-    screen_w, screen_h = _get_screen_size()
-    w = screen_w // 2
-    h = int(w * DESIGN_HEIGHT / DESIGN_WIDTH)
-    if h > screen_h // 2:
-        h = screen_h // 2
-        w = int(h * DESIGN_WIDTH / DESIGN_HEIGHT)
-    return w, h
-
-
 class App:
     def __init__(self, url):
-        width, height = _calc_window_size()
+        width, height = Utils.calc_window_size()
         self.window = webview.create_window(
             f"{APP_TITLE}{VERSION}",
             url,
@@ -59,8 +27,7 @@ class App:
         )
         # 存储句柄和对应Script实例的字典
         self._script_instances = {}
-        self._recording_proxy = None
-        self._hosts_hijacked = False
+        self._session = get_session()
         js.init(self.window)
         self.init()
 
@@ -100,11 +67,12 @@ class App:
         api.on("API:ACCOUNT:SAVE", AccountManager.save_account)
         api.on("API:ACCOUNT:DELETE", AccountManager.delete_account)
         api.on("API:ACCOUNT:RENAME", AccountManager.rename_account)
-        api.on("API:ACCOUNT:RECORD:START", self.start_recording)
-        api.on("API:ACCOUNT:RECORD:STOP", self.stop_recording)
-        api.on("API:ACCOUNT:RECORD:STATUS", self.recording_status)
-        api.on("API:ACCOUNT:REPLAY:START", self.start_replay)
-        api.on("API:ACCOUNT:REPLAY:STOP", self.stop_replay)
+        api.on("API:ACCOUNT:RECORD:START", self._session.start_qr_recording)
+        api.on("API:ACCOUNT:RECORD:START:CHANNEL", self._session.start_channel_recording)
+        api.on("API:ACCOUNT:RECORD:STOP", self._session.stop_recording)
+        api.on("API:ACCOUNT:RECORD:STATUS", self._session.recording_status)
+        api.on("API:ACCOUNT:REPLAY:START", self._session.start_replay)
+        api.on("API:ACCOUNT:REPLAY:STOP", self._session.stop_replay)
         setup_logging()
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
@@ -124,208 +92,27 @@ class App:
     def capture_for_template(hwnd):
         """捕获窗口截图返回 base64 供裁剪弹窗使用"""
         try:
-            img, _ = ScreenCapture.capture_gray(hwnd)
+            return ScreenCapture.capture_base64(hwnd)
         except (ValueError, Exception) as e:
             logging.error(f"模板捕获失败: hwnd={hwnd}, error={e}")
             return None
-        _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 90])
-        return {
-            "base64": f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}",
-            "width": img.shape[1],
-            "height": img.shape[0],
-        }
 
     @staticmethod
     def save_template_image(hwnd, crop_region, filename, scope, task_name=None, version=None):
-        """
-        截图裁剪保存模板图片。
-        crop_region: [x1, y1, x2, y2] 相对于游戏窗口客户区的坐标
-        filename: 不含扩展名的文件名
-        scope: "global" → resources/images/, "task" → resources/config/{task}/{version}/images/
-        """
+        """截图裁剪保存模板图片"""
         try:
-            img, _ = ScreenCapture.capture_gray(hwnd)
+            return TemplateMatcher.save_crop(hwnd, crop_region, filename, scope, task_name, version)
         except (ValueError, Exception) as e:
             logging.error(f"模板截图失败: hwnd={hwnd}, error={e}")
             raise
 
-        x1, y1, x2, y2 = crop_region
-        x1, x2 = max(0, min(x1, x2)), min(img.shape[1], max(x1, x2))
-        y1, y2 = max(0, min(y1, y2)), min(img.shape[0], max(y1, y2))
-        if x1 >= x2 or y1 >= y2:
-            raise ValueError(f"无效的裁剪区域: {crop_region}")
-
-        cropped = img[y1:y2, x1:x2]
-
-        if scope == "task" and task_name and version:
-            target_dir = os.path.join(PROJECT_ROOT, "resources", "config", task_name, version, "images")
-        else:
-            target_dir = os.path.join(PROJECT_ROOT, "resources", "images")
-
-        os.makedirs(target_dir, exist_ok=True)
-        filepath = os.path.join(target_dir, f"{filename}.bmp")
-        ret, buf = cv2.imencode(".bmp", cropped)
-        if not ret:
-            raise RuntimeError(f"图像编码失败: {filename}")
-        with open(filepath, "wb") as f:
-            f.write(buf.tobytes())
-        TemplateMatcher.load_template.cache_clear()
-        logging.info(f"模板图片已保存: {filepath}")
-        return filepath
-
-    # 预处理相关参数名
-    _PREPROCESS_KEYS = {"binarize", "binarize_threshold", "binarize_invert",
-                        "adaptive", "adaptive_block", "adaptive_c"}
-
-    # ---------- preprocess_apply helpers ----------
-
-    @staticmethod
-    def _decode_base64_image(b64: str):
-        """解码前端 data URL 为灰度 numpy 数组。失败返回 None。"""
-        b64_data = re.sub(r'^data:image/\w+;base64,', '', b64)
-        img_bytes = base64.b64decode(b64_data)
-        img_array = np.frombuffer(img_bytes, dtype=np.uint8)
-        img = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
-        if img is not None:
-            logging.info(f"[PREPROCESS] 解码原图: {img.shape[1]}x{img.shape[0]}")
-        return img
-
-    @staticmethod
-    def _get_search_image(original, mode: str, hwnd: str):
-        """mode='current' 返回原图，否则重新截图。返回灰度图或 None。"""
-        if mode == "current":
-            logging.info("[PREPROCESS] mode=current，在原图上搜索")
-            return original
-        _, img = ScreenCapture.capture_gray(hwnd)
-        logging.info(f"[PREPROCESS] mode=recapture，新截图: {img.shape[1]}x{img.shape[0]}")
-        return img
-
-    @staticmethod
-    def _non_max_suppression(matches, margin: int = 20, max_kept: int = 50):
-        """贪婪 NMS：按置信度降序保留不重叠的匹配点。"""
-        sorted_matches = sorted(matches, key=lambda m: -m[0])
-        kept = []
-        for conf, px, py in sorted_matches:
-            too_close = any(
-                abs(px - kx) < margin and abs(py - ky) < margin
-                for _, kx, ky in kept
-            )
-            if not too_close:
-                kept.append((conf, px, py))
-                if len(kept) >= max_kept:
-                    break
-        return kept
-
-    _MATCH_COLORS = [
-        (0.95, (0, 255, 0)),     # 绿色  ≥ 0.95
-        (0.9,  (0, 200, 255)),   # 橙色  ≥ 0.9
-        (0.0,  (0, 140, 255)),   # 蓝色  <  0.9
-    ]
-
-    @classmethod
-    def _run_match_template(cls, processed, original, crop, preprocess_cfg, match_threshold):
-        """在搜索图上运行模板匹配并标注结果。返回 (标注后图像, match_results 列表)。"""
-        x, y = int(crop["x"]), int(crop["y"])
-        w, h = int(crop["w"]), int(crop["h"])
-        ih, iw = original.shape
-        if not (w > 4 and h > 4 and 0 <= x and x + w <= iw and 0 <= y and y + h <= ih):
-            logging.warning(f"[PREPROCESS] 无效的 crop: {crop}")
-            return processed, []
-
-        # 从原图裁剪模板（与原图相同预处理）
-        template_raw = original[y:y+h, x:x+w]
-        template = ScreenCapture.apply_preprocess(template_raw, preprocess_cfg)
-        logging.info(f"[PREPROCESS] 模板: {template.shape[1]}x{template.shape[0]}，原图({x},{y})")
-
-        # 匹配 + NMS
-        result = cv2.matchTemplate(processed, template, cv2.TM_CCOEFF_NORMED)
-        locations = np.where(result >= match_threshold)
-        raw = [(float(result[py, px]), px, py) for py, px in zip(*locations)]
-        kept = cls._non_max_suppression(raw)
-
-        # 标注到彩色图
-        annotated = cv2.cvtColor(processed, cv2.COLOR_GRAY2BGR)
-        matches = []
-        for confidence, px, py in kept:
-            matches.append({"x": int(px), "y": int(py), "w": w, "h": h, "confidence": round(confidence, 4)})
-            for thresh, color in cls._MATCH_COLORS:
-                if confidence >= thresh:
-                    break
-            cv2.rectangle(annotated, (px, py), (px + w, py + h), color, 2)
-            label = f"{confidence:.3f}"
-            (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-            cv2.rectangle(annotated, (px, py - th - 4), (px + tw + 4, py - 2), color, -1)
-            cv2.putText(annotated, label, (px + 2, py - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-
-        logging.info(f"[PREPROCESS] 匹配结果: {len(matches)} 个 (阈值={match_threshold})")
-        return annotated, matches
-
-    @staticmethod
-    def _encode_result(img, matches):
-        """将 numpy 图像编码为 base64 返回 dict。"""
-        _, buffer = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 90])
-        return {
-            "base64": f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}",
-            "width": img.shape[1],
-            "height": img.shape[0],
-            "matches": matches,
-        }
-
     @staticmethod
     def preprocess_apply(hwnd, args):
-        """
-        对截图应用预处理并运行模板匹配，返回标注后的图像。
-
-        args:
-            mode: "current" | "recapture"
-            base64: 原图 data URL（用于提取模板）
-            crop: {x, y, w, h} 框选区域
-            match_threshold: 匹配阈值（默认 0.8）
-            预处理参数: binarize, binarize_threshold, binarize_invert,
-                        adaptive, adaptive_block, adaptive_c
-        返回: { base64, width, height, matches } 或 { error }
-        """
+        """预处理预览：截图 + 匹配 + 可视化标注"""
         logging.info(f"[PREPROCESS] 收到: hwnd={hwnd}, keys={list(args.keys()) if isinstance(args, dict) else type(args).__name__}")
-
         if not isinstance(args, dict):
             return {"error": f"args 类型错误: {type(args).__name__}"}
-
-        mode = args.get("mode", "current")
-        crop = args.get("crop")
-        preprocess_cfg = {k: v for k, v in args.items() if k in App._PREPROCESS_KEYS and v is not None}
-        logging.info(f"[PREPROCESS] mode={mode}, crop={crop}, pp={preprocess_cfg if preprocess_cfg else '(空)'}")
-
-        try:
-            # 解码原图 → 提取模板
-            original = App._decode_base64_image(args.get("base64", ""))
-            if original is None:
-                return {"error": "base64 解码失败"}
-
-            # 获取搜索目标图
-            search_img = App._get_search_image(original, mode, hwnd)
-
-            # recapture 模式下，capture_gray 会对截图做 GaussianBlur + equalizeHist，
-            # 这里对 original 也做同样的处理，保证模板和搜索图的预处理一致
-            if mode == "recapture":
-                original = cv2.GaussianBlur(original, (3, 3), 0)
-                original = cv2.equalizeHist(original)
-
-            # 预处理 + 匹配
-            pp = preprocess_cfg if preprocess_cfg else None
-            processed = ScreenCapture.apply_preprocess(search_img, pp)
-            if crop and isinstance(crop, dict):
-                threshold = float(args.get("match_threshold", THRESHOLD))
-                processed, matches = App._run_match_template(processed, original, crop, pp, threshold)
-            else:
-                matches = []
-
-            result = App._encode_result(processed, matches)
-            logging.info(f"[PREPROCESS] 成功: {result['width']}x{result['height']}, {len(matches)}匹配")
-            return result
-
-        except (ValueError, Exception) as e:
-            logging.exception(f"[PREPROCESS] 异常: {type(e).__name__}: {e}")
-            return {"error": f"{type(e).__name__}: {e}"}
+        return TemplateMatcher.match_and_visualize(hwnd, args)
 
     @staticmethod
     def set_window_opacity(hwnd, opacity):
@@ -346,15 +133,11 @@ class App:
             if hwnd in self._script_instances:
                 continue
             try:
-                img, _ = ScreenCapture.capture_gray(hwnd=hwnd)
+                cap = ScreenCapture.capture_base64(hwnd, "png")
             except (ValueError, Exception):
                 logging.debug(f"窗口截图跳过: {hwnd}")
                 continue
-            _, buffer = cv2.imencode('.png', img)
-            winList.append({
-                "hwnd": hwnd,
-                "base64": f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}"
-            })
+            winList.append({"hwnd": hwnd, "base64": cap["base64"]})
         return winList
 
     def bind(self, hwnd):
@@ -374,54 +157,22 @@ class App:
         logging.info(f"解绑窗口: hwnd={hwnd}")
 
     def export_task(self, task_id):
-        """导出任务为 zip — 使用系统原生保存对话框"""
-        config = StaticCommon.get_task_config_by_id(task_id)
-        if not config:
-            return {"error": f"任务不存在: {task_id}"}
+        """导出任务为 zip"""
+        built = StaticCommon.build_task_zip(task_id)
+        if isinstance(built, dict):
+            return built
+        buf, default_name = built
 
-        name = config.get("name", "")
-        version = config.get("version", "")
-        author = config.get("author", "")
-        if not name or not version:
-            return {"error": "任务缺少 name 或 version"}
-
-        task_dir = os.path.dirname(config.get("_config_path", ""))
-        if not task_dir or not os.path.isdir(task_dir):
-            return {"error": "任务目录不存在"}
-
-        # 构建 zip
-        buf = io.BytesIO()
-        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            clean = {k: v for k, v in config.items() if k not in ("id", "_config_path")}
-            zf.writestr(f"{name}.json", json.dumps(clean, ensure_ascii=False, indent=2))
-
-            pos_path = os.path.join(task_dir, "positions.json")
-            if os.path.isfile(pos_path):
-                zf.write(pos_path, "positions.json")
-
-            images_dir = os.path.join(task_dir, "images")
-            if os.path.isdir(images_dir):
-                for fname in os.listdir(images_dir):
-                    if fname.endswith(".bmp"):
-                        zf.write(os.path.join(images_dir, fname), f"images/{fname}")
-
-        # 生成建议文件名
-        safe = lambda s: re.sub(r'[\/\\:*?"<>|]', '_', s or "unknown")
-        default_name = f"{safe(name)}_{safe(version)}_{safe(author)}.zip"
-
-        # 系统原生保存对话框
         result = self.window.create_file_dialog(
             webview.FileDialog.SAVE,
             directory="",
             save_filename=default_name,
             file_types=("ZIP 压缩包 (*.zip)",),
         )
-
         if not result:
             return {"cancelled": True}
 
         filepath = result[0] if isinstance(result, tuple) else result
-
         try:
             with open(filepath, "wb") as f:
                 f.write(buf.getvalue())
@@ -431,76 +182,8 @@ class App:
             logging.error(f"导出写入失败: {e}")
             return {"error": f"写入文件失败: {e}"}
 
-    def _ensure_proxy(self):
-        """代理常驻，只启动一次"""
-        proxy = get_proxy()
-        proxy.completed = False
-        if proxy._addon and hasattr(proxy._addon, "captured"):
-            proxy._addon.captured = None
-        self._recording_proxy = proxy
-
-    def _start_session(self, mode, name="", token_info=None):
-        self._ensure_proxy()
-        self._recording_proxy.mode = mode
-        self._recording_proxy.token_info = token_info
-        self._recording_proxy.completed = False
-        self._hosts_hijacked = HostsManager.hijack()
-        subprocess.run(["ipconfig", "/flushdns"], capture_output=True, creationflags=0x08000000)
-        mode_label = "录制" if mode == RECORDING else "回放"
-        logging.info(f"[App] 开始{mode_label}: {name}")
-
-    def start_recording(self, name):
-        try:
-            self._start_session(RECORDING, name)
-            return {"status": "recording", "message": f"请在游戏中手动登录账号 '{name}'"}
-        except Exception as e:
-            logging.error(f"[App] 启动录制失败: {e}")
-            return {"error": str(e)}
-
-    def stop_recording(self, name):
-        if not self._recording_proxy:
-            return {"error": "未在录制"}
-        token = self._recording_proxy.captured
-        HostsManager.restore()
-        self._hosts_hijacked = False
-        self._recording_proxy.completed = False
-        if token:
-            AccountManager.save_account({"name": name, "token_info": token})
-            logging.info(f"[App] 账号录制完成: {name}")
-            return {"status": "done", "account": name}
-        logging.warning(f"[App] 录制未捕获到token: {name}")
-        return {"error": "未捕获到登录凭证"}
-
-    def recording_status(self):
-        if self._recording_proxy and self._hosts_hijacked:
-            if self._recording_proxy.completed:
-                return {"status": "done", "has_token": bool(self._recording_proxy.captured)}
-            return {"status": "recording", "has_token": False}
-        return {"status": "idle", "has_token": False}
-
-    def start_replay(self, account_name):
-        account = AccountManager.get_account(account_name)
-        if not account:
-            return {"error": f"账号不存在: {account_name}"}
-        token_info = account.get("token_info")
-        if not token_info:
-            return {"error": "账号未包含登录凭证"}
-        try:
-            self._start_session(INJECTION, account_name, token_info=token_info)
-            return {"status": "replaying", "message": f"正在回放「{account_name}」，请在游戏中触发登录"}
-        except Exception as e:
-            logging.error(f"[App] 启动回放失败: {e}")
-            return {"error": str(e)}
-
-    def stop_replay(self):
-        HostsManager.restore()
-        self._hosts_hijacked = False
-        if self._recording_proxy:
-            self._recording_proxy.completed = False
-        logging.info("[App] 回放停止")
-        return {"status": "stopped"}
-
-    def _on_cron_trigger(self, hwnd, action_type, params):
+    @staticmethod
+    def _on_cron_trigger(hwnd, action_type, params):
         logging.info(f"[Cron] 定时触发 hwnd={hwnd} type={action_type} params={params}")
 
     def _script(self, hwnd):

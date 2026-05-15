@@ -125,10 +125,16 @@ class BaseTask:
         account_name = kwargs.get("account_name")
         account = AccountManager.get_account(account_name)
         token_info = account.get("token_info") if account else None
+        channel_auth = account.get("channel_auth") if account else None
 
         proxy = get_proxy()
         proxy.mode = INJECTION
-        proxy.token_info = token_info
+        proxy.channel_fake = False
+        if channel_auth:
+            proxy.token_info = {"source": "channel", "channel_auth": channel_auth}
+            proxy.channel_fake = True
+        else:
+            proxy.token_info = token_info
         proxy.completed = False
         HostsManager.hijack()
         subprocess.run(["ipconfig", "/flushdns"], capture_output=True, creationflags=0x08000000)
