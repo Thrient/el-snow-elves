@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "author": "Thrient",
   "description": "切换账号",
-  "start": "",
+  "start": "切换账号",
   "steps": {
     "用户中心": {
       "action": "mouse_click",
@@ -27,7 +27,8 @@
           365
         ],
         "hwnd": "{ChildHwnd:登录}"
-      }
+      },
+      "next": "踏入江湖"
     },
     "踏入江湖": {
       "action": "touch",
@@ -35,8 +36,17 @@
         "args": [
           "按钮首页踏入江湖"
         ],
-        "seconds": 30
-      }
+        "seconds": 30,
+        "pre_delay": 8000
+      },
+      "postfix": [
+        {
+          "step": "等待切换角色界面"
+        },
+        {
+          "step": "点击登录"
+        }
+      ]
     }
   },
   "common": {
@@ -70,12 +80,7 @@
     "interval": 1
   },
   "values": {
-    "账号名称": "拾忆",
-    "CONFIG": {
-      "背包": "B",
-      "设置": "ESC",
-      "好友": "H"
-    }
+    "账号名称": "拾忆"
   },
   "layout": [
     [
