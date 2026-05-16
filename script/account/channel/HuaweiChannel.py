@@ -177,7 +177,17 @@ class HuaweiLogin:
         self._done.clear()
         code_container: dict = {}
 
-        self._window = webview.create_window("华为账号登录", auth_url, width=420, height=680)
+        # 提前下载图标，窗口创建后立即设置
+        try:
+            icon_bytes = requests.get("https://consumer.huawei.com/favicon.ico", timeout=5).content
+        except Exception:
+            icon_bytes = None
+
+        self._window = webview.create_window("华为账号登录", auth_url, width=1050, height=810)
+
+        if icon_bytes:
+            from script.account.channel.ChannelUtils import _apply_icon_bytes
+            _apply_icon_bytes(self._window, icon_bytes)
 
         def _run():
             time.sleep(1.5)  # 等 WebView2 初始化
@@ -208,9 +218,12 @@ class HuaweiLogin:
 
         try:
             from webview.platforms.winforms import BrowserView
+            import clr
+            clr.AddReference("System.Windows.Forms")
+            from System.Windows.Forms import MethodInvoker
             form = BrowserView.instances.get(self._window.uid) if self._window else None
             if form:
-                form.Invoke(WinForms.MethodInvoker(lambda: form.Close()))
+                form.Invoke(MethodInvoker(lambda: form.Close()))
         except Exception:
             pass
         return self._result

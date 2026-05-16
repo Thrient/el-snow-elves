@@ -78,12 +78,23 @@ class BilibiliLogin:
     def login(self) -> dict | None:
         """阻塞：打开窗口 → 等待登录完成 → 返回结果"""
         self._done.clear()
+
+        # 提前下载图标
+        try:
+            icon_bytes = requests.get("https://www.bilibili.com/favicon.ico", timeout=5).content
+        except Exception:
+            icon_bytes = None
+
         self._window = webview.create_window(
             "Bilibili 账号登录",
             self.login_url,
             width=370,
             height=480,
         )
+
+        if icon_bytes:
+            from script.account.channel.ChannelUtils import _apply_icon_bytes
+            _apply_icon_bytes(self._window, icon_bytes)
 
         # 等页面加载后注入拦截脚本，然后轮询结果
         def _run():

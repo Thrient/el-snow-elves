@@ -1,71 +1,95 @@
-"""渠道服通用工具 — SAUTH 构造 + 签名发送"""
+"""网易 UniSDK 渠道服通用工具 — SAUTH 构造 + 签名发送
 
-import base64
+实现网易 mgbsdk.matrix.netease.com 的 uni_sauth 协议：
+  1. 构造 SAUTH JSON（设备指纹 + 登录凭证 + 随机字段）
+  2. HMAC-SHA256 签名（METHOD + path + body）
+  3. POST 到 uni_sauth 端点
+
+协议参考：网易 UniSDK 公开 API 文档
+"""
+
+import hashlib
+import hmac
 import json
+import logging
+import os as _os
 import random
 import string
-import hmac
-import hashlib
-import logging
 
 import requests
 
-# 设备指纹 — 持久化避免每次变更
-import os as _os
+# ── 设备指纹（持久化，避免每次变更触发风控）──
 
 _DEVICE_FILE = _os.path.join(_os.path.dirname(__file__), "_fake_device.json")
 
+
 def _load_device() -> dict:
+    """加载或生成持久化设备指纹"""
     try:
         with open(_DEVICE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
-        d = {
-            "device_model": "M2102K1AC",
-            "os_name": "android",
-            "os_ver": "12",
-            "udid": "".join(random.choices(string.hexdigits.lower(), k=16)),
-            "app_ver": "157",
-            "imei": "".join(random.choices(string.digits, k=15)),
-            "country_code": "CN",
-            "is_emulator": 0,
-            "is_root": 0,
-            "oaid": "",
-        }
-        try:
-            with open(_DEVICE_FILE, "w", encoding="utf-8") as f:
-                json.dump(d, f)
-        except Exception:
-            pass
-        return d
+        pass
+
+    d = {
+        "device_model": "M2102K1AC",
+        "os_name": "android",
+        "os_ver": "12",
+        "udid": "".join(random.choices(string.hexdigits.lower(), k=16)),
+        "app_ver": "157",
+        "imei": "".join(random.choices(string.digits, k=15)),
+        "country_code": "CN",
+        "is_emulator": 0,
+        "is_root": 0,
+        "oaid": "",
+    }
+    try:
+        with open(_DEVICE_FILE, "w", encoding="utf-8") as f:
+            json.dump(d, f)
+    except Exception:
+        pass
+    return d
 
 
-FAKE_DEVICE = _load_device()
+FAKE_DEVICE: dict = _load_device()
 
-# 默认 log_key（一梦江湖 h42，来自 idv-login cloudRes）
+# 一梦江湖 (h42) 的 log_key，来自游戏资源文件
 DEFAULT_LOG_KEY = "yi8_cXKEm4Pe2XYL3E4GjjD9MVtYRuGy"
 
-
-def get_sign_src(method: str, url: str, data: str) -> str:
-    replaced = url.replace("://", "")
-    path = ""
-    idx = replaced.find("/")
-    if idx != -1:
-        path = replaced[idx:]
-    return method.upper() + path + data
+# UniSDK SAUTH 端点
+_UNI_SAUTH_URL = "https://mgbsdk.matrix.netease.com/{game_id}/sdk/uni_sauth"
 
 
-def calc_sign(url: str, method: str, data: str, key: str) -> str:
-    src = get_sign_src(method, url, data)
+# ── HMAC 签名 ──
+
+def _hmac_sign(method: str, url: str, body: str, key: str) -> str:
+    """计算 UniSDK 请求签名：HMAC-SHA256(METHOD + path + body, key)"""
+    # 提取 path（去掉协议和 host）
+    path = url[url.find("/", url.find("://") + 3):] if "://" in url else url
+    src = method.upper() + path + body
     return hmac.new(key.encode(), src.encode(), hashlib.sha256).hexdigest()
 
 
 def _get_my_ip() -> str:
+    """获取本机出口 IP"""
     try:
-        return requests.get("https://who.nie.netease.com/", verify=False, timeout=5).json().get("ip", "127.0.0.1")
+        return requests.get(
+            "https://who.nie.netease.com/", verify=False, timeout=5
+        ).json().get("ip", "127.0.0.1")
     except Exception:
         return "127.0.0.1"
 
+
+# ── 自定义 JSON 编码器（Vivo 等渠道需要 / 转义为 \/）──
+
+class _CustomEncoder(json.JSONEncoder):
+    r"""将 JSON 中的 / 转义为 \/，保证 HMAC 签名与服务端一致"""
+
+    def encode(self, obj):
+        return super().encode(obj).replace("/", "\\/")
+
+
+# ── 公共 API ──
 
 def build_sauth(
     login_channel: str,
@@ -76,10 +100,24 @@ def build_sauth(
     sdk_version: str = "6.1.0.301",
     custom_data: dict | None = None,
 ) -> dict:
-    """构造 UniSDK SAUTH 数据"""
+    """构造 UniSDK SAUTH 请求体
+
+    Args:
+        login_channel: 登录渠道标识（如 nearme_vivo, huawei, bilibili_sdk）
+        app_channel: 应用渠道标识
+        uid: 渠道用户 ID（sdkuid）
+        session: 登录凭证（sessionid / access_key / open_token）
+        game_id: 游戏 ID（如 h42）
+        sdk_version: UniSDK 版本号
+        custom_data: 额外的顶层字段（如 realname）
+
+    Returns:
+        SAUTH JSON 字典，可直接传给 post_signed_data
+    """
     device = dict(FAKE_DEVICE)
     ip = _get_my_ip()
-    data = {
+
+    body = {
         "gameid": game_id,
         "login_channel": login_channel,
         "app_channel": app_channel,
@@ -90,7 +128,10 @@ def build_sauth(
         "sdk_version": sdk_version,
         "is_unisdk_guest": 0,
         "ip": ip,
-        "aim_info": f'{{"tz":"+0800","tzid":"Asia/Shanghai","aim":"{ip}","country":"CN"}}',
+        "aim_info": (
+            '{"tz":"+0800","tzid":"Asia/Shanghai",'
+            '"aim":"' + ip + '","country":"CN"}'
+        ),
         "source_app_channel": app_channel,
         "source_platform": "ad",
         "client_login_sn": "".join(random.choices(string.hexdigits, k=16)),
@@ -100,124 +141,102 @@ def build_sauth(
         "sdklog": json.dumps(device),
     }
     if custom_data:
-        data.update(custom_data)
-    return data
+        body.update(custom_data)
+    return body
 
 
-class _CustomEncoder(json.JSONEncoder):
-    """idv-login 风格的 JSON 编码器：转义 / 为 \\/"""
-    def encode(self, obj):
-        return super().encode(obj).replace('/', '\\/')
+def post_signed_data(
+    data: dict,
+    game_id: str,
+    log_key: str = DEFAULT_LOG_KEY,
+    need_custom_encode: bool = False,
+) -> dict:
+    """对 SAUTH 数据签名并 POST 到网易 UniSDK 端点
 
+    Args:
+        data: build_sauth 返回的字典
+        game_id: 游戏 ID
+        log_key: HMAC 签名密钥
+        need_custom_encode: 是否使用自定义编码器（Vivo 渠道需要）
 
-def post_signed_data(data: dict, game_id: str, log_key: str = DEFAULT_LOG_KEY,
-                     need_custom_encode: bool = False) -> dict:
-    """签名并 POST 到网易 UniSDK 端点"""
-    url = f"https://mgbsdk.matrix.netease.com/{game_id}/sdk/uni_sauth"
-    if need_custom_encode:
-        body = json.dumps(data, cls=_CustomEncoder)
+    Returns:
+        服务端响应的 JSON 字典，包含 unisdk_login_json 等字段
+    """
+    url = _UNI_SAUTH_URL.format(game_id=game_id)
+
+    encoder = _CustomEncoder if need_custom_encode else None
+    if encoder:
+        body = json.dumps(data, cls=encoder)
     else:
         body = json.dumps(data)
+
     headers = {
-        "X-Client-Sign": calc_sign(url, "POST", body, log_key),
+        "X-Client-Sign": _hmac_sign("POST", url, body, log_key),
         "Content-Type": "application/json",
-        "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 12; M2102K1AC Build/V417IR)",
+        "User-Agent": (
+            "Dalvik/2.1.0 (Linux; U; Android 12; M2102K1AC Build/V417IR)"
+        ),
     }
     r = requests.post(url, data=body, headers=headers, timeout=15)
     result = r.json()
-    logging.info(f"[ChannelUtils] uni_sauth code={result.get('code')} msg={result.get('msg', result.get('reason', ''))}")
-    logging.debug(f"[ChannelUtils] uni_sauth keys: {list(result.keys())} full={json.dumps(result, ensure_ascii=False)[:300]}")
-    if result.get('code') != 0:
-        logging.error(f"[ChannelUtils] uni_sauth failed code={result.get('code')} subcode={result.get('subcode', 'N/A')} status={result.get('status', 'N/A')}")
-        logging.debug(f"[ChannelUtils] uni_sauth body login_channel={data.get('login_channel')} sdkuid={data.get('sdkuid')} sessionid={data.get('sessionid')[:20] if data.get('sessionid') else 'N/A'}...")
+
+    code = result.get("code")
+    if code != 0:
+        logging.error(
+            "[ChannelUtils] uni_sauth failed code=%s subcode=%s",
+            code, result.get("subcode", "N/A"),
+        )
+        logging.debug(
+            "[ChannelUtils] uni_sauth req login_channel=%s sdkuid=%s",
+            data.get("login_channel"), data.get("sdkuid"),
+        )
+    else:
+        logging.info("[ChannelUtils] uni_sauth OK")
+    logging.debug(
+        "[ChannelUtils] uni_sauth resp keys=%s",
+        list(result.keys()),
+    )
     return result
 
 
-def confirm_login(game_id: str, process_id: str, uni_data: dict, channel_data: dict | None = None) -> bool:
-    """调用网易 qrcode/confirm_login — 对齐 idv-login 格式"""
-    # 用真实 IP 避免 hosts 劫持
-    url = "https://42.186.193.21/mpay/api/qrcode/confirm_login"
-    cd = channel_data or {}
-    fd = dict(FAKE_DEVICE)
+# ── 窗口图标 ──
 
-    # 构建 extra_unisdk_data（SAUTH_STR + SAUTH_JSON）
-    unisdk_json = uni_data.get("unisdk_login_json", "")
-    extra = {}
-    if unisdk_json:
-        try:
-            unisdk_obj = json.loads(base64.b64decode(unisdk_json))
-        except Exception:
-            unisdk_obj = {}
-        str_data = dict(unisdk_obj)
-        str_data["username"] = cd.get("uname", "")
-        sauth_str = base64.b64encode("&".join(f"{k}={v}" for k, v in str_data.items()).encode()).decode()
-        sauth_json = base64.b64encode(json.dumps(unisdk_obj).encode()).decode()
-        extra = {"SAUTH_STR": sauth_str, "SAUTH_JSON": sauth_json}
+# 各渠道官网 favicon
+CHANNEL_ICONS: dict[str, str] = {
+    "huawei": "https://consumer.huawei.com/favicon.ico",
+    "vivo": "https://www.vivo.com/favicon.ico",
+    "bilibili": "https://www.bilibili.com/favicon.ico",
+    "nearme_vivo": "https://www.vivo.com/favicon.ico",
+}
 
-    body = {
-        "game_id": game_id,
-        "uuid": process_id,
-        "user_id": cd.get("user_id", ""),
-        "token": cd.get("token", ""),
-        "login_channel": cd.get("login_channel", ""),
-        "app_channel": cd.get("app_channel", ""),
-        "pay_channel": cd.get("pay_channel", ""),
-        "udid": fd["udid"],
-        "sdk_version": "6.1.0.301",
-        "jf_game_id": game_id.split("-")[-1] if "-" in game_id else game_id,
-        "gv": "157",
-        "gvn": "1.5.80",
-        "cv": "a1.5.0",
-        "extra_data": "",
-        "extra_unisdk_data": json.dumps(extra) if extra else "",
-    }
-    body_str = "&".join(f"{k}={v}" for k, v in body.items())
-    logging.debug(f"[ChannelUtils] confirm_login extra_unisdk_data={body.get('extra_unisdk_data', 'MISSING')[:120]}")
-    logging.debug(f"[ChannelUtils] confirm_login body: {body_str[:500]}")
+
+def set_window_icon(window, icon_url: str):
+    """下载 favicon 并设置为 WebView2 窗口图标（需在窗口创建后调用）"""
     try:
-        r = requests.post(
-            url, data=body_str,
-            headers={"Content-Type": "application/x-www-form-urlencoded", "Host": "service.mkey.163.com"},
-            timeout=15, verify=False,
-        )
-        result = r.json()
-        code = result.get("code")
-        ok = code is None or code == 0
-        logging.info(f"[ChannelUtils] confirm_login: {'OK' if ok else 'FAIL'} code={code} status={r.status_code}")
-        logging.debug(f"[ChannelUtils] confirm_login raw: {r.text[:300]}")
-        return ok
+        resp = requests.get(icon_url, timeout=10)
+        resp.raise_for_status()
+        _apply_icon_bytes(window, resp.content)
+        logging.info(f"[ChannelUtils] 窗口图标已设置: {icon_url}")
     except Exception as e:
-        logging.error(f"[ChannelUtils] confirm_login 失败: {e}")
-        return False
+        logging.warning(f"[ChannelUtils] 设置窗口图标失败: {e}")
 
 
-def get_huawei_game_auth(access_token: str, app_id: str = "100112247") -> dict | None:
-    """回放时刷新 gameAuthSign"""
-    try:
-        body = {
-            "gamePopTime": 0, "idType": 2,
-            "hmsSdkVersionCode": 60100302, "hmsSdkVersionName": "6.1.0.302",
-            "hmsApkVersionName": "6.14.0.302", "hmsApkVersionCode": 61400302,
-            "kitver": 61400300, "thirdAppVersion": "1.5.99",
-            "clientPackage": "com.huawei.gamebox", "locale": "zh_CN",
-            "timeZone": "Asia/Shanghai", "serviceType": 47, "odm": 0,
-            "countryCode": "CN", "deviceIdType": 4,
-            "method": "client.hms.gs.getGameAuthSign",
-            "extraBody": f'json={{"appId":"{app_id}"}}',
-            "accessToken": access_token,
-        }
-        resp = requests.post(
-            "https://jgw-drcn.jos.dbankcloud.cn/gameservice/api/gbClientApi",
-            headers={"User-Agent": "com.huawei.hms.game/6.14.0.300 (Linux; Android 12; M2102K1AC) RestClient/7.0.6.300", "Content-Type": "application/x-www-form-urlencoded"},
-            data=body, timeout=15,
-        )
-        result = resp.json()
-        gs = result.get("gameAuthSign")
-        pid = result.get("playerId")
-        if gs and pid:
-            logging.info(f"[ChannelUtils] getGameAuthSign 刷新成功, playerId={pid}")
-            return {"gameAuthSign": gs, "playerId": str(pid), "playerLevel": str(result.get("playerLevel", "")), "ts": str(result.get("ts", ""))}
-        logging.error(f"[ChannelUtils] getGameAuthSign 失败: {result}")
-    except Exception as e:
-        logging.error(f"[ChannelUtils] getGameAuthSign 异常: {e}")
-    return None
+def _apply_icon_bytes(window, icon_bytes: bytes):
+    """将图标字节应用到窗口（内部方法，兼容 ico/png/jpg 等格式）"""
+    import clr
+    clr.AddReference("System.Drawing")
+    clr.AddReference("System.Windows.Forms")
+    from System.Drawing import Bitmap, Icon
+    from System.Windows.Forms import MethodInvoker
+    from System.IO import MemoryStream
+    from webview.platforms.winforms import BrowserView
+
+    stream = MemoryStream(icon_bytes)
+    # 先用 Bitmap 加载（支持 png/jpg/bmp/ico），再转为 Icon
+    bitmap = Bitmap(stream)
+    icon = Icon.FromHandle(bitmap.GetHicon())
+    stream.Close()
+
+    form = BrowserView.instances.get(window.uid) if window else None
+    if form:
+        form.Invoke(MethodInvoker(lambda: setattr(form, "Icon", icon)))

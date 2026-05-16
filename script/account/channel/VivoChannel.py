@@ -77,10 +77,19 @@ class VivoLogin:
         _wf.cache_dir = self._temp_dir
         logging.info(f"[VivoChannel] 临时缓存目录: {self._temp_dir}")
 
+        # 提前下载图标
+        try:
+            icon_bytes = requests.get("https://www.vivo.com/favicon.ico", timeout=5).content
+        except Exception:
+            icon_bytes = None
+
         try:
             self._window = webview.create_window(
                 "Vivo 账号登录", VIVO_LOGIN_URL, width=420, height=680,
             )
+            if icon_bytes:
+                from script.account.channel.ChannelUtils import _apply_icon_bytes
+                _apply_icon_bytes(self._window, icon_bytes)
         finally:
             _wf.cache_dir = self._original_cache_dir
 
