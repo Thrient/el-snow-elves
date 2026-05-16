@@ -41,7 +41,7 @@ def _add_navigation_handler(window, login_container: dict):
         def handler(sender, args: CoreWebView2NavigationStartingEventArgs):
             uri = args.Uri or ""
             if "joint.vivo.com.cn" in uri and "from=login" in uri:
-                logging.info(f"[VivoChannel] 拦截登录完成: {uri[:120]}")
+                logging.debug(f"[VivoChannel] 拦截登录完成: {uri[:120]}")
                 login_container["url"] = uri
 
         wv2.NavigationStarting += EventHandler[CoreWebView2NavigationStartingEventArgs](handler)
@@ -63,6 +63,7 @@ class VivoLogin:
         self._done = threading.Event()
         self._temp_dir: str = ""
         self._original_cache_dir: str = ""
+        self._selected_sub: dict | None = None  # 用户选中的子账号
 
     def login(self) -> dict | None:
         self._done.clear()
@@ -108,6 +109,7 @@ class VivoLogin:
             self._done.set()
 
         def _process_login():
+            # Step 1: union/get — 获取子账号列表
             self._window.evaluate_js(f"""
                 window.__vivo_result = null;
                 fetch("{VIVO_UNION_GET.format(game_package=self.game_package)}", {{credentials: "include"}})
@@ -123,21 +125,40 @@ class VivoLogin:
                         data = json.loads(raw)
                         if isinstance(data, dict) and data.get("code") == 0:
                             self._result = data.get("data", {})
-                            logging.info(f"[VivoChannel] union/get 成功: {json.dumps(self._result, ensure_ascii=False)[:200]}")
+                            sub_accounts = self._result.get("subAccounts", [])
+                            logging.info(f"[VivoChannel] union/get 成功, {len(sub_accounts)} 个子账号")
+
+                            # Step 2: 选择子账号
+                            if sub_accounts:
+                                logging.debug(f"[VivoChannel] 子账号示例: {json.dumps(sub_accounts[0], ensure_ascii=False)}")
+                            if len(sub_accounts) == 0:
+                                logging.error("[VivoChannel] 无子账号")
+                            elif len(sub_accounts) == 1:
+                                self._selected_sub = sub_accounts[0]
+                                logging.info(f"[VivoChannel] 自动选择唯一子账号: {self._selected_sub.get('subRole') or self._selected_sub.get('roleName', '?')}")
+                            else:
+                                self._selected_sub = _wait_sub_account_selection(
+                                    self._window, sub_accounts)
+
+                            # Step 3: union/use — 获取 open_token
+                            if self._selected_sub:
+                                self._do_union_use(self._selected_sub)
+                            break
                         elif isinstance(data, dict) and data.get("error"):
                             logging.error(f"[VivoChannel] fetch 错误: {data['error']}")
                         else:
                             logging.error(f"[VivoChannel] union/get 失败: {data}")
                         break
-                except Exception:
-                    pass
+                except Exception as e:
+                    logging.debug(f"[VivoChannel] union/get 轮询异常: {e}")
                 time.sleep(0.2)
             else:
                 logging.error("[VivoChannel] union/get 超时")
 
-            # 通过 window.get_cookies() 获取包含 HttpOnly 的全部 Cookie
+            # 获取 Cookie
             self._cookies = _get_cookies_safe(self._window)
 
+            # 关闭窗口
             try:
                 from webview.platforms.winforms import BrowserView
                 import clr
@@ -157,6 +178,45 @@ class VivoLogin:
         self._cleanup_temp_dir()
         return self._result
 
+    def _do_union_use(self, sub: dict):
+        """用选中的子账号调用 union/use，获取 open_token 并存入 self._result"""
+        sub_open_id = sub.get("subOpenId", "")
+        if not sub_open_id:
+            logging.error("[VivoChannel] subOpenId 为空，union/use 跳过")
+            return
+
+        js_code = f"""
+            window.__vivo_use_result = null;
+            fetch("https://joint.vivo.com.cn/h5/union/use", {{
+                method: "POST",
+                headers: {{"Content-Type": "application/x-www-form-urlencoded"}},
+                body: "noLoading=true&subOpenId={sub_open_id}&gamePackage={self.game_package}",
+                credentials: "include"
+            }})
+                .then(r => r.text())
+                .then(text => {{ window.__vivo_use_result = text; }})
+                .catch(e => {{ window.__vivo_use_result = JSON.stringify({{error: e.toString()}}); }});
+        """
+        self._window.evaluate_js(js_code)
+
+        for _ in range(30):
+            try:
+                raw = self._window.evaluate_js("window.__vivo_use_result")
+                if raw and raw != "null":
+                    data = json.loads(raw)
+                    if isinstance(data, dict) and data.get("code") == 0:
+                        open_token = data.get("data", "")
+                        self._result["_open_token"] = open_token
+                        self._result["_sub_open_id"] = sub_open_id
+                        logging.info(f"[VivoChannel] union/use 成功")
+                    else:
+                        logging.error(f"[VivoChannel] union/use 失败: {data}")
+                    return
+            except Exception:
+                pass
+            time.sleep(0.2)
+        logging.error("[VivoChannel] union/use 超时")
+
     def _cleanup_temp_dir(self):
         if not self._temp_dir:
             return
@@ -169,6 +229,80 @@ class VivoLogin:
     @property
     def cookies(self) -> dict:
         return self._cookies
+
+
+def _wait_sub_account_selection(window, sub_accounts: list) -> dict | None:
+    """注入子账号选择 UI，阻塞等待用户点击，返回选中的子账号 dict"""
+    # Step 1: 先将数据注入为独立 JS 变量（避免 f-string 嵌入 JSON 的转义问题）
+    items_json = json.dumps(sub_accounts, ensure_ascii=False)
+    try:
+        window.evaluate_js(f"window.__vivo_subs = {items_json};")
+    except Exception as e:
+        logging.error(f"[VivoChannel] 注入子账号数据失败: {e}")
+        return sub_accounts[0] if sub_accounts else None
+
+    # Step 2: 注入选择 UI（从已注入的变量读取数据，用原始字符串避免转义问题）
+    js_code = r"""
+        (function() {
+            if (document.getElementById('__vivo_sub_sel')) return;
+            if (!document.body) return;
+            var items = window.__vivo_subs;
+            if (!items || !items.length) return;
+            var html = '<div id="__vivo_sub_sel" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;'
+                + 'background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;font-family:sans-serif;">'
+                + '<div style="background:#fff;border-radius:16px;width:340px;max-height:70vh;overflow-y:auto;'
+                + 'box-shadow:0 12px 40px rgba(0,0,0,0.2);padding:20px 16px 12px;">'
+                + '<div style="text-align:center;margin-bottom:16px;font-size:16px;font-weight:700;color:#1a1a2e;">'
+                + '选择账号</div>';
+            for (var i = 0; i < items.length; i++) {
+                var s = items[i];
+                var name = s.subRole || s.roleName || s.nickName || ('角色 ' + (i + 1));
+                var level = s.subLevel || s.roleLevel || s.level || '';
+                var info = [s.nickName, level ? 'Lv.' + level : ''].filter(Boolean).join(' · ');
+                var safeName = name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                var safeInfo = info.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                html += '<div onclick="window.__vivo_selected_sub=' + i + ';'
+                    + "document.getElementById('__vivo_sub_sel').remove();\""
+                    + 'style="display:flex;align-items:center;gap:12px;padding:14px 12px;margin-bottom:8px;'
+                    + 'border-radius:12px;border:1px solid #eef0f2;cursor:pointer;'
+                    + "transition:all 0.15s;background:#fafbfc;\""
+                    + "onmouseover=\"this.style.borderColor='#1677ff';this.style.background='#f0f5ff';\""
+                    + "onmouseout=\"this.style.borderColor='#eef0f2';this.style.background='#fafbfc';\">"
+                    + '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1677ff,#0958d9);'
+                    + 'color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">'
+                    + (i + 1) + '</div>'
+                    + '<div style="min-width:0;flex:1;">'
+                    + '<div style="font-size:14px;font-weight:600;color:#1a1a2e;line-height:1.3;">' + safeName + '</div>'
+                    + (info ? '<div style="font-size:11px;color:#8b8fa3;margin-top:2px;">' + safeInfo + '</div>' : '')
+                    + '</div>'
+                    + '<div style="color:#c0c4cc;font-size:18px;flex-shrink:0;">→</div>'
+                    + '</div>';
+            }
+            html += '</div></div>';
+            document.body.insertAdjacentHTML('beforeend', html);
+        })();
+    """
+    try:
+        window.evaluate_js(js_code)
+    except Exception as e:
+        logging.error(f"[VivoChannel] 注入选择 UI 失败: {e}")
+        return sub_accounts[0] if sub_accounts else None
+
+    for _ in range(120):
+        try:
+            idx = window.evaluate_js("window.__vivo_selected_sub")
+            if idx is not None and idx != "null":
+                i = int(idx)
+                if 0 <= i < len(sub_accounts):
+                    sub = sub_accounts[i]
+                    logging.info(f"[VivoChannel] 用户选择子账号: {sub.get('subRole') or sub.get('roleName', '?')} (idx={i})")
+                    return sub
+                break
+        except Exception as e:
+            logging.debug(f"[VivoChannel] 轮询子账号选择: {e}")
+        time.sleep(0.5)
+    logging.warning("[VivoChannel] 子账号选择超时，使用第一个")
+    return sub_accounts[0] if sub_accounts else None
 
 
 def _get_cookies_safe(window) -> dict[str, str]:
@@ -188,15 +322,20 @@ def _get_cookies_safe(window) -> dict[str, str]:
 
 
 def record() -> dict | None:
-    """录制：打开 Vivo 登录窗口 → 返回 channel_auth"""
+    """录制：打开 Vivo 登录窗口 → 选择子账号 → 返回 channel_auth"""
     login = VivoLogin()
     result = login.login()
     if not result:
         return None
+    sel = login._selected_sub or {}
     return {
         "channel_type": "nearme_vivo",
         "auth_data": result,
         "cookies": login.cookies,
+        "sub_open_id": sel.get("subOpenId", ""),
+        "role_name": sel.get("subRole") or sel.get("roleName", ""),
+        "account_name": sel.get("nickName", ""),
+        "sub_level": sel.get("subLevel") or sel.get("level", ""),
     }
 
 
@@ -228,7 +367,20 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
     if not sub_accounts:
         logging.error("[VivoChannel] 无子账号")
         return None
-    sub = sub_accounts[0]
+
+    # 优先匹配录制时选中的子账号，否则回退到第一个
+    stored_sub_id = channel_auth.get("sub_open_id", "")
+    sub = None
+    if stored_sub_id:
+        for s in sub_accounts:
+            if s.get("subOpenId") == stored_sub_id:
+                sub = s
+                logging.info(f"[VivoChannel] 匹配到已选子账号: {s.get('subRole') or s.get('roleName', '?')}")
+                break
+    if not sub:
+        sub = sub_accounts[0]
+        logging.info(f"[VivoChannel] 使用默认子账号: {sub.get('subRole') or sub.get('roleName', '?')}")
+
     sub_open_id = sub.get("subOpenId", "")
     if not sub_open_id:
         logging.error("[VivoChannel] subOpenId 为空")
