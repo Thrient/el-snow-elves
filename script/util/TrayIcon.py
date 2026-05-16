@@ -1,0 +1,272 @@
+"""系统托盘图标 — Shell_NotifyIcon via ctypes，零额外依赖"""
+
+import ctypes
+import logging
+import threading
+from ctypes import wintypes
+from typing import Callable, Optional
+
+# Win32 constants
+WM_USER = 0x0400
+WM_TRAY = WM_USER + 1
+NIM_ADD = 0
+NIM_DELETE = 2
+NIF_MESSAGE = 1
+NIF_ICON = 2
+NIF_TIP = 4
+NIM_SETFOCUS = 3
+WM_LBUTTONUP = 0x0202
+WM_RBUTTONUP = 0x0205
+WM_DESTROY = 0x0002
+WS_POPUP = 0x80000000
+WS_EX_TOOLWINDOW = 0x00000080
+WS_EX_NOACTIVATE = 0x08000000
+WM_COMMAND = 0x0111
+SW_HIDE = 0
+SW_SHOW = 5
+
+# 托盘菜单 ID
+ID_SHOW = 1001
+ID_EXIT = 1002
+ID_REPLAY_SUBMENU_BASE = 2000  # 回放子菜单项 ID 起点
+ID_REFRESH = 2999  # 刷新账号列表
+
+
+# WNDCLASSW 结构体（ctypes.wintypes 在部分 Python 版本字段不全）
+class WNDCLASSW(ctypes.Structure):
+    _fields_ = [
+        ("style", wintypes.UINT),
+        ("lpfnWndProc", ctypes.c_void_p),
+        ("cbClsExtra", ctypes.c_int),
+        ("cbWndExtra", ctypes.c_int),
+        ("hInstance", wintypes.HINSTANCE),
+        ("hIcon", wintypes.HICON),
+        ("hCursor", ctypes.c_void_p),
+        ("hbrBackground", ctypes.c_void_p),
+        ("lpszMenuName", wintypes.LPCWSTR),
+        ("lpszClassName", wintypes.LPCWSTR),
+    ]
+
+
+class TrayIcon:
+    """Windows 系统托盘图标"""
+
+    def __init__(self, title: str = "El Snow Elves", icon_path: str | None = None):
+        self._title = title
+        self._icon_path = icon_path
+        self._hwnd = None
+        self._thread: threading.Thread | None = None
+        self._on_show: Optional[Callable] = None
+        self._on_exit: Optional[Callable] = None
+        self._on_refresh: Optional[Callable] = None
+        self._ready = threading.Event()
+        self._extra_items: list[tuple[str, Callable]] = []
+
+    # ── public API ──
+
+    def start(self, on_show: Callable, on_exit: Callable):
+        """启动托盘（阻塞当前线程直到托盘退出）"""
+        self._on_show = on_show
+        self._on_exit = on_exit
+        self._run()
+
+    def start_async(self, on_show: Callable, on_exit: Callable, on_refresh: Optional[Callable] = None):
+        """在后台线程启动托盘"""
+        self._on_show = on_show
+        self._on_exit = on_exit
+        self._on_refresh = on_refresh
+        self._thread = threading.Thread(target=self._run, daemon=True, name="TrayIcon")
+        self._thread.start()
+        self._ready.wait(timeout=5)
+
+    def set_menu_items(self, items: list[tuple[str, Callable]]):
+        """设置额外的菜单项 [(label, callback), ...]"""
+        self._extra_items = items
+
+    def stop(self):
+        """停止托盘图标"""
+        if self._hwnd:
+            ctypes.windll.user32.PostMessageW(self._hwnd, WM_DESTROY, 0, 0)
+
+    # ── internal ──
+
+    def _run(self):
+        try:
+            self._create_tray()
+        except Exception as e:
+            logging.error(f"[TrayIcon] 启动失败: {e}")
+
+    def _create_tray(self):
+        """创建隐藏窗口 + 托盘图标 + 消息循环"""
+        hinstance = ctypes.windll.kernel32.GetModuleHandleW(None)
+
+        # 注册窗口类
+        wnd_class = WNDCLASSW()
+        wnd_class.lpfnWndProc = ctypes.cast(WNDPROC(self._wnd_proc), ctypes.c_void_p)
+        wnd_class.hInstance = hinstance
+        wnd_class.lpszClassName = "ElvesTrayClass"
+        atom = ctypes.windll.user32.RegisterClassW(ctypes.byref(wnd_class))
+        if not atom:
+            logging.error(f"[TrayIcon] RegisterClass 失败: {ctypes.GetLastError()}")
+            return
+
+        # 创建隐藏消息窗口
+        self._hwnd = ctypes.windll.user32.CreateWindowExW(
+            WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
+            wintypes.LPCWSTR(atom),
+            None,
+            WS_POPUP,
+            0, 0, 1, 1,
+            None, None, hinstance, None,
+        )
+        if not self._hwnd:
+            logging.error(f"[TrayIcon] CreateWindow 失败: {ctypes.GetLastError()}")
+            return
+
+        # 关联实例到窗口（用于 wnd_proc 回调）
+        _INSTANCES[self._hwnd] = self
+
+        # 添加托盘图标
+        if self._icon_path:
+            icon_handle = ctypes.windll.user32.LoadImageW(
+                0, self._icon_path, 1,  # IMAGE_ICON
+                0, 0, 0x00000010 | 0x00000020,  # LR_LOADFROMFILE | LR_DEFAULTSIZE
+            )
+        else:
+            icon_handle = ctypes.windll.user32.LoadIconW(0, 32512)  # IDI_APPLICATION
+        self._add_tray_icon(icon_handle or 0)
+        self._ready.set()
+        logging.info("[TrayIcon] 托盘图标已创建")
+
+        # 消息循环
+        msg = wintypes.MSG()
+        while ctypes.windll.user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
+            ctypes.windll.user32.TranslateMessage(ctypes.byref(msg))
+            ctypes.windll.user32.DispatchMessageW(ctypes.byref(msg))
+
+        # 清理
+        self._remove_tray_icon()
+        ctypes.windll.user32.DestroyWindow(self._hwnd)
+        _INSTANCES.pop(self._hwnd, None)
+        self._hwnd = None
+        logging.info("[TrayIcon] 托盘已退出")
+
+    def _add_tray_icon(self, icon_handle):
+        class NOTIFYICONDATAW(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", wintypes.DWORD),
+                ("hWnd", wintypes.HWND),
+                ("uID", wintypes.UINT),
+                ("uFlags", wintypes.UINT),
+                ("uCallbackMessage", wintypes.UINT),
+                ("hIcon", wintypes.HICON),
+                ("szTip", wintypes.WCHAR * 128),
+                ("dwState", wintypes.DWORD),
+                ("dwStateMask", wintypes.DWORD),
+                ("szInfo", wintypes.WCHAR * 256),
+                ("uTimeout", wintypes.UINT),
+                ("szInfoTitle", wintypes.WCHAR * 64),
+                ("dwInfoFlags", wintypes.DWORD),
+            ]
+
+        nid = NOTIFYICONDATAW()
+        nid.cbSize = ctypes.sizeof(NOTIFYICONDATAW)
+        nid.hWnd = self._hwnd
+        nid.uID = 1
+        nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP
+        nid.uCallbackMessage = WM_TRAY
+        nid.hIcon = icon_handle
+        nid.szTip = self._title
+        ctypes.windll.shell32.Shell_NotifyIconW(NIM_ADD, ctypes.byref(nid))
+
+    def _remove_tray_icon(self):
+        class NOTIFYICONDATAW(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", wintypes.DWORD),
+                ("hWnd", wintypes.HWND),
+                ("uID", wintypes.UINT),
+            ]
+        nid = NOTIFYICONDATAW()
+        nid.cbSize = ctypes.sizeof(NOTIFYICONDATAW)
+        nid.hWnd = self._hwnd
+        nid.uID = 1
+        ctypes.windll.shell32.Shell_NotifyIconW(NIM_DELETE, ctypes.byref(nid))
+
+    def _show_menu(self):
+        """弹出右键菜单"""
+        menu = ctypes.windll.user32.CreatePopupMenu()
+        ctypes.windll.user32.AppendMenuW(menu, 0, ID_SHOW, "显示主窗口")
+
+        # 回放账号子菜单
+        if self._extra_items:
+            sub_menu = ctypes.windll.user32.CreatePopupMenu()
+            for i, (label, _) in enumerate(self._extra_items):
+                ctypes.windll.user32.AppendMenuW(sub_menu, 0, ID_REPLAY_SUBMENU_BASE + i, label)
+            ctypes.windll.user32.AppendMenuW(sub_menu, 0x800, 0, "")  # 分割线
+            ctypes.windll.user32.AppendMenuW(sub_menu, 0, ID_REFRESH, "刷新账号列表")
+            ctypes.windll.user32.AppendMenuW(menu, 0x10, sub_menu, "回放账号")  # MF_POPUP
+
+        ctypes.windll.user32.AppendMenuW(menu, 0x800, 0, "")  # 分割线
+        ctypes.windll.user32.AppendMenuW(menu, 0, ID_EXIT, "退出")
+
+        # 获取光标位置
+        pt = wintypes.POINT()
+        ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
+
+        # 设置前台窗口以便菜单能正确关闭
+        ctypes.windll.user32.SetForegroundWindow(self._hwnd)
+        ctypes.windll.user32.TrackPopupMenu(
+            menu, 0, pt.x, pt.y, 0, self._hwnd, None
+        )
+        ctypes.windll.user32.PostMessageW(self._hwnd, 0, 0, 0)
+        ctypes.windll.user32.DestroyMenu(menu)
+        if self._extra_items:
+            ctypes.windll.user32.DestroyMenu(sub_menu)
+
+    # ── 窗口过程 ──
+
+    @staticmethod
+    def _wnd_proc(hwnd, msg, wparam, lparam):
+        self = _INSTANCES.get(hwnd)
+        if not self:
+            return ctypes.windll.user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+
+        if msg == WM_TRAY:
+            if lparam == WM_LBUTTONUP:
+                self._on_show and self._on_show()
+            elif lparam == WM_RBUTTONUP:
+                self._show_menu()
+        elif msg == WM_COMMAND:
+            if wparam == ID_SHOW:
+                self._on_show and self._on_show()
+            elif wparam == ID_EXIT:
+                self._on_exit and self._on_exit()
+                self.stop()
+            elif wparam == ID_REFRESH:
+                self._on_refresh and self._on_refresh()
+            elif ID_REPLAY_SUBMENU_BASE <= wparam < ID_REFRESH:
+                idx = wparam - ID_REPLAY_SUBMENU_BASE
+                if 0 <= idx < len(self._extra_items):
+                    try:
+                        self._extra_items[idx][1]()
+                    except Exception as e:
+                        logging.error(f"[TrayIcon] 菜单回调异常: {e}")
+        elif msg == WM_DESTROY:
+            ctypes.windll.user32.PostQuitMessage(0)
+
+        return ctypes.windll.user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+
+
+# ── 全局 ──
+
+# 窗口过程回调类型
+WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_longlong, wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
+
+# 修复 DefWindowProcW 参数类型（避免 64 位 LPARAM 溢出）
+ctypes.windll.user32.DefWindowProcW.argtypes = [
+    wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM,
+]
+ctypes.windll.user32.DefWindowProcW.restype = ctypes.c_longlong
+
+# 实例映射（窗口句柄 → TrayIcon 实例，供 wnd_proc 回调查找）
+_INSTANCES: dict[int, "TrayIcon"] = {}

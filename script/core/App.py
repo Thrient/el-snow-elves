@@ -1,10 +1,11 @@
 import logging
+import os
 
 import webview
 
 from script.api.Api import api
 from script.api.JsApi import js
-from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH
+from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH, PROJECT_ROOT
 from script.core.LogManager import setup_logging, read_logs, get_log_files
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
@@ -14,6 +15,8 @@ from script.account.SessionManager import get_session
 from script.core.TemplateMatcher import TemplateMatcher
 from script.core.Window import Window
 from script.util.Utils import Utils
+from script.util.TrayIcon import TrayIcon
+
 
 class App:
     def __init__(self, url):
@@ -29,7 +32,56 @@ class App:
         self._script_instances = {}
         self._session = get_session()
         js.init(self.window)
+        self._tray: TrayIcon | None = None
+        self._setup_tray()
         self.init()
+
+    def _setup_tray(self):
+        """初始化系统托盘：关闭窗口 → 隐藏到托盘"""
+        self._tray = TrayIcon(APP_TITLE, icon_path=os.path.join(PROJECT_ROOT, "resources", "favicon.ico"))
+        self._tray.start_async(
+            on_show=lambda: self.window.show(),
+            on_exit=self._do_exit,
+            on_refresh=self._refresh_tray_accounts,
+        )
+        # 拦截窗口关闭事件，隐藏到托盘
+        self.window.confirm_close = True
+        self.window.events.closing += self._on_window_closing
+
+        # 刷新托盘账号菜单
+        self._refresh_tray_accounts()
+
+    def _refresh_tray_accounts(self):
+        """从账号管理器加载账号列表到托盘菜单"""
+        try:
+            accounts = AccountManager.list_accounts() or []
+        except Exception:
+            accounts = []
+        items: list[tuple[str, callable]] = []
+        for a in accounts:
+            name = a.get("name", "")
+            if name:
+                items.append((f"回放 {name}", lambda n=name: self._tray_replay(n)))
+        self._tray.set_menu_items(items)
+
+    def _tray_replay(self, account_name):
+        """托盘菜单触发回放"""
+        logging.info(f"[Tray] 回放账号: {account_name}")
+        self._session.start_replay(account_name)
+
+    def _on_window_closing(self) -> bool:
+        """窗口关闭时隐藏到托盘"""
+        self.window.hide()
+        return False  # 阻止关闭
+
+    def _do_exit(self):
+        """真正退出程序"""
+        try:
+            self.window.events.closing -= self._on_window_closing
+        except Exception:
+            pass
+        self.window.confirm_close = False
+        self.window.destroy()
 
     def init(self):
         api.on("API:SETTINGS:LOAD", StaticCommon.load_settings)
