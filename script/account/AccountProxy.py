@@ -342,7 +342,7 @@ class AccountProxy:
         self._master = None
 
     def _run(self):
-        if sys.platform == "win32":
+        if sys.platform == "win32" and sys.version_info < (3, 13):
             self._loop = asyncio.SelectorEventLoop()
         else:
             self._loop = asyncio.new_event_loop()

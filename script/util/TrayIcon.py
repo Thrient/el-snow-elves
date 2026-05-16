@@ -60,7 +60,8 @@ class TrayIcon:
         self._on_exit: Optional[Callable] = None
         self._on_refresh: Optional[Callable] = None
         self._ready = threading.Event()
-        self._extra_items: list[tuple[str, Callable]] = []
+        self._extra_groups: list[tuple[str, list[tuple[str, Callable]]]] = []
+        self._extra_callbacks: list[Callable] = []  # 扁平回调，按序分配 ID
 
     # ── public API ──
 
@@ -79,9 +80,14 @@ class TrayIcon:
         self._thread.start()
         self._ready.wait(timeout=5)
 
-    def set_menu_items(self, items: list[tuple[str, Callable]]):
-        """设置额外的菜单项 [(label, callback), ...]"""
-        self._extra_items = items
+    def set_menu_items(self, groups: list[tuple[str, list[tuple[str, Callable]]]]):
+        """设置额外菜单：[(group_label, [(item_label, callback), ...]), ...]
+        每个 group 渲染为一个子菜单"""
+        self._extra_groups = groups
+        self._extra_callbacks = []
+        for _, items in groups:
+            for _, cb in items:
+                self._extra_callbacks.append(cb)
 
     def stop(self):
         """停止托盘图标"""
@@ -197,14 +203,19 @@ class TrayIcon:
         menu = ctypes.windll.user32.CreatePopupMenu()
         ctypes.windll.user32.AppendMenuW(menu, 0, ID_SHOW, "显示主窗口")
 
-        # 回放账号子菜单
-        if self._extra_items:
-            sub_menu = ctypes.windll.user32.CreatePopupMenu()
-            for i, (label, _) in enumerate(self._extra_items):
-                ctypes.windll.user32.AppendMenuW(sub_menu, 0, ID_REPLAY_SUBMENU_BASE + i, label)
-            ctypes.windll.user32.AppendMenuW(sub_menu, 0x800, 0, "")  # 分割线
-            ctypes.windll.user32.AppendMenuW(sub_menu, 0, ID_REFRESH, "刷新账号列表")
-            ctypes.windll.user32.AppendMenuW(menu, 0x10, sub_menu, "回放账号")  # MF_POPUP
+        # 账号子菜单（每个账号一个子菜单，内含回放 + 一键启动）
+        if self._extra_groups:
+            accounts_sub = ctypes.windll.user32.CreatePopupMenu()
+            cmd_id = ID_REPLAY_SUBMENU_BASE
+            for group_label, items in self._extra_groups:
+                group_sub = ctypes.windll.user32.CreatePopupMenu()
+                for item_label, _ in items:
+                    ctypes.windll.user32.AppendMenuW(group_sub, 0, cmd_id, item_label)
+                    cmd_id += 1
+                ctypes.windll.user32.AppendMenuW(accounts_sub, 0x10, group_sub, group_label)  # MF_POPUP
+            ctypes.windll.user32.AppendMenuW(accounts_sub, 0x800, 0, "")  # 分割线
+            ctypes.windll.user32.AppendMenuW(accounts_sub, 0, ID_REFRESH, "刷新账号列表")
+            ctypes.windll.user32.AppendMenuW(menu, 0x10, accounts_sub, "回放账号")  # MF_POPUP
 
         ctypes.windll.user32.AppendMenuW(menu, 0x800, 0, "")  # 分割线
         ctypes.windll.user32.AppendMenuW(menu, 0, ID_EXIT, "退出")
@@ -220,8 +231,6 @@ class TrayIcon:
         )
         ctypes.windll.user32.PostMessageW(self._hwnd, 0, 0, 0)
         ctypes.windll.user32.DestroyMenu(menu)
-        if self._extra_items:
-            ctypes.windll.user32.DestroyMenu(sub_menu)
 
     # ── 窗口过程 ──
 
@@ -246,9 +255,9 @@ class TrayIcon:
                 self._on_refresh and self._on_refresh()
             elif ID_REPLAY_SUBMENU_BASE <= wparam < ID_REFRESH:
                 idx = wparam - ID_REPLAY_SUBMENU_BASE
-                if 0 <= idx < len(self._extra_items):
+                if 0 <= idx < len(self._extra_callbacks):
                     try:
-                        self._extra_items[idx][1]()
+                        self._extra_callbacks[idx]()
                     except Exception as e:
                         logging.error(f"[TrayIcon] 菜单回调异常: {e}")
         elif msg == WM_DESTROY:

@@ -7,6 +7,7 @@ from script.api.Api import api
 from script.api.JsApi import js
 from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH, PROJECT_ROOT
 from script.core.LogManager import setup_logging, read_logs, get_log_files
+from script.core.QuickStart import QuickStart
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
 from script.core.StaticCommon import StaticCommon
@@ -33,6 +34,7 @@ class App:
         self._session = get_session()
         js.init(self.window)
         self._tray: TrayIcon | None = None
+        self._qs = QuickStart(self._session, self.window)
         self._setup_tray()
         self.init()
 
@@ -57,17 +59,27 @@ class App:
             accounts = AccountManager.list_accounts() or []
         except Exception:
             accounts = []
-        items: list[tuple[str, callable]] = []
+        groups = []
         for a in accounts:
             name = a.get("name", "")
             if name:
-                items.append((f"回放 {name}", lambda n=name: self._tray_replay(n)))
-        self._tray.set_menu_items(items)
+                groups.append((name, [
+                    ("回放", lambda n=name: self._tray_replay(n)),
+                    ("一键启动", lambda n=name: self._tray_quick_start(n)),
+                ]))
+        self._tray.set_menu_items(groups)
 
     def _tray_replay(self, account_name):
         """托盘菜单触发回放"""
         logging.info(f"[Tray] 回放账号: {account_name}")
-        self._session.start_replay(account_name)
+        import threading
+        threading.Thread(target=self._session.start_replay, args=(account_name,), daemon=True).start()
+
+    def _tray_quick_start(self, account_name):
+        """托盘菜单触发一键启动"""
+        logging.info(f"[Tray] 一键启动: {account_name}")
+        import threading
+        threading.Thread(target=self._qs.execute, args=(account_name,), daemon=True).start()
 
     def _on_window_closing(self) -> bool:
         """窗口关闭时隐藏到托盘"""
@@ -124,6 +136,7 @@ class App:
         api.on("API:ACCOUNT:RECORD:STOP", self._session.stop_recording)
         api.on("API:ACCOUNT:RECORD:STATUS", self._session.recording_status)
         api.on("API:ACCOUNT:REPLAY:START", self._session.start_replay)
+        api.on("API:ACCOUNT:QUICK_START", self._qs.execute)
         api.on("API:ACCOUNT:REPLAY:STOP", self._session.stop_replay)
         setup_logging()
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
