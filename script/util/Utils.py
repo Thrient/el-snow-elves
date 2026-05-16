@@ -195,6 +195,64 @@ class Utils:
 
         return exe
 
+    _AUTOSTART_KEY = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+    _AUTOSTART_NAME = "Elves"
+
+    @staticmethod
+    def set_autostart(enabled: bool) -> bool:
+        """设置/取消开机自启动（注册表 Run + cmd 包装确保工作目录正确）"""
+        import sys
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, Utils._AUTOSTART_KEY, 0,
+                                 winreg.KEY_SET_VALUE | winreg.KEY_QUERY_VALUE)
+        except Exception:
+            return False
+
+        if not enabled:
+            try:
+                winreg.DeleteValue(key, Utils._AUTOSTART_NAME)
+                return True
+            except FileNotFoundError:
+                return True
+            except Exception:
+                return False
+
+        exe = sys.executable
+        exe_name = os.path.basename(exe).lower()
+        if "python" not in exe_name:
+            target = exe
+            work_dir = os.path.dirname(exe)
+            cmd = f'cmd /c "cd /d {work_dir} && start "" "{target}" --tray"'
+        else:
+            from script.config.Setting import PROJECT_ROOT
+            target = os.path.join(PROJECT_ROOT, "Elves.py")
+            cmd = f'cmd /c "cd /d {PROJECT_ROOT} && start "" "{exe}" "{target}" --tray"'
+
+        try:
+            winreg.SetValueEx(key, Utils._AUTOSTART_NAME, 0, winreg.REG_SZ, cmd)
+            # 同时清理可能存在的旧快捷方式
+            old_lnk = os.path.join(os.getenv("APPDATA", ""),
+                                   r"Microsoft\Windows\Start Menu\Programs\Startup\Elves.lnk")
+            try:
+                os.remove(old_lnk)
+            except Exception:
+                pass
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def get_autostart() -> bool:
+        """查询开机自启动是否启用"""
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, Utils._AUTOSTART_KEY, 0, winreg.KEY_READ)
+            winreg.QueryValueEx(key, Utils._AUTOSTART_NAME)
+            return True
+        except FileNotFoundError:
+            return False
+        except Exception:
+            return False
+
     @staticmethod
     def wait_for_new_game_window(existing: set[int], timeout: float = 60) -> int | None:
         """等待新的一梦江湖窗口出现（排除已有 hwnd），返回新 hwnd。

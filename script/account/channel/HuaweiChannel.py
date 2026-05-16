@@ -158,7 +158,7 @@ def _add_navigation_handler(window, code_container: dict) -> bool:
 
         event_type = EventHandler[CoreWebView2NavigationStartingEventArgs]
         wv2.NavigationStarting += event_type(handler)
-        logging.info("[HuaweiChannel] NavigationStarting 处理器已追加")
+        logging.debug("[HuaweiChannel] NavigationStarting 处理器已追加")
         return True
     except Exception as e:
         logging.error(f"[HuaweiChannel] 追加事件失败: {e}")

@@ -35,6 +35,6 @@ class BaseHandler(ABC):
             data = json.loads(flow.response.content)
             data.setdefault("qrcode", {})["status"] = 2
             flow.response.content = json.dumps(data, ensure_ascii=False).encode()
-            logging.info(f"[Proxy {tag}] 伪造扫码状态")
+            logging.debug(f"[Proxy {tag}] 伪造扫码状态")
         except Exception:
             pass

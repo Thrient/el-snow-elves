@@ -136,7 +136,7 @@ class SessionManager:
         self._hosts_hijacked = False
         if self._proxy:
             self._proxy.completed = False
-        logging.info("[Session] 回放停止")
+        logging.debug("[Session] 回放停止")
         return {"status": "stopped"}
 
 

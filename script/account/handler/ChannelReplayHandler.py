@@ -40,13 +40,13 @@ class ChannelReplayHandler(BaseHandler):
         try:
             body = json.loads(flow.response.content)
             user = body.get("user", {})
-            logging.info(f"[Proxy] 渠道 exchange_token code={body.get('code')} user_id={user.get('id', 'N/A')} login_channel={user.get('login_channel', 'N/A')} keys={list(user.keys())}")
+            logging.debug(f"[Proxy] 渠道 exchange_token code={body.get('code')} user_id={user.get('id', 'N/A')} login_channel={user.get('login_channel', 'N/A')} keys={list(user.keys())}")
             if user:
                 self.proxy.completed = True
                 HostsManager.restore()
                 logging.info("[Proxy] 渠道回放完成，已还原hosts")
         except Exception:
-            logging.info(f"[Proxy] 渠道 exchange_token 透传, status={flow.response.status_code}")
+            logging.debug(f"[Proxy] 渠道 exchange_token 透传, status={flow.response.status_code}")
         return True
 
     # ── channel confirm flow ──
@@ -83,7 +83,7 @@ class ChannelReplayHandler(BaseHandler):
                     timeout=15, verify=False,
                 )
                 scan_json = scan_resp.json()
-                logging.info(f"[Proxy] scan: code={scan_json.get('code')} status={scan_resp.status_code}")
+                logging.debug(f"[Proxy] scan: code={scan_json.get('code')} status={scan_resp.status_code}")
 
                 if scan_json.get("code") == 1424:
                     gid = scan_json.get("game", {}).get("id", gid)
@@ -119,7 +119,7 @@ class ChannelReplayHandler(BaseHandler):
                     },
                     timeout=15, verify=False,
                 )
-                logging.info(f"[Proxy] confirm_login: status={r.status_code} body={r.text[:200]}")
+                logging.debug(f"[Proxy] confirm_login: status={r.status_code} body={r.text[:200]}")
                 if r.status_code == 200:
                     self.proxy.channel_done = True
                     logging.info("[Proxy] channel confirm_login: OK")

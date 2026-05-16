@@ -216,7 +216,7 @@ def set_window_icon(window, icon_url: str):
         resp = requests.get(icon_url, timeout=10)
         resp.raise_for_status()
         _apply_icon_bytes(window, resp.content)
-        logging.info(f"[ChannelUtils] 窗口图标已设置: {icon_url}")
+        logging.debug(f"[ChannelUtils] 窗口图标已设置: {icon_url}")
     except Exception as e:
         logging.warning(f"[ChannelUtils] 设置窗口图标失败: {e}")
 

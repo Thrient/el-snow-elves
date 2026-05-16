@@ -110,7 +110,7 @@ class _RequestLogger:
         key = f"{flow.request.method} {host}{path}"
         if key not in self._seen:
             self._seen.add(key)
-            logging.info(f"[Proxy REQ] {key}")
+            logging.debug(f"[Proxy REQ] {key}")
 
 
 class ProxyRouter:
@@ -166,7 +166,7 @@ class ProxyRouter:
         if "/qrcode/create_login" in path:
             self.proxy.game_id = flow.request.query.get("game_id", "")
             self.proxy.process_id = flow.request.query.get("process_id", "")
-            logging.info(f"[Proxy] 提取 game_id={self.proxy.game_id} process_id={self.proxy.process_id}")
+            logging.debug(f"[Proxy] 提取 game_id={self.proxy.game_id} process_id={self.proxy.process_id}")
 
     def response(self, flow):
         host = flow.request.host
@@ -200,13 +200,13 @@ class ProxyRouter:
             data = json.loads(flow.response.content)
             scanners = data.get("qrcode_scanners") or []
             if scanners:
-                logging.info(f"[Proxy] scanner keys: {list(scanners[0].keys())}")
+                logging.debug(f"[Proxy] scanner keys: {list(scanners[0].keys())}")
             top = {k: v for k, v in data.items() if k != "qrcode_scanners"}
-            logging.info(f"[Proxy] create_login top keys: {list(top.keys())}")
+            logging.debug(f"[Proxy] create_login top keys: {list(top.keys())}")
             for k in ("uuid", "login_info", "qrcode_uuid", "qrcode_id"):
                 if data.get(k):
                     self.proxy.scanner_uuid = str(data[k])
-                    logging.info(f"[Proxy] found scanner_uuid from {k}: {self.proxy.scanner_uuid}")
+                    logging.debug(f"[Proxy] found scanner_uuid from {k}: {self.proxy.scanner_uuid}")
                     break
         except Exception:
             pass
@@ -267,7 +267,7 @@ class AccountProxy:
                 capture_output=True, text=True,
                 creationflags=0x08000000,
             )
-            logging.info(f"[AccountProxy] CA安装: {result.stdout.strip()}")
+            logging.debug(f"[AccountProxy] CA安装: {result.stdout.strip()}")
             return True
         except Exception as e:
             logging.warning(f"[AccountProxy] CA安装失败: {e}")

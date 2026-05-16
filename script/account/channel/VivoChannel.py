@@ -45,7 +45,7 @@ def _add_navigation_handler(window, login_container: dict):
                 login_container["url"] = uri
 
         wv2.NavigationStarting += EventHandler[CoreWebView2NavigationStartingEventArgs](handler)
-        logging.info("[VivoChannel] NavigationStarting 处理器已追加")
+        logging.debug("[VivoChannel] NavigationStarting 处理器已追加")
         return True
     except Exception as e:
         logging.error(f"[VivoChannel] 追加事件失败: {e}")
@@ -76,7 +76,7 @@ class VivoLogin:
         os.makedirs(self._temp_dir, exist_ok=True)
         self._original_cache_dir = _wf.cache_dir
         _wf.cache_dir = self._temp_dir
-        logging.info(f"[VivoChannel] 临时缓存目录: {self._temp_dir}")
+        logging.debug(f"[VivoChannel] 临时缓存目录: {self._temp_dir}")
 
         # 提前下载图标
         try:
@@ -135,7 +135,7 @@ class VivoLogin:
                                 logging.error("[VivoChannel] 无子账号")
                             elif len(sub_accounts) == 1:
                                 self._selected_sub = sub_accounts[0]
-                                logging.info(f"[VivoChannel] 自动选择唯一子账号: {self._selected_sub.get('subRole') or self._selected_sub.get('roleName', '?')}")
+                                logging.debug(f"[VivoChannel] 自动选择唯一子账号: {self._selected_sub.get('subRole') or self._selected_sub.get('roleName', '?')}")
                             else:
                                 self._selected_sub = _wait_sub_account_selection(
                                     self._window, sub_accounts)
@@ -222,7 +222,7 @@ class VivoLogin:
             return
         try:
             shutil.rmtree(self._temp_dir, ignore_errors=True)
-            logging.info(f"[VivoChannel] 临时目录已清理: {self._temp_dir}")
+            logging.debug(f"[VivoChannel] 临时目录已清理: {self._temp_dir}")
         except Exception as e:
             logging.warning(f"[VivoChannel] 清理临时目录失败: {e}")
 
@@ -314,7 +314,7 @@ def _get_cookies_safe(window) -> dict[str, str]:
             for name, morsel in cookie.items():
                 if name and morsel.value:
                     result[name] = morsel.value
-        logging.info(f"[VivoChannel] get_cookies 获取到 {len(result)} 个")
+        logging.debug(f"[VivoChannel] get_cookies 获取到 {len(result)} 个")
         return result
     except Exception as e:
         logging.warning(f"[VivoChannel] get_cookies 失败: {e}")
@@ -354,7 +354,7 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
         r = requests.get(VIVO_UNION_GET.format(game_package=DEFAULT_GAME_PACKAGE),
                           cookies=cookies, timeout=15)
         data = r.json()
-        logging.info(f"[VivoChannel] union/get: code={data.get('code')}")
+        logging.debug(f"[VivoChannel] union/get: code={data.get('code')}")
         if data.get("code") != 0:
             logging.error(f"[VivoChannel] union/get 失败: {data}")
             return None
@@ -375,11 +375,11 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
         for s in sub_accounts:
             if s.get("subOpenId") == stored_sub_id:
                 sub = s
-                logging.info(f"[VivoChannel] 匹配到已选子账号: {s.get('subRole') or s.get('roleName', '?')}")
+                logging.debug(f"[VivoChannel] 匹配到已选子账号: {s.get('subRole') or s.get('roleName', '?')}")
                 break
     if not sub:
         sub = sub_accounts[0]
-        logging.info(f"[VivoChannel] 使用默认子账号: {sub.get('subRole') or sub.get('roleName', '?')}")
+        logging.debug(f"[VivoChannel] 使用默认子账号: {sub.get('subRole') or sub.get('roleName', '?')}")
 
     sub_open_id = sub.get("subOpenId", "")
     if not sub_open_id:
@@ -392,7 +392,7 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
                                  "gamePackage": DEFAULT_GAME_PACKAGE},
                            cookies=cookies, timeout=15)
         use_data = r2.json()
-        logging.info(f"[VivoChannel] union/use: code={use_data.get('code')}")
+        logging.debug(f"[VivoChannel] union/use: code={use_data.get('code')}")
         if use_data.get("code") != 0:
             logging.error(f"[VivoChannel] union/use 失败: {use_data}")
             return None

@@ -28,6 +28,8 @@ SW_SHOW = 5
 # 托盘菜单 ID
 ID_SHOW = 1001
 ID_EXIT = 1002
+ID_AUTOSTART = 1003
+ID_RESET_CLOSE = 1004
 ID_REPLAY_SUBMENU_BASE = 2000  # 回放子菜单项 ID 起点
 ID_REFRESH = 2999  # 刷新账号列表
 
@@ -59,9 +61,13 @@ class TrayIcon:
         self._on_show: Optional[Callable] = None
         self._on_exit: Optional[Callable] = None
         self._on_refresh: Optional[Callable] = None
+        self._on_autostart: Optional[Callable] = None
+        self._on_reset_close: Optional[Callable] = None
         self._ready = threading.Event()
         self._extra_groups: list[tuple[str, list[tuple[str, Callable]]]] = []
         self._extra_callbacks: list[Callable] = []  # 扁平回调，按序分配 ID
+        self._autostart_enabled = False
+        self._close_remembered = False
 
     # ── public API ──
 
@@ -71,14 +77,25 @@ class TrayIcon:
         self._on_exit = on_exit
         self._run()
 
-    def start_async(self, on_show: Callable, on_exit: Callable, on_refresh: Optional[Callable] = None):
+    def start_async(self, on_show: Callable, on_exit: Callable, on_refresh: Optional[Callable] = None, on_autostart: Optional[Callable] = None, on_reset_close: Optional[Callable] = None):
         """在后台线程启动托盘"""
         self._on_show = on_show
         self._on_exit = on_exit
         self._on_refresh = on_refresh
+        self._on_autostart = on_autostart
+        self._on_reset_close = on_reset_close
         self._thread = threading.Thread(target=self._run, daemon=True, name="TrayIcon")
         self._thread.start()
         self._ready.wait(timeout=5)
+
+    def set_autostart_state(self, enabled: bool):
+        """更新开机自启勾选状态"""
+        self._autostart_enabled = enabled
+
+    def set_close_remembered_state(self, remembered: bool):
+        """更新「记住关闭选择」勾选状态"""
+        logging.info(f"[TrayIcon] set_close_remembered_state({remembered})")
+        self._close_remembered = remembered
 
     def set_menu_items(self, groups: list[tuple[str, list[tuple[str, Callable]]]]):
         """设置额外菜单：[(group_label, [(item_label, callback), ...]), ...]
@@ -200,10 +217,15 @@ class TrayIcon:
 
     def _show_menu(self):
         """弹出右键菜单"""
+        logging.debug(f"[TrayIcon] _show_menu: autostart={self._autostart_enabled}, close_remembered={self._close_remembered}")
         menu = ctypes.windll.user32.CreatePopupMenu()
-        ctypes.windll.user32.AppendMenuW(menu, 0, ID_SHOW, "显示主窗口")
+        SEP = 0x800  # MF_SEPARATOR
 
-        # 账号子菜单（每个账号一个子菜单，内含回放 + 一键启动）
+        # 显示主窗口（加粗默认）
+        ctypes.windll.user32.AppendMenuW(menu, 0, ID_SHOW, "显示主窗口")
+        ctypes.windll.user32.SetMenuDefaultItem(menu, ID_SHOW, 0)
+
+        # ── 账号 ──
         if self._extra_groups:
             accounts_sub = ctypes.windll.user32.CreatePopupMenu()
             cmd_id = ID_REPLAY_SUBMENU_BASE
@@ -212,12 +234,20 @@ class TrayIcon:
                 for item_label, _ in items:
                     ctypes.windll.user32.AppendMenuW(group_sub, 0, cmd_id, item_label)
                     cmd_id += 1
-                ctypes.windll.user32.AppendMenuW(accounts_sub, 0x10, group_sub, group_label)  # MF_POPUP
-            ctypes.windll.user32.AppendMenuW(accounts_sub, 0x800, 0, "")  # 分割线
+                ctypes.windll.user32.AppendMenuW(accounts_sub, 0x10, group_sub, group_label)
+            ctypes.windll.user32.AppendMenuW(accounts_sub, SEP, 0, "")
             ctypes.windll.user32.AppendMenuW(accounts_sub, 0, ID_REFRESH, "刷新账号列表")
-            ctypes.windll.user32.AppendMenuW(menu, 0x10, accounts_sub, "回放账号")  # MF_POPUP
+            ctypes.windll.user32.AppendMenuW(menu, 0x10, accounts_sub, "回放账号")
 
-        ctypes.windll.user32.AppendMenuW(menu, 0x800, 0, "")  # 分割线
+        ctypes.windll.user32.AppendMenuW(menu, SEP, 0, "")
+
+        # ── 设置 ──
+        check = 0x8 if self._autostart_enabled else 0  # MF_CHECKED
+        ctypes.windll.user32.AppendMenuW(menu, check, ID_AUTOSTART, "开机自启")
+        close_check = 0x8 if self._close_remembered else 0
+        ctypes.windll.user32.AppendMenuW(menu, close_check, ID_RESET_CLOSE, "最小化到托盘")
+
+        ctypes.windll.user32.AppendMenuW(menu, SEP, 0, "")
         ctypes.windll.user32.AppendMenuW(menu, 0, ID_EXIT, "退出")
 
         # 获取光标位置
@@ -248,6 +278,12 @@ class TrayIcon:
         elif msg == WM_COMMAND:
             if wparam == ID_SHOW:
                 self._on_show and self._on_show()
+            elif wparam == ID_AUTOSTART:
+                self._autostart_enabled = not self._autostart_enabled
+                self._on_autostart and self._on_autostart(self._autostart_enabled)
+            elif wparam == ID_RESET_CLOSE:
+                self._close_remembered = not self._close_remembered
+                self._on_reset_close and self._on_reset_close(self._close_remembered)
             elif wparam == ID_EXIT:
                 self._on_exit and self._on_exit()
                 self.stop()
