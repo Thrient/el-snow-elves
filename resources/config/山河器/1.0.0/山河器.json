@@ -1,0 +1,76 @@
+{
+  "name": "山河器",
+  "version": "1.0.0",
+  "author": "Thrient",
+  "description": "每天自动拾取免费山河器",
+  "start": "探索山河器",
+  "steps": {
+    "探索山河器": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮山河器前往探索"
+        ]
+      },
+      "prefix": [
+        {
+          "step": "检查山河器"
+        }
+      ],
+      "success": "等待拾取",
+      "failure": "免费搜索"
+    },
+    "免费搜索": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮山河器免费搜索"
+        ]
+      },
+      "success": "探索山河器",
+      "postfix": [
+        {
+          "step": "搜索日晷"
+        }
+      ]
+    },
+    "等待拾取": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮大世界拾取"
+        ],
+        "post_delay": 5000
+      },
+      "next": "免费搜索",
+      "prefix": [
+        {
+          "step": "等待到达"
+        }
+      ],
+      "postfix": [
+        {
+          "step": "激活窗口"
+        }
+      ]
+    }
+  },
+  "common": {
+    "搜索日晷": {
+      "action": "mouse_click",
+      "params": {
+        "pos": [
+          673,
+          350
+        ],
+        "pre_delay": 5000
+      }
+    }
+  },
+  "monitors": {
+    "loop": [],
+    "interval": 1
+  },
+  "values": {},
+  "layout": []
+}

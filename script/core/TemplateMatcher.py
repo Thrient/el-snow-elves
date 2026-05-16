@@ -55,6 +55,11 @@ class TemplateMatcher:
     @staticmethod
     def _match(search_img, template_img, threshold):
         """核心匹配算法：所有匹配最终汇集于此。"""
+        # airtest 内部 img_mat_rgb_2_gray 要求 3 通道输入（numpy 2.x 兼容）
+        if search_img.ndim == 2:
+            search_img = cv2.cvtColor(search_img, cv2.COLOR_GRAY2BGR)
+        if template_img.ndim == 2:
+            template_img = cv2.cvtColor(template_img, cv2.COLOR_GRAY2BGR)
         return TemplateMatching(template_img, search_img, threshold=threshold, rgb=False).find_all_results()
 
     @staticmethod
