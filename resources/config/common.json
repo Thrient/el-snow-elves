@@ -1,4 +1,68 @@
 {
+  "队伍检测": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "标志无队伍"
+      ]
+    },
+    "prefix": [
+      "检查队伍"
+    ],
+    "success": "任务结束",
+    "failure": "退出队伍"
+  },
+  "退出队伍": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮退出队伍"
+      ]
+    },
+    "postfix": [
+      "按钮确定"
+    ]
+  },
+  "检查队伍": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面队伍"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      "打开队伍"
+    ],
+    "next": "任务结束"
+  },
+  "打开队伍": {
+    "action": "key_click",
+    "params": {
+      "key": "{CONFIG.队伍}"
+    },
+    "next": "任务结束"
+  },
+  "检查好友": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面好友"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      "打开好友"
+    ],
+    "next": "任务结束"
+  },
+  "打开好友": {
+    "action": "key_click",
+    "params": {
+      "key": "{CONFIG.好友}"
+    },
+    "next": "任务结束"
+  },
   "检查背包": {
     "action": "exits",
     "params": {
