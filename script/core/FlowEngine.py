@@ -7,6 +7,7 @@ from threading import Thread, Event
 
 from script.config.Setting import PROJECT_ROOT
 from script.core.VariableProcessor import VariableProcessor
+from script.core.Window import Window
 from script.task.BaseTask import BaseTask
 from script.util.Utils import Utils
 
@@ -223,6 +224,7 @@ class FlowEngine(Thread):
             for step_name in self._monitor_loop:
                 if self._monitor_stop_event.is_set():
                     break
+                Window.ensure_window_size(self._hwnd)
                 self.run_subflow(step_name)
             # 等待间隔，期间可被停止事件打断
             self._monitor_stop_event.wait(timeout=self._monitor_interval)
@@ -301,6 +303,7 @@ class FlowEngine(Thread):
             t0 = time.time()
 
             self._run_extra(step_def, "prefix")
+            Window.ensure_window_size(self._hwnd)
             result = self._run_action(step_def)
             self.vp.apply_set(step_def, result)
             self._run_extra(step_def, "postfix")

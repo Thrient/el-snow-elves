@@ -25,6 +25,9 @@ class App:
     def __init__(self, url):
         setup_logging()
         width, height = Utils.calc_window_size()
+        saved_rect = Window.get_saved_rect("main")
+        if saved_rect:
+            width, height = saved_rect[2] - saved_rect[0], saved_rect[3] - saved_rect[1]
         self.window = webview.create_window(
             f"{APP_TITLE}{VERSION}",
             url,
@@ -32,8 +35,11 @@ class App:
             width=width,
             height=height
         )
+        if saved_rect:
+            self._restore_main_rect(saved_rect)
         # 存储句柄和对应Script实例的字典
         self._script_instances = {}
+        self._lock_states: dict[int, bool] = {}
         self._session = get_session()
         js.init(self.window)
         self._tray: TrayIcon | None = None
@@ -49,7 +55,7 @@ class App:
         """初始化系统托盘：关闭窗口 → 隐藏到托盘"""
         self._tray = TrayIcon(APP_TITLE, icon_path=os.path.join(PROJECT_ROOT, "resources", "favicon.ico"))
         self._tray.start_async(
-            on_show=lambda: self.window.show(),
+            on_show=lambda: self._show_main_window(),
             on_exit=self._do_exit,
             on_refresh=self._refresh_tray_accounts,
             on_autostart=lambda enabled: Utils.set_autostart(enabled),
@@ -95,14 +101,45 @@ class App:
         import threading
         threading.Thread(target=self._qs.execute, args=(account_name,), daemon=True).start()
 
+    def _get_main_hwnd(self) -> int | None:
+        """获取主窗口原生 HWND"""
+        try:
+            from webview.platforms.winforms import BrowserView
+            form = BrowserView.instances.get(self.window.uid)
+            if form:
+                return int(form.Handle)
+        except Exception:
+            pass
+        return None
+
+    def _restore_main_rect(self, saved_rect):
+        """延迟恢复主窗口位置（等 WinForms 窗口就绪）"""
+        import threading
+        def _do():
+            import time
+            time.sleep(0.3)
+            hwnd = self._get_main_hwnd()
+            if hwnd:
+                Window.restore_window_rect(hwnd, "main")
+        threading.Thread(target=_do, daemon=True).start()
+
+    def _show_main_window(self):
+        """显示主窗口并恢复保存的位置"""
+        self.window.show()
+        hwnd = self._get_main_hwnd()
+        if hwnd:
+            Window.restore_window_rect(hwnd, "main")
+
     def _on_window_closing(self) -> bool:
         """窗口关闭：托盘勾 → 最小化到托盘，托盘不勾 → 直接退出"""
         pref = self._load_close_preference()
         logging.info(f"[Close] pref={pref!r}")
         if pref == "tray":
+            hwnd = self._get_main_hwnd()
+            if hwnd:
+                Window.save_window_rect(hwnd, "main")
             self.window.hide()
         else:
-            # "exit" 或首次启动无偏好 → 直接退出
             self._do_exit()
         return False
 
@@ -235,6 +272,9 @@ class App:
 
     def _do_exit(self):
         """真正退出程序"""
+        hwnd = self._get_main_hwnd()
+        if hwnd:
+            Window.save_window_rect(hwnd, "main")
         try:
             self.window.events.closing -= self._on_window_closing
         except Exception:
@@ -253,6 +293,8 @@ class App:
         api.on("API:SCRIPT:UNBIND", self.unbind)
         api.on("API:SCRIPT:RESUME", self.resume)
         api.on("API:SCRIPT:PAUSE", self.pause)
+        api.on("API:SCRIPT:LOCK", self.lock_window)
+        api.on("API:SCRIPT:UNLOCK", self.unlock_window)
         api.on("API:SCRIPT:SET_OPACITY", self.set_window_opacity)
         api.on("API:TASK:LOAD:FULL", StaticCommon.get_full_task_config)
         api.on("API:TASK:SAVE:FULL", StaticCommon.save_full_task_config)
@@ -300,6 +342,24 @@ class App:
             return
         script = self._script_instances[hwnd]
         script.pause()
+
+    def lock_window(self, hwnd):
+        """锁定窗口（鼠标穿透），防止用户误触"""
+        if hwnd not in self._script_instances:
+            logging.warning(f"[Lock] 窗口未绑定: hwnd={hwnd}")
+            return
+        Window.disable_Window(hwnd)
+        self._lock_states[hwnd] = True
+        logging.info(f"[Lock] 窗口已锁定: hwnd={hwnd}")
+
+    def unlock_window(self, hwnd):
+        """解锁窗口，恢复鼠标可交互"""
+        if hwnd not in self._script_instances:
+            logging.warning(f"[Lock] 窗口未绑定: hwnd={hwnd}")
+            return
+        Window.enable_window(hwnd)
+        self._lock_states[hwnd] = False
+        logging.info(f"[Lock] 窗口已解锁: hwnd={hwnd}")
 
     @staticmethod
     def capture_for_template(hwnd):
@@ -359,6 +419,9 @@ class App:
             return
         logging.info(f"绑定窗口: hwnd={hwnd}")
         Window.set_window_size(hwnd)
+        Window.disable_window(hwnd)
+        self._lock_states[hwnd] = True
+        logging.info(f"[Lock] 窗口已锁定（鼠标穿透）: hwnd={hwnd}")
         self._script(hwnd)
 
     def unbind(self, hwnd):
@@ -367,6 +430,8 @@ class App:
             return
         script = self._script_instances.pop(hwnd)
         script.stop()
+        Window.enable_window(hwnd)
+        self._lock_states.pop(hwnd, None)
         logging.info(f"解绑窗口: hwnd={hwnd}")
 
     def export_task(self, task_id):

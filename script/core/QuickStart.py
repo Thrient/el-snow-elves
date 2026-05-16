@@ -9,6 +9,7 @@ import time
 import webview
 
 from script.config.Setting import STORAGE_PATH
+from script.core.Window import Window
 from script.util.Utils import Utils
 
 
@@ -44,6 +45,8 @@ class QuickStart:
         hwnd = Utils.wait_for_new_game_window(existing, timeout=120)
         if not hwnd:
             return {"status": "waiting", "message": "游戏已启动，等待窗口出现..."}
+
+        Window.set_window_size(hwnd)
 
         # Step 5: 导航到登录界面
         self._navigate_to_login(hwnd)

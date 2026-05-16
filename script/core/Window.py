@@ -1,10 +1,25 @@
+import json
 import logging
+import os
 
 import win32con
 import win32gui
 
 
 class Window:
+
+    @staticmethod
+    def ensure_window_size(hwnd, client_width=1335, client_height=750):
+        """检查客户区尺寸，仅在不符合目标值时才调整（轻量，适合高频调用）"""
+        try:
+            if not win32gui.IsWindow(hwnd):
+                return
+            rect = win32gui.GetClientRect(hwnd)
+            if abs(rect[2] - client_width) <= 1 and abs(rect[3] - client_height) <= 1:
+                return
+            Window.set_window_size(hwnd)
+        except Exception:
+            pass
 
     @staticmethod
     def set_window_size(hwnd):
@@ -78,7 +93,7 @@ class Window:
             logging.error(f"设置窗口大小失败: {e}")
 
     @staticmethod
-    def disable_Window(hwnd):
+    def disable_window(hwnd):
         """
         禁用窗口（点击穿透）
         :param hwnd: 窗口句柄
@@ -131,3 +146,70 @@ class Window:
         # 强制重绘以立即生效
         win32gui.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
                               win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_FRAMECHANGED)
+
+    @staticmethod
+    def get_saved_rect(name: str) -> tuple | None:
+        """读取持久化的窗口 rect，不恢复。返回 (left, top, right, bottom) 或 None"""
+        try:
+            from script.config.Setting import STORAGE_PATH
+            path = os.path.join(STORAGE_PATH, "Config", "User", "window_state.json")
+            if not os.path.exists(path):
+                return None
+            with open(path, "r", encoding="utf-8") as f:
+                saved = json.load(f).get(name)
+            if not saved:
+                return None
+            return (saved["left"], saved["top"], saved["right"], saved["bottom"])
+        except Exception:
+            return None
+
+    @staticmethod
+    def save_window_rect(hwnd, name: str):
+        """持久化窗口位置+尺寸"""
+        try:
+            from script.config.Setting import STORAGE_PATH
+            rect = win32gui.GetWindowRect(hwnd)
+            path = os.path.join(STORAGE_PATH, "Config", "User", "window_state.json")
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            data = {}
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            data[name] = {"left": rect[0], "top": rect[1], "right": rect[2], "bottom": rect[3]}
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+            logging.debug(f"[Window] 已保存窗口状态: {name}")
+        except Exception as e:
+            logging.debug(f"[Window] 保存窗口状态失败: {e}")
+
+    @staticmethod
+    def restore_window_rect(hwnd, name: str) -> bool:
+        """恢复窗口位置+尺寸，含多屏安全检查。返回 True=成功恢复"""
+        try:
+            import ctypes
+            from script.config.Setting import STORAGE_PATH
+            path = os.path.join(STORAGE_PATH, "Config", "User", "window_state.json")
+            if not os.path.exists(path):
+                return False
+            with open(path, "r", encoding="utf-8") as f:
+                saved = json.load(f).get(name)
+            if not saved:
+                return False
+            left, top, right, bottom = saved["left"], saved["top"], saved["right"], saved["bottom"]
+
+            user32 = ctypes.windll.user32
+            vs_x = user32.GetSystemMetrics(76)
+            vs_y = user32.GetSystemMetrics(77)
+            vs_w = user32.GetSystemMetrics(78)
+            vs_h = user32.GetSystemMetrics(79)
+            if left >= vs_x + vs_w or top >= vs_y + vs_h or right <= vs_x or bottom <= vs_y:
+                logging.debug(f"[Window] 保存的窗口位置不可见，跳过恢复: {name}")
+                return False
+
+            win32gui.SetWindowPos(hwnd, 0, left, top, right - left, bottom - top,
+                                  win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
+            logging.debug(f"[Window] 已恢复窗口状态: {name}")
+            return True
+        except Exception as e:
+            logging.debug(f"[Window] 恢复窗口状态失败: {e}")
+            return False
