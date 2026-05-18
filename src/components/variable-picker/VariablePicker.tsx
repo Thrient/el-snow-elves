@@ -2,7 +2,7 @@ import { useState, useMemo, type FC } from "react";
 import { Input, Popover } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
-type VarOp = "get" | "inc" | "dec" | "default" | "sub" | "len";
+type VarOp = "get" | "inc" | "dec" | "default" | "sub" | "len" | "split";
 
 interface OpBtn {
   key: VarOp;
@@ -18,6 +18,7 @@ const ALL_OPS: OpBtn[] = [
   { key: "dec",     label: "--",      syntax: (n) => `{${n}}--`,      hint: "自减 1（用于 set）" },
   { key: "len",     label: "长度",    syntax: (n) => `len(${n})`,     hint: "列表元素个数" },
   { key: "sub",     label: "[0]",     syntax: (n) => `{${n}}[0]`,     hint: "取列表下标元素" },
+  { key: "split",   label: "split",  syntax: (n) => `split({${n}}, '#')`, hint: "按分隔符拆分为列表" },
 ];
 
 interface VarItem {
@@ -51,10 +52,10 @@ const CAT_COLORS: Record<string, string> = {
 // Top ops per context, rest shown on expand
 const TOP_COUNT = 3;
 const CONTEXT_ORDER: Record<string, VarOp[]> = {
-  set:    ["inc", "dec", "get", "default", "len", "sub"],
-  when:   ["len", "get", "sub", "inc", "dec", "default"],
-  args:   ["get", "default", "len", "sub", "inc", "dec"],
-  params: ["get", "default", "sub", "len", "inc", "dec"],
+  set:    ["inc", "dec", "get", "default", "len", "sub", "split"],
+  when:   ["len", "get", "sub", "split", "inc", "dec", "default"],
+  args:   ["get", "default", "len", "sub", "split", "inc", "dec"],
+  params: ["get", "default", "sub", "split", "len", "inc", "dec"],
 };
 
 const VariablePicker: FC<Props> = ({ variables, onInsert, children, placeholder, context }) => {

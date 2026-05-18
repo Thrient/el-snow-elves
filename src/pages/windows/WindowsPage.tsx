@@ -11,6 +11,7 @@ import {
   PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
+  StopOutlined,
   UnlockOutlined,
 } from "@ant-design/icons";
 import { Button, Select, Slider, Space, Switch, Tag, Empty } from "antd";
@@ -129,6 +130,16 @@ const WindowsPage: FC = () => {
           {characterStore.selectedHwnd && (
             <Button size="middle" danger icon={<MinusCircleOutlined />} onClick={() => { const hwnd = characterStore.selectedHwnd!; window.pywebview?.api.emit("API:SCRIPT:UNBIND", hwnd).then(() => characterStore.remove(hwnd)); }} style={{ borderRadius:8, fontWeight:500 }}>解绑</Button>
           )}
+          <Button size="middle" icon={<DeleteOutlined />} disabled={characterStore.characters.length === 0}
+            onClick={async () => {
+              for (const c of characterStore.characters) {
+                await window.pywebview?.api.emit("API:SCRIPT:UNBIND", c.hwnd);
+                characterStore.remove(c.hwnd);
+              }
+            }}
+            style={{ borderRadius:8, fontWeight:500, borderColor: "#fecaca", color: "#dc2626" }}>
+            一键解绑
+          </Button>
         </Space>
       </div>
 
@@ -209,6 +220,19 @@ const WindowsPage: FC = () => {
                   });
                 }}
               >{selectedCharacter?.running ? "暂停" : "开始执行"}</Button>
+
+              <Button
+                icon={<StopOutlined />}
+                disabled={!selectedCharacter?.running}
+                onClick={async () => {
+                  const hwnd = characterStore.selectedHwnd!;
+                  await window.pywebview?.api.emit("API:SCRIPT:STOP", hwnd);
+                  characterStore.update({ hwnd, running: false, currentTask: null });
+                  characterStore.clearExecute(hwnd);
+                }}
+                style={{ borderRadius:8, fontWeight:500, borderColor: "#fecaca", color: "#dc2626" }}>
+                结束任务
+              </Button>
 
               <Button
                 icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
