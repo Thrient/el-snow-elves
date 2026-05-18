@@ -228,7 +228,6 @@ const WindowsPage: FC = () => {
                   const hwnd = characterStore.selectedHwnd!;
                   await window.pywebview?.api.emit("API:SCRIPT:STOP", hwnd);
                   characterStore.update({ hwnd, running: false, currentTask: null });
-                  characterStore.clearExecute(hwnd);
                 }}
                 style={{ borderRadius:8, fontWeight:500, borderColor: "#fecaca", color: "#dc2626" }}>
                 结束任务
