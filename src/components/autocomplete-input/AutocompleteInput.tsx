@@ -73,13 +73,13 @@ const AutocompleteInput: FC<Props> = ({
           break;
         case "variable": {
           const items: { value: string; label: string }[] = [
-            { value: "{result}", label: "{result} — 当前步骤返回值" },
+            { value: "{result}", label: "{result}" },
           ];
           if (context.variables) {
             for (const key of context.variables) {
               items.push({
                 value: `{${key}}`,
-                label: `{${key}} — 任务变量`,
+                label: `{${key}}`,
               });
             }
           }
@@ -89,7 +89,7 @@ const AutocompleteInput: FC<Props> = ({
               for (const key of Object.keys(settings.values)) {
                 items.push({
                   value: `{CONFIG.${key}}`,
-                  label: `{CONFIG.${key}} — 全局设置`,
+                  label: `{CONFIG.${key}}`,
                 });
               }
             }

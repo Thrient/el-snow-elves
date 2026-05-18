@@ -1,4 +1,4 @@
-export type VariableCategory = "config" | "task" | "system" | "step" | "set";
+export type VariableCategory = "config" | "task" | "system" | "step";
 
 export interface VariableItem {
   syntax: string;
@@ -12,7 +12,6 @@ export const VARIABLE_CATEGORY_LABELS: Record<VariableCategory, string> = {
   task: "任务变量",
   system: "系统变量",
   step: "步骤名称",
-  set: "Set 变量",
 };
 
 export const SYSTEM_VARIABLES: VariableItem[] = [

@@ -1,6 +1,6 @@
 import { useState, useEffect, type FC } from "react";
-import { AutoComplete, Button, Input, InputNumber, Popover, Select, Tooltip, message } from "antd";
-import { CloseOutlined, CheckOutlined, ArrowRightOutlined, DeleteOutlined, LeftOutlined, BugOutlined, PictureOutlined, ReloadOutlined, ApartmentOutlined, PlusOutlined, CodeOutlined } from "@ant-design/icons";
+import { AutoComplete, Button, Input, InputNumber, Select, Tooltip, message } from "antd";
+import { CloseOutlined, CheckOutlined, ArrowRightOutlined, DeleteOutlined, LeftOutlined, BugOutlined, PictureOutlined, ReloadOutlined, ApartmentOutlined, PlusOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
 import type { EditorCtx } from "./constants";
 import { ACTION_OPTS, ACTIONS_WITH_TEMPLATES, ACTION_PARAMS, PARAM_META, REQUIRED_PARAMS } from "./constants";
@@ -149,7 +149,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
           className="w-full"
           value={(value as string) ?? ""}
           onChange={(v) => onUpdate("params", { ...params, hwnd: v ?? "" })}
-          options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.setVars]}
+          options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
           placeholder="{hwnd}"
           allowClear
           filterOption={(input, option) =>
@@ -181,7 +181,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
             className="flex-1"
             value={(value as string) ?? ""}
             onChange={(v) => onUpdate("params", { ...params, text: v ?? "" })}
-            options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.setVars]}
+            options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
             placeholder="输入文本，支持 {变量}"
             filterOption={(input, option) =>
               option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
@@ -193,7 +193,6 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
               ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
               ...ctx.configVars.map(v => ({ syntax: v.value, label: v.label, category: "config" as const })),
               ...ctx.taskValueVars.map(v => ({ syntax: v.value, label: v.label, category: "task" as const })),
-              ...ctx.setVars.map(v => ({ syntax: v.value, label: v.label, category: "set" as const })),
             ]}
             onInsert={(expr) => onUpdate("params", { ...params, text: (value as string ?? "") + expr })}
           >
@@ -201,7 +200,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
               style={{ width: 20, height: 20, color: "#c4bbb2" }}
               onMouseEnter={(e) => { e.currentTarget.style.color = "#d4513b"; e.currentTarget.style.background = "#fef3ef"; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "#c4bbb2"; e.currentTarget.style.background = "transparent"; }}
-            ><CodeOutlined style={{ fontSize: 11 }} /></button>
+            >fx</button>
           </VariablePicker>
         </div>
       );
@@ -210,7 +209,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
       return (
         <KeyInput value={(value as string) ?? ""}
           onChange={(v) => onUpdate("params", { ...params, key: v })}
-          varOptions={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.setVars]} />
+          varOptions={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]} />
       );
     }
     if (key === "account_name") {
@@ -220,7 +219,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
           style={{ width: 160 }}
           value={value as string}
           onChange={(v) => onUpdate("params", { ...params, account_name: v })}
-          options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.setVars]}
+          options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
           placeholder="{account_name}"
           allowClear
           filterOption={(input, option) =>
@@ -265,7 +264,6 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
             ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
             ...ctx.configVars.map(v => ({ syntax: v.value, label: v.label, category: "config" as const })),
             ...ctx.taskValueVars.map(v => ({ syntax: v.value, label: v.label, category: "task" as const })),
-            ...ctx.setVars.map(v => ({ syntax: v.value, label: v.label, category: "set" as const })),
           ]}
           onInsert={(expr) => {
             let newVal = (typeof value === "string" ? value : JSON.stringify(value ?? "")) + expr;
@@ -278,7 +276,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
             style={{ width: 20, height: 20, color: "#c4bbb2" }}
             onMouseEnter={(e) => { e.currentTarget.style.color = "#d4513b"; e.currentTarget.style.background = "#fef3ef"; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "#c4bbb2"; e.currentTarget.style.background = "transparent"; }}
-          ><CodeOutlined style={{ fontSize: 11 }} /></button>
+          >fx</button>
         </VariablePicker>
       </div>
     );
@@ -437,12 +435,15 @@ const SubListEditor: FC<{
           <div className="flex items-center gap-2 px-3.5 py-2">
             <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-semibold shrink-0"
               style={{ background: `${color}18`, color }}>{i + 1}</span>
-            <Input size="small" variant="borderless" placeholder="变量名" className="flex-1 font-mono text-[12px]" value={item.name}
-              onChange={(e) => { const u = [...arr]; u[i] = { ...u[i], name: e.target.value }; onChange(u); }} />
+            <AutoComplete size="small" variant="borderless" placeholder="变量名" className="flex-1 font-mono text-[12px]" value={item.name}
+              popupMatchSelectWidth={false}
+              options={[...ctx.taskValueVars]}
+              filterOption={(iv, opt) => opt?.label?.toLowerCase().includes(iv.toLowerCase()) ?? false}
+              onChange={(v) => { const u = [...arr]; u[i] = { ...u[i], name: v }; onChange(u); }} />
             <span className="font-mono text-[10px] text-[#8b8fa3] shrink-0">=</span>
             <AutoComplete className="flex-1" size="small" variant="borderless" placeholder="值" value={item.value as string}
               popupMatchSelectWidth={false}
-              options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.setVars, ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps]}
+              options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps]}
               filterOption={(iv, opt) => opt?.label?.toLowerCase().includes(iv.toLowerCase()) ?? false}
               onChange={(v) => { const u = [...arr]; u[i] = { ...u[i], value: v }; onChange(u); }} />
             <VariablePicker
@@ -451,12 +452,11 @@ const SubListEditor: FC<{
                 ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
                 ...ctx.configVars.map(v => ({ syntax: v.value, label: v.label, category: "config" as const })),
                 ...ctx.taskValueVars.map(v => ({ syntax: v.value, label: v.label, category: "task" as const })),
-                ...ctx.setVars.map(v => ({ syntax: v.value, label: v.label, category: "set" as const })),
               ]}
               onInsert={(expr) => { const u = [...arr]; u[i] = { ...u[i], value: expr }; onChange(u); }}
             >
               <span className="text-[#c0c4cc] hover:text-[#d4513b] opacity-0 group-hover:opacity-100 transition-all shrink-0 cursor-pointer select-none mx-0.5"
-                style={{ fontSize: 14, lineHeight: 1 }}><CodeOutlined /></span>
+                style={{ fontSize: 14, lineHeight: 1 }}>fx</span>
             </VariablePicker>
             <span className="text-[#c0c4cc] opacity-0 group-hover:opacity-100 transition-all shrink-0 text-[10px] select-none cursor-grab">⠿</span>
             <button onClick={() => onChange(arr.filter((_, j) => j !== i))}
@@ -592,10 +592,10 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
           />
 
           {/* Expression builder — shown when action is expression-type */}
-          {step.action && (step.action === "{...}" || step.action === "{True}" || step.action.startsWith("{")) && (
+          {step.action && (step.action === "{...}" || step.action.startsWith("{")) && (
             <ExpressionActionBuilder
               value={step.action}
-              varOptions={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.setVars]}
+              varOptions={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
               values={ctx.values}
               layout={ctx.layout}
               onChange={(expr) => onUpdate("action", expr)}

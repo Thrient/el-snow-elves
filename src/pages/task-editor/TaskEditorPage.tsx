@@ -95,7 +95,7 @@ const TaskEditorPage: FC = () => {
     return [...taskStepNames, ...taskCommonNames, ...Object.keys(globalCommonData).filter((n) => !owned.has(n))];
   }, [taskStepNames, taskCommonNames, globalCommonData]);
 
-  const setVars = useMemo(() => {
+  const setVarOptions = useMemo(() => {
     const names = new Set<string>();
     const collect = (steps: Record<string, Step>) => {
       for (const step of Object.values(steps))
@@ -108,26 +108,28 @@ const TaskEditorPage: FC = () => {
     return Array.from(names);
   }, [editor.currentTask]);
 
-  const taskValueKeys = useMemo(
-    () => Object.keys(editor.currentTask?.values ?? {}),
-    [editor.currentTask?.values],
-  );
+  const taskValueKeys = useMemo(() => {
+    const keys = new Set(Object.keys(editor.currentTask?.values ?? {}));
+    // also include variable names extracted from steps' set fields — they write to the same variables dict
+    for (const step of Object.values(editor.currentTask?.steps ?? {}))
+      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name);
+    for (const step of Object.values(editor.currentTask?.common ?? {}))
+      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name);
+    return Array.from(keys);
+  }, [editor.currentTask?.values, editor.currentTask?.steps, editor.currentTask?.common]);
 
   const builtinVars = BUILTIN_VARS;
   const configVars = useMemo(() =>
-    configKeys.map((k) => ({ value: `{CONFIG.${k}}`, label: `{CONFIG.${k}} — 全局设置` })),
+    configKeys.map((k) => ({ value: `{CONFIG.${k}}`, label: `{CONFIG.${k}}` })),
     [configKeys]);
   const taskValueVars = useMemo(() =>
-    taskValueKeys.map((k) => ({ value: `{${k}}`, label: `{${k}} — 任务配置` })),
+    taskValueKeys.map((k) => ({ value: `{${k}}`, label: `{${k}}` })),
     [taskValueKeys]);
-  const setVarOptions = useMemo(() =>
-    setVars.map((v) => ({ value: `{${v}}`, label: `{${v}} — set 变量` })),
-    [setVars]);
 
   const makeStepOpts = (names: string[], source: Record<string, Step>, suffix: string) =>
     names.map((k) => {
       const s = source[k];
-      return { value: k, label: s?.description ? `${k} — ${s.description} — ${suffix}` : `${k} — ${suffix}` };
+      return { value: k, label: s?.description ? `${k} — ${s.description}` : k };
     });
   const taskSteps = useMemo(() =>
     makeStepOpts(taskStepNames, editor.currentTask?.steps ?? {}, "任务步骤"),
@@ -160,7 +162,7 @@ const TaskEditorPage: FC = () => {
 
   const ctx: EditorCtx = {
     stepKeys: allStepNames,
-    builtinVars, configVars, taskValueVars, setVars: setVarOptions,
+    builtinVars, configVars, taskValueVars,
     taskSteps, taskCommonSteps, globalCommonSteps,
     stepParamsMap,
     allStepsData,
@@ -461,7 +463,7 @@ const TaskEditorPage: FC = () => {
           )}
         </div>
         <VariablePanel taskValues={editor.currentTask?.values ?? {}} configKeys={configKeys}
-          stepNames={allStepNames} setVariables={setVars}
+          stepNames={allStepNames} setVariables={setVarOptions}
           visible={varVisible} onToggle={() => setVarVisible(false)} />
       </div>
 

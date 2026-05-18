@@ -44,8 +44,7 @@ export const ACTION_OPTS: ActionOpt[] = [
   { value: "mouse_click",    label: "mouse_click",    desc: "点击坐标",        icon: <PushpinOutlined />,        color: "#ec4899", group: "输入操作" },
   { value: "set_character",  label: "set_character",  desc: "捕获角色头像",    icon: <UserOutlined />,           color: "#8b5cf6", group: "角色账号" },
   { value: "switch_account", label: "switch_account", desc: "切换游戏账号",    icon: <SwapOutlined />,           color: "#1677ff", group: "角色账号" },
-  { value: "{True}",         label: "{True}",         desc: "无条件通过",      icon: <CheckCircleOutlined />,    color: "#10b981", group: "流程控制" },
-  { value: "{...}",          label: "{...}",          desc: "表达式判断",      icon: <BranchesOutlined />,       color: "#d4513b", group: "流程控制" },
+  { value: "{...}",          label: "{...}",          desc: "表达式",      icon: <BranchesOutlined />,       color: "#d4513b", group: "流程控制" },
 ];
 
 export interface ParamMeta {
@@ -86,7 +85,6 @@ export const ACTION_PARAMS: Record<string, string[]> = {
   mouse_click:    ["pos", "pre_delay", "post_delay", "hwnd"],
   set_character:  ["hwnd"],
   switch_account: ["account_name"],
-  "{True}":       [],
   "{...}":        [],
 };
 
@@ -102,9 +100,9 @@ export const ACTIONS_WITH_TEMPLATES = new Set(["touch", "exits", "wait", "wait_d
 export const PLAIN_VALUE_PARAMS = new Set(["threshold", "seconds", "k", "pos", "box", "pre_delay", "post_delay"]);
 
 export const BUILTIN_VARS: { value: string; label: string }[] = [
-  { value: "{result}",    label: "{result} — 步骤返回值" },
-  { value: "{hwnd}",      label: "{hwnd} — 当前窗口句柄" },
-  { value: "{ChildHwnd}", label: "{ChildHwnd} — 子窗口句柄" },
+  { value: "{result}",    label: "{result}" },
+  { value: "{hwnd}",      label: "{hwnd}" },
+  { value: "{ChildHwnd}", label: "{ChildHwnd}" },
 ];
 
 export interface EditorCtx {
@@ -112,7 +110,6 @@ export interface EditorCtx {
   builtinVars: { value: string; label: string }[];
   configVars: { value: string; label: string }[];
   taskValueVars: { value: string; label: string }[];
-  setVars: { value: string; label: string }[];
   taskSteps: { value: string; label: string }[];
   taskCommonSteps: { value: string; label: string }[];
   globalCommonSteps: { value: string; label: string }[];

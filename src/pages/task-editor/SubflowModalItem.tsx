@@ -1,6 +1,6 @@
 import { useMemo, type FC } from "react";
 import { AutoComplete, Button, InputNumber, Popover, Select } from "antd";
-import { DeleteOutlined, CodeOutlined } from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 import type { EditorCtx } from "./constants";
 import VariablePicker from "@/components/variable-picker/VariablePicker";
 import ExpressionActionBuilder from "@/components/expression-builder/ExpressionActionBuilder";
@@ -53,14 +53,14 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
   }, [ctx.stepParamsMap, ctx.allStepsData, baseName]);
 
   const varOnlyOptions = useMemo(
-    () => [...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.setVars],
-    [ctx.builtinVars, ctx.configVars, ctx.taskValueVars, ctx.setVars],
+    () => [...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars],
+    [ctx.builtinVars, ctx.configVars, ctx.taskValueVars],
   );
   const allOptions = useMemo(
     () => [...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars,
-           ...ctx.setVars, ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps],
+           ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps],
     [ctx.builtinVars, ctx.configVars, ctx.taskValueVars,
-     ctx.setVars, ctx.taskSteps, ctx.taskCommonSteps, ctx.globalCommonSteps],
+     ctx.taskSteps, ctx.taskCommonSteps, ctx.globalCommonSteps],
   );
 
   return (
@@ -165,7 +165,6 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
                             ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
                             ...ctx.configVars.map(v => ({ syntax: v.value, label: v.label, category: "config" as const })),
                             ...ctx.taskValueVars.map(v => ({ syntax: v.value, label: v.label, category: "task" as const })),
-                            ...ctx.setVars.map(v => ({ syntax: v.value, label: v.label, category: "set" as const })),
                           ]}
                           onInsert={(expr) => { const next = [...argsEntries]; next[ei] = [key, expr]; setArgs(next); }}
                         >
@@ -173,7 +172,7 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
                             style={{ width: 18, height: 18, color: "#c4bbb2", fontSize: 11 }}
                             onMouseEnter={(e) => { e.currentTarget.style.color = "#d4513b"; e.currentTarget.style.background = "#fef3ef"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.color = "#c4bbb2"; e.currentTarget.style.background = "transparent"; }}
-                          ><CodeOutlined /></button>
+                          >fx</button>
                         </VariablePicker>
                         {/* Modified indicator */}
                         {isModified && (

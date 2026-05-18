@@ -41,7 +41,9 @@ const VariablePanel: FC<Props> = ({
       items.push({ syntax: name, label: name, category: "step" });
     }
     for (const v of setVariables) {
-      items.push({ syntax: `{${v}}`, label: `{${v}}`, category: "set" });
+      if (!(v in taskValues)) {
+        items.push({ syntax: `{${v}}`, label: `{${v}}`, category: "task" });
+      }
     }
     return items;
   }, [taskValues, configKeys, stepNames, setVariables]);
@@ -72,7 +74,6 @@ const VariablePanel: FC<Props> = ({
     task: "green",
     system: "purple",
     step: "orange",
-    set: "cyan",
   };
 
   if (!visible) return null;

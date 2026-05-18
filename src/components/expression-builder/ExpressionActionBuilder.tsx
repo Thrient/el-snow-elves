@@ -84,10 +84,7 @@ const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes
 
   // Build varOptions array for VariablePicker (used in value fields)
   const pickerVars = useMemo(() =>
-    varOptions.map((v) => {
-      const bare = v.value.replace(/^\{|\}$/g, "");
-      return { syntax: v.value, label: v.label, category: "task" as const };
-    }),
+    varOptions.map((v) => ({ syntax: v.value, label: v.label, category: "task" as const })),
   [varOptions]);
 
   // Parse existing value on mount
@@ -154,17 +151,6 @@ const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes
   };
 
   const currentExpr = mode === "true" ? "{True}" : mode === "var" ? (varName ? `{${varName}}` : "{...}") : (buildExpr(conds) || "{...}");
-
-  // Build the varOptions list for VariablePicker with operation variants
-  const varPickerVars = useMemo(() => {
-    const result: { syntax: string; label: string; category: string }[] = [];
-    for (const opt of varOptions) {
-      const bare = opt.value.replace(/^\{|\}$/g, "");
-      if (!bare) continue;
-      result.push({ syntax: opt.value, label: opt.label, category: "task" });
-    }
-    return result;
-  }, [varOptions]);
 
   return (
     <div className="flex flex-col" style={{ gap: 10 }}>
