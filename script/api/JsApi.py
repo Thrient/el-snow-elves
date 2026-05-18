@@ -14,9 +14,18 @@ class JsApi:
 
     def get_execute_task(self, hwnd):
         code = f"""
-        window.useCharacterStore.getState().popExecute({hwnd})
+        (function() {{
+            const result = window.useCharacterStore.getState().popExecute({hwnd});
+            return result ? JSON.stringify(result) : null;
+        }})()
         """
-        return self.window.evaluate_js(code)
+        import json
+        raw = self.window.evaluate_js(code)
+        if raw is None:
+            return None
+        if isinstance(raw, dict):
+            return raw
+        return json.loads(raw)
 
 
 js = JsApi()

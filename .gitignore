@@ -1,5 +1,7 @@
 .venv/
 build/
+docs/
+mitmproxy-conf/
 dist/
 __pycache__/
 *.pyc
@@ -12,3 +14,4 @@ temp/
 .env
 *.log
 .DS_Store
+.superpowers

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "author": "Thrient",
   "description": "茶馆说书任务并进行随机答题",
-  "start": "",
+  "start": "茶馆说书前往",
   "steps": {
     "茶馆说书前往": {
       "action": "touch",
@@ -53,7 +53,12 @@
         ]
       },
       "postfix": [],
-      "success": "随机答题"
+      "success": "随机答题",
+      "failure_extra": [
+        {
+          "step": "关闭窗口"
+        }
+      ]
     },
     "等待退出茶馆": {
       "action": "touch",

@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import time
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 
 from script.config.Setting import PROJECT_ROOT
 from script.core.VariableProcessor import VariableProcessor
@@ -12,6 +12,14 @@ from script.task.BaseTask import BaseTask
 from script.util.Utils import Utils
 
 _COMMON_CACHE = None
+_COMMON_CACHE_LOCK = Lock()
+
+
+def clear_common_cache():
+    """清空全局公共步骤缓存，下次执行时重新读磁盘"""
+    global _COMMON_CACHE
+    with _COMMON_CACHE_LOCK:
+        _COMMON_CACHE = None
 
 
 class FlowEngine(Thread):
@@ -49,17 +57,18 @@ class FlowEngine(Thread):
         返回合并后的字典。
         """
         global _COMMON_CACHE
-        if _COMMON_CACHE is None:
-            file_path = os.path.join(PROJECT_ROOT, "resources", "config", "common.json")
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    _COMMON_CACHE = json.load(f)
-            except FileNotFoundError:
-                logging.warning(f"公共步骤文件不存在，使用空基础: {file_path}")
-                _COMMON_CACHE = {}
-            except json.JSONDecodeError as e:
-                logging.error(f"公共步骤文件 JSON 解析失败，使用空基础: {file_path} | {e}")
-                _COMMON_CACHE = {}
+        with _COMMON_CACHE_LOCK:
+            if _COMMON_CACHE is None:
+                file_path = os.path.join(PROJECT_ROOT, "resources", "config", "common.json")
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        _COMMON_CACHE = json.load(f)
+                except FileNotFoundError:
+                    logging.warning(f"公共步骤文件不存在，使用空基础: {file_path}")
+                    _COMMON_CACHE = {}
+                except json.JSONDecodeError as e:
+                    logging.error(f"公共步骤文件 JSON 解析失败，使用空基础: {file_path} | {e}")
+                    _COMMON_CACHE = {}
 
         base_common = dict(_COMMON_CACHE)
 
@@ -241,11 +250,13 @@ class FlowEngine(Thread):
                 if not cond:
                     logging.info(f"子流程跳过 [when={when}]: {name}")
                     continue
+            # Resolve {var} / {var:default} templates in args before passing to subflow
+            args = self._resolve_params(args)
             self.run_subflow(name, args)
 
     def _run_action(self, step_def):
         retry = step_def.get("retry", {})
-        for attempt in range(retry.get("times", 1)):
+        for attempt in range(max(1, retry.get("times", 1))):
             result = self.action(self._hwnd, step_def)
             if result:
                 return result

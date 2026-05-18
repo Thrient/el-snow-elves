@@ -1,8 +1,32 @@
 {
   "values": {
+    "普攻": "1",
+    "技能1": "2",
+    "技能2": "3",
+    "技能3": "4",
+    "技能4": "5",
+    "技能5": "6",
+    "技能6": "7",
+    "技能7": "8",
+    "技能8": "9",
+    "绝学": "R",
+    "双门派": "Z",
+    "切换": "TAB",
+    "轻功": "Q",
+    "自创1": "K",
+    "自创2": "L",
+    "前进": "W",
+    "后退": "S",
+    "左移": "A",
+    "右移": "D",
+    "翻滚": "F",
+    "跳跃": "SPACE",
+    "队伍": "T",
+    "帮派": "O",
+    "好友": "H",
     "背包": "B",
-    "设置": "ESC",
-    "好友": "H"
+    "地图": "M",
+    "设置": "ESC"
   },
   "layout": [
     [
@@ -14,21 +38,177 @@
     [
       {
         "span": 6,
-        "text": "背包:",
+        "text": "技能1",
+        "model": "el-key-input",
+        "store": "技能1"
+      },
+      {
+        "span": 6,
+        "text": "技能2",
+        "model": "el-key-input",
+        "store": "技能2"
+      },
+      {
+        "span": 6,
+        "text": "技能3",
+        "model": "el-key-input",
+        "store": "技能3"
+      },
+      {
+        "span": 6,
+        "text": "技能4",
+        "model": "el-key-input",
+        "store": "技能4"
+      }
+    ],
+    [
+      {
+        "span": 6,
+        "text": "技能5",
+        "model": "el-key-input",
+        "store": "技能5"
+      },
+      {
+        "span": 6,
+        "text": "技能6",
+        "model": "el-key-input",
+        "store": "技能6"
+      },
+      {
+        "span": 6,
+        "text": "技能7",
+        "model": "el-key-input",
+        "store": "技能7"
+      },
+      {
+        "span": 6,
+        "text": "技能8",
+        "model": "el-key-input",
+        "store": "技能8"
+      }
+    ],
+    [
+      {
+        "span": 6,
+        "text": "普攻",
+        "model": "el-key-input",
+        "store": "普攻"
+      },
+      {
+        "span": 6,
+        "text": "绝学",
+        "model": "el-key-input",
+        "store": "绝学"
+      },
+      {
+        "span": 6,
+        "text": "自创1",
+        "model": "el-key-input",
+        "store": "自创1"
+      },
+      {
+        "span": 6,
+        "text": "自创2",
+        "model": "el-key-input",
+        "store": "自创2"
+      }
+    ],
+    [
+      {
+        "span": 6,
+        "text": "跳跃",
+        "model": "el-key-input",
+        "store": "跳跃"
+      },
+      {
+        "span": 6,
+        "text": "轻功",
+        "model": "el-key-input",
+        "store": "轻功"
+      },
+      {
+        "span": 6,
+        "text": "翻滚",
+        "model": "el-key-input",
+        "store": "翻滚"
+      },
+      {
+        "span": 6,
+        "text": "切换",
+        "model": "el-key-input",
+        "store": "切换"
+      }
+    ],
+    [
+      {
+        "span": 6,
+        "text": "前进",
+        "model": "el-key-input",
+        "store": "前进"
+      },
+      {
+        "span": 6,
+        "text": "后退",
+        "model": "el-key-input",
+        "store": "后退"
+      },
+      {
+        "span": 6,
+        "text": "左移",
+        "model": "el-key-input",
+        "store": "左移"
+      },
+      {
+        "span": 6,
+        "text": "右移",
+        "model": "el-key-input",
+        "store": "右移"
+      }
+    ],
+    [
+      {
+        "span": 6,
+        "text": "双门派",
+        "model": "el-key-input",
+        "store": "双门派"
+      },
+      {
+        "span": 6,
+        "text": "队伍",
+        "model": "el-key-input",
+        "store": "队伍"
+      },
+      {
+        "span": 6,
+        "text": "帮派",
+        "model": "el-key-input",
+        "store": "帮派"
+      },
+      {
+        "span": 6,
+        "text": "好友",
+        "model": "el-key-input",
+        "store": "好友"
+      }
+    ],
+    [
+      {
+        "span": 6,
+        "text": "背包",
         "model": "el-key-input",
         "store": "背包"
       },
       {
         "span": 6,
-        "text": "设置:",
+        "text": "地图",
         "model": "el-key-input",
-        "store": "设置"
+        "store": "地图"
       },
       {
         "span": 6,
-        "text": "好友:",
+        "text": "设置",
         "model": "el-key-input",
-        "store": "好友"
+        "store": "设置"
       }
     ]
   ]

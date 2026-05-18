@@ -1,4 +1,225 @@
 {
+  "等待时间": {
+    "action": "wait",
+    "params": {
+      "args": [
+      ],
+      "seconds": "{等待时间:1}"
+    }
+  },
+  "普通世界喊话": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮大世界发送"
+      ]
+    },
+    "prefix": [
+      "唤出世界",
+      "选择普通世界",
+      "世界点击输入文字",
+      "输入内容"
+    ]
+  },
+  "世界点击输入文字": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "标志点击输入文字"
+      ]
+    }
+  },
+  "退出世界": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮聊天退出"
+      ]
+    }
+  },
+  "唤出世界": {
+    "action": "mouse_click",
+    "params": {
+      "pos": [
+        305,
+        600
+      ]
+    }
+  },
+  "选择普通世界": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮大世界普通世界"
+      ]
+    }
+  },
+  "前往坐标": {
+    "action": "{True}",
+    "params": {
+      "args": [
+        "标志地图当前坐标"
+      ]
+    },
+    "prefix": [
+      "检查地图"
+    ],
+    "postfix": [
+      {
+        "step": "打开世界地图",
+        "when": "{目标区域 != ''}"
+      },
+      "停止寻路",
+      "坐标展开",
+      "横坐标",
+      "纵坐标",
+      "前往区域",
+      "等待到达"
+    ]
+  },
+  "停止寻路": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮地图停止寻路"
+      ]
+    }
+  },
+  "坐标展开": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮地图坐标展开"
+      ]
+    }
+  },
+  "横坐标": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮地图横坐标"
+      ]
+    },
+    "postfix": [
+      {
+        "step": "输入内容",
+        "args": {
+          "文本": "{横坐标:600}"
+        }
+      }
+    ]
+  },
+  "纵坐标": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮地图纵坐标"
+      ]
+    },
+    "postfix": [
+      {
+        "step": "输入内容",
+        "args": {
+          "文本": "{纵坐标:600}"
+        }
+      }
+    ]
+  },
+  "前往区域": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮地图前往区域"
+      ]
+    }
+  },
+  "输入内容": {
+    "action": "input",
+    "params": {
+      "text": "{文本:}"
+    }
+  },
+  "打开世界地图": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮地图世界"
+      ]
+    },
+    "next": "前往指定区域"
+  },
+  "前往指定区域": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮地图{目标区域:}区域"
+      ]
+    },
+    "next": "任务结束"
+  },
+  "检查地图": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "标志地图当前坐标"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      "打开地图"
+    ],
+    "next": "任务结束"
+  },
+  "打开地图": {
+    "action": "key_click",
+    "params": {
+      "key": "{CONFIG.地图}"
+    },
+    "next": "任务结束"
+  },
+  "退出场景": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮副本退出"
+      ],
+      "secondes": null
+    },
+    "retry": {
+      "times": 7,
+      "interval": 1000
+    },
+    "prefix": [
+      "激活窗口"
+    ],
+    "success_extra": [
+      "确认退出场景",
+      "等待场景加载"
+    ]
+  },
+  "确认退出场景": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮回到坊间",
+        "按钮确定",
+        "按钮离开"
+      ]
+    }
+  },
+  "等待场景加载": {
+    "action": "wait_disappear",
+    "params": {
+      "args": [
+        "标志地图加载_V1",
+        "标志地图加载_V2"
+      ],
+      "threshold": 0.7,
+      "seconds": 180,
+      "k": 6
+    },
+    "next": "任务结束"
+  },
   "队伍检测": {
     "action": "exits",
     "params": {
@@ -9,8 +230,10 @@
     "prefix": [
       "检查队伍"
     ],
-    "success": "任务结束",
-    "failure": "退出队伍"
+    "failure_extra": [
+      "退出队伍",
+      "检测主界面"
+    ]
   },
   "退出队伍": {
     "action": "touch",
@@ -119,6 +342,18 @@
     "params": {
       "args": [
         "按钮活动江湖"
+      ]
+    },
+    "prefix": [
+      "检查活动"
+    ],
+    "next": "任务结束"
+  },
+  "打开游历": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮活动游历"
       ]
     },
     "prefix": [

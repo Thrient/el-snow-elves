@@ -10,7 +10,8 @@
       "params": {
         "args": [
           "按钮山河器前往探索"
-        ]
+        ],
+        "seconds": 2
       },
       "prefix": [
         {
@@ -18,6 +19,11 @@
         }
       ],
       "success": "等待拾取",
+      "failure_extra": [],
+      "retry": {
+        "times": 0,
+        "interval": 0
+      },
       "failure": "免费搜索"
     },
     "免费搜索": {
@@ -25,12 +31,19 @@
       "params": {
         "args": [
           "按钮山河器免费搜索"
-        ]
+        ],
+        "post_delay": 8000
       },
+      "postfix": [],
       "success": "探索山河器",
-      "postfix": [
+      "success_extra": [
         {
           "step": "搜索日晷"
+        }
+      ],
+      "failure_extra": [
+        {
+          "step": "检测主界面"
         }
       ]
     },
@@ -63,7 +76,8 @@
           673,
           350
         ],
-        "pre_delay": 5000
+        "pre_delay": 5000,
+        "post_delay": 5000
       }
     }
   },

@@ -6,9 +6,9 @@ def delay(pre_delay=0, post_delay=0):
 
     def decorator(func):
         def wrapper(*args, **kwargs):
-            time.sleep(kwargs.get('pre_delay', pre_delay) / 1000)
+            time.sleep(float(kwargs.get('pre_delay', pre_delay)) / 1000)
             result = func(*args, **kwargs)
-            time.sleep(kwargs.get('post_delay', post_delay) / 1000)
+            time.sleep(float(kwargs.get('post_delay', post_delay)) / 1000)
             return result
 
         return wrapper
@@ -21,7 +21,7 @@ def repeat(count=1):
 
     def decorator(func):
         def wrapper(*args, **kwargs):
-            for _ in range(kwargs.get('count', count)):
+            for _ in range(int(kwargs.get('count', count))):
                 func(*args, **kwargs)
 
         return wrapper
@@ -34,14 +34,17 @@ def during(seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda:
 
     def decorator(func):
         def wrapper(*args, **kwargs):
-            if kwargs.get('seconds', seconds) is None:
+            secs = kwargs.get('seconds')
+            if secs is None:
+                secs = seconds
+            if secs is None:
                 return func(*args, **kwargs)
-            end_time = time.time() + kwargs.get('seconds', seconds)
+            end_time = time.time() + float(secs)
             while time.time() < end_time and kwargs.get("predicate", predicate)():
                 result = func(*args, **kwargs)
                 if kwargs.get("is_valid", is_valid)(result):
                     return result
-                time.sleep(kwargs.get('dealy', dealy))
+                time.sleep(float(kwargs.get('dealy', dealy)))
             return None
 
         return wrapper
@@ -52,10 +55,13 @@ def during(seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda:
 def wait_until(k=1, seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda: True):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            if kwargs.get('seconds', seconds) is None:
+            secs = kwargs.get('seconds')
+            if secs is None:
+                secs = seconds
+            if secs is None:
                 return func(*args, **kwargs)
             count = 0
-            end_time = time.time() + kwargs.get('seconds', seconds)
+            end_time = time.time() + float(secs)
             while time.time() < end_time and kwargs.get("predicate", predicate)():
                 result = func(*args, **kwargs)
 
@@ -65,7 +71,7 @@ def wait_until(k=1, seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicat
                         return result
                 else:
                     count = 0
-                time.sleep(kwargs.get('dealy', dealy))
+                time.sleep(float(kwargs.get('dealy', dealy)))
             return None
 
         return wrapper

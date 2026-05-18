@@ -13,6 +13,7 @@ from script.core.QuickStart import QuickStart
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
 from script.core.StaticCommon import StaticCommon
+from script.core.FlowEngine import clear_common_cache
 from script.account import AccountManager
 from script.account.SessionManager import get_session
 from script.core.TemplateMatcher import TemplateMatcher
@@ -305,6 +306,7 @@ class App:
         api.on("API:AUTOCOMPLETE:TEMPLATES", StaticCommon.list_template_images)
         api.on("API:AUTOCOMPLETE:STEPS", StaticCommon.list_steps_for_task)
         api.on("API:AUTOCOMPLETE:COMMON:STEPS", StaticCommon.list_global_common_steps)
+        api.on("API:COMMON:CACHE:CLEAR", clear_common_cache)
         api.on("API:TASK:LOAD:POSITIONS", StaticCommon.load_positions)
         api.on("API:TASK:SAVE:POSITIONS", StaticCommon.save_positions)
         api.on("API:TEMPLATE:CAPTURE", self.capture_for_template)
@@ -348,7 +350,7 @@ class App:
         if hwnd not in self._script_instances:
             logging.warning(f"[Lock] 窗口未绑定: hwnd={hwnd}")
             return
-        Window.disable_Window(hwnd)
+        Window.disable_window(hwnd)
         self._lock_states[hwnd] = True
         logging.info(f"[Lock] 窗口已锁定: hwnd={hwnd}")
 
@@ -371,10 +373,10 @@ class App:
             return None
 
     @staticmethod
-    def save_template_image(hwnd, crop_region, filename, scope, task_name=None, version=None):
-        """截图裁剪保存模板图片"""
+    def save_template_image(hwnd, crop_region, filename, scope, task_name=None, version=None, base64_data=None):
+        """截图裁剪保存模板图片。base64_data 为选图时的快照，避免二次截图画面变化。"""
         try:
-            return TemplateMatcher.save_crop(hwnd, crop_region, filename, scope, task_name, version)
+            return TemplateMatcher.save_crop(hwnd, crop_region, filename, scope, task_name, version, base64_data)
         except (ValueError, Exception) as e:
             logging.error(f"模板截图失败: hwnd={hwnd}, error={e}")
             raise
