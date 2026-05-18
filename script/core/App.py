@@ -294,6 +294,7 @@ class App:
         api.on("API:SCRIPT:UNBIND", self.unbind)
         api.on("API:SCRIPT:RESUME", self.resume)
         api.on("API:SCRIPT:PAUSE", self.pause)
+        api.on("API:SCRIPT:STOP", self.stop_task)
         api.on("API:SCRIPT:LOCK", self.lock_window)
         api.on("API:SCRIPT:UNLOCK", self.unlock_window)
         api.on("API:SCRIPT:SET_OPACITY", self.set_window_opacity)
@@ -344,6 +345,13 @@ class App:
             return
         script = self._script_instances[hwnd]
         script.pause()
+
+    def stop_task(self, hwnd):
+        if hwnd not in self._script_instances:
+            return
+        script = self._script_instances[hwnd]
+        script.stop()
+        logging.info(f"[Stop] 任务已停止: hwnd={hwnd}")
 
     def lock_window(self, hwnd):
         """锁定窗口（鼠标穿透），防止用户误触"""
