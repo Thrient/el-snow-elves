@@ -217,7 +217,6 @@ class StaticCommon:
             {"value": "mouse_click", "label": "mouse_click — 点击坐标"},
             {"value": "set_character", "label": "set_character — 捕获角色头像"},
             {"value": "switch_account", "label": "switch_account — 切换游戏账号"},
-            {"value": "{True}", "label": "{True} — 无条件通过"},
         ]
 
     @staticmethod
@@ -237,17 +236,22 @@ class StaticCommon:
 
     @staticmethod
     def list_global_common_steps():
-        """返回全局 common.json 中的步骤名列表"""
+        """返回全局 common.json 中的完整步骤数据"""
         try:
             file_path = os.path.join(PROJECT_ROOT, "resources", "config", "common.json")
             if not os.path.exists(file_path):
-                return []
+                return {}
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            return sorted(list(data.keys())) if isinstance(data, dict) else []
+            if not isinstance(data, dict):
+                return {}
+            result = {}
+            for name, step in data.items():
+                result[name] = dict(step)
+            return result
         except Exception as e:
             logging.warning(f"获取全局公共步骤失败: {e}")
-            return []
+            return {}
 
     @staticmethod
     def load_positions(task_id):

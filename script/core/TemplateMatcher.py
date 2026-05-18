@@ -49,8 +49,8 @@ class TemplateMatcher:
         if not results:
             return []
         best = results[0]
-        px, py = best["rectangle"][0]
-        return [(px + x1, py + y1)]
+        (px, py), (w, h) = best["rectangle"]
+        return [(px + w // 2 + x1, py + h // 2 + y1)]
 
     @staticmethod
     def _match(search_img, template_img, threshold):
@@ -141,9 +141,23 @@ class TemplateMatcher:
     # ── 模板保存 ──
 
     @staticmethod
-    def save_crop(hwnd, crop_region, filename, scope, task_name=None, version=None):
-        """截图 → 裁剪 → 保存为 .bmp 模板文件。"""
-        img, _ = ScreenCapture.capture_gray(hwnd)
+    def save_crop(hwnd, crop_region, filename, scope, task_name=None, version=None, base64_data=None):
+        """截图 → 裁剪 → 保存为 .bmp 模板文件。
+
+        若传入 base64_data（data URL），则直接解码使用，避免二次截图导致画面变化；
+        否则从窗口重新截图。"""
+        import re as _re
+
+        if base64_data:
+            b64 = _re.sub(r'^data:image/\w+;base64,', '', base64_data)
+            raw = base64.b64decode(b64)
+            arr = np.frombuffer(raw, dtype=np.uint8)
+            img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+            if img is None:
+                raise ValueError("base64 解码失败")
+        else:
+            img, _ = ScreenCapture.capture_gray(hwnd)
+
         x1, y1, x2, y2 = crop_region
         x1, x2 = max(0, min(x1, x2)), min(img.shape[1], max(x1, x2))
         y1, y2 = max(0, min(y1, y2)), min(img.shape[0], max(y1, y2))

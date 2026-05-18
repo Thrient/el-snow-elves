@@ -49,7 +49,7 @@ class SafeExpressionEvaluator:
         """递归验证节点是否安全（仅允许白名单节点类型）"""
         allowed_types = (
             ast.Constant, ast.Name, ast.BinOp, ast.UnaryOp, ast.Compare,
-            ast.BoolOp, ast.Subscript, ast.Attribute,
+            ast.BoolOp, ast.Subscript, ast.Attribute, ast.Call,
             ast.Load, ast.Store,
             ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow,
             ast.USub, ast.UAdd, ast.Not,
@@ -146,6 +146,16 @@ class SafeExpressionEvaluator:
                 return obj[node.attr]
             raise TypeError(f"不支持属性访问，对象类型: {type(obj)}")
 
+        # 新增：函数调用（仅允许 len() 和 split()）
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and not node.keywords:
+                args = [self._eval_node(a) for a in node.args]
+                if node.func.id == 'len' and len(args) == 1:
+                    return len(args[0])
+                if node.func.id == 'split' and len(args) == 2:
+                    return str(args[0]).split(str(args[1]))
+            raise TypeError("仅支持 len() 和 split() 函数调用")
+
         raise TypeError("不支持的 AST 节点类型: {}".format(type(node).__name__))
 
 
@@ -232,7 +242,7 @@ class AutoIncrementDecrementParser(ValueParser):
 
 
 class ExpressionParser(ValueParser):
-    _VAR_PATTERN = re.compile(r'\{(\w+)}')
+    _VAR_PATTERN = re.compile(r'\{([^{}:]+)}')
 
     def parse(self, raw_value):
         if not isinstance(raw_value, str):
@@ -280,6 +290,37 @@ class DefaultValueParser(ValueParser):
         return DefaultValue(var_name, default_value)
 
 
+class InlineTemplateParser(ValueParser):
+    """处理字符串内嵌的 {变量:默认值}，如 '按钮地图{目标区域:江南}区域'
+       仅匹配带 : 的模板，避免拦截 {Escape} 等表达式"""
+    _TEMPLATE_RE = re.compile(r'\{([^{}:]+):([^}]*)\}')
+
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return None
+        if '{' not in raw_value or ':' not in raw_value:
+            return None
+        matches = self._TEMPLATE_RE.findall(raw_value)
+        if not matches:
+            return None
+        return InlineTemplateValue(raw_value, matches)
+
+
+class InlineTemplateValue(Evaluable):
+    def __init__(self, template, matches):
+        self.template = template
+        self.matches = matches
+
+    def evaluate(self, result, variables, computed=None):
+        def replacer(m):
+            var_name = m.group(1)
+            default = m.group(2)
+            if computed and var_name in computed:
+                return str(computed[var_name](default))
+            return str(variables.get(var_name, default))
+        return InlineTemplateParser._TEMPLATE_RE.sub(replacer, self.template)
+
+
 class BraceExpressionParser(ValueParser):
     """处理整个字符串被 {expr} 包裹的纯表达式，如 {a + b > 5}"""
     _PATTERN = re.compile(r'^\{(.+)}$', re.DOTALL)
@@ -307,6 +348,7 @@ class VariableProcessor:
         self._parsers.append(ResultPlaceholderParser())
         self._parsers.append(AutoIncrementDecrementParser())
         self._parsers.append(DefaultValueParser())
+        self._parsers.append(InlineTemplateParser())
         self._parsers.append(BraceExpressionParser())
         self._parsers.append(ExpressionParser())
 
