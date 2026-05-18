@@ -223,11 +223,11 @@ const WindowsPage: FC = () => {
 
               <Button
                 icon={<StopOutlined />}
-                disabled={!selectedCharacter?.running}
+                disabled={!selectedCharacter?.currentTask && taskCount === 0}
                 onClick={async () => {
                   const hwnd = characterStore.selectedHwnd!;
                   await window.pywebview?.api.emit("API:SCRIPT:STOP", hwnd);
-                  characterStore.update({ hwnd, running: false, currentTask: null });
+                  characterStore.update({ hwnd, currentTask: null });
                 }}
                 style={{ borderRadius:8, fontWeight:500, borderColor: "#fecaca", color: "#dc2626" }}>
                 结束任务
