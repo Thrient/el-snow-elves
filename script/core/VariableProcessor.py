@@ -334,6 +334,17 @@ class BraceExpressionParser(ValueParser):
         return ExpressionValue(match.group(1), [])
 
 
+class JsonParser(ValueParser):
+    """尝试将字符串反序列化为 Python 对象（数字/布尔/列表/字典）"""
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return None
+        try:
+            return ConstantValue(json.loads(raw_value.strip()))
+        except (json.JSONDecodeError, ValueError):
+            return None
+
+
 # ---------- 变量处理器 ----------
 class VariableProcessor:
     def __init__(self, variables = None):
@@ -351,6 +362,7 @@ class VariableProcessor:
         self._parsers.append(InlineTemplateParser())
         self._parsers.append(BraceExpressionParser())
         self._parsers.append(ExpressionParser())
+        self._parsers.append(JsonParser())
 
     def register_parser(self, parser):
         self._parsers.append(parser)
