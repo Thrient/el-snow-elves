@@ -100,7 +100,8 @@
       {
         "span": 24,
         "model": "el-input-tags",
-        "store": "喊话内容"
+        "store": "喊话内容",
+        "text": "喊话内容"
       }
     ],
     [

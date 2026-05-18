@@ -435,13 +435,16 @@ class App:
         self._script(hwnd)
 
     def unbind(self, hwnd):
-        if hwnd not in self._script_instances:
-            logging.warning(f"窗口未绑定: hwnd={hwnd}")
-            return
-        script = self._script_instances.pop(hwnd)
-        script.stop()
-        Window.enable_window(hwnd)
-        self._lock_states.pop(hwnd, None)
+        script = self._script_instances.pop(hwnd, None)
+        if script:
+            script.stop()
+        # 无论是否在实例列表中，都确保解锁
+        if hwnd in self._lock_states:
+            Window.enable_window(hwnd)
+            self._lock_states.pop(hwnd, None)
+            logging.info(f"[Lock] 窗口已解锁: hwnd={hwnd}")
+        else:
+            Window.enable_window(hwnd)
         logging.info(f"解绑窗口: hwnd={hwnd}")
 
     def export_task(self, task_id):
