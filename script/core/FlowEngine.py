@@ -257,6 +257,8 @@ class FlowEngine(Thread):
     def _run_action(self, step_def):
         retry = step_def.get("retry", {})
         for attempt in range(max(1, retry.get("times", 1))):
+            if self._paused.is_set():
+                return []
             result = self.action(self._hwnd, step_def)
             if result:
                 return result
