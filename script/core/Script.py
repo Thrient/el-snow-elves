@@ -27,6 +27,11 @@ class Script(Thread):
         self._stopped.set()
         self._paused.set()
 
+    def skip_current(self):
+        """跳过当前任务，自动继续下一个"""
+        logging.info(f"跳过当前任务: hwnd={self._hwnd}")
+        self._paused.set()
+
     def _wait_while_paused(self):
         while self._paused.is_set() and not self._stopped.is_set():
             time.sleep(0.2)
@@ -64,3 +69,6 @@ class Script(Thread):
                     engine.loop()
                 engine.start()
                 engine.join()
+                # 如果是 skip_current 触发的暂停，自动恢复继续下一个任务
+                if self._paused.is_set() and not self._stopped.is_set():
+                    self._paused.clear()

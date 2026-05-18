@@ -609,18 +609,6 @@
       "检测主界面"
     ]
   },
-  "等待切换角色界面": {
-    "action": "wait",
-    "params": {
-      "args": [
-        "按钮登录进入游戏"
-      ],
-      "seconds": 30
-    },
-    "postfix": [
-      "激活窗口"
-    ]
-  },
   "选择需求商品": {
     "action": "touch",
     "params": {

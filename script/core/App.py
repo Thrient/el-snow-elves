@@ -350,8 +350,8 @@ class App:
         if hwnd not in self._script_instances:
             return
         script = self._script_instances[hwnd]
-        script.stop()
-        logging.info(f"[Stop] 任务已停止: hwnd={hwnd}")
+        script.skip_current()
+        logging.info(f"[Stop] 跳过当前任务: hwnd={hwnd}")
 
     def lock_window(self, hwnd):
         """锁定窗口（鼠标穿透），防止用户误触"""
