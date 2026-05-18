@@ -126,7 +126,7 @@ const TaskEditorPage: FC = () => {
     taskValueKeys.map((k) => ({ value: `{${k}}`, label: `{${k}}` })),
     [taskValueKeys]);
 
-  const makeStepOpts = (names: string[], source: Record<string, Step>, suffix: string) =>
+  const makeStepOpts = (names: string[], source: Record<string, Step>, _suffix: string) =>
     names.map((k) => {
       const s = source[k];
       return { value: k, label: s?.description ? `${k} — ${s.description}` : k };

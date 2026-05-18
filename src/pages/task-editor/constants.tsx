@@ -21,7 +21,6 @@ import {
   ClockCircleOutlined,
   EyeInvisibleOutlined,
   SwapOutlined,
-  CheckCircleOutlined,
   BranchesOutlined,
 } from "@ant-design/icons";
 
