@@ -49,12 +49,8 @@ class TemplateMatcher:
         if not results:
             return []
         best = results[0]
-        rect = best["rectangle"]
-        # airtest rectangle 格式: (x, y, w, h) 扁平 4 元组
-        if len(rect) == 4:
-            px, py, w, h = rect
-        else:
-            (px, py), (w, h) = rect
+        px, py = best["rectangle"][0]
+        h, w = tpl_img.shape[:2]
         return [(px + w // 2 + x1, py + h // 2 + y1)]
 
     @staticmethod
