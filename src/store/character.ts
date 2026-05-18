@@ -87,6 +87,12 @@ export const useCharacterStore = create<State>((set, get) => ({
       const settingsValues = useSettingsStore.getState().values ?? {}
       return { ...item, values: { ...item.values, CONFIG: settingsValues } }
     }
+    // 队列已空，清除当前任务名
+    set((state) => ({
+      characters: state.characters.map((c) =>
+        c.hwnd === hwnd ? { ...c, currentTask: null } : c
+      ),
+    }))
     return item
   },
   remove: (hwnd: string) => {
