@@ -2,11 +2,12 @@ import {
   useState, useCallback, useMemo,
   type FC, type DragEvent as ReactDragEvent,
 } from "react";
-import { Button, Input, InputNumber, Modal, Select, Switch, message } from "antd";
-import type { Cell, CellModel, CellOption } from "@/types/task";
+import { Button, Input, Modal, message } from "antd";
+import type { Cell, CellModel } from "@/types/task";
 import { detectValueType } from "@/utils/type-compat";
 import MiniPreview from "@/components/mini-preview/MiniPreview";
 import ComponentPickerModal from "./ComponentPickerModal";
+import ControlEditorModal from "./ControlEditorModal";
 
 /* ── helpers ── */
 
@@ -41,8 +42,6 @@ const MODEL_META: Record<string, { label: string; short: string; color: string; 
   "el-input-tags":  { label: "标签输入", short: "#",  color: "#0891b2", bg: "#ecfeff" },
 };
 
-const OPTION_MODELS = new Set<CellModel>(["el-select", "el-checkbox-group", "el-radio"]);
-
 const DEFAULT_CELL_SPAN = 12;
 
 /* ── props ── */
@@ -53,12 +52,6 @@ export interface LayoutBuilderProps {
   onConfirm?: (layout: Cell[][], values: Record<string, unknown>) => void;
   onCancel?: () => void;
 }
-
-/* ── sub: label ── */
-
-const Lbl: FC<{ t: string }> = ({ t }) => (
-  <span className="text-[11px] font-medium text-slate-500 block mb-1">{t}</span>
-);
 
 /* ── main ── */
 
@@ -231,13 +224,6 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
     return t;
   }
 
-  // Display a value for editing (string-friendly)
-  function displayValue(v: unknown): string {
-    if (typeof v === "string") return v;
-    if (typeof v === "number" || typeof v === "boolean") return String(v);
-    return v === undefined || v === null ? "" : JSON.stringify(v);
-  }
-
   const handleCreateVar = useCallback(() => {
     if (!newVarName.trim()) {
       message.warning("变量名不能为空");
@@ -264,56 +250,6 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
       if (!(k in finalVals)) finalVals[k] = v ?? "";
     }
     onConfirm?.(final, finalVals);
-  };
-
-  /* ── editor: field render ── */
-
-  const modelFields: Record<string, string[]> = {
-    "el-input":        ["text","placeholder","disabled","maxLength","allowClear"],
-    "el-input-number": ["text","placeholder","disabled","min","max","step"],
-    "el-select":       ["text","placeholder","disabled","mode","allowClear"],
-    "el-textarea":     ["text","placeholder","disabled","rows","maxLength"],
-    "el-slider":       ["text","disabled","min","max","step"],
-    "el-switch":       ["text","disabled"],
-    "el-checkbox":     ["text","disabled"],
-    "el-checkbox-group":["text","disabled"],
-    "el-radio":        ["text","disabled","optionType"],
-    "el-date-picker":  ["text","placeholder","disabled","format"],
-    "el-color-picker": ["text","disabled"],
-    "el-input-tags":  ["text","placeholder","disabled","allowClear"],
-  };
-
-  const renderField = (ri: number, ci: number, cell: Cell, field: string) => {
-    const val = (cell as any)[field];
-    const set = (v: any) => updateCell(ri, ci, { [field]: v === undefined || v === "" || v === false ? undefined : v });
-
-    switch (field) {
-      case "text":
-        return <div key="text"><Lbl t="标签"/><Input size="small" className="text-xs" value={val ?? ""} placeholder="控件标签" onChange={(e) => set(e.target.value || undefined)}/></div>;
-      case "placeholder":
-        return <div key="ph"><Lbl t="占位提示"/><Input size="small" className="text-xs" value={val ?? ""} placeholder="placeholder" onChange={(e) => set(e.target.value || undefined)}/></div>;
-      case "disabled":
-        return <div key="dis"><Lbl t="禁用"/><Switch size="small" checked={val ?? false} onChange={set}/></div>;
-      case "min":
-        return <div key="min"><Lbl t="最小值"/><InputNumber size="small" className="w-full" value={val ?? undefined} placeholder="不限" onChange={(v) => set(v ?? undefined)}/></div>;
-      case "max":
-        return <div key="max"><Lbl t="最大值"/><InputNumber size="small" className="w-full" value={val ?? undefined} placeholder="不限" onChange={(v) => set(v ?? undefined)}/></div>;
-      case "step":
-        return <div key="step"><Lbl t="步长"/><InputNumber size="small" className="w-full" value={val ?? undefined} placeholder="1" onChange={(v) => set(v ?? undefined)}/></div>;
-      case "rows":
-        return <div key="rows"><Lbl t="行数"/><InputNumber size="small" className="w-full" min={1} value={val ?? 4} onChange={(v) => updateCell(ri, ci, { rows: v ?? 4 })}/></div>;
-      case "allowClear":
-        return <div key="ac"><Lbl t="可清除"/><Switch size="small" checked={val ?? false} onChange={set}/></div>;
-      case "maxLength":
-        return <div key="ml"><Lbl t="最大长度"/><InputNumber size="small" className="w-full" min={0} value={val} placeholder="不限" onChange={(v) => set(v ?? undefined)}/></div>;
-      case "mode":
-        return <div key="mode"><Lbl t="多选"/><Switch size="small" checked={val === "multiple"} onChange={(v) => set(v ? "multiple" : undefined)}/></div>;
-      case "optionType":
-        return <div key="ot"><Lbl t="样式"/><Select size="small" className="w-full" value={val} allowClear placeholder="默认" options={[{value:"default",label:"默认"},{value:"button",label:"按钮"}]} onChange={(v) => set(v || undefined)}/></div>;
-      case "format":
-        return <div key="fmt"><Lbl t="日期格式"/><Input size="small" className="text-xs" value={val ?? ""} placeholder="YYYY-MM-DD" onChange={(e) => set(e.target.value || undefined)}/></div>;
-      default: return null;
-    }
   };
 
   /* ═══════════════════════════════════════════════
@@ -401,7 +337,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
       </div>
 
       {/* ═══ RIGHT: 布局画布 ═══ */}
-      <div className="flex-1 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-lg">
+      <div className="relative flex-1 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-lg">
         {/* toolbar */}
         <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">
           <div className="flex items-center gap-2">
@@ -556,119 +492,25 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
           )}
         </div>
 
-        {/* ── editor panel (bottom dock) ── */}
-        {selCell && (
-          <div
-            className="border-t-2 border-indigo-200 bg-gradient-to-b from-white to-slate-50/30 px-5 py-4 shrink-0 animate-slideUp"
-            style={{ maxHeight: 260, overflowY: "auto" }}
-          >
-            {/* header */}
-            <div className="flex items-center gap-2.5 mb-4">
-              <span className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm"
-                style={{ backgroundColor: MODEL_META[selCell.model ?? "el-input"]?.bg, color: MODEL_META[selCell.model ?? "el-input"]?.color }}>
-                <span className="text-sm font-bold">{MODEL_META[selCell.model ?? "el-input"]?.short}</span>
-              </span>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-bold text-slate-700">
-                  {MODEL_META[selCell.model ?? "el-input"]?.label ?? "控件"}
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  行 {sel!.ri + 1} · 格 {(sel!.ci ?? 0) + 1} · {selCell.span ?? DEFAULT_CELL_SPAN} 列宽
-                </span>
-              </div>
-              <div className="flex-1" />
-              <Button type="text" size="small" danger className="!text-[11px] !rounded-lg hover:!bg-rose-50"
-                onClick={() => removeCell(sel!.ri, sel!.ci!)}>删除控件</Button>
-            </div>
-
-            {/* basic info card */}
-            <div className="rounded-xl border border-slate-100 bg-white/80 p-4 mb-3 shadow-sm">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-3">基本信息</span>
-              <div className="grid grid-cols-4 gap-3">
-                <div>
-                  <Lbl t="变量名"/>
-                  <Input size="small" className="!rounded-lg !text-xs" value={selCell.store ?? ""} readOnly/>
-                </div>
-                <div>
-                  <Lbl t="宽度 (1-24)"/>
-                  <InputNumber size="small" className="w-full !rounded-lg" min={1} max={24}
-                    value={selCell.span ?? DEFAULT_CELL_SPAN}
-                    onChange={(v) => updateCell(sel!.ri, sel!.ci!, { span: v ?? DEFAULT_CELL_SPAN })}/>
-                </div>
-                <div>
-                  <Lbl t="默认值"/>
-                  <Input size="small" className="!rounded-lg !text-xs"
-                    value={displayValue(selCell.store ? values[selCell.store] : "")}
-                    onChange={(e) => {
-                      const store = selCell.store;
-                      if (!store) return;
-                      setValues((prev) => ({ ...prev, [store]: parseTyped(e.target.value) }));
-                    }}/>
-                </div>
-                <div className="flex items-end pb-0.5">
-                  <Button size="small" className="!rounded-lg"
-                    onClick={() => {
-                      setPendingVar({ name: selCell.store ?? "", value: values[selCell.store ?? ""] ?? "", ri: sel!.ri, ci: sel!.ci! });
-                      setPickerOpen(true);
-                    }}>更换控件</Button>
-                </div>
-              </div>
-            </div>
-
-            {/* properties card */}
-            <div className="rounded-xl border border-slate-100 bg-white/80 p-4 mb-3 shadow-sm">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-3">属性配置</span>
-              <div className="grid grid-cols-4 gap-3">
-                {(modelFields[selCell.model ?? "el-input"] ?? []).map((f) => renderField(sel!.ri, sel!.ci!, selCell, f))}
-              </div>
-            </div>
-
-            {/* options card */}
-            {OPTION_MODELS.has(selCell.model ?? "el-input") && (
-              <div className="rounded-xl border border-slate-100 bg-white/80 p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">选项列表</span>
-                  <Button type="dashed" size="small" className="!text-[10px] !rounded-lg"
-                    onClick={() => {
-                      const opts = [...(selCell.options ?? []), { label: "", value: "" }];
-                      updateCell(sel!.ri, sel!.ci!, { options: opts });
-                    }}>
-                    + 添加选项
-                  </Button>
-                </div>
-                <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto">
-                  {(selCell.options ?? []).length === 0 && (
-                    <span className="text-[10px] text-slate-400 py-2 text-center bg-slate-50 rounded-lg">暂无选项，点击上方按钮添加</span>
-                  )}
-                  {(selCell.options ?? []).map((opt: CellOption, oi: number) => (
-                    <div key={oi} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl">
-                      <Input size="small" placeholder="标签" className="flex-1 !text-xs !rounded-lg"
-                        value={opt.label}
-                        onChange={(e) => {
-                          const opts = (selCell.options ?? []).map((o, i) => i === oi ? { ...o, label: e.target.value } : o);
-                          updateCell(sel!.ri, sel!.ci!, { options: opts });
-                        }}/>
-                      <Input size="small" placeholder="值" className="flex-1 !text-xs !rounded-lg"
-                        value={typeof opt.value === "number" ? String(opt.value) : opt.value}
-                        onChange={(e) => {
-                          const opts = (selCell.options ?? []).map((o, i) => i === oi ? { ...o, value: e.target.value } : o);
-                          updateCell(sel!.ri, sel!.ci!, { options: opts });
-                        }}/>
-                      <button
-                        className="w-6 h-6 rounded-lg bg-white hover:bg-rose-100 text-slate-300 hover:text-rose-400 flex items-center justify-center text-sm transition-all duration-200 shrink-0 shadow-sm"
-                        onClick={() => {
-                          updateCell(sel!.ri, sel!.ci!, { options: (selCell.options ?? []).filter((_, i) => i !== oi) });
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* ── Control Editor Popup ── */}
+        <ControlEditorModal
+          open={!!selCell}
+          cell={selCell}
+          ri={sel?.ri ?? 0}
+          ci={sel?.ci ?? 0}
+          values={values}
+          onClose={() => setSel(null)}
+          onUpdateCell={updateCell}
+          onRemoveCell={removeCell}
+          onChangeControl={() => {
+            if (!selCell) return;
+            setPendingVar({ name: selCell.store ?? "", value: values[selCell.store ?? ""] ?? "", ri: sel!.ri, ci: sel!.ci! });
+            setPickerOpen(true);
+          }}
+          onChangeValue={(store, value) => {
+            setValues((prev) => ({ ...prev, [store]: value }));
+          }}
+        />
 
         {/* bottom bar */}
         <div className="flex items-center gap-3 px-5 py-3 border-t border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">

@@ -113,7 +113,9 @@ const TaskPage: FC = () => {
       title: '配置项',
       key: 'config',
       render: (_, record) => {
-        const entries = Object.entries(record.values);
+        // 只展示已布局的变量，未布局的是内置变量不对外暴露
+        const layoutKeys = new Set((record.layout ?? []).flatMap((row) => row.map((c) => c.store).filter(Boolean)));
+        const entries = Object.entries(record.values).filter(([k]) => layoutKeys.has(k));
         if (entries.length === 0) {
           return <span className="text-[#ccc] text-xs">暂无配置</span>;
         }

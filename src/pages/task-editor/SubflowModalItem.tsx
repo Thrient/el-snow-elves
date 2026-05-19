@@ -51,10 +51,6 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
     return Object.keys(def).map((k) => ({ value: k, label: k }));
   }, [ctx.stepParamsMap, ctx.allStepsData, baseName]);
 
-  const varOnlyOptions = useMemo(
-    () => [...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars],
-    [ctx.builtinVars, ctx.configVars, ctx.taskValueVars],
-  );
   const allOptions = useMemo(
     () => [...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars,
            ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps],
