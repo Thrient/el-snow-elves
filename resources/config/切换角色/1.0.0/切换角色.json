@@ -45,6 +45,83 @@
   ],
   "monitors": {},
   "common": {
+    "设置角色信息": {
+      "action": "set_character",
+      "params": {
+        "box": [
+          158,
+          186,
+          742,
+          892
+        ]
+      },
+      "next": "任务结束"
+    },
+    "切换角色1": {
+      "action": "mouse_click",
+      "params": {
+        "pos": [
+          1245,
+          70
+        ]
+      },
+      "prefix": [
+        "按钮设置切换角色"
+      ],
+      "next": "点击登录"
+    },
+    "切换角色2": {
+      "action": "mouse_click",
+      "params": {
+        "pos": [
+          1245,
+          170
+        ]
+      },
+      "prefix": [
+        "按钮设置切换角色"
+      ],
+      "next": "点击登录"
+    },
+    "切换角色3": {
+      "action": "mouse_click",
+      "params": {
+        "pos": [
+          1245,
+          270
+        ]
+      },
+      "prefix": [
+        "按钮设置切换角色"
+      ],
+      "next": "点击登录"
+    },
+    "切换角色4": {
+      "action": "mouse_click",
+      "params": {
+        "pos": [
+          1245,
+          370
+        ]
+      },
+      "prefix": [
+        "按钮设置切换角色"
+      ],
+      "next": "点击登录"
+    },
+    "切换角色5": {
+      "action": "mouse_click",
+      "params": {
+        "pos": [
+          1245,
+          470
+        ]
+      },
+      "prefix": [
+        "按钮设置切换角色"
+      ],
+      "next": "点击登录"
+    },
     "打开属性": {
       "action": "touch",
       "params": {
@@ -53,7 +130,7 @@
         ]
       },
       "prefix": [
-        "检查背包"
+        "打开背包"
       ]
     },
     "按钮设置确定": {
@@ -72,7 +149,7 @@
         ]
       },
       "prefix": [
-        "检查设置"
+        "打开设置"
       ],
       "postfix": [
         "按钮设置确定",

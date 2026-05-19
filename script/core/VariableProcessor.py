@@ -318,7 +318,12 @@ class InlineTemplateValue(Evaluable):
             if computed and var_name in computed:
                 return str(computed[var_name](default))
             return str(variables.get(var_name, default))
-        return InlineTemplateParser._TEMPLATE_RE.sub(replacer, self.template)
+        resolved = InlineTemplateParser._TEMPLATE_RE.sub(replacer, self.template)
+        # Try to convert structured results like "[1335, 750]" or "1335" to Python types
+        try:
+            return json.loads(resolved)
+        except (json.JSONDecodeError, ValueError):
+            return resolved
 
 
 class BraceExpressionParser(ValueParser):

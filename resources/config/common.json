@@ -2,10 +2,130 @@
   "等待时间": {
     "action": "wait",
     "params": {
-      "args": [
-      ],
+      "args": [],
       "seconds": "{等待时间:1}"
     }
+  },
+  "输入内容": {
+    "action": "input",
+    "params": {
+      "text": "{文本:}"
+    }
+  },
+  "点击坐标": {
+    "action": "mouse_click",
+    "params": {
+      "pos": [
+        "{x:1335}",
+        "{y:750}"
+      ]
+    }
+  },
+  "点击按键": {
+    "action": "key_click",
+    "params": {
+      "key": "{key:}"
+    }
+  },
+  "点击模板": {
+    "action": "touch",
+    "params": {
+      "args": "{split(模板, ',')}",
+      "click_mode": "{点击模式:random}",
+      "threshold": "{阈值:0.85}",
+      "x": "{X:0}",
+      "y": "{Y:0}"
+    }
+  },
+  "打开地图": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "标志地图当前坐标"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      {
+        "step": "点击按键",
+        "args": {
+          "key": "{CONFIG.地图}"
+        }
+      }
+    ],
+    "next": "任务结束"
+  },
+  "打开队伍": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面队伍"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      {
+        "step": "点击按键",
+        "args": {
+          "key": "{CONFIG.队伍}"
+        }
+      }
+    ],
+    "next": "任务结束"
+  },
+  "打开好友": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面好友"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      {
+        "step": "点击按键",
+        "args": {
+          "key": "{CONFIG.好友}"
+        }
+      }
+    ],
+    "next": "任务结束"
+  },
+  "打开背包": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面物品"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      {
+        "step": "点击按键",
+        "args": {
+          "key": "{CONFIG.背包}"
+        }
+      }
+    ],
+    "next": "任务结束"
+  },
+  "打开设置": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面设置"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      {
+        "step": "点击按键",
+        "args": {
+          "key": "{CONFIG.设置}"
+        }
+      }
+    ],
+    "next": "任务结束"
   },
   "普通世界喊话": {
     "action": "touch",
@@ -62,7 +182,7 @@
       ]
     },
     "prefix": [
-      "检查地图"
+      "打开地图"
     ],
     "postfix": [
       {
@@ -133,12 +253,6 @@
       ]
     }
   },
-  "输入内容": {
-    "action": "input",
-    "params": {
-      "text": "{文本:}"
-    }
-  },
   "打开世界地图": {
     "action": "touch",
     "params": {
@@ -154,26 +268,6 @@
       "args": [
         "按钮地图{目标区域:}区域"
       ]
-    },
-    "next": "任务结束"
-  },
-  "检查地图": {
-    "action": "exits",
-    "params": {
-      "args": [
-        "标志地图当前坐标"
-      ]
-    },
-    "failure_extra": [
-      "检测主界面",
-      "打开地图"
-    ],
-    "next": "任务结束"
-  },
-  "打开地图": {
-    "action": "key_click",
-    "params": {
-      "key": "{CONFIG.地图}"
     },
     "next": "任务结束"
   },
@@ -228,7 +322,7 @@
       ]
     },
     "prefix": [
-      "检查队伍"
+      "打开队伍"
     ],
     "failure_extra": [
       "退出队伍",
@@ -246,72 +340,6 @@
       "按钮确定"
     ]
   },
-  "检查队伍": {
-    "action": "exits",
-    "params": {
-      "args": [
-        "界面队伍"
-      ]
-    },
-    "failure_extra": [
-      "检测主界面",
-      "打开队伍"
-    ],
-    "next": "任务结束"
-  },
-  "打开队伍": {
-    "action": "key_click",
-    "params": {
-      "key": "{CONFIG.队伍}"
-    },
-    "next": "任务结束"
-  },
-  "检查好友": {
-    "action": "exits",
-    "params": {
-      "args": [
-        "界面好友"
-      ]
-    },
-    "failure_extra": [
-      "检测主界面",
-      "打开好友"
-    ],
-    "next": "任务结束"
-  },
-  "打开好友": {
-    "action": "key_click",
-    "params": {
-      "key": "{CONFIG.好友}"
-    },
-    "next": "任务结束"
-  },
-  "检查背包": {
-    "action": "exits",
-    "params": {
-      "args": [
-        "界面物品"
-      ]
-    },
-    "failure_extra": [
-      "检测主界面",
-      "打开背包"
-    ],
-    "next": "任务结束"
-  },
-  "检查设置": {
-    "action": "exits",
-    "params": {
-      "args": [
-        "界面设置"
-      ]
-    },
-    "failure_extra": [
-      "检测主界面",
-      "打开设置"
-    ],
-    "next": "任务结束"
-  },
   "打开综合入口": {
     "action": "touch",
     "params": {
@@ -320,11 +348,11 @@
       ]
     },
     "prefix": [
-      "检查背包"
+      "打开背包"
     ],
     "next": "任务结束"
   },
-  "检查活动": {
+  "打开活动": {
     "action": "exits",
     "params": {
       "args": [
@@ -333,7 +361,12 @@
     },
     "failure_extra": [
       "打开综合入口",
-      "打开活动"
+      {
+        "step": "点击模板",
+        "args": {
+          "模板": "按钮物品活动"
+        }
+      }
     ],
     "next": "任务结束"
   },
@@ -345,7 +378,7 @@
       ]
     },
     "prefix": [
-      "检查活动"
+      "打开活动"
     ],
     "next": "任务结束"
   },
@@ -357,20 +390,11 @@
       ]
     },
     "prefix": [
-      "检查活动"
+      "打开活动"
     ],
     "next": "任务结束"
   },
-  "打开活动": {
-    "action": "touch",
-    "params": {
-      "args": [
-        "按钮物品活动"
-      ]
-    },
-    "next": "任务结束"
-  },
-  "检查山河器": {
+  "打开山河器": {
     "action": "exits",
     "params": {
       "args": [
@@ -379,31 +403,13 @@
     },
     "failure_extra": [
       "打开综合入口",
-      "打开山河器"
+      {
+        "step": "点击模板",
+        "args": {
+          "模板": "按钮物品山河器"
+        }
+      }
     ],
-    "next": "任务结束"
-  },
-  "打开山河器": {
-    "action": "touch",
-    "params": {
-      "args": [
-        "按钮物品山河器"
-      ]
-    },
-    "next": "任务结束"
-  },
-  "打开背包": {
-    "action": "key_click",
-    "params": {
-      "key": "{CONFIG.背包}"
-    },
-    "next": "任务结束"
-  },
-  "打开设置": {
-    "action": "key_click",
-    "params": {
-      "key": "{CONFIG.设置}"
-    },
     "next": "任务结束"
   },
   "等待到达": {
@@ -520,83 +526,6 @@
       "seconds": null
     },
     "next": "任务结束"
-  },
-  "设置角色信息": {
-    "action": "set_character",
-    "params": {
-      "box": [
-        158,
-        186,
-        742,
-        892
-      ]
-    },
-    "next": "任务结束"
-  },
-  "切换角色1": {
-    "action": "mouse_click",
-    "params": {
-      "pos": [
-        1245,
-        70
-      ]
-    },
-    "prefix": [
-      "按钮设置切换角色"
-    ],
-    "next": "点击登录"
-  },
-  "切换角色2": {
-    "action": "mouse_click",
-    "params": {
-      "pos": [
-        1245,
-        170
-      ]
-    },
-    "prefix": [
-      "按钮设置切换角色"
-    ],
-    "next": "点击登录"
-  },
-  "切换角色3": {
-    "action": "mouse_click",
-    "params": {
-      "pos": [
-        1245,
-        270
-      ]
-    },
-    "prefix": [
-      "按钮设置切换角色"
-    ],
-    "next": "点击登录"
-  },
-  "切换角色4": {
-    "action": "mouse_click",
-    "params": {
-      "pos": [
-        1245,
-        370
-      ]
-    },
-    "prefix": [
-      "按钮设置切换角色"
-    ],
-    "next": "点击登录"
-  },
-  "切换角色5": {
-    "action": "mouse_click",
-    "params": {
-      "pos": [
-        1245,
-        470
-      ]
-    },
-    "prefix": [
-      "按钮设置切换角色"
-    ],
-    "next": "点击登录"
   },
   "点击登录": {
     "action": "touch",

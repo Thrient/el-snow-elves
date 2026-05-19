@@ -46,28 +46,10 @@
       ],
       "next": "判断结束"
     },
-    "重置索引": {
-      "action": "{True}",
-      "set": [
-        {
-          "name": "index",
-          "value": 0
-        }
-      ]
-    },
-    "递增索引": {
-      "action": "{True}",
-      "set": [
-        {
-          "name": "index",
-          "value": "{index}++"
-        }
-      ]
-    },
     "判断结束": {
       "action": "{喊话次数索引 >= 喊话次数}",
       "params": {},
-      "failure": "乘坐坐骑",
+      "failure": "世界喊话",
       "set": [
         {
           "name": "喊话次数索引",
@@ -92,7 +74,6 @@
   "values": {
     "喊话内容": "",
     "喊话次数": 100,
-    "index": 0,
     "喊话次数索引": 0
   },
   "layout": [
