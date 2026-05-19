@@ -11,8 +11,7 @@ import BoxPickerModal from "@/components/box-picker/BoxPickerModal";
 import PreprocessEditor from "./PreprocessEditor";
 import KeyInput from "@/components/settings-field/components/KeyInput";
 import CoordPickerModal from "@/components/coord-picker/CoordPickerModal";
-import ExpressionActionBuilder from "@/components/expression-builder/ExpressionActionBuilder";
-import VariablePicker from "@/components/variable-picker/VariablePicker";
+import VarOpBuilder from "@/components/var-op-builder/VarOpBuilder";
 import { useCharacterStore } from "@/store/character";
 import { useEditorStore } from "@/store/editor-store";
 
@@ -187,7 +186,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
               option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
             }
           />
-          <VariablePicker
+          <VarOpBuilder
             context="params"
             variables={[
               ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
@@ -201,7 +200,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
               onMouseEnter={(e) => { e.currentTarget.style.color = "#d4513b"; e.currentTarget.style.background = "#fef3ef"; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "#c4bbb2"; e.currentTarget.style.background = "transparent"; }}
             >fx</button>
-          </VariablePicker>
+          </VarOpBuilder>
         </div>
       );
     }
@@ -258,7 +257,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
             if (v !== "" && !isNaN(n)) v = n;
             onUpdate("params", { ...params, [key]: v });
           }} />
-        <VariablePicker
+        <VarOpBuilder
           context="params"
           variables={[
             ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
@@ -277,7 +276,7 @@ const ParamsEditor: FC<{ step: Step; ctx: EditorCtx; onUpdate: Props["onUpdate"]
             onMouseEnter={(e) => { e.currentTarget.style.color = "#d4513b"; e.currentTarget.style.background = "#fef3ef"; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "#c4bbb2"; e.currentTarget.style.background = "transparent"; }}
           >fx</button>
-        </VariablePicker>
+        </VarOpBuilder>
       </div>
     );
   };
@@ -446,7 +445,7 @@ const SubListEditor: FC<{
               options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps]}
               filterOption={(iv, opt) => opt?.label?.toLowerCase().includes(iv.toLowerCase()) ?? false}
               onChange={(v) => { const u = [...arr]; u[i] = { ...u[i], value: v }; onChange(u); }} />
-            <VariablePicker
+            <VarOpBuilder
               context="set"
               variables={[
                 ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
@@ -457,7 +456,7 @@ const SubListEditor: FC<{
             >
               <span className="text-[#c0c4cc] hover:text-[#d4513b] opacity-0 group-hover:opacity-100 transition-all shrink-0 cursor-pointer select-none mx-0.5"
                 style={{ fontSize: 14, lineHeight: 1 }}>fx</span>
-            </VariablePicker>
+            </VarOpBuilder>
             <span className="text-[#c0c4cc] opacity-0 group-hover:opacity-100 transition-all shrink-0 text-[10px] select-none cursor-grab">⠿</span>
             <button onClick={() => onChange(arr.filter((_, j) => j !== i))}
               className="text-[#c0c4cc] hover:text-[#ff4d4f] opacity-0 group-hover:opacity-100 transition-all text-xs shrink-0 border-0 bg-transparent cursor-pointer">×</button>
@@ -538,69 +537,78 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
             <div className="w-1 h-4 rounded-full bg-[#1677ff]" />
             <span className="text-[11px] font-semibold text-[#1a1a2e]">基础</span>
           </div>
-          <Select className="w-full" size="small" allowClear showSearch placeholder="选择动作…"
-            value={step.action || undefined} popupMatchSelectWidth={false}
-            onChange={v => {
-              const newAction = v ?? "";
-              const allowed = newAction ? (ACTION_PARAMS[newAction] ?? []) : [];
-              const oldParams = (step.params ?? {}) as Record<string, unknown>;
-              const clean: Record<string, unknown> = {};
-              for (const k of Object.keys(oldParams)) {
-                if (k === "args" || allowed.includes(k)) clean[k] = oldParams[k];
-              }
-              for (const k of (REQUIRED_PARAMS[newAction] ?? [])) {
-                if (!(k in clean)) clean[k] = "";
-              }
-              useEditorStore.getState().updateStep(stepName, {
-                ...step, action: newAction, params: clean,
-              }, isCommon);
-              onUpdate("action", newAction);
-            }}
-            options={ACTION_OPTS.map(o => ({
-              value: o.value,
-              label: (
-                <span className="flex items-center gap-1.5">
-                  <span style={{ color: o.color, fontSize: 13, display: "inline-flex" }}>{o.icon}</span>
-                  <code className="text-[11px] font-semibold px-1.5 py-px rounded" style={{ background: `${o.color}14`, color: o.color }}>
-                    {o.label}
-                  </code>
-                </span>
-              ),
-            }))}
-            optionRender={(option) => {
-              const o = ACTION_OPTS.find((a) => a.value === option.value);
-              if (!o) return option.label;
-              return (
-                <div className="flex items-center gap-2 px-1 py-0.5">
-                  <span className="flex items-center justify-center rounded shrink-0" style={{ width: 24, height: 24, background: `${o.color}14`, color: o.color, fontSize: 13 }}>
-                    {o.icon}
+          <div className="flex items-center gap-1">
+            <Select className="flex-1" size="small" allowClear showSearch placeholder="选择动作…"
+              value={step.action || undefined} popupMatchSelectWidth={false}
+              onChange={v => {
+                const newAction = v ?? "";
+                const allowed = newAction ? (ACTION_PARAMS[newAction] ?? []) : [];
+                const oldParams = (step.params ?? {}) as Record<string, unknown>;
+                const clean: Record<string, unknown> = {};
+                for (const k of Object.keys(oldParams)) {
+                  if (k === "args" || allowed.includes(k)) clean[k] = oldParams[k];
+                }
+                for (const k of (REQUIRED_PARAMS[newAction] ?? [])) {
+                  if (!(k in clean)) clean[k] = "";
+                }
+                useEditorStore.getState().updateStep(stepName, {
+                  ...step, action: newAction, params: clean,
+                }, isCommon);
+                onUpdate("action", newAction);
+              }}
+              options={ACTION_OPTS.map(o => ({
+                value: o.value,
+                label: (
+                  <span className="flex items-center gap-1.5">
+                    <span style={{ color: o.color, fontSize: 13, display: "inline-flex" }}>{o.icon}</span>
+                    <code className="text-[11px] font-semibold px-1.5 py-px rounded" style={{ background: `${o.color}14`, color: o.color }}>
+                      {o.label}
+                    </code>
                   </span>
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <code className="text-[11px] font-semibold px-1.5 py-px rounded" style={{ background: `${o.color}14`, color: o.color }}>
-                        {o.label}
-                      </code>
-                      <span className="text-[9px] uppercase tracking-wider font-semibold px-1 rounded" style={{ background: "#f3f0ec", color: "#9a8e82" }}>
-                        {o.group}
-                      </span>
+                ),
+              }))}
+              optionRender={(option) => {
+                const o = ACTION_OPTS.find((a) => a.value === option.value);
+                if (!o) return option.label;
+                return (
+                  <div className="flex items-center gap-2 px-1 py-0.5">
+                    <span className="flex items-center justify-center rounded shrink-0" style={{ width: 24, height: 24, background: `${o.color}14`, color: o.color, fontSize: 13 }}>
+                      {o.icon}
+                    </span>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <code className="text-[11px] font-semibold px-1.5 py-px rounded" style={{ background: `${o.color}14`, color: o.color }}>
+                          {o.label}
+                        </code>
+                        <span className="text-[9px] uppercase tracking-wider font-semibold px-1 rounded" style={{ background: "#f3f0ec", color: "#9a8e82" }}>
+                          {o.group}
+                        </span>
+                      </div>
+                      <span className="text-[11px] leading-tight" style={{ color: "#8b8fa3" }}>{o.desc}</span>
                     </div>
-                    <span className="text-[11px] leading-tight" style={{ color: "#8b8fa3" }}>{o.desc}</span>
                   </div>
-                </div>
-              );
-            }}
-          />
-
-          {/* Expression builder — shown when action is expression-type */}
-          {step.action && (step.action === "{...}" || step.action.startsWith("{")) && (
-            <ExpressionActionBuilder
-              value={step.action}
-              varOptions={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
-              values={ctx.values}
-              layout={ctx.layout}
-              onChange={(expr) => onUpdate("action", expr)}
+                );
+              }}
             />
-          )}
+            {step.action && (step.action === "{True}" || step.action.startsWith("{")) && (
+              <VarOpBuilder
+                context="when"
+                value={step.action}
+                variables={[
+                  ...ctx.builtinVars.map(v => ({ syntax: v.value, label: v.label, category: "system" as const })),
+                  ...ctx.configVars.map(v => ({ syntax: v.value, label: v.label, category: "config" as const })),
+                  ...ctx.taskValueVars.map(v => ({ syntax: v.value, label: v.label, category: "task" as const })),
+                ]}
+                onInsert={(expr) => onUpdate("action", expr)}
+              >
+                <button className="flex items-center justify-center rounded border-0 bg-transparent cursor-pointer shrink-0 transition-colors"
+                  style={{ width: 20, height: 20, color: "#6366f1", fontSize: 11, fontWeight: 600 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#eef2ff"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >fx</button>
+              </VarOpBuilder>
+            )}
+          </div>
         </div>
 
         {/* ── Debug execution ── */}

@@ -92,22 +92,32 @@ export function extractAllParams(
 
   const result: Record<string, unknown> = {};
 
-  // 1. From own params — both args array and named params values
-  const ownArgs = stepData.params?.args ?? [];
-  for (const arg of ownArgs) {
-    for (const m of String(arg).matchAll(/\{([^:}]+):([^}]*)\}/g)) {
+  // Scan a string value for both {var:default} and {split(var,...)} / {len(var)} patterns
+  const scanStr = (s: string) => {
+    // {var:default}
+    for (const m of s.matchAll(/\{([^{:}]+):([^}]*)\}/g)) {
       if (!(m[1] in result)) result[m[1]] = m[2];
     }
+    // {split(var, sep)} / {len(var)} — extract bare variable names from function args
+    for (const m of s.matchAll(/\b(split|len)\s*\(\s*([^,)]+)/g)) {
+      const name = m[2].trim();
+      if (name && !(name in result)) result[name] = "";
+    }
+  };
+
+  // 1. From own params — both args array and named params values
+  const ownArgs = stepData.params?.args;
+  if (Array.isArray(ownArgs)) {
+    for (const arg of ownArgs) scanStr(String(arg));
+  } else if (typeof ownArgs === "string") {
+    scanStr(ownArgs);
   }
-  // Also scan all non-args params values, e.g. {text: "{文本:600}"}
+  // Also scan all non-args params values
   if (stepData.params) {
     for (const [k, v] of Object.entries(stepData.params)) {
       if (k === "args") continue;
-      if (typeof v === "string") {
-        for (const m of v.matchAll(/\{([^{}:]+):([^}]*)\}/g)) {
-          if (!(m[1] in result)) result[m[1]] = m[2];
-        }
-      }
+      if (typeof v === "string") scanStr(v);
+      else if (Array.isArray(v)) v.forEach(item => { if (typeof item === "string") scanStr(item); });
     }
   }
 
@@ -121,12 +131,7 @@ export function extractAllParams(
       if (typeof item === "object" && item.args) {
         for (const [k, v] of Object.entries(item.args)) {
           if (!(k in result)) result[k] = v;
-          // Also scan value for {param:default} refs, e.g. "文本": "{横坐标:600}" → expose 横坐标
-          if (typeof v === "string") {
-            for (const m of v.matchAll(/\{([^{}:]+):([^}]*)\}/g)) {
-              if (!(m[1] in result)) result[m[1]] = m[2];
-            }
-          }
+          if (typeof v === "string") scanStr(v);
         }
       }
       // 2b. Recurse into the called step's own params + its sub-chains
