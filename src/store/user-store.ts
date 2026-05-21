@@ -30,7 +30,7 @@ export const useUserStore = create<State>((set) => ({
   appendTask: (task) => {
     const uid = _nextTaskUid++
     set((state) => ({
-      queue: [...state.queue, { id: task.id, name: task.name, version: task.version, values: { ...task.values }, _uid: uid }]
+      queue: [...state.queue, { id: task.id, name: task.name, version: task.version, values: { ...task.values }, valueTypes: task.valueTypes ? { ...task.valueTypes } : undefined, _uid: uid }]
     }))
   },
   removeTask: (uid: number) =>
@@ -92,6 +92,7 @@ export const useUserStore = create<State>((set) => ({
             name: t.name as string,
             version: t.version as string,
             values: (t.values ?? {}) as Record<string, unknown>,
+            valueTypes: t.valueTypes as Record<string, "text" | "number" | "bool" | "list"> | undefined,
             _uid: _nextTaskUid++,
           }))
         } else if (key === "plans") {

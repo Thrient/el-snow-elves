@@ -97,9 +97,15 @@ const TaskEditorPage: FC = () => {
 
   const setVarOptions = useMemo(() => {
     const names = new Set<string>();
+    const taskVals = editor.currentTask?.values ?? {};
     const collect = (steps: Record<string, Step>) => {
       for (const step of Object.values(steps))
-        for (const v of step.set ?? []) if (v.name) names.add(v.name);
+        for (const v of step.set ?? []) {
+          if (!v.name) continue;
+          const bare = v.name.replace(/^\{|\}$/g, "");
+          if (bare in taskVals) continue;
+          names.add(bare);
+        }
     };
     if (editor.currentTask) {
       collect(editor.currentTask.steps ?? {});
@@ -109,12 +115,12 @@ const TaskEditorPage: FC = () => {
   }, [editor.currentTask]);
 
   const taskValueKeys = useMemo(() => {
-    const keys = new Set(Object.keys(editor.currentTask?.values ?? {}));
+    const keys = new Set(Object.keys(editor.currentTask?.values ?? {}).map(k => k.replace(/^\{|\}$/g, "")));
     // also include variable names extracted from steps' set fields — they write to the same variables dict
     for (const step of Object.values(editor.currentTask?.steps ?? {}))
-      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name);
+      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name.replace(/^\{|\}$/g, ""));
     for (const step of Object.values(editor.currentTask?.common ?? {}))
-      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name);
+      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name.replace(/^\{|\}$/g, ""));
     return Array.from(keys);
   }, [editor.currentTask?.values, editor.currentTask?.steps, editor.currentTask?.common]);
 
@@ -170,6 +176,7 @@ const TaskEditorPage: FC = () => {
     hwnd: characterStore.selectedHwnd ?? '',
     taskName: editor.currentTask?.name, version: editor.currentTask?.version,
     values: editor.currentTask?.values ?? {},
+    valueTypes: editor.currentTask?.valueTypes ?? {},
     layout: editor.currentTask?.layout ?? [],
   };
 
@@ -325,7 +332,7 @@ const TaskEditorPage: FC = () => {
           </div>
           <Button icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>新建任务</Button>
         </div>
-        <div className="flex-1 overflow-y-auto flex justify-center pt-8 pb-4">
+        <div className="flex-1 overflow-y-auto flex justify-center pt-8 pb-4 thin-scrollbar">
           <div className="w-full max-w-lg px-4">
             <div className="text-center mb-6">
               <div className="w-16 h-16 rounded-2xl bg-[#f0f2f5] flex items-center justify-center mx-auto mb-3">
@@ -452,14 +459,20 @@ const TaskEditorPage: FC = () => {
               onUpdate={(field, value) => {
                 if (!editor.currentTask) return;
                 const key = drawerStep.isCommon ? "common" : "steps";
-                editor.updateStep(drawerStep.name, { ...editor.currentTask[key][drawerStep.name], [field]: value }, drawerStep.isCommon);
+                editor.updateStep(drawerStep.name, { ...useEditorStore.getState().currentTask![key][drawerStep.name], [field]: value }, drawerStep.isCommon);
                 if (field === "action" || field === "description") {
                   setFlowNodes((prev) => prev.map((n) =>
                     n.id === drawerStep.name ? { ...n, data: { ...n.data, [field]: value } } : n
                   ));
                 }
               }}
-              onDelete={() => { editor.removeStep(drawerStep.name, drawerStep.isCommon); setDrawerStep(null); }} />
+              onDelete={() => {
+                const name = drawerStep.name;
+                editor.removeStep(name, drawerStep.isCommon);
+                setDrawerStep(null);
+                setFlowNodes((prev) => prev.filter((n) => n.id !== name));
+                setFlowEdges((prev) => prev.filter((e) => e.source !== name && e.target !== name));
+              }} />
           )}
         </div>
         <VariablePanel taskValues={editor.currentTask?.values ?? {}} configKeys={configKeys}
@@ -473,10 +486,11 @@ const TaskEditorPage: FC = () => {
           <LayoutBuilder
             initialLayout={editor.currentTask.layout ?? []}
             initialValues={editor.currentTask.values ?? {}}
+            initialValueTypes={editor.currentTask.valueTypes ?? {}}
             onCancel={() => setVarsOpen(false)}
-            onConfirm={(newLayout, newValues) => {
+            onConfirm={(newLayout, newValues, newValueTypes) => {
               useEditorStore.setState({
-                currentTask: { ...editor.currentTask!, layout: newLayout, values: newValues },
+                currentTask: { ...editor.currentTask!, layout: newLayout, values: newValues, valueTypes: newValueTypes },
                 isDirty: true,
               });
               setVarsOpen(false);

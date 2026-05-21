@@ -83,11 +83,15 @@ export type Cell = {
   autocompleteContext?: AutocompleteContext
 }
 
+export type VarType = "text" | "number" | "switch"
+
 export type TaskBase = {
   id: string
   name: string
   version: string
   values: Record<string, unknown>
+  /** 变量类型 — 用户创建变量时手动指定，优于自动推断 */
+  valueTypes?: Record<string, VarType>
   debugStart?: string
   debugSingle?: boolean
 }

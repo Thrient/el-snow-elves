@@ -1,5 +1,5 @@
 import { useMemo, useState, type FC } from "react";
-import { Input, Tag, Tooltip } from "antd";
+import { Button, Input, Tag, Tooltip } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { insertAtCursor } from "@/utils/insert-at-cursor";
 import {
@@ -129,7 +129,5 @@ const VariablePanel: FC<Props> = ({
     </div>
   );
 };
-
-import { Button } from "antd";
 
 export default VariablePanel;

@@ -150,7 +150,7 @@ const TaskSettingsModal: FC<Props> = ({ open, task, stepNames, onClose }) => {
       closable={false}
       styles={{ body: { padding: 0 } }}
     >
-      <div className="max-h-[calc(85vh-80px)] overflow-y-auto px-7 py-6 pr-10">
+      <div className="max-h-[calc(85vh-80px)] overflow-y-auto px-7 py-6 pr-10 thin-scrollbar">
       {/* header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1677ff] to-[#0958d9] flex items-center justify-center shadow-[0_2px_8px_rgba(22,119,255,0.25)]">

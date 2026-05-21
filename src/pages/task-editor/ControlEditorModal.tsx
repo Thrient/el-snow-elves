@@ -3,8 +3,7 @@ import {
   type FC,
 } from "react";
 import { Button, Input, InputNumber, Select, Switch } from "antd";
-import type { Cell, CellModel, CellOption } from "@/types/task";
-import { detectValueType } from "@/utils/type-compat";
+import type { Cell, CellModel, CellOption, VarType } from "@/types/task";
 
 /* ── model display metadata (light theme, matching LayoutBuilder) ── */
 
@@ -61,6 +60,7 @@ export interface ControlEditorModalProps {
   ri: number;
   ci: number;
   values: Record<string, unknown>;
+  valueTypes: Record<string, VarType>;
   onClose: () => void;
   onUpdateCell: (ri: number, ci: number, patch: Partial<Cell>) => void;
   onRemoveCell: (ri: number, ci: number) => void;
@@ -69,7 +69,7 @@ export interface ControlEditorModalProps {
 }
 
 const ControlEditorModal: FC<ControlEditorModalProps> = ({
-  open, cell, ri, ci, values,
+  open, cell, ri, ci, values, valueTypes,
   onClose, onUpdateCell, onRemoveCell, onChangeControl, onChangeValue,
 }) => {
   const [visible, setVisible] = useState(false);
@@ -309,7 +309,7 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
         </div>
 
         {/* ═══ SCROLLABLE BODY ═══ */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 custom-scrollbar" style={animStyle(0.08)}>
+        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 thin-scrollbar" style={animStyle(0.08)}>
           {/* ── Basic Info Card ── */}
           <section style={cardStyle}>
             <div className="flex items-center gap-2.5 mb-4">
@@ -338,8 +338,7 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
                   value={store ? (typeof values[store] === "string" ? values[store] as string : JSON.stringify(values[store])) : ""}
                   onChange={(e) => {
                     if (!store) return;
-                    const raw = e.target.value;
-                    onChangeValue(store, detectValueType(raw) === "number" ? Number(raw) : raw);
+                    onChangeValue(store, e.target.value);
                   }} />
               </div>
               <div className="flex items-end pb-0.5">
@@ -396,7 +395,7 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
                 </Button>
               </div>
 
-              <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto thin-scrollbar">
                 {(cell.options ?? []).length === 0 && (
                   <div className="text-[11px] text-slate-400 py-5 text-center bg-slate-50 rounded-xl flex flex-col items-center gap-1.5">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="opacity-25">
@@ -483,23 +482,6 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
           </button>
         </div>
       </div>
-
-      {/* custom scrollbar */}
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(148,163,184,0.25);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(148,163,184,0.4);
-        }
-      `}</style>
     </div>
   );
 };

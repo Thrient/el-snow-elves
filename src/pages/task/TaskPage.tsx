@@ -1,13 +1,13 @@
-import { useRef, type FC } from "react";
-import { useState } from "react";
+import { useRef, useState, useEffect, useCallback, type FC } from "react";
+import type React from "react";
 import {
   PlusOutlined, EditOutlined, ProfileOutlined,
-  ExportOutlined, ImportOutlined,
+  ExportOutlined, ImportOutlined, DeleteOutlined,
 } from "@ant-design/icons";
-import { Button, Space, Table, Tag, message } from "antd";
-import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx";
+import { Button, message, Modal, Space, Table, Tag, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { Task } from "@/types/task.ts";
+import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx";
 import { useUserStore } from "@/store/user-store.ts";
 import { useTaskStore } from "@/store/task-store.ts";
 
@@ -17,14 +17,33 @@ const TaskPage: FC = () => {
   const appendTask = useUserStore((s) => s.appendTask);
   const taskList = useTaskStore((s) => s.taskList);
   const loading = useTaskStore((s) => s.loading);
+  const loadTasks = useTaskStore((s) => s.loadTasks);
   const updateTaskValues = useTaskStore((s) => s.updateTaskValues);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { loadTasks(); }, [loadTasks]);
 
   const [configOpen, setConfigOpen] = useState(false);
   const [configTask, setConfigTask] = useState<Task | null>(null);
   const [importing, setImporting] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [tableH, setTableH] = useState(400);
+  const tableWrapRef = useRef<HTMLDivElement>(null);
 
-  const handleExport = async (task: Task) => {
+  const measure = useCallback(() => {
+    if (tableWrapRef.current) setTableH(tableWrapRef.current.clientHeight);
+  }, []);
+
+  useEffect(() => {
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (tableWrapRef.current) ro.observe(tableWrapRef.current);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  // ── Export ──
+
+  const handleExportSingle = async (task: Task) => {
     try {
       const result = await window.pywebview?.api.emit("API:TASK:EXPORT", task.id);
       if (!result) return;
@@ -34,35 +53,85 @@ const TaskPage: FC = () => {
     } catch { message.error("导出失败"); }
   };
 
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleExportBatch = async () => {
+    const ids = selectedRowKeys.length > 0 ? selectedRowKeys : taskList.map((t) => t.id);
+    if (ids.length === 0) { message.warning("没有可导出的任务"); return; }
+    try {
+      const result = await window.pywebview?.api.emit("API:TASK:EXPORT:BATCH", ids);
+      if (!result) return;
+      if (result.cancelled) return;
+      if (result.saved?.length) { message.success(`已导出 ${result.saved.length} 个任务`); }
+      if (result.errors?.length) { message.error(`${result.errors.length} 个导出失败`); }
+    } catch { message.error("导出失败"); }
+  };
+
+  // ── Import (batch) ──
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleImportFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setImporting(true);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.slice(result.indexOf(",") + 1));
-        };
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-      });
-      const result = await window.pywebview?.api.emit("API:TASK:IMPORT", base64);
-      if (result?.error) {
-        message.error(result.error);
-      } else if (result?.name) {
-        message.success(`导入成功：${result.name} v${result.version}（${result.author}）`);
-        useTaskStore.getState().loadTasks();
-      } else {
-        message.error("导入失败：未知错误");
+      const zipList: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const b64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string).split(",")[1]);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(files[i]);
+        });
+        zipList.push(b64);
       }
+      const results = await window.pywebview?.api.emit("API:TASK:IMPORT", zipList);
+      if (Array.isArray(results)) {
+        const ok = results.filter((r: Record<string, unknown>) => !r.error);
+        const fail = results.filter((r: Record<string, unknown>) => r.error);
+        if (ok.length) message.success(`成功导入 ${ok.length} 个任务`);
+        if (fail.length) message.error(`${fail.length} 个导入失败`);
+      }
+      useTaskStore.getState().loadTasks();
     } catch { message.error("导入失败"); }
     finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  // ── Delete ──
+
+  const handleDeleteSingle = (task: Task) => {
+    Modal.confirm({
+      title: `删除「${task.name}」？`,
+      content: "此操作不可恢复，任务目录和所有模板图片将被永久删除。",
+      okText: "删除", okType: "danger", cancelText: "取消",
+      onOk: async () => {
+        await window.pywebview?.api.emit("API:TASK:DELETE", task.id);
+        useTaskStore.getState().loadTasks();
+        message.success("任务已删除");
+      },
+    });
+  };
+
+  const handleDeleteBatch = () => {
+    if (selectedRowKeys.length === 0) { message.warning("请先选择要删除的任务"); return; }
+    Modal.confirm({
+      title: `确认删除 ${selectedRowKeys.length} 个任务？`,
+      content: "此操作不可恢复，任务目录和所有模板图片将被永久删除。",
+      okText: "删除", okType: "danger", cancelText: "取消",
+      onOk: async () => {
+        for (const id of selectedRowKeys) {
+          await window.pywebview?.api.emit("API:TASK:DELETE", id);
+        }
+        setSelectedRowKeys([]);
+        useTaskStore.getState().loadTasks();
+        message.success(`已删除 ${selectedRowKeys.length} 个任务`);
+      },
+    });
+  };
+
+  // ── Config ──
 
   const openConfig = (task: Task) => {
     setConfigTask(task);
@@ -113,7 +182,6 @@ const TaskPage: FC = () => {
       title: '配置项',
       key: 'config',
       render: (_, record) => {
-        // 只展示已布局的变量，未布局的是内置变量不对外暴露
         const layoutKeys = new Set((record.layout ?? []).flatMap((row) => row.map((c) => c.store).filter(Boolean)));
         const entries = Object.entries(record.values).filter(([k]) => layoutKeys.has(k));
         if (entries.length === 0) {
@@ -142,36 +210,19 @@ const TaskPage: FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 240,
+      width: 160,
       render: (_, record) => (
-        <Space size={8}>
-          <Button
-            size="small"
-            type="primary"
-            icon={<PlusOutlined />}
+        <Space size={4}>
+          <Tooltip title="添加"><Button size="small" type="primary" icon={<PlusOutlined />}
             onClick={() => appendTask({
               id: record.id,
               name: record.name,
               version: record.version,
               values: { ...record.values },
-            })}
-          >
-            添加
-          </Button>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => openConfig(record)}
-          >
-            配置
-          </Button>
-          <Button
-            size="small"
-            icon={<ExportOutlined />}
-            onClick={() => handleExport(record)}
-          >
-            导出
-          </Button>
+            })} /></Tooltip>
+          <Tooltip title="配置"><Button size="small" icon={<EditOutlined />} onClick={() => openConfig(record)} /></Tooltip>
+          <Tooltip title="导出"><Button size="small" icon={<ExportOutlined />} onClick={() => handleExportSingle(record)} /></Tooltip>
+          <Tooltip title="删除"><Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteSingle(record)} /></Tooltip>
         </Space>
       ),
     },
@@ -190,21 +241,34 @@ const TaskPage: FC = () => {
             {taskList.length}
           </span>
         </div>
-        <Button icon={<ImportOutlined />} loading={importing} onClick={() => fileInputRef.current?.click()}>
-          导入
-        </Button>
+        <Space size="small">
+          <Tooltip title="批量导入">
+            <Button icon={<ImportOutlined />} loading={importing} onClick={handleImportClick} />
+          </Tooltip>
+          <Tooltip title="批量导出">
+            <Button icon={<ExportOutlined />} onClick={handleExportBatch} />
+          </Tooltip>
+          <Tooltip title="批量删除">
+            <Button danger icon={<DeleteOutlined />} disabled={selectedRowKeys.length === 0} onClick={handleDeleteBatch} />
+          </Tooltip>
+        </Space>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div ref={tableWrapRef} className="flex-1 min-h-0">
         <Table
           columns={columns}
           dataSource={taskList}
           rowKey="id"
-          size="middle"
+          size="small"
           pagination={false}
           loading={loading}
           locale={{ emptyText: '暂无任务，请在编辑器新建' }}
-          rowClassName={() => 'group'}
+          scroll={{ y: tableH - 2 }}
+          rowClassName={() => 'task-row'}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: (keys) => setSelectedRowKeys(keys),
+          }}
         />
       </div>
 
@@ -220,8 +284,9 @@ const TaskPage: FC = () => {
         ref={fileInputRef}
         type="file"
         accept=".zip"
-        className="hidden"
-        onChange={handleImportFile}
+        multiple
+        hidden
+        onChange={handleImportFiles}
       />
     </div>
   )

@@ -12,6 +12,7 @@ interface Props {
   onChange: (expr: string) => void;
   modes?: Mode[];
   values?: Record<string, unknown>;
+  valueTypes?: Record<string, import("@/types/task").VarType>;
   layout?: { model?: string; store?: string }[][];
 }
 
@@ -26,7 +27,7 @@ const MODEL_LIST_TYPES = new Set(["el-input-tags", "el-checkbox-group"]);
 const MODEL_NUM_TYPES = new Set(["el-input-number", "el-slider"]);
 const MODEL_BOOL_TYPES = new Set(["el-switch", "el-checkbox"]);
 
-const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes, values, layout }) => {
+const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes, values, valueTypes, layout }) => {
   const allowedModes = modes ?? ["true", "var", "compare"];
   const [mode, setMode] = useState<Mode>(allowedModes.includes("compare") ? "compare" : allowedModes[0]);
   const [varName, setVarName] = useState("");
@@ -38,31 +39,39 @@ const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes
   const condRefs = useRef<(HTMLDivElement | null)[]>([]);
   const opBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Build type map from both values AND cell models (layout)
+  // Build type map: valueTypes > layout cell models > runtime values
   const varTypeMap = useMemo(() => {
     const m: Record<string, string | undefined> = {};
-    // 1. From layout cell models (higher priority — declared type)
+    // 1. From explicit valueTypes (highest priority — user-specified)
+    if (valueTypes) {
+      for (const [k, vt] of Object.entries(valueTypes)) {
+        if (vt === "list") m[k] = "list";
+        else if (vt === "number") m[k] = "number";
+        else if (vt === "bool") m[k] = "boolean";
+      }
+    }
+    // 2. From layout cell models (fallback — declared type via control)
     if (layout) {
       for (const row of layout) {
         for (const cell of row) {
-          if (!cell.store) continue;
+          if (!cell.store || m[cell.store]) continue;
           if (MODEL_LIST_TYPES.has(cell.model ?? "")) m[cell.store] = "list";
           else if (MODEL_NUM_TYPES.has(cell.model ?? "")) m[cell.store] = "number";
           else if (MODEL_BOOL_TYPES.has(cell.model ?? "")) m[cell.store] = "boolean";
         }
       }
     }
-    // 2. From values (fallback)
+    // 3. From runtime values (lowest priority)
     if (values) {
       for (const [k, v] of Object.entries(values)) {
-        if (m[k]) continue; // layout wins
+        if (m[k]) continue;
         if (Array.isArray(v)) m[k] = "list";
         else if (typeof v === "number") m[k] = "number";
         else if (typeof v === "boolean") m[k] = "boolean";
       }
     }
     return m;
-  }, [layout, values]);
+  }, [valueTypes, layout, values]);
 
   // Extended varOptions: native {var} entries + len(var) / {var}[0] for list-type variables
   const extendedVarOptions = useMemo(() => {
@@ -312,13 +321,7 @@ const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes
                       style={{ width: "100%", borderRadius: 0, fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace", fontSize: 12 }}
                       placeholder="期望值" value={c.val}
                       onChange={(e) => setCond(i, { val: e.target.value })} />
-                    <VariablePicker variables={pickerVars} onInsert={(expr) => setCond(i, { val: c.val + expr })}>
-                      <button className="flex items-center justify-center rounded border-0 bg-transparent cursor-pointer shrink-0"
-                        style={{ width: 16, height: 16, color: "#c4bbb2", fontSize: 10 }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#d4513b"; e.currentTarget.style.background = "#fef3ef"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#c4bbb2"; e.currentTarget.style.background = "transparent"; }}
-                      >fx</button>
-                    </VariablePicker>
+                    <VariablePicker variables={pickerVars} onInsert={(expr) => setCond(i, { val: c.val + expr })} />
                   </div>
 
                   <button onClick={() => { if (conds.length <= 1) syncConds([defaultCond()]); else syncConds(conds.filter((_, idx) => idx !== i)); }}

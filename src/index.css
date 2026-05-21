@@ -160,3 +160,22 @@ body {
     0% { transform: scale(1); opacity: 0.7; }
     100% { transform: scale(1.6); opacity: 0; }
 }
+
+/* ── Thin scrollbar (shared by table & task editor) ── */
+.ant-table-body,
+.thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #d0d5dd transparent;
+}
+.ant-table-body::-webkit-scrollbar,
+.thin-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.ant-table-body::-webkit-scrollbar-track,
+.thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.ant-table-body::-webkit-scrollbar-thumb,
+.thin-scrollbar::-webkit-scrollbar-thumb {
+    background: #d0d5dd;
+    border-radius: 4px;
+}
+.ant-table-body::-webkit-scrollbar-thumb:hover,
+.thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+

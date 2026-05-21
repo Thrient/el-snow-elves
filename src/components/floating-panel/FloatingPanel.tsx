@@ -1,4 +1,4 @@
-import type { FC, MouseEvent } from "react"
+import { type FC, type MouseEvent } from "react"
 import { useEffect, useRef, useState } from "react"
 import { Badge, Switch, Tabs } from "antd"
 import { ArrowDownOutlined, UnorderedListOutlined, InboxOutlined, ClockCircleOutlined, HolderOutlined } from "@ant-design/icons"
@@ -549,4 +549,4 @@ const FloatingPanel: FC = () => {
   )
 }
 
-export default FloatingPanel
+export default FloatingPanel;

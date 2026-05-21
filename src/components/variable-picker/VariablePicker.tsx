@@ -298,7 +298,11 @@ const VariablePicker: FC<Props> = ({ variables, onInsert, children, placeholder,
       content={content}
       overlayStyle={{ maxWidth: 380 }}
     >
-      {children}
+      {children ?? (
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[#9ca3af] hover:text-[#d4513b] hover:bg-[#fef3ef] transition-colors cursor-pointer select-none text-[11px] font-semibold">
+          fx
+        </span>
+      )}
     </Popover>
   );
 };

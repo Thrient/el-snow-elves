@@ -20,6 +20,7 @@ import {
   SearchOutlined,
   ClockCircleOutlined,
   EyeInvisibleOutlined,
+  BgColorsOutlined,
   SwapOutlined,
   BranchesOutlined,
 } from "@ant-design/icons";
@@ -38,6 +39,10 @@ export const ACTION_OPTS: ActionOpt[] = [
   { value: "exits",          label: "exits",          desc: "检测模板是否存在", icon: <SearchOutlined />,        color: "#10b981", group: "图像操作" },
   { value: "wait",           label: "wait",           desc: "等待模板出现",    icon: <ClockCircleOutlined />,    color: "#f59e0b", group: "图像操作" },
   { value: "wait_disappear", label: "wait_disappear", desc: "等待模板消失",    icon: <EyeInvisibleOutlined />,   color: "#f97316", group: "图像操作" },
+  { value: "exits_color",         label: "exits_color",         desc: "检测颜色是否存在",   icon: <BgColorsOutlined />,       color: "#06b6d4", group: "颜色操作" },
+  { value: "touch_color",         label: "touch_color",         desc: "找色并点击",         icon: <BgColorsOutlined />,       color: "#0891b2", group: "颜色操作" },
+  { value: "wait_color",          label: "wait_color",          desc: "等待颜色出现",       icon: <BgColorsOutlined />,       color: "#0e7490", group: "颜色操作" },
+  { value: "wait_color_disappear",label: "wait_color_disappear",desc: "等待颜色消失",       icon: <BgColorsOutlined />,       color: "#155e75", group: "颜色操作" },
   { value: "key_click",      label: "key_click",      desc: "发送按键",        icon: <CodeSandboxOutlined />,    color: "#6366f1", group: "输入操作" },
   { value: "input",          label: "input",          desc: "输入文本",        icon: <EditOutlined />,           color: "#14b8a6", group: "输入操作" },
   { value: "mouse_click",    label: "mouse_click",    desc: "点击坐标",        icon: <PushpinOutlined />,        color: "#ec4899", group: "输入操作" },
@@ -57,6 +62,8 @@ export interface ParamMeta {
 
 export const PARAM_META: Record<string, ParamMeta> = {
   threshold:  { label: "匹配阈值",  color: "#ef4444", icon: <AimOutlined />,          desc: "匹配置信度，低于此值视为未匹配。越高越严格，越低越宽松",         range: "0 ~ 1，默认 0.85" },
+  color:      { label: "目标颜色",  color: "#06b6d4", icon: <BgColorsOutlined />,      desc: "要匹配的目标颜色 [R, G, B]，如 [255, 0, 0] 红色",                    range: "[0~255, 0~255, 0~255]" },
+  tolerance:  { label: "颜色容差",  color: "#0891b2", icon: <FieldNumberOutlined />,  desc: "RGB 欧氏距离的容差阈值。0=精确匹配，值越大越宽松",                     range: "0~255，默认 10" },
   seconds:    { label: "超时时间",  color: "#f59e0b", icon: <FieldTimeOutlined />,    desc: "最长等待秒数，到达时间仍未匹配则判定失败。null 表示一直等待",     range: "默认 1.8s" },
   k:          { label: "确认帧数",  color: "#8b5cf6", icon: <ScanOutlined />,         desc: "需连续多少帧都未匹配才确认消失。值越大越可靠但越慢",               range: "默认 1" },
   click_mode: { label: "点击方式",  color: "#06b6d4", icon: <DeploymentUnitOutlined />, desc: "匹配到多个目标时的选择策略",                                       range: "random / first / last / all / all_reverse" },
@@ -76,9 +83,13 @@ export const PARAM_META: Record<string, ParamMeta> = {
 
 export const ACTION_PARAMS: Record<string, string[]> = {
   touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "pre_delay", "post_delay", "seconds", "k", "preprocess", "hwnd"],
-  exits:          ["threshold", "seconds", "preprocess", "hwnd"],
-  wait:           ["threshold", "seconds", "preprocess", "hwnd"],
-  wait_disappear: ["threshold", "seconds", "preprocess", "hwnd"],
+  exits:          ["threshold", "box", "seconds", "preprocess", "hwnd"],
+  wait:           ["threshold", "box", "seconds", "preprocess", "hwnd"],
+  wait_disappear:          ["threshold", "box", "seconds", "k", "preprocess", "hwnd"],
+  exits_color:             ["color", "tolerance", "box", "hwnd"],
+  touch_color:              ["color", "tolerance", "box", "pos", "click_mode", "pre_delay", "post_delay", "hwnd"],
+  wait_color:               ["color", "tolerance", "box", "seconds", "k", "hwnd"],
+  wait_color_disappear:     ["color", "tolerance", "box", "seconds", "k", "hwnd"],
   key_click:      ["key", "pre_delay", "post_delay", "hwnd"],
   input:          ["text", "pre_delay", "post_delay", "hwnd"],
   mouse_click:    ["pos", "pre_delay", "post_delay", "hwnd"],
@@ -89,9 +100,17 @@ export const ACTION_PARAMS: Record<string, string[]> = {
 
 /** 必填参数 — 切换动作时自动注入 */
 export const REQUIRED_PARAMS: Record<string, string[]> = {
+  touch: ["args"],
+  exits: ["args"],
+  wait: ["args"],
+  wait_disappear: ["args"],
   key_click: ["key"],
   input: ["text"],
   mouse_click: ["pos"],
+  exits_color: ["color"],
+  touch_color: ["color"],
+  wait_color: ["color"],
+  wait_color_disappear: ["color"],
   switch_account: ["account_name"],
 };
 
@@ -126,6 +145,8 @@ export interface EditorCtx {
   version?: string;
   /** Task runtime values — for variable type detection */
   values?: Record<string, unknown>;
+  /** 变量显式类型 — 用户创建时手动指定 */
+  valueTypes?: Record<string, import("@/types/task").VarType>;
   /** Layout — for inferring variable types from cell models */
   layout?: { model?: string; store?: string }[][];
 }

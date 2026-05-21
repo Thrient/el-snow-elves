@@ -1,13 +1,14 @@
 import { useMemo, type FC } from "react";
 import { Modal } from "antd";
-import type { CellModel } from "@/types/task";
-import { compatibleModels, detectValueType } from "@/utils/type-compat";
+import type { CellModel, VarType } from "@/types/task";
+import { compatibleModels, VAR_TYPE_META } from "@/utils/type-compat";
 import MiniPreview from "@/components/mini-preview/MiniPreview";
 
 interface Props {
   open: boolean;
   varName: string;
   varValue: unknown;
+  varType?: VarType;
   onSelect: (model: CellModel) => void;
   onCancel: () => void;
 }
@@ -33,9 +34,9 @@ function formatPreviewValue(val: unknown): string {
   return String(val);
 }
 
-const ComponentPickerModal: FC<Props> = ({ open, varName, varValue, onSelect, onCancel }) => {
-  const models = useMemo(() => compatibleModels(varValue), [varValue]);
-  const valueType = useMemo(() => detectValueType(varValue), [varValue]);
+const ComponentPickerModal: FC<Props> = ({ open, varName, varValue, varType, onSelect, onCancel }) => {
+  const models = useMemo(() => compatibleModels(varValue, varType), [varValue, varType]);
+  const typeLabel = varType ? VAR_TYPE_META[varType]?.label : null;
   const previewStr = formatPreviewValue(varValue);
 
   const allModels = Object.keys(MODEL_META) as CellModel[];
@@ -116,7 +117,7 @@ const ComponentPickerModal: FC<Props> = ({ open, varName, varValue, onSelect, on
         <div className="mt-4 pt-3 border-t border-slate-100">
           <span className="text-[10px] text-slate-400 flex items-center gap-1.5">
             <span className="inline-block w-1 h-1 rounded-full bg-slate-300" />
-            因默认值类型为 <strong className="text-slate-500 font-semibold">{valueType}</strong>，已自动隐藏不兼容控件：{incompatible.map((m) => MODEL_META[m]?.label ?? m).join("、")}
+            根据变量类型{typeLabel && <strong className="text-slate-500 font-semibold">「{typeLabel}」</strong>}，已隐藏不兼容控件：{incompatible.map((m) => MODEL_META[m]?.label ?? m).join("、")}
           </span>
         </div>
       )}

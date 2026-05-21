@@ -3,8 +3,8 @@ import {
   type FC, type DragEvent as ReactDragEvent,
 } from "react";
 import { Button, Input, Modal, message } from "antd";
-import type { Cell, CellModel } from "@/types/task";
-import { detectValueType } from "@/utils/type-compat";
+import type { Cell, CellModel, VarType } from "@/types/task";
+import { VAR_TYPE_OPTS, compatibleModels } from "@/utils/type-compat";
 import MiniPreview from "@/components/mini-preview/MiniPreview";
 import ComponentPickerModal from "./ComponentPickerModal";
 import ControlEditorModal from "./ControlEditorModal";
@@ -49,15 +49,17 @@ const DEFAULT_CELL_SPAN = 12;
 export interface LayoutBuilderProps {
   initialLayout?: Cell[][];
   initialValues?: Record<string, unknown>;
-  onConfirm?: (layout: Cell[][], values: Record<string, unknown>) => void;
+  initialValueTypes?: Record<string, VarType>;
+  onConfirm?: (layout: Cell[][], values: Record<string, unknown>, valueTypes: Record<string, VarType>) => void;
   onCancel?: () => void;
 }
 
 /* ── main ── */
 
-const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValues = {}, onConfirm, onCancel }) => {
+const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValues = {}, initialValueTypes = {}, onConfirm, onCancel }) => {
   const [layout, setLayout] = useState<Cell[][]>(() => cloneLayout(initialLayout));
   const [values, setValues] = useState<Record<string, unknown>>({ ...initialValues });
+  const [valueTypes, setValueTypes] = useState<Record<string, VarType>>({ ...initialValueTypes });
 
   // selection
   const [sel, setSel] = useState<{ ri: number; ci: number } | null>(null);
@@ -65,7 +67,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
 
   // picker state
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pendingVar, setPendingVar] = useState<{ name: string; value: unknown; ri: number; ci: number } | null>(null);
+  const [pendingVar, setPendingVar] = useState<{ name: string; value: unknown; type: VarType; ri: number; ci: number } | null>(null);
 
   // drag state
   const [dragFromLeft, setDragFromLeft] = useState<{ key: string } | null>(null);
@@ -78,6 +80,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
   const [createVarOpen, setCreateVarOpen] = useState(false);
   const [newVarName, setNewVarName] = useState("");
   const [newVarValue, setNewVarValue] = useState("");
+  const [newVarType, setNewVarType] = useState<VarType>("text");
 
   /* ── computed ── */
 
@@ -85,8 +88,8 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
     const used = usedStores(layout);
     return Object.entries(values)
       .filter(([k]) => !used.has(k))
-      .map(([k, v]) => ({ key: k, value: v, type: detectValueType(v) }));
-  }, [values, layout]);
+      .map(([k, v]) => ({ key: k, value: v, type: valueTypes[k] ?? "text" as const }));
+  }, [values, layout, valueTypes]);
 
   /* ── layout ops ── */
 
@@ -167,9 +170,9 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
     if (!key) return;
     const val = values[key];
     if (val === undefined) return;
-    setPendingVar({ name: key, value: val, ri, ci });
+    setPendingVar({ name: key, value: val, type: valueTypes[key] ?? "text", ri, ci });
     setPickerOpen(true);
-  }, [values]);
+  }, [values, valueTypes]);
 
   const handleDragOverRow = useCallback((ri: number, e: ReactDragEvent) => {
     e.preventDefault();
@@ -207,22 +210,16 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
       delete next[key];
       return next;
     });
+    setValueTypes((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
     // 同步清理 layout 中引用该变量的 cell
     setLayout((prev) => cloneLayout(prev).map((row) =>
       row.filter((cell) => cell.store !== key),
     ).filter((row) => row.length > 0));
   }, []);
-
-  // Parse a string default value to its proper typed value (number / boolean / string)
-  function parseTyped(v: string): unknown {
-    const t = v.trim();
-    if (t === "") return "";
-    if (t.toLowerCase() === "true") return true;
-    if (t.toLowerCase() === "false") return false;
-    if (/^-?\d+$/.test(t)) return parseInt(t, 10);
-    if (/^-?\d+\.\d+$/.test(t)) return parseFloat(t);
-    return t;
-  }
 
   const handleCreateVar = useCallback(() => {
     if (!newVarName.trim()) {
@@ -233,12 +230,15 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
       message.warning("变量名已存在");
       return;
     }
-    setValues((prev) => ({ ...prev, [newVarName.trim()]: parseTyped(newVarValue) }));
+    const key = newVarName.trim();
+    setValues((prev) => ({ ...prev, [key]: newVarValue }));
+    setValueTypes((prev) => ({ ...prev, [key]: newVarType }));
     setCreateVarOpen(false);
     setNewVarName("");
     setNewVarValue("");
-    message.success(`变量 {${newVarName.trim()}} 已创建`);
-  }, [newVarName, newVarValue, values]);
+    setNewVarType("text");
+    message.success(`变量 {${key}} 已创建`);
+  }, [newVarName, newVarValue, newVarType, values]);
 
   const handleConfirm = () => {
     const final = cloneLayout(layout).filter((r) => r.length > 0);
@@ -249,7 +249,12 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
     for (const [k, v] of Object.entries(values)) {
       if (!(k in finalVals)) finalVals[k] = v ?? "";
     }
-    onConfirm?.(final, finalVals);
+    // Clean up valueTypes for deleted vars
+    const finalTypes: Record<string, VarType> = {};
+    for (const k of Object.keys(finalVals)) {
+      finalTypes[k] = valueTypes[k] ?? "text";
+    }
+    onConfirm?.(final, finalVals, finalTypes);
   };
 
   /* ═══════════════════════════════════════════════
@@ -276,7 +281,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
             </span>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2.5 flex flex-col gap-1.5">
+        <div className="flex-1 overflow-y-auto p-2.5 flex flex-col gap-1.5 thin-scrollbar">
           {unboundVars.length === 0 && Object.keys(values).length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-[11px] text-slate-300 text-center px-2">
               <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 text-lg mb-1">∅</div>
@@ -290,8 +295,9 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
             </div>
           ) : (
             unboundVars.map(({ key, value, type }) => {
-              const typeIcon = type === "number" ? "#" : type === "boolean" ? "⇄" : "Aa";
-              const typeColor = type === "number" ? "#10b981" : type === "boolean" ? "#f59e0b" : "#6366f1";
+              const meta = VAR_TYPE_OPTS.find((o) => o.value === type);
+              const typeIcon = type === "number" ? "12" : type === "bool" ? "⇄" : type === "list" ? "[ ]" : "Aa";
+              const typeColor = type === "number" ? "#10b981" : type === "bool" ? "#f59e0b" : type === "list" ? "#ec4899" : "#6366f1";
               const valStr = value === null || value === undefined ? "" : String(value);
 
               return (
@@ -353,7 +359,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
 
         {/* grid area */}
         <div
-          className="flex-1 overflow-y-auto p-5 bg-[radial-gradient(ellipse_at_top,rgba(248,250,252,0.8),rgba(241,245,249,0.4))]"
+          className="flex-1 overflow-y-auto p-5 bg-[radial-gradient(ellipse_at_top,rgba(248,250,252,0.8),rgba(241,245,249,0.4))] thin-scrollbar"
           onClick={() => { setSel(null); setCtxMenu(null); }}
           onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null); }}
         >
@@ -499,12 +505,13 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
           ri={sel?.ri ?? 0}
           ci={sel?.ci ?? 0}
           values={values}
+          valueTypes={valueTypes}
           onClose={() => setSel(null)}
           onUpdateCell={updateCell}
           onRemoveCell={removeCell}
           onChangeControl={() => {
             if (!selCell) return;
-            setPendingVar({ name: selCell.store ?? "", value: values[selCell.store ?? ""] ?? "", ri: sel!.ri, ci: sel!.ci! });
+            setPendingVar({ name: selCell.store ?? "", value: values[selCell.store ?? ""] ?? "", type: valueTypes[selCell.store ?? ""] ?? "text", ri: sel!.ri, ci: sel!.ci! });
             setPickerOpen(true);
           }}
           onChangeValue={(store, value) => {
@@ -525,6 +532,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
         open={pickerOpen}
         varName={pendingVar?.name ?? ""}
         varValue={pendingVar?.value ?? ""}
+        varType={pendingVar?.type}
         onSelect={handlePickerSelect}
         onCancel={() => { setPickerOpen(false); setPendingVar(null); }}
       />
@@ -641,10 +649,10 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
         title={null}
         open={createVarOpen}
         onOk={handleCreateVar}
-        onCancel={() => { setCreateVarOpen(false); setNewVarName(""); setNewVarValue(""); }}
+        onCancel={() => { setCreateVarOpen(false); setNewVarName(""); setNewVarValue(""); setNewVarType("text"); }}
         okText="创建变量"
         cancelText="取消"
-        width={440}
+        width={460}
         destroyOnClose
         okButtonProps={{ className: "!rounded-xl !shadow-md !shadow-indigo-200" }}
         cancelButtonProps={{ className: "!rounded-xl" }}
@@ -679,14 +687,57 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
             />
           </div>
 
+          {/* type selector */}
+          <div>
+            <span className="text-[11px] font-semibold text-slate-600 block mb-2">变量类型</span>
+            <div className="grid grid-cols-2 gap-2">
+              {VAR_TYPE_OPTS.map((o) => {
+                const active = newVarType === o.value;
+                const colors: Record<string, string> = {
+                  text: "#6366f1", number: "#10b981", bool: "#f59e0b", list: "#ec4899",
+                };
+                const color = colors[o.value] ?? "#6366f1";
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setNewVarType(o.value)}
+                    className={`text-left p-3 rounded-xl border-2 transition-all duration-150 ${
+                      active
+                        ? "border-current shadow-sm"
+                        : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
+                    }`}
+                    style={active ? { borderColor: color, backgroundColor: `${color}08` } : undefined}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                        style={{ backgroundColor: color }}
+                      >
+                        {o.value === "text" ? "Aa" : o.value === "number" ? "12" : o.value === "bool" ? "⇄" : "[ ]"}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-700">{o.label}</span>
+                      {active && (
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center ml-auto shrink-0" style={{ backgroundColor: color }}>
+                          <span className="text-[8px] text-white font-bold">✓</span>
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400 leading-relaxed">{o.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* value input */}
           <div>
             <span className="text-[11px] font-semibold text-slate-600 block mb-2">
-              默认值 <span className="text-[10px] text-slate-400 font-normal">— 可选，留空则为空字符串</span>
+              默认值 <span className="text-[10px] text-slate-400 font-normal">— 可选，留空则为空</span>
             </span>
             <Input
               size="middle"
-              placeholder="例如 hello、123、true"
+              placeholder="例如 hello、123、true、[1,2,3]"
               value={newVarValue}
               onChange={(e) => setNewVarValue(e.target.value)}
               onPressEnter={handleCreateVar}
@@ -711,7 +762,8 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
               </div>
               <div className="mt-3 text-[10px] text-slate-400 flex items-center gap-1.5">
                 <span className="inline-block w-1 h-1 rounded-full bg-slate-300" />
-                类型：{newVarValue ? (detectValueType(newVarValue) === "number" ? "数字" : detectValueType(newVarValue) === "boolean" ? "布尔" : "文本") : "文本（空）"}
+                类型：{VAR_TYPE_OPTS.find((o) => o.value === newVarType)?.label ?? newVarType}
+                <span className="text-[10px] text-slate-300 ml-1">— {VAR_TYPE_OPTS.find((o) => o.value === newVarType)?.desc ?? ""}</span>
               </div>
             </div>
           )}

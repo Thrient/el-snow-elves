@@ -1,7 +1,7 @@
 import { useState, useMemo, type FC } from "react";
 import { Button, Input, InputNumber, Select, Switch, Tooltip, Divider } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import type { Cell, CellModel, CellOption } from "@/types/task";
+import type { Cell, CellModel, CellOption, VarType } from "@/types/task";
 import MiniPreview from "@/components/mini-preview/MiniPreview";
 
 /* ── constants ── */
@@ -40,8 +40,10 @@ const MODELS_WITH_PLACEHOLDER = new Set<CellModel>([
 
 interface Props {
   values: Record<string, unknown>;
+  valueTypes?: Record<string, VarType>;
   layout: Cell[][];
   onChange: (values: Record<string, unknown>) => void;
+  onValueTypesChange?: (valueTypes: Record<string, VarType>) => void;
   onLayoutChange: (layout: Cell[][]) => void;
 }
 
@@ -59,7 +61,7 @@ const Field: FC<{ label: string; children: React.ReactNode; className?: string }
 
 /* ── main component ── */
 
-const TaskVarsSection: FC<Props> = ({ values, layout, onChange, onLayoutChange }) => {
+const TaskVarsSection: FC<Props> = ({ values, valueTypes = {}, layout, onChange, onValueTypesChange, onLayoutChange }) => {
   const [sel, setSel] = useState<Selection>(null);
 
   const orphanedKeys = useMemo(() => {
@@ -88,25 +90,39 @@ const TaskVarsSection: FC<Props> = ({ values, layout, onChange, onLayoutChange }
 
   const updateStore = (ri: number, ci: number, oldStore: string | undefined, newStore: string) => {
     const nextVals = { ...values };
-    if (oldStore && oldStore !== newStore && !isStoreUsedElsewhere(ri, ci, oldStore))
+    let nextTypes = { ...valueTypes };
+    if (oldStore && oldStore !== newStore && !isStoreUsedElsewhere(ri, ci, oldStore)) {
       delete nextVals[oldStore];
-    if (newStore && !(newStore in nextVals)) nextVals[newStore] = "";
+      delete nextTypes[oldStore];
+    }
+    if (newStore && !(newStore in nextVals)) {
+      nextVals[newStore] = "";
+      nextTypes[newStore] = "text" as VarType;
+    }
     onChange(nextVals);
+    onValueTypesChange?.(nextTypes);
     update(ri, ci, { store: newStore || undefined });
   };
 
   const addRow = () => {
     const key = `var_${Date.now()}`;
     onChange({ ...values, [key]: "" });
+    onValueTypesChange?.({ ...valueTypes, [key]: "text" as VarType });
     onLayoutChange([...layout, [{ span: 24, model: "el-input", text: "", store: key }]]);
     setSel({ ri: layout.length, ci: 0 });
   };
 
   const deleteRow = (ri: number) => {
     const nextVals = { ...values };
-    for (const cell of layout[ri])
-      if (cell.store && !isStoreUsedElsewhere(ri, -1, cell.store)) delete nextVals[cell.store];
+    const nextTypes = { ...valueTypes };
+    for (const cell of layout[ri]) {
+      if (cell.store && !isStoreUsedElsewhere(ri, -1, cell.store)) {
+        delete nextVals[cell.store];
+        delete nextTypes[cell.store];
+      }
+    }
     onChange(nextVals);
+    onValueTypesChange?.(nextTypes);
     onLayoutChange(layout.filter((_, i) => i !== ri));
     if (sel?.ri === ri) setSel(null);
   };
@@ -126,6 +142,7 @@ const TaskVarsSection: FC<Props> = ({ values, layout, onChange, onLayoutChange }
     const used = layout[ri].reduce((s, c) => s + (c.span ?? 24), 0);
     const span = Math.max(1, Math.min(6, 24 - used));
     onChange({ ...values, [key]: "" });
+    onValueTypesChange?.({ ...valueTypes, [key]: "text" as VarType });
     onLayoutChange(layout.map((row, i) =>
       i === ri ? [...row, { span, model: "el-input" as const, text: "", store: key }] : row,
     ));
@@ -135,8 +152,13 @@ const TaskVarsSection: FC<Props> = ({ values, layout, onChange, onLayoutChange }
   const deleteCell = (ri: number, ci: number) => {
     const cell = layout[ri][ci];
     const nextVals = { ...values };
-    if (cell.store && !isStoreUsedElsewhere(ri, ci, cell.store)) delete nextVals[cell.store];
+    const nextTypes = { ...valueTypes };
+    if (cell.store && !isStoreUsedElsewhere(ri, ci, cell.store)) {
+      delete nextVals[cell.store];
+      delete nextTypes[cell.store];
+    }
     onChange(nextVals);
+    onValueTypesChange?.(nextTypes);
     const newRow = layout[ri].filter((_, j) => j !== ci);
     onLayoutChange(newRow.length === 0
       ? layout.filter((_, i) => i !== ri)
@@ -147,6 +169,7 @@ const TaskVarsSection: FC<Props> = ({ values, layout, onChange, onLayoutChange }
 
   const adoptOrphan = (key: string) => {
     onLayoutChange([...layout, [{ span: 24, model: "el-input", text: "", store: key }]]);
+    if (!(key in valueTypes)) onValueTypesChange?.({ ...valueTypes, [key]: "text" as VarType });
     setSel({ ri: layout.length, ci: 0 });
   };
 
@@ -237,7 +260,7 @@ const TaskVarsSection: FC<Props> = ({ values, layout, onChange, onLayoutChange }
   return (
     <div className="flex gap-4" style={{ minHeight: 320 }}>
       {/* ── Left: grid ── */}
-      <div className="flex-1 flex flex-col gap-2 min-w-0 overflow-y-auto" style={{ maxHeight: 420 }}>
+      <div className="flex-1 flex flex-col gap-2 min-w-0 overflow-y-auto thin-scrollbar" style={{ maxHeight: 420 }}>
         {orphanedKeys.length > 0 && (
           <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg px-3 py-2 text-[10px] text-[#92400e]">
             <span className="font-semibold">未绑定布局的值：</span>
@@ -265,7 +288,7 @@ const TaskVarsSection: FC<Props> = ({ values, layout, onChange, onLayoutChange }
       </div>
 
       {/* ── Right: editor panel ── */}
-      <div className="w-[310px] shrink-0 border-l border-[#eef0f2] pl-4 overflow-y-auto" style={{ maxHeight: 420 }}>
+      <div className="w-[310px] shrink-0 border-l border-[#eef0f2] pl-4 overflow-y-auto thin-scrollbar" style={{ maxHeight: 420 }}>
         {selectedCell ? (
           <CellEditor
             cell={selectedCell}

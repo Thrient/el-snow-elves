@@ -29,6 +29,8 @@ interface Props {
   value?: string;
   modes?: string[];
   inline?: boolean;
+  /** 变量显式类型 — 优先于名称推断 */
+  valueTypes?: Record<string, import("@/types/task").VarType>;
 }
 
 // ── Type helpers ──
@@ -37,15 +39,26 @@ const TYPE_LABELS: Record<string, string> = { list: "列表", number: "数字", 
 const TYPE_COLORS: Record<string, string> = { list: "#c62828", number: "#1565c0", string: "#6a1b9a", boolean: "#2e7d32" };
 const TYPE_BG: Record<string, string> = { list: "#fce4ec", number: "#e3f2fd", string: "#f3e5f5", boolean: "#e8f5e9" };
 
-function detectType(v: VarItem): string {
-  const bare = v.syntax.replace(/^\{|\}$/g, "");
+function extractBareName(syntax: string): string {
+  return syntax.replace(/^\{|\}$/g, "").replace(/[+\-*/!><=?.\[\]() ]/g, "").trim();
+}
+
+function detectType(v: VarItem, valueTypes?: Record<string, import("@/types/task").VarType>): string {
+  const bare = extractBareName(v.syntax);
+  // 1. 显式类型（最高优先）
+  if (valueTypes && bare in valueTypes) {
+    const vt = valueTypes[bare];
+    if (vt === "list") return "list";
+    if (vt === "number") return "number";
+    if (vt === "bool") return "boolean";
+    return "string";
+  }
+  // 2. 系统变量 — 名称推断
   if (v.category === "system") {
     if (/index|i$/i.test(bare)) return "number";
-    if (/len|count|size/i.test(bare)) return "number";
+    if (/len|count|size|result/i.test(bare)) return "number";
   }
-  if (/true|false|是否|开关/i.test(v.label)) return "boolean";
-  if (/列表|数组|项/i.test(v.label)) return "list";
-  if (/数量|数字|值|坐标|index/i.test(v.label)) return "number";
+  // 3. 默认文本
   return "string";
 }
 
@@ -66,10 +79,14 @@ const OPS_BY_TYPE: Record<string, OpDef[]> = {
     { key: "dec",    title: "自减 --",    desc: "每次执行 -1",                               expr: "{var--}" },
     { key: "add",    title: "加法 +n",    desc: "加上一个数值",                             expr: "{var+?}",   arg: { label: "数值", type: "number" } },
     { key: "sub",    title: "减法 -n",    desc: "减去一个数值",                             expr: "{var-?}",   arg: { label: "数值", type: "number" } },
+    { key: "eq",     title: "等于 ==",    desc: "判断是否等于某值",                         expr: "{var==?}",  arg: { label: "值", type: "number" } },
+    { key: "neq",    title: "不等于 !=",  desc: "判断是否不等于某值",                       expr: "{var!=?}",  arg: { label: "值", type: "number" } },
     { key: "compare",title: "条件比较",   desc: ">, <, >=, <=, ==, !=",                     expr: "{var>?}",   arg: { label: "比较值", type: "number" } },
   ],
   string: [
     { key: "value",  title: "取值",       desc: "直接取字符串值",                           expr: "{var}" },
+    { key: "eq",     title: "等于 ==",    desc: "判断是否等于某文本",                       expr: "{var==?}",  arg: { label: "文本", type: "text" } },
+    { key: "neq",    title: "不等于 !=",  desc: "判断是否不等于某文本",                     expr: "{var!=?}",  arg: { label: "文本", type: "text" } },
     { key: "concat", title: "拼接 +",     desc: "连接字符串",                               expr: "{var+?}",   arg: { label: "文本", type: "text" } },
     { key: "len",    title: "求长度",     desc: "返回字符数 len(var)",                       expr: "{len(var)}" },
     { key: "contains",title:"判断包含",   desc: "检查是否包含指定文本",                      expr: "{var⊃?}",  arg: { label: "关键词", type: "text" } },
@@ -90,7 +107,7 @@ const STEP_LABELS: Record<BuildStep, string> = {
   var: "选变量", op: "定操作", arg: "填参数", confirm: "确认",
 };
 
-const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, context, value, modes, inline }) => {
+const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, context, value, modes, inline, valueTypes }) => {
   const isWhen = context === "when";
   const showTrue = isWhen && (!modes || modes.includes("true"));
 
@@ -142,7 +159,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const filteredVars = useMemo(() => {
     let list = variables;
     if (typeFilter !== "all") {
-      list = list.filter(v => detectType(v) === typeFilter);
+      list = list.filter(v => detectType(v, valueTypes) === typeFilter);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -156,7 +173,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const ops = useMemo(() => {
     if (!selectedVar) return [];
     if (selectedVar.syntax === "True") return [];
-    const type = detectType(selectedVar);
+    const type = detectType(selectedVar, valueTypes);
     return OPS_BY_TYPE[type] || OPS_BY_TYPE.string;
   }, [selectedVar]);
 
@@ -184,7 +201,10 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     if (!selectedVar || !selectedOp) return "{…}";
     const bare = selectedVar.syntax.replace(/^\{|\}$/g, "");
     let expr = selectedOp.expr.replace("var", bare);
-    if (selectedOp.arg && opArg) expr = expr.replace("?", opArg);
+    if (selectedOp.arg && opArg) {
+      const val = selectedOp.arg.type === "text" ? `'${opArg}'` : opArg;
+      expr = expr.replace("?", val);
+    }
     return expr.replace(/\?/g, "…");
   };
 
@@ -254,7 +274,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     <div style={{ width: 320, maxHeight: 440, display: "flex", flexDirection: "column" }}>
       {/* ── Step indicators ── */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 0, padding: "0 0 14px",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 0, padding: "0 0 14px",
         fontSize: 11, color: "#b8afa6", flexShrink: 0,
       }}>
         {stepDefs.map((s, i) => (
@@ -360,7 +380,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                 <div style={{ textAlign: "center", padding: 24, fontSize: 12, color: "#b8afa6" }}>无匹配变量</div>
               ) : (
                 filteredVars.map(v => {
-                  const type = detectType(v);
+                  const type = detectType(v, valueTypes);
                   const bare = stripBraces(v.syntax);
                   return (
                     <div
@@ -399,22 +419,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
 
         {/* Step: Pick Operation */}
         {step === "op" && selectedVar && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div
-              onClick={() => { setStep("var"); setSelectedOp(null); }}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 5, alignSelf: "flex-start",
-                padding: "4px 12px", fontSize: 11, fontWeight: 500,
-                background: "rgba(212,81,59,0.06)", border: "1px solid rgba(212,81,59,0.15)",
-                borderRadius: 20, cursor: "pointer",
-              }}
-            >
-              <span style={{ color: "#d4513b", fontWeight: 600 }}>{stripBraces(selectedVar.syntax)}</span>
-              <span style={{ color: "#8b857e", fontSize: 10 }}>· {TYPE_LABELS[detectType(selectedVar)]}</span>
-              <span style={{ color: "#b8afa6", fontSize: 10 }}>↩</span>
-            </div>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, overflowY: "auto", alignContent: "start" }}>
               {ops.map(op => {
                 const bare = stripBraces(selectedVar.syntax);
                 const preview = op.expr.replace("var", bare).replace(/\?/g, "…");
@@ -423,9 +429,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                     key={op.key}
                     onClick={() => selectOp(op)}
                     style={{
-                      flex: "0 0 calc(50% - 3px)",
-                      padding: "10px 12px",
-                      borderRadius: 10,
+                      padding: "6px 10px",
+                      borderRadius: 8,
                       border: "1.5px solid #e8e3dc",
                       background: "#fff",
                       cursor: "pointer",
@@ -440,13 +445,13 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#3d3630" }}>{op.title}</div>
-                    <div style={{ fontSize: 10, color: "#8b857e", marginTop: 1 }}>{op.desc}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#3d3630", lineHeight: 1.2 }}>{op.title}</div>
+                    <div style={{ fontSize: 10, color: "#8b857e", marginTop: 1, lineHeight: 1.2 }}>{op.desc}</div>
                     <code style={{
-                      display: "inline-block", marginTop: 5,
+                      display: "inline-block", marginTop: 3,
                       fontSize: 10, fontWeight: 500,
                       color: "#d4513b", background: "rgba(212,81,59,0.05)",
-                      padding: "1px 7px", borderRadius: 5,
+                      padding: "0 6px", borderRadius: 4,
                     }}>{preview}</code>
                   </div>
                 );
@@ -511,7 +516,11 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                 {(() => {
                   const bare = stripBraces(selectedVar.syntax);
                   let p = selectedOp.expr.replace("var", bare);
-                  return opArg ? p.replace("?", opArg) : p.replace(/\?/g, "…");
+                  if (opArg) {
+                    const val = selectedOp.arg?.type === "text" ? `'${opArg}'` : opArg;
+                    return p.replace("?", val);
+                  }
+                  return p.replace(/\?/g, "…");
                 })()}
               </code>
             </div>
@@ -656,7 +665,11 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
       overlayStyle={{ maxWidth: 380 }}
       destroyTooltipOnHide
     >
-      {children}
+      {children ?? (
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[#9ca3af] hover:text-[#d4513b] hover:bg-[#fef3ef] transition-colors cursor-pointer select-none text-[11px] font-semibold">
+          fx
+        </span>
+      )}
     </Popover>
   );
 };
