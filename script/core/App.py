@@ -301,7 +301,9 @@ class App:
         api.on("API:TASK:LOAD:FULL", StaticCommon.get_full_task_config)
         api.on("API:TASK:SAVE:FULL", StaticCommon.save_full_task_config)
         api.on("API:TASK:CREATE", StaticCommon.create_task)
+        api.on("API:TASK:DELETE", StaticCommon.delete_task)
         api.on("API:TASK:EXPORT", self.export_task)
+        api.on("API:TASK:EXPORT:BATCH", self.export_tasks_batch)
         api.on("API:TASK:IMPORT", StaticCommon.import_task)
         api.on("API:AUTOCOMPLETE:ACTIONS", StaticCommon.list_actions)
         api.on("API:AUTOCOMPLETE:TEMPLATES", StaticCommon.list_template_images)
@@ -311,6 +313,7 @@ class App:
         api.on("API:TASK:LOAD:POSITIONS", StaticCommon.load_positions)
         api.on("API:TASK:SAVE:POSITIONS", StaticCommon.save_positions)
         api.on("API:TEMPLATE:CAPTURE", self.capture_for_template)
+        api.on("API:TEMPLATE:CAPTURE:PNG", self.capture_for_template_png)
         api.on("API:TEMPLATE:SAVE", self.save_template_image)
         api.on("API:PREPROCESS:APPLY", self.preprocess_apply)
         api.on("API:LOG:READ", read_logs)
@@ -381,6 +384,15 @@ class App:
             return None
 
     @staticmethod
+    def capture_for_template_png(hwnd):
+        """捕获窗口截图返回 PNG base64 供取色器使用"""
+        try:
+            return ScreenCapture.capture_base64(hwnd, fmt="png")
+        except (ValueError, Exception) as e:
+            logging.error(f"PNG 截图失败: hwnd={hwnd}, error={e}")
+            return None
+
+    @staticmethod
     def save_template_image(hwnd, crop_region, filename, scope, task_name=None, version=None, base64_data=None):
         """截图裁剪保存模板图片。base64_data 为选图时的快照，避免二次截图画面变化。"""
         try:
@@ -448,7 +460,7 @@ class App:
         logging.info(f"解绑窗口: hwnd={hwnd}")
 
     def export_task(self, task_id):
-        """导出任务为 zip"""
+        """导出单个任务为 zip"""
         built = StaticCommon.build_task_zip(task_id)
         if isinstance(built, dict):
             return built
@@ -471,7 +483,36 @@ class App:
             return {"success": True, "path": filepath}
         except OSError as e:
             logging.error(f"导出写入失败: {e}")
-            return {"error": f"写入文件失败: {e}"}
+
+    @staticmethod
+    def export_tasks_batch(task_ids):
+        """批量导出：每个任务独立 zip，弹出文件夹选择器保存"""
+        import re as _re
+        import tkinter.filedialog as _fd
+        import tkinter as _tk
+
+        folder = _fd.askdirectory(title="选择导出文件夹")
+        if not folder:
+            return {"cancelled": True}
+
+        safe = lambda s: _re.sub(r'[\/\\:*?"<>|]', '_', s or "unknown")
+        saved = []
+        errors = []
+        for tid in task_ids:
+            built = StaticCommon.build_task_zip(tid)
+            if isinstance(built, dict):
+                errors.append(built)
+                continue
+            buf, default_name = built
+            filepath = os.path.join(folder, default_name)
+            try:
+                with open(filepath, "wb") as f:
+                    f.write(buf.getvalue())
+                saved.append(default_name)
+                logging.info(f"任务导出: {filepath}")
+            except OSError as e:
+                errors.append({"file": default_name, "error": str(e)})
+        return {"saved": saved, "errors": errors}
 
     @staticmethod
     def _on_cron_trigger(hwnd, action_type, params):

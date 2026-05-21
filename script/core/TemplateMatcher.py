@@ -111,7 +111,7 @@ class TemplateMatcher:
 
         template = ScreenCapture.apply_preprocess(original[y:y+h, x:x+w], preprocess_cfg)
         processed = ScreenCapture.apply_preprocess(search_img, preprocess_cfg)
-        logging.info(f"[Matcher] 模板: {template.shape[1]}x{template.shape[0]}, 搜索: {processed.shape[1]}x{processed.shape[0]}")
+        logging.debug(f"[Matcher] 模板: {template.shape[1]}x{template.shape[0]}, 搜索: {processed.shape[1]}x{processed.shape[0]}")
 
         results = TemplateMatcher._match(processed, template, threshold)
         return [{"x": int(r["rectangle"][0][0]), "y": int(r["rectangle"][0][1]),

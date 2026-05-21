@@ -64,6 +64,26 @@
           }
         }
       ]
+    },
+    "重置索引": {
+      "action": "{True}",
+      "params": {},
+      "set": [
+        {
+          "name": "{index}",
+          "value": "0"
+        }
+      ]
+    },
+    "递增索引": {
+      "action": "{True}",
+      "params": {},
+      "set": [
+        {
+          "name": "{index}",
+          "value": "{index}++"
+        }
+      ]
     }
   },
   "common": {},
@@ -74,7 +94,8 @@
   "values": {
     "喊话内容": "",
     "喊话次数": 100,
-    "喊话次数索引": 0
+    "喊话次数索引": 1,
+    "index": 0
   },
   "layout": [
     [
@@ -89,7 +110,8 @@
       {
         "span": 12,
         "model": "el-input-number",
-        "store": "喊话次数"
+        "store": "喊话次数",
+        "text": "喊话次数"
       }
     ]
   ]

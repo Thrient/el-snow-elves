@@ -38,7 +38,10 @@ class FlowEngine(Thread):
         self.step_name = kwargs.get("start") if "start" in kwargs else self.work.get("start")
         self._single_step = kwargs.get("single_step", False)
         self._is_subflow = kwargs.get("is_subflow", False)
-        self.vp = kwargs.get("vp") if "vp" in kwargs else VariableProcessor({**(self.work.get("values") or {}), "hwnd": self._hwnd})
+        self.vp = kwargs.get("vp") if "vp" in kwargs else VariableProcessor(
+            {**(self.work.get("values") or {}), "hwnd": self._hwnd},
+            value_types=self.work.get("valueTypes")
+        )
         if "vp" not in kwargs:
             self.vp.register_computed("ChildHwnd", lambda title="MPAY_USER_CENTER": Utils.find_window_by_title_and_owner_hwnd(title, self._hwnd) or "")
 
@@ -313,7 +316,6 @@ class FlowEngine(Thread):
             logging.info(f"▶ {self.name} v{self.version}")
         while not self._paused.is_set() and self.step_name and self.step_name != "任务结束":
             step_def = self.process_step(self.step_name)
-            t0 = time.time()
 
             self._run_extra(step_def, "prefix")
             Window.ensure_window_size(self._hwnd)
@@ -328,10 +330,6 @@ class FlowEngine(Thread):
             self.step_name = self.process_result(result, step_def)
             if self._single_step:
                 self.step_name = "任务结束"
-            elapsed = (time.time() - t0) * 1000
-            action_label = self._format_action(step_def)
-            result_label = self._format_result(result)
-            logging.info(f"{action_label} → {result_label} | {elapsed:.0f}ms")
             logging.debug(f"[{self.name}] {prev} → {self.step_name} | vars={self.vp.variables}")
         if not self._is_subflow:
             total_elapsed = (time.time() - t_start) * 1000

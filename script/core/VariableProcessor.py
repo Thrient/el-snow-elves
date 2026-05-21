@@ -318,12 +318,7 @@ class InlineTemplateValue(Evaluable):
             if computed and var_name in computed:
                 return str(computed[var_name](default))
             return str(variables.get(var_name, default))
-        resolved = InlineTemplateParser._TEMPLATE_RE.sub(replacer, self.template)
-        # Try to convert structured results like "[1335, 750]" or "1335" to Python types
-        try:
-            return json.loads(resolved)
-        except (json.JSONDecodeError, ValueError):
-            return resolved
+        return InlineTemplateParser._TEMPLATE_RE.sub(replacer, self.template)
 
 
 class BraceExpressionParser(ValueParser):
@@ -350,14 +345,46 @@ class JsonParser(ValueParser):
             return None
 
 
+# ---------- 类型转换 ----------
+
+_VTYPE_COERCE = {
+    "text": lambda v: str(v) if not isinstance(v, str) else v,
+    "number": lambda v: float(v) if '.' in str(v) else int(v),
+    "bool": lambda v: v if isinstance(v, bool) else str(v).lower() in ("true", "1", "yes"),
+    "list": lambda v: json.loads(v) if isinstance(v, str) and v.strip().startswith('[') else (list(v) if isinstance(v, (list, tuple)) else [v]),
+}
+
+
 # ---------- 变量处理器 ----------
 class VariableProcessor:
-    def __init__(self, variables = None):
+    def __init__(self, variables=None, value_types=None):
         self.variables = variables or dict()
+        self._value_types = value_types or {}
         self._computed = {}
         self._parsers = []
         self._lock = __import__('threading').Lock()
         self._register_default_parsers()
+        if value_types:
+            self._apply_type_hints(value_types)
+
+    def _apply_type_hints(self, value_types):
+        """统一入口：按声明的类型转换所有变量"""
+        for name, vtype in value_types.items():
+            if name in self.variables and vtype in _VTYPE_COERCE:
+                try:
+                    self.variables[name] = _VTYPE_COERCE[vtype](self.variables[name])
+                except Exception:
+                    pass  # 转换失败保持原值
+
+    def _coerce_value(self, name, value):
+        """对 set 操作的结果按已声明类型转换"""
+        vtype = getattr(self, '_value_types', {}).get(name)
+        if vtype and vtype in _VTYPE_COERCE:
+            try:
+                return _VTYPE_COERCE[vtype](value)
+            except Exception:
+                pass
+        return value
 
     def _register_default_parsers(self):
         self._parsers.append(ConstantParser())
@@ -393,7 +420,7 @@ class VariableProcessor:
                 name = item['name']
                 raw_value = item['value']
                 final_value = self.process_value(raw_value, result)
-                self.variables[name] = final_value
+                self.variables[name] = self._coerce_value(name, final_value)
 
     def bulk_update(self, args):
         with self._lock:

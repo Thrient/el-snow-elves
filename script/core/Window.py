@@ -178,9 +178,9 @@ class Window:
             data[name] = {"left": rect[0], "top": rect[1], "right": rect[2], "bottom": rect[3]}
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f)
-            logging.debug(f"[Window] 已保存窗口状态: {name}")
+            logging.info(f"[Window] 已保存窗口状态: {name}")
         except Exception as e:
-            logging.debug(f"[Window] 保存窗口状态失败: {e}")
+            logging.info(f"[Window] 保存窗口状态失败: {e}")
 
     @staticmethod
     def restore_window_rect(hwnd, name: str) -> bool:
@@ -203,13 +203,13 @@ class Window:
             vs_w = user32.GetSystemMetrics(78)
             vs_h = user32.GetSystemMetrics(79)
             if left >= vs_x + vs_w or top >= vs_y + vs_h or right <= vs_x or bottom <= vs_y:
-                logging.debug(f"[Window] 保存的窗口位置不可见，跳过恢复: {name}")
+                logging.info(f"[Window] 保存的窗口位置不可见，跳过恢复: {name}")
                 return False
 
             win32gui.SetWindowPos(hwnd, 0, left, top, right - left, bottom - top,
                                   win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
-            logging.debug(f"[Window] 已恢复窗口状态: {name}")
+            logging.info(f"[Window] 已恢复窗口状态: {name}")
             return True
         except Exception as e:
-            logging.debug(f"[Window] 恢复窗口状态失败: {e}")
+            logging.info(f"[Window] 恢复窗口状态失败: {e}")
             return False

@@ -212,6 +212,10 @@ class StaticCommon:
             {"value": "exits", "label": "exits — 检测模板是否存在"},
             {"value": "wait", "label": "wait — 等待模板出现"},
             {"value": "wait_disappear", "label": "wait_disappear — 等待模板消失"},
+            {"value": "exits_color", "label": "exits_color — 检测颜色是否存在"},
+            {"value": "touch_color", "label": "touch_color — 找色并点击"},
+            {"value": "wait_color", "label": "wait_color — 等待颜色出现"},
+            {"value": "wait_color_disappear", "label": "wait_color_disappear — 等待颜色消失"},
             {"value": "key_click", "label": "key_click — 发送按键"},
             {"value": "input", "label": "input — 输入文本"},
             {"value": "mouse_click", "label": "mouse_click — 点击坐标"},
@@ -334,7 +338,17 @@ class StaticCommon:
 
     @staticmethod
     def import_task(zip_base64):
-        """从 base64 编码的 zip 导入任务"""
+        """从 base64 编码的 zip 导入任务（单个或批量）"""
+        if isinstance(zip_base64, list):
+            results = []
+            for item in zip_base64:
+                results.append(StaticCommon._import_single(item))
+            return results
+        return StaticCommon._import_single(zip_base64)
+
+    @staticmethod
+    def _import_single(zip_base64):
+        """导入单个任务 zip"""
         try:
             zip_data = base64.b64decode(zip_base64)
         except Exception:
@@ -414,6 +428,21 @@ class StaticCommon:
             return {"error": f"文件系统错误: {e}"}
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
+
+    @staticmethod
+    def delete_task(task_id):
+        """删除任务：移除目录 + 清缓存"""
+        config = _TASK_CONFIG_CACHE.get(task_id)
+        if not config:
+            return {"error": f"任务不存在: {task_id}"}
+        name = config.get("name", "")
+        version = config.get("version", "")
+        task_dir = os.path.dirname(config.get("_config_path", ""))
+        if task_dir and os.path.isdir(task_dir):
+            shutil.rmtree(task_dir, ignore_errors=True)
+        _TASK_CONFIG_CACHE.pop(task_id, None)
+        logging.info(f"[Task] 已删除: {name} v{version}")
+        return {"success": True, "name": name, "version": version}
 
     @staticmethod
     def load_plans():

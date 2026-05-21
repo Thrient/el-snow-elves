@@ -54,6 +54,7 @@ class Script(Thread):
             if task is not None:
                 work = StaticCommon.get_task_config_by_id(task["id"])
                 work["values"] = task.get("values", work.get("values", {}))
+                work["valueTypes"] = task.get("valueTypes", work.get("valueTypes", {}))
                 debug_start = task.get("debugStart")
                 debug_single = task.get("debugSingle", False)
                 logging.info(f"开始执行任务: {task['name']} v{task.get('version', '?')} | hwnd={self._hwnd}" +

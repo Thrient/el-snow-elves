@@ -54,11 +54,7 @@
       },
       "postfix": [],
       "success": "随机答题",
-      "failure_extra": [
-        {
-          "step": "关闭窗口"
-        }
-      ]
+      "failure_extra": []
     },
     "等待退出茶馆": {
       "action": "touch",

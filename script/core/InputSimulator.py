@@ -43,7 +43,7 @@ class InputSimulator:
             scan_code = win32api.MapVirtualKey(vk_code, 0)
             win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk_code, (scan_code << 16) | 1)
             win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk_code, (scan_code << 16) | 0xC0000001)
-            logging.debug(f"按键: {key} | hwnd={hwnd}")
+            logging.info(f"按键: {key} | hwnd={hwnd}")
 
         return _inner(**kwargs)
 
@@ -63,7 +63,7 @@ class InputSimulator:
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
 
-            logging.debug(f"点击坐标: {pos}")
+            logging.info(f"点击坐标: {pos}")
 
         return _inner(**kwargs)
 
@@ -78,6 +78,6 @@ class InputSimulator:
             for char in text:
                 win32gui.PostMessage(hwnd, win32con.WM_CHAR, ord(char), None)
                 time.sleep(0.02)
-            logging.debug(f"输入文本: {text[:20]}{'...' if len(text) > 20 else ''} | hwnd={hwnd}")
+            logging.info(f"输入文本: {text[:20]}{'...' if len(text) > 20 else ''} | hwnd={hwnd}")
 
         return _inner(**kwargs)

@@ -527,17 +527,6 @@
     },
     "next": "任务结束"
   },
-  "点击登录": {
-    "action": "touch",
-    "params": {
-      "args": [
-        "按钮登录进入游戏"
-      ]
-    },
-    "postfix": [
-      "检测主界面"
-    ]
-  },
   "选择需求商品": {
     "action": "touch",
     "params": {
