@@ -496,24 +496,6 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                 style={{ width: 200 }}
                 placeholder="数字或 {变量}"
               />
-              <code style={{
-                fontSize: 13, fontWeight: 500,
-                color: "#d4513b", background: "rgba(212,81,59,0.05)",
-                padding: "4px 10px", borderRadius: 7,
-              }}>
-                {(() => {
-                  const bare = stripBraces(selectedVar.syntax);
-                  let p = selectedOp.expr.replace("var", bare);
-                  if (opArg) {
-                    const isNumber = /^-?\d+$/.test(opArg);
-                    const isVar = /^\{.+\}$/.test(opArg);
-                    const display = opArg.replace(/^\{|\}$/g, "");
-                    const val = (selectedOp.arg?.type === "text" && !isNumber && !isVar) ? `'${display}'` : display;
-                    return p.replace("?", val);
-                  }
-                  return p.replace(/\?/g, "…");
-                })()}
-              </code>
             </div>
 
             <div style={{ fontSize: 11, color: "#b8afa6" }}>Enter 确认</div>
