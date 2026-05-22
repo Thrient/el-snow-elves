@@ -22,8 +22,11 @@ def _push_js(code: str):
         w = webview.active_window()
         if w:
             w.evaluate_js(code)
-    except Exception:
-        pass
+            _log.debug(f"_push_js ok: {code[:80]}")
+        else:
+            _log.warning("_push_js: no active window")
+    except Exception as e:
+        _log.error(f"_push_js failed: {e}")
 
 
 class UpdateWorker:
