@@ -86,15 +86,18 @@ class UpdateWorker:
     def apply_and_restart():
         """写入重启脚本并退出应用。"""
         if getattr(sys, 'frozen', False):
-            me = sys.executable
+            # 打包后：直接启动 exe
+            launch = f'start "" "{sys.executable}"'
         else:
-            me = sys.executable
+            # 开发模式：python 执行入口脚本
+            entry = os.path.join(APP_DIR, "Elves.py")
+            launch = f'start "" "{sys.executable}" "{entry}"'
 
         script = f'''@echo off
 timeout /t 2 /nobreak > nul
 xcopy /y /s /e "{STAGING_DIR}\\*" "{APP_DIR}\\"
 rmdir /s /q "{STAGING_DIR}"
-start "" "{me}"
+{launch}
 del "%~f0"
 '''
         with open(BAT_PATH, "w", encoding="utf-8") as f:
