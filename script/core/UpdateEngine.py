@@ -4,7 +4,7 @@ import json
 import os
 import requests
 
-HUB_URL = "http://nas.elarion.cn/api/v1"
+HUB_URL = "https://nas.elarion.cn/api/v1"
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST_PATH = os.path.join(APP_DIR, "manifest.json")
 
