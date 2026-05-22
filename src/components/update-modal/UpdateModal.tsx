@@ -12,36 +12,19 @@ export default function UpdateModal() {
   const currentVersion = useUpdateStore(s => s.currentVersion);
 
   const handleUpdate = async () => {
-    useUpdateStore.getState().startDownload(0);
     closeCheckModal();
 
     try {
-      const events = (await window.pywebview?.api.emit("API:UPDATE:DOWNLOAD", {
+      const result = (await window.pywebview?.api.emit("API:UPDATE:DOWNLOAD", {
         current_version: useUpdateStore.getState().currentVersion,
       })) as any;
 
-      if (events && Array.isArray(events)) {
-        for (const ev of events) {
-          if (ev.error) {
-            useUpdateStore.getState().finishDownload();
-            return;
-          }
-          if (ev.up_to_date) {
-            useUpdateStore.getState().clearUpdate();
-            return;
-          }
-          if (ev.done) {
-            useUpdateStore.getState().finishDownload();
-            return;
-          }
-          if (ev.progress !== undefined) {
-            useUpdateStore.getState().updateProgress(
-              ev.current ?? "下载中...",
-              ev.index ?? 0,
-            );
-          }
-        }
+      if (result?.up_to_date) {
+        useUpdateStore.getState().clearUpdate();
+      } else if (result?.error) {
+        useUpdateStore.getState().finishDownload();
       }
+      // 进度由 Python 通过 JS bridge 实时推送，这里无需处理
     } catch {
       useUpdateStore.getState().finishDownload();
     }
