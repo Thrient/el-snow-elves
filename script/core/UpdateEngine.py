@@ -10,7 +10,12 @@ _log = logging.getLogger("Elves.UpdateEngine")
 from script.config.Setting import APP_DATA
 
 HUB_URL = "https://nas.elarion.cn:5173/api/v1"
-APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if getattr(sys, 'frozen', False):
+    APP_DIR = os.path.dirname(sys.executable)
+else:
+    APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 MANIFEST_PATH = os.path.join(APP_DATA, "manifest.json")
 
 EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "temp", "build", "dist", "_update_staging"}
