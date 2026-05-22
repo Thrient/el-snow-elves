@@ -36,6 +36,8 @@ export default function UpdateModal() {
 
       const total = firstEv.total ?? result.length;
       useUpdateStore.getState().startDownload(total);
+      // yield to React so the modal renders with totalFiles set
+      await new Promise(r => setTimeout(r, 50));
 
       for (const ev of result) {
         if (ev.done) {
@@ -47,6 +49,8 @@ export default function UpdateModal() {
             ev.current ?? "下载中...",
             ev.index ?? 0,
           );
+          // yield to React between each file so progress bar animates
+          await new Promise(r => setTimeout(r, 10));
         }
       }
     } catch {
