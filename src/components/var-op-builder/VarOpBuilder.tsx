@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, type FC } from "react";
-import { Input, Popover } from "antd";
+import { AutoComplete, Input, Popover } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
 // ── Types ──
@@ -122,7 +122,6 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const [opArg, setOpArg] = useState("");
   const [compound, setCompound] = useState<{ expr: string; connector: string | null }[]>([]);
   const [submitted, setSubmitted] = useState(false);
-  const argInputRef = useRef<HTMLInputElement>(null);
 
   // Parse initial value
   useEffect(() => {
@@ -149,12 +148,6 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     }
   }, [open]);
 
-  // Auto-focus arg input
-  useEffect(() => {
-    if (step === "arg" && argInputRef.current) {
-      argInputRef.current.focus();
-    }
-  }, [step]);
 
   // ── Computed ──
   const filteredVars = useMemo(() => {
@@ -493,47 +486,16 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
               <label style={{ fontSize: 13, fontWeight: 600, color: "#3d3630" }}>
                 输入{selectedOp.arg!.label}
               </label>
-              <input
-                ref={argInputRef}
-                type={selectedOp.arg!.type === "number" ? "number" : "text"}
+              <AutoComplete
                 value={opArg}
-                onChange={e => setOpArg(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && canProceed()) goNext(); }}
-                placeholder={selectedOp.arg!.type === "number" ? "0" : "…"}
-                style={{
-                  width: 120, padding: "8px 12px",
-                  border: "1.5px solid #e8e3dc", borderRadius: 10,
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 18, textAlign: "center",
-                  color: "#3d3630", background: "#faf8f5",
-                  outline: "none", transition: "border-color 0.15s",
-                }}
-                onFocus={e => { e.currentTarget.style.borderColor = "#d4513b"; }}
-                onBlur={e => { e.currentTarget.style.borderColor = "#e8e3dc"; }}
+                onChange={v => setOpArg(v)}
+                options={variables.map(v => ({ value: v.syntax, label: v.syntax.replace(/^\{|\}$/g, "") }))}
+                filterOption={(input, option) =>
+                  option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+                }
+                style={{ width: 200 }}
+                placeholder="数字或 {变量}"
               />
-              {/* Variable suggestions */}
-              <div style={{
-                display: "flex", gap: 4, flexWrap: "wrap",
-                justifyContent: "center", maxWidth: 260,
-                maxHeight: 80, overflowY: "auto",
-              }} className="thin-scrollbar">
-                {variables.map(v => (
-                  <button
-                    key={v.syntax}
-                    onClick={() => { setOpArg(v.syntax); argInputRef.current?.focus(); }}
-                    style={{
-                      fontSize: 10, fontWeight: 500,
-                      padding: "2px 8px", borderRadius: 10,
-                      border: "1px solid #e8e3dc",
-                      background: "#fff", color: "#6366f1",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#a5b4fc"; e.currentTarget.style.background = "#eef2ff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#e8e3dc"; e.currentTarget.style.background = "#fff"; }}
-                  >{v.syntax}</button>
-                ))}
-              </div>
               <code style={{
                 fontSize: 13, fontWeight: 500,
                 color: "#d4513b", background: "rgba(212,81,59,0.05)",
