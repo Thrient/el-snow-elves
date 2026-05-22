@@ -9,6 +9,7 @@ export interface UpdateInfo {
 interface UpdateState {
   hasUpdate: boolean;
   latestVersion: string | null;
+  currentVersion: string;
   changelog: string | null;
   isMandatory: boolean;
   checkModalOpen: boolean;
@@ -18,6 +19,7 @@ interface UpdateState {
   totalFiles: number;
   completedFiles: number;
   downloadDone: boolean;
+  setCurrentVersion: (v: string) => void;
   setUpdate: (info: UpdateInfo) => void;
   clearUpdate: () => void;
   openCheckModal: () => void;
@@ -30,6 +32,7 @@ interface UpdateState {
 export const useUpdateStore = create<UpdateState>((set) => ({
   hasUpdate: false,
   latestVersion: null,
+  currentVersion: "?.?.?",
   changelog: null,
   isMandatory: false,
   checkModalOpen: false,
@@ -39,6 +42,8 @@ export const useUpdateStore = create<UpdateState>((set) => ({
   totalFiles: 0,
   completedFiles: 0,
   downloadDone: false,
+
+  setCurrentVersion: (v) => set({ currentVersion: v }),
 
   setUpdate: (info) => set({
     hasUpdate: true,

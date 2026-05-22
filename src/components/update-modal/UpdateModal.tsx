@@ -9,8 +9,7 @@ export default function UpdateModal() {
   const checkModalOpen = useUpdateStore(s => s.checkModalOpen);
   const closeCheckModal = useUpdateStore(s => s.closeCheckModal);
 
-  // TODO: replace with actual current version from Python
-  const currentVersion = "?.?.?";
+  const currentVersion = useUpdateStore(s => s.currentVersion);
 
   const handleUpdate = async () => {
     useUpdateStore.getState().startDownload(0);
@@ -18,7 +17,7 @@ export default function UpdateModal() {
 
     try {
       const result = (await window.pywebview?.api.emit("API:UPDATE:DOWNLOAD", {
-        current_version: currentVersion,
+        current_version: useUpdateStore.getState().currentVersion,
       })) as any;
 
       // If the result is iterable progress events

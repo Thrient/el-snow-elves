@@ -28,10 +28,14 @@ const MainLayout: FC = () => {
 
       // Check for updates on startup
       try {
+        const currentVersion = await window.pywebview?.api.emit("API:APP:VERSION") as any
+        if (currentVersion) {
+          useUpdateStore.getState().setCurrentVersion(String(currentVersion))
+        }
+
         const latest = await window.pywebview?.api.emit("API:UPDATE:CHECK") as any
-        if (latest && latest.version) {
-          const currentVersion = "?.?.?" // TODO: get from settings or constant
-          if (latest.version !== currentVersion) {
+        if (latest && latest.version && currentVersion) {
+          if (latest.version !== String(currentVersion)) {
             useUpdateStore.getState().setUpdate({
               version: latest.version,
               changelog: latest.changelog,
