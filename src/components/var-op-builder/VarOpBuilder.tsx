@@ -515,8 +515,9 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
               <div style={{
                 display: "flex", gap: 4, flexWrap: "wrap",
                 justifyContent: "center", maxWidth: 260,
-              }}>
-                {variables.filter(v => detectType(v, valueTypes) === "number").slice(0, 8).map(v => (
+                maxHeight: 80, overflowY: "auto",
+              }} className="thin-scrollbar">
+                {variables.map(v => (
                   <button
                     key={v.syntax}
                     onClick={() => { setOpArg(v.syntax); argInputRef.current?.focus(); }}
