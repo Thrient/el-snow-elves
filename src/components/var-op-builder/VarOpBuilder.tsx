@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, type FC } from "react";
+import { useState, useMemo, useEffect, type FC } from "react";
 import { AutoComplete, Input, Popover } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
