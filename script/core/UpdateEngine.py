@@ -1,8 +1,11 @@
 """更新引擎 — 版本检查 + manifest diff + 文件下载"""
 import hashlib
 import json
+import logging
 import os
 import requests
+
+_log = logging.getLogger("Elves.UpdateEngine")
 
 HUB_URL = "https://nas.elarion.cn:5173/api/v1"
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,32 +51,43 @@ class UpdateEngine:
     def check_version() -> dict | None:
         """返回最新版本信息 {'version','changelog','is_mandatory','is_latest'} 或 None"""
         try:
+            _log.info(f"check_version: GET {HUB_URL}/versions")
             resp = requests.get(f"{HUB_URL}/versions", timeout=10)
             data = resp.json()
             versions = data.get("data", [])
             for v in versions:
                 if v.get("is_latest"):
+                    _log.info(f"check_version: latest={v.get('version')}")
                     return v
+            _log.info("check_version: no latest found")
             return None
-        except Exception:
+        except Exception as e:
+            _log.error(f"check_version failed: {e}")
             return None
 
     @staticmethod
     def diff_manifest(current_version: str, local_manifest: dict[str, str]) -> dict:
         """POST /versions/diff，返回 {latest_version, changelog, is_mandatory, changed, removed}"""
         try:
+            _log.info(f"diff_manifest: POST {HUB_URL}/versions/diff current={current_version} manifest_keys={len(local_manifest)}")
             resp = requests.post(
                 f"{HUB_URL}/versions/diff",
                 json={"current_version": current_version, "manifest": local_manifest},
                 timeout=30,
             )
-            return resp.json()
+            data = resp.json()
+            changed = len(data.get("changed", []))
+            removed = len(data.get("removed", []))
+            _log.info(f"diff_manifest: ok latest={data.get('latest_version')} changed={changed} removed={removed}")
+            return data
         except Exception as e:
+            _log.error(f"diff_manifest failed: {e}")
             return {"error": str(e)}
 
     @staticmethod
     def download_blob(fingerprint_id: int, save_path: str):
         """下载单个 blob 到指定路径"""
+        _log.debug(f"download_blob: id={fingerprint_id} → {save_path}")
         resp = requests.get(f"{HUB_URL}/blobs/{fingerprint_id}", stream=True, timeout=60)
         resp.raise_for_status()
         os.makedirs(os.path.dirname(save_path), exist_ok=True)

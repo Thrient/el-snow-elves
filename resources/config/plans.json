@@ -17,16 +17,19 @@
   {
     "name": "限时任务",
     "templateId": "push_task",
-    "cron": "*/30 * * * *",
+    "cron": "*/5 * * * *",
     "enabled": false,
     "action": {
       "type": "push_task",
       "params": {
-        "taskId": "c99efbbdc14df1fa1c9ee17ab65225e82ceec0f699408fba06129ead896e7f07"
+        "taskId": "c99efbbdc14df1fa1c9ee17ab65225e82ceec0f699408fba06129ead896e7f07",
+        "values": {
+          "切换角色": "默认角色"
+        }
       }
     },
     "id": "plan_1778627071274",
     "createdAt": 1778627181750,
-    "updatedAt": 1778627181750
+    "updatedAt": 1779456630259
   }
 ]

@@ -1,4 +1,5 @@
 """更新执行器 — 下载更新 + 替换文件 + 重启"""
+import logging
 import os
 import shutil
 import subprocess
@@ -6,6 +7,8 @@ import sys
 import json
 
 from script.core.UpdateEngine import UpdateEngine, APP_DIR, MANIFEST_PATH
+
+_log = logging.getLogger("Elves.UpdateWorker")
 
 STAGING_DIR = os.path.join(APP_DIR, "_update_staging")
 BAT_PATH = os.path.join(APP_DIR, "_restart.bat")
@@ -15,17 +18,22 @@ class UpdateWorker:
     @staticmethod
     def download_updates(current_version: str) -> list[dict]:
         """返回进度事件列表，最后一个为 done/error。用于 IPC 返回给前端。"""
+        _log.info(f"download_updates: start current_version={current_version}")
         local = UpdateEngine.load_local_manifest()
+        _log.info(f"download_updates: local manifest has {len(local)} entries")
         diff = UpdateEngine.diff_manifest(current_version, local)
 
         if "error" in diff:
+            _log.error(f"download_updates: diff error: {diff['error']}")
             return [{"error": diff["error"]}]
 
         if not diff.get("changed"):
+            _log.info("download_updates: no changed files, up to date")
             return [{"up_to_date": True}]
 
         changed = diff["changed"]
         total = len(changed)
+        _log.info(f"download_updates: {total} files to download")
         events = []
 
         # 清空暂存区
@@ -35,6 +43,7 @@ class UpdateWorker:
 
         for i, item in enumerate(changed):
             save_path = os.path.join(STAGING_DIR, item["path"])
+            _log.info(f"download_updates: [{i+1}/{total}] {item['path']} (id={item['fingerprint_id']}, size={item['size']})")
             try:
                 UpdateEngine.download_blob(item["fingerprint_id"], save_path)
                 events.append({
@@ -44,6 +53,7 @@ class UpdateWorker:
                     "index": i + 1,
                 })
             except Exception as e:
+                _log.error(f"download_updates: failed {item['path']}: {e}")
                 events.append({"error": f"download {item['path']}: {e}"})
                 return events
 
