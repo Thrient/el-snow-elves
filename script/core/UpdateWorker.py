@@ -32,7 +32,11 @@ class UpdateWorker:
         """下载更新文件，通过 JS bridge 实时推送进度到前端。返回 {"ok": True} 或 {"error": "..."}。"""
         _log.info(f"download_updates: start current_version={current_version}")
         local = UpdateEngine.load_local_manifest()
-        _log.info(f"download_updates: local manifest has {len(local)} entries")
+        if not local:
+            _log.info("download_updates: no saved manifest, computing from disk")
+            local = UpdateEngine.compute_manifest()
+            UpdateEngine.save_manifest(local)
+        _log.info(f"download_updates: manifest has {len(local)} entries")
         diff = UpdateEngine.diff_manifest(current_version, local)
 
         if "error" in diff:
@@ -68,11 +72,11 @@ class UpdateWorker:
                 _push_js("window.useUpdateStore.getState().finishDownload()")
                 return {"error": f"download {item['path']}: {e}"}
 
-        # 下载完成 — 把最新版本号写入 staged manifest
-        staged_manifest = {item["path"]: item["sha256"] for item in changed}
-        manifest_path = os.path.join(STAGING_DIR, "manifest.json")
-        with open(manifest_path, "w", encoding="utf-8") as f:
-            json.dump(staged_manifest, f, indent=2)
+        # 更新本地 manifest：合并已变更文件的 SHA256
+        new_manifest = dict(local)
+        for item in changed:
+            new_manifest[item["path"]] = item["sha256"]
+        UpdateEngine.save_manifest(new_manifest)
 
         _push_js("window.useUpdateStore.getState().finishDownload()")
         _log.info(f"download_updates: done, {total} files downloaded")
