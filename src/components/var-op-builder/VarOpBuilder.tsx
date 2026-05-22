@@ -68,7 +68,7 @@ const OPS_BY_TYPE: Record<string, OpDef[]> = {
   list: [
     { key: "value",  title: "取值",       desc: "直接取列表引用",                           expr: "{var}" },
     { key: "loop",   title: "循环取值",   desc: "遍历每一项，自动注入 index/len/reset",      expr: "{var[循环]}" },
-    { key: "index",  title: "取下标 [n]", desc: "按位置取第 n 项，从 0 开始",                expr: "{var[?]}",   arg: { label: "下标", type: "number" } },
+    { key: "index",  title: "取下标 [n]", desc: "按位置取第 n 项，从 0 开始，支持 {变量}",    expr: "{var[?]}",   arg: { label: "下标", type: "text" } },
     { key: "choice", title: "随机选择",   desc: "随机取列表中一项 choice(var)",              expr: "{choice(var)}" },
     { key: "len",    title: "求长度",     desc: "返回元素个数 len(var)",                      expr: "{len(var)}" },
     { key: "first",  title: "取第一个",   desc: "等价于 [0]",                                expr: "{var[0]}" },
@@ -203,7 +203,9 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     const bare = selectedVar.syntax.replace(/^\{|\}$/g, "");
     let expr = selectedOp.expr.replace("var", bare);
     if (selectedOp.arg && opArg) {
-      const val = selectedOp.arg.type === "text" ? `'${opArg}'` : opArg;
+      const isNumber = /^-?\d+$/.test(opArg);
+      const isVar = /^\{.+\}$/.test(opArg);
+      const val = (selectedOp.arg.type === "text" && !isNumber && !isVar) ? `'${opArg}'` : opArg;
       expr = expr.replace("?", val);
     }
     return expr.replace(/\?/g, "…");
