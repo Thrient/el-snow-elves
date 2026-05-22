@@ -511,6 +511,28 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                 onFocus={e => { e.currentTarget.style.borderColor = "#d4513b"; }}
                 onBlur={e => { e.currentTarget.style.borderColor = "#e8e3dc"; }}
               />
+              {/* Variable suggestions */}
+              <div style={{
+                display: "flex", gap: 4, flexWrap: "wrap",
+                justifyContent: "center", maxWidth: 260,
+              }}>
+                {variables.filter(v => detectType(v, valueTypes) === "number").slice(0, 8).map(v => (
+                  <button
+                    key={v.syntax}
+                    onClick={() => { setOpArg(v.syntax); argInputRef.current?.focus(); }}
+                    style={{
+                      fontSize: 10, fontWeight: 500,
+                      padding: "2px 8px", borderRadius: 10,
+                      border: "1px solid #e8e3dc",
+                      background: "#fff", color: "#6366f1",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#a5b4fc"; e.currentTarget.style.background = "#eef2ff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#e8e3dc"; e.currentTarget.style.background = "#fff"; }}
+                  >{v.syntax}</button>
+                ))}
+              </div>
               <code style={{
                 fontSize: 13, fontWeight: 500,
                 color: "#d4513b", background: "rgba(212,81,59,0.05)",
@@ -520,7 +542,9 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                   const bare = stripBraces(selectedVar.syntax);
                   let p = selectedOp.expr.replace("var", bare);
                   if (opArg) {
-                    const val = selectedOp.arg?.type === "text" ? `'${opArg}'` : opArg;
+                    const isNumber = /^-?\d+$/.test(opArg);
+                    const isVar = /^\{.+\}$/.test(opArg);
+                    const val = (selectedOp.arg?.type === "text" && !isNumber && !isVar) ? `'${opArg}'` : opArg;
                     return p.replace("?", val);
                   }
                   return p.replace(/\?/g, "…");
