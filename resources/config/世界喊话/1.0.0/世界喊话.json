@@ -1,0 +1,172 @@
+{
+  "name": "世界喊话",
+  "version": "1.0.0",
+  "author": "Thrient",
+  "description": "世界喊话",
+  "start": "乘坐坐骑",
+  "steps": {
+    "乘坐坐骑": {
+      "action": "touch",
+      "params": {
+        "args": [
+          "按钮大世界坐骑"
+        ]
+      },
+      "prefix": [
+        {
+          "step": "检测主界面"
+        }
+      ],
+      "next": "世界喊话"
+    },
+    "世界喊话": {
+      "action": "{True}",
+      "params": {},
+      "prefix": [
+        {
+          "step": "重置索引",
+          "args": {},
+          "when": "{index >= len(喊话内容)}"
+        },
+        {
+          "step": "构建喊话内容"
+        },
+        {
+          "step": "构建随机喊话内容"
+        },
+        {
+          "step": "普通世界喊话",
+          "args": {
+            "文本": "{当前喊话内容+随机喊话内容}"
+          }
+        }
+      ],
+      "postfix": [
+        {
+          "step": "退出世界"
+        },
+        {
+          "step": "递增索引",
+          "args": {}
+        }
+      ],
+      "next": "判断结束"
+    },
+    "判断结束": {
+      "action": "{喊话次数索引 >= 喊话次数}",
+      "params": {},
+      "failure": "世界喊话",
+      "set": [
+        {
+          "name": "喊话次数索引",
+          "value": "{喊话次数索引}++"
+        }
+      ],
+      "postfix": [
+        {
+          "step": "等待时间",
+          "args": {
+            "等待时间": "30"
+          }
+        }
+      ]
+    },
+    "重置索引": {
+      "action": "{True}",
+      "params": {},
+      "set": [
+        {
+          "name": "{index}",
+          "value": "0"
+        }
+      ]
+    },
+    "递增索引": {
+      "action": "{True}",
+      "params": {},
+      "set": [
+        {
+          "name": "{index}",
+          "value": "{index}++"
+        }
+      ]
+    },
+    "构建喊话内容": {
+      "action": "{True}",
+      "params": {},
+      "set": [
+        {
+          "name": "当前喊话内容",
+          "value": "{喊话内容[index]}"
+        }
+      ]
+    },
+    "构建随机喊话内容": {
+      "action": "{随机小尾巴}",
+      "params": {},
+      "set": [
+        {
+          "name": "随机喊话内容",
+          "value": "{choice(随机内容)}"
+        }
+      ]
+    }
+  },
+  "common": {},
+  "monitors": {
+    "loop": [],
+    "interval": 1
+  },
+  "values": {
+    "喊话次数": "100",
+    "随机小尾巴": "",
+    "喊话内容": "",
+    "随机内容": "",
+    "当前喊话内容": "",
+    "随机喊话内容": "",
+    "index": "",
+    "喊话次数索引": ""
+  },
+  "layout": [
+    [
+      {
+        "span": 12,
+        "model": "el-input-number",
+        "store": "喊话次数",
+        "text": "喊话次数"
+      },
+      {
+        "span": 12,
+        "model": "el-switch",
+        "store": "随机小尾巴",
+        "text": "随机小尾巴"
+      }
+    ],
+    [
+      {
+        "span": 24,
+        "model": "el-input-tags",
+        "store": "喊话内容",
+        "text": "喊话内容"
+      }
+    ],
+    [
+      {
+        "span": 24,
+        "model": "el-input-tags",
+        "store": "随机内容",
+        "text": "随机内容"
+      }
+    ]
+  ],
+  "valueTypes": {
+    "喊话次数": "number",
+    "随机小尾巴": "switch",
+    "喊话内容": "list",
+    "随机内容": "list",
+    "当前喊话内容": "text",
+    "随机喊话内容": "text",
+    "index": "number",
+    "喊话次数索引": "number"
+  }
+}

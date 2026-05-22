@@ -320,7 +320,8 @@ class FlowEngine(Thread):
             self._run_extra(step_def, "prefix")
             Window.ensure_window_size(self._hwnd)
             result = self._run_action(step_def)
-            self.vp.apply_set(step_def, result)
+            if result:
+                self.vp.apply_set(step_def, result)
             self._run_extra(step_def, "postfix")
 
             if result:
