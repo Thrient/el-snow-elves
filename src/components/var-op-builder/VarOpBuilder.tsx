@@ -123,6 +123,12 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const [compound, setCompound] = useState<{ expr: string; connector: string | null }[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
+  // Sub-expression builder for arg values
+  const [argMode, setArgMode] = useState<"input" | "var" | "op">("input");
+  const [argVar, setArgVar] = useState<VarItem | null>(null);
+  const [argOp, setArgOp] = useState<OpDef | null>(null);
+  const [argSubArg, setArgSubArg] = useState("");
+
   // Parse initial value
   useEffect(() => {
     if (!value || !open) return;
@@ -144,6 +150,10 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
       setSelectedOp(null);
       setOpArg("");
       setCompound([]);
+      setArgMode("input");
+      setArgVar(null);
+      setArgOp(null);
+      setArgSubArg("");
       setSubmitted(false);
     }
   }, [open]);
@@ -477,29 +487,163 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
               <span style={{ color: "#b8afa6", fontSize: 10 }}>↩</span>
             </div>
 
-            <div style={{
-              background: "#fff", border: "2px solid #d4513b",
-              borderRadius: 14, padding: "24px 28px",
-              display: "flex", flexDirection: "column",
-              alignItems: "center", gap: 12,
-              boxShadow: "0 0 0 3px rgba(212,81,59,0.08)",
-            }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: "#3d3630" }}>
-                输入{selectedOp.arg!.label}
-              </label>
-              <AutoComplete
-                value={opArg}
-                onChange={v => setOpArg(v)}
-                options={variables.map(v => ({ value: v.syntax, label: v.syntax.replace(/^\{|\}$/g, "") }))}
-                filterOption={(input, option) =>
-                  option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
-                }
-                style={{ width: 200 }}
-                placeholder="数字或 {变量}"
-              />
-            </div>
-
-            <div style={{ fontSize: 11, color: "#b8afa6" }}>Enter 确认</div>
+            {argMode === "input" ? (
+              <>
+                <div style={{
+                  background: "#fff", border: "2px solid #d4513b",
+                  borderRadius: 14, padding: "24px 28px",
+                  display: "flex", flexDirection: "column",
+                  alignItems: "center", gap: 12,
+                  boxShadow: "0 0 0 3px rgba(212,81,59,0.08)",
+                }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#3d3630" }}>
+                    输入{selectedOp.arg!.label}
+                  </label>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <AutoComplete
+                      value={opArg}
+                      onChange={v => setOpArg(v)}
+                      options={variables.map(v => ({ value: v.syntax, label: v.syntax.replace(/^\{|\}$/g, "") }))}
+                      filterOption={(input, option) =>
+                        option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+                      }
+                      style={{ width: 160 }}
+                      placeholder="数字或 {变量}"
+                    />
+                    <button
+                      onClick={() => { setArgMode("var"); setArgVar(null); setArgOp(null); setArgSubArg(""); }}
+                      style={{
+                        width: 32, height: 32,
+                        borderRadius: 8, border: "1.5px solid #d0d5dd",
+                        background: "#faf8f5", cursor: "pointer",
+                        fontSize: 14, fontWeight: 700, color: "#6366f1",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.15s",
+                      }}
+                      title="构建表达式"
+                    >fx</button>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: "#b8afa6" }}>Enter 确认 · fx 构建表达式</div>
+              </>
+            ) : argMode === "var" ? (
+              <div style={{
+                background: "#fff", border: "2px solid #6366f1",
+                borderRadius: 14, padding: "16px 20px",
+                display: "flex", flexDirection: "column", gap: 6,
+                boxShadow: "0 0 0 3px rgba(99,102,241,0.08)",
+                maxHeight: 220, overflowY: "auto",
+              }} className="thin-scrollbar">
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#6366f1", marginBottom: 2 }}>
+                  选择变量
+                  <button onClick={() => setArgMode("input")}
+                    style={{ marginLeft: 8, fontSize: 10, color: "#b8afa6", border: "none", background: "none", cursor: "pointer" }}>← 返回</button>
+                </div>
+                {variables.map(v => {
+                  const type = detectType(v, valueTypes);
+                  const bare = stripBraces(v.syntax);
+                  return (
+                    <div key={v.syntax} onClick={() => { setArgVar(v); setArgMode("op"); }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "6px 10px", borderRadius: 8, cursor: "pointer",
+                        background: "#faf8f5", transition: "background 0.12s",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "#eef2ff"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "#faf8f5"; }}
+                    >
+                      <span style={{ fontSize: 12 }}>{type==="list"?"📋":type==="number"?"🔢":"📝"}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#3d3630" }}>{bare}</span>
+                      <span style={{ fontSize: 9, color: "#b8afa6" }}>{TYPE_LABELS[type]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : argMode === "op" && argVar ? (
+              <div style={{
+                background: "#fff", border: "2px solid #6366f1",
+                borderRadius: 14, padding: "16px 20px",
+                display: "flex", flexDirection: "column", gap: 6,
+                boxShadow: "0 0 0 3px rgba(99,102,241,0.08)",
+                maxHeight: 220, overflowY: "auto",
+              }} className="thin-scrollbar">
+                <div style={{ fontSize: 11, fontWeight: 600, color: "#6366f1", marginBottom: 2 }}>
+                  {stripBraces(argVar.syntax)} · 选择操作
+                  <button onClick={() => setArgMode("var")}
+                    style={{ marginLeft: 8, fontSize: 10, color: "#b8afa6", border: "none", background: "none", cursor: "pointer" }}>← 返回</button>
+                </div>
+                {(() => {
+                  const vtype = detectType(argVar, valueTypes);
+                  const ops = OPS_BY_TYPE[vtype] ?? [];
+                  return ops.map(op => {
+                    const preview = op.expr.replace("var", stripBraces(argVar.syntax)).replace(/\?/g, "…");
+                    return (
+                      <div key={op.key}
+                        onClick={() => {
+                          if (op.arg) {
+                            setArgOp(op);
+                            // 直接构建，无子参数的跳过二次确认
+                          } else {
+                            const inner = op.expr.replace("var", stripBraces(argVar.syntax));
+                            setOpArg(inner);
+                            setArgMode("input");
+                          }
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "6px 10px", borderRadius: 8, cursor: "pointer",
+                          background: argOp?.key === op.key ? "#eef2ff" : "#faf8f5",
+                          transition: "background 0.12s",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "#eef2ff"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = argOp?.key === op.key ? "#eef2ff" : "#faf8f5"; }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "#3d3630" }}>{op.title}</div>
+                          <div style={{ fontSize: 10, color: "#b8afa6" }}>{op.desc}</div>
+                        </div>
+                        <code style={{ fontSize: 10, color: "#6366f1", background: "#eef2ff", padding: "2px 6px", borderRadius: 4 }}>{preview}</code>
+                      </div>
+                    );
+                  });
+                })()}
+                {/* Sub-arg input for ops that need it */}
+                {argOp?.arg && (
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                    <AutoComplete
+                      value={argSubArg}
+                      onChange={v => setArgSubArg(v)}
+                      options={variables.map(v => ({ value: v.syntax, label: v.syntax.replace(/^\{|\}$/g, "") }))}
+                      filterOption={(input, option) =>
+                        option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+                      }
+                      style={{ flex: 1 }}
+                      placeholder={argOp.arg.label}
+                    />
+                    <button
+                      onClick={() => {
+                        const bare = stripBraces(argVar.syntax);
+                        let expr = argOp.expr.replace("var", bare);
+                        if (argSubArg) {
+                          const sub = argSubArg.replace(/^\{|\}$/g, "");
+                          const isNum = /^-?\d+$/.test(sub);
+                          const isVarName = variables.some(v => stripBraces(v.syntax) === sub);
+                          const v = (!isNum && !isVarName) ? `'${sub}'` : sub;
+                          expr = expr.replace("?", v);
+                        }
+                        setOpArg(expr);
+                        setArgMode("input");
+                      }}
+                      style={{
+                        padding: "4px 10px", borderRadius: 8,
+                        border: "none", background: "#6366f1", color: "#fff",
+                        fontWeight: 600, fontSize: 11, cursor: "pointer",
+                      }}
+                    >确定</button>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         )}
 
