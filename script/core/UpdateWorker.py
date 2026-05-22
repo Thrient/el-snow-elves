@@ -6,6 +6,8 @@ import subprocess
 import sys
 import json
 
+import webview
+
 from script.core.UpdateEngine import UpdateEngine, APP_DIR, MANIFEST_PATH
 
 _log = logging.getLogger("Elves.UpdateWorker")
@@ -14,10 +16,20 @@ STAGING_DIR = os.path.join(APP_DIR, "_update_staging")
 BAT_PATH = os.path.join(APP_DIR, "_restart.bat")
 
 
+def _push_js(code: str):
+    """执行 JS 代码推送进度到前端 store"""
+    try:
+        w = webview.active_window()
+        if w:
+            w.evaluate_js(code)
+    except Exception:
+        pass
+
+
 class UpdateWorker:
     @staticmethod
-    def download_updates(current_version: str) -> list[dict]:
-        """返回进度事件列表，最后一个为 done/error。用于 IPC 返回给前端。"""
+    def download_updates(current_version: str) -> dict:
+        """下载更新文件，通过 JS bridge 实时推送进度到前端。返回 {"ok": True} 或 {"error": "..."}。"""
         _log.info(f"download_updates: start current_version={current_version}")
         local = UpdateEngine.load_local_manifest()
         _log.info(f"download_updates: local manifest has {len(local)} entries")
@@ -25,16 +37,19 @@ class UpdateWorker:
 
         if "error" in diff:
             _log.error(f"download_updates: diff error: {diff['error']}")
-            return [{"error": diff["error"]}]
+            _push_js("window.useUpdateStore.getState().finishDownload()")
+            return {"error": diff["error"]}
 
         if not diff.get("changed"):
             _log.info("download_updates: no changed files, up to date")
-            return [{"up_to_date": True}]
+            return {"up_to_date": True}
 
         changed = diff["changed"]
         total = len(changed)
         _log.info(f"download_updates: {total} files to download")
-        events = []
+
+        # 推送初始化
+        _push_js(f"window.useUpdateStore.getState().startDownload({total})")
 
         # 清空暂存区
         if os.path.exists(STAGING_DIR):
@@ -46,16 +61,12 @@ class UpdateWorker:
             _log.info(f"download_updates: [{i+1}/{total}] {item['path']} (id={item['fingerprint_id']}, size={item['size']})")
             try:
                 UpdateEngine.download_blob(item["fingerprint_id"], save_path)
-                events.append({
-                    "progress": (i + 1) / total,
-                    "current": item["path"],
-                    "total": total,
-                    "index": i + 1,
-                })
+                path = item["path"].replace("\\", "\\\\").replace("'", "\\'")
+                _push_js(f"window.useUpdateStore.getState().updateProgress('{path}',{i+1})")
             except Exception as e:
                 _log.error(f"download_updates: failed {item['path']}: {e}")
-                events.append({"error": f"download {item['path']}: {e}"})
-                return events
+                _push_js("window.useUpdateStore.getState().finishDownload()")
+                return {"error": f"download {item['path']}: {e}"}
 
         # 下载完成 — 把最新版本号写入 staged manifest
         staged_manifest = {item["path"]: item["sha256"] for item in changed}
@@ -63,17 +74,13 @@ class UpdateWorker:
         with open(manifest_path, "w", encoding="utf-8") as f:
             json.dump(staged_manifest, f, indent=2)
 
-        events.append({
-            "done": True,
-            "version": diff["latest_version"],
-            "file_count": total,
-        })
-        return events
+        _push_js("window.useUpdateStore.getState().finishDownload()")
+        _log.info(f"download_updates: done, {total} files downloaded")
+        return {"ok": True, "file_count": total}
 
     @staticmethod
     def apply_and_restart():
         """写入重启脚本并退出应用。"""
-        # 找出可执行文件路径
         if getattr(sys, 'frozen', False):
             me = sys.executable
         else:
@@ -92,6 +99,6 @@ del "%~f0"
         subprocess.Popen(
             f'cmd /c "{BAT_PATH}"',
             shell=True,
-            creationflags=subprocess.CREATE_NEW_CONSOLE | 0x00000008,  # DETACHED_PROCESS
+            creationflags=subprocess.CREATE_NEW_CONSOLE | 0x00000008,
         )
         return True
