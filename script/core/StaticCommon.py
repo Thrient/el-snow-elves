@@ -68,6 +68,8 @@ class StaticCommon:
             if not os.path.isdir(task_path):
                 continue
 
+            found = False
+
             # 遍历版本子文件夹
             for version_folder in os.listdir(task_path):
                 version_path = os.path.join(task_path, version_folder)
@@ -90,11 +92,13 @@ class StaticCommon:
                 data["_config_path"] = json_path
                 _TASK_CONFIG_CACHE[task_id] = dict(data)
 
+                found = True
                 # 移除不需要的字段（只影响返回给前端的列表）
                 for key in ("monitors", "common", "steps", "start"):
                     data.pop(key, None)
 
-            tasks.append(data)
+            if found:
+                tasks.append(data)
         return tasks
 
     @staticmethod
