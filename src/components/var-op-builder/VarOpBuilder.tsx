@@ -507,9 +507,9 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                   if (opArg) {
                     const isNumber = /^-?\d+$/.test(opArg);
                     const isVar = /^\{.+\}$/.test(opArg);
-                    const val = (selectedOp.arg?.type === "text" && !isNumber && !isVar) ? `'${opArg}'` : opArg;
-                    // 预览去外层花括号，清爽显示
-                    return p.replace("?", val).replace(/^\{|\}$/g, "");
+                    const display = opArg.replace(/^\{|\}$/g, "");
+                    const val = (selectedOp.arg?.type === "text" && !isNumber && !isVar) ? `'${display}'` : display;
+                    return p.replace("?", val);
                   }
                   return p.replace(/\?/g, "…");
                 })()}
