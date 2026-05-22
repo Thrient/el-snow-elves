@@ -12,7 +12,6 @@ export default function UpdateModal() {
   const currentVersion = useUpdateStore(s => s.currentVersion);
 
   const handleUpdate = async () => {
-    useUpdateStore.getState().startDownload(0);
     closeCheckModal();
 
     try {
@@ -20,23 +19,34 @@ export default function UpdateModal() {
         current_version: useUpdateStore.getState().currentVersion,
       })) as any;
 
-      // If the result is iterable progress events
-      if (result && typeof result[Symbol.iterator] === "function") {
-        for (const ev of result) {
-          if (ev.up_to_date) {
-            useUpdateStore.getState().clearUpdate();
-            return;
-          }
-          if (ev.done) {
-            useUpdateStore.getState().finishDownload();
-            return;
-          }
-          if (ev.progress !== undefined) {
-            useUpdateStore.getState().updateProgress(
-              ev.current ?? "下载中...",
-              ev.index ?? 0,
-            );
-          }
+      if (!result || !Array.isArray(result)) {
+        useUpdateStore.getState().finishDownload();
+        return;
+      }
+
+      const firstEv = result[0];
+      if (firstEv.error) {
+        useUpdateStore.getState().finishDownload();
+        return;
+      }
+      if (firstEv.up_to_date) {
+        useUpdateStore.getState().clearUpdate();
+        return;
+      }
+
+      const total = firstEv.total ?? result.length;
+      useUpdateStore.getState().startDownload(total);
+
+      for (const ev of result) {
+        if (ev.done) {
+          useUpdateStore.getState().finishDownload();
+          return;
+        }
+        if (ev.progress !== undefined) {
+          useUpdateStore.getState().updateProgress(
+            ev.current ?? "下载中...",
+            ev.index ?? 0,
+          );
         }
       }
     } catch {
