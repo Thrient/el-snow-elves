@@ -196,9 +196,9 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     const bare = selectedVar.syntax.replace(/^\{|\}$/g, "");
     let expr = selectedOp.expr.replace("var", bare);
     if (selectedOp.arg && opArg) {
-      const isNumber = /^-?\d+$/.test(opArg);
-      const isVar = /^\{.+\}$/.test(opArg);
-      const val = (selectedOp.arg.type === "text" && !isNumber && !isVar) ? `'${opArg}'` : opArg;
+      const arg = opArg.replace(/^\{|\}$/g, "");
+      const isNumber = /^-?\d+$/.test(arg);
+      const val = (selectedOp.arg.type === "text" && !isNumber) ? `'${arg}'` : arg;
       expr = expr.replace("?", val);
     }
     return expr.replace(/\?/g, "…");
