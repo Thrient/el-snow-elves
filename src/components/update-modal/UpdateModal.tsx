@@ -19,13 +19,17 @@ export default function UpdateModal() {
         current_version: useUpdateStore.getState().currentVersion,
       })) as any;
 
+      console.log("[update] download result:", JSON.stringify(result))
       if (result?.up_to_date) {
         useUpdateStore.getState().clearUpdate();
       } else if (result?.error) {
+        console.log("[update] download error:", result.error)
         useUpdateStore.getState().finishDownload();
+      } else {
+        console.log("[update] download ok:", result)
       }
-      // 进度由 Python 通过 JS bridge 实时推送，这里无需处理
-    } catch {
+    } catch (e) {
+      console.log("[update] download exception:", e)
       useUpdateStore.getState().finishDownload();
     }
   };
