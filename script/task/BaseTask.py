@@ -19,6 +19,7 @@ class BaseTask:
     def __init__(self):
         self._matcher = TemplateMatcher()
         self._input = InputSimulator()
+        self._color = ColorMatcher()
 
     def batch_template_match(self, *args, **kwargs):
         return self._matcher.batch_match(*args, **kwargs)
@@ -147,12 +148,12 @@ class BaseTask:
     # ── 颜色动作 ──
 
     def exits_color(self, *args, **kwargs):
-        return ColorMatcher.exits_color(**kwargs)
+        return self._color.exits_color(**kwargs)
 
     def touch_color(self, *args, **kwargs):
         @during(seconds=OVERTIME, is_valid=lambda x: bool(x))
         def _inner(**inner_kwargs):
-            results = ColorMatcher.match_color(**inner_kwargs)
+            results = self._color.match_color(**inner_kwargs)
             mode = kwargs.get("click_mode", "random")
             if mode == "first":
                 self.click_first(results=results, **kwargs)
@@ -172,13 +173,13 @@ class BaseTask:
     def wait_color(self, *args, **kwargs):
         @wait_until(k=1)
         def _inner(**inner_kwargs):
-            return ColorMatcher.exits_color(**inner_kwargs)
+            return self._color.exits_color(**inner_kwargs)
         return _inner(**kwargs)
 
     def wait_color_disappear(self, *args, **kwargs):
         @wait_until(k=1, is_valid=lambda x: not bool(x))
         def _inner(**inner_kwargs):
-            return ColorMatcher.exits_color(**inner_kwargs)
+            return self._color.exits_color(**inner_kwargs)
         return _inner(**kwargs)
 
     def input(self, *args, **kwargs):
