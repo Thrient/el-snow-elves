@@ -12,45 +12,34 @@ export default function UpdateModal() {
   const currentVersion = useUpdateStore(s => s.currentVersion);
 
   const handleUpdate = async () => {
+    useUpdateStore.getState().startDownload(0);
     closeCheckModal();
 
     try {
-      const result = (await window.pywebview?.api.emit("API:UPDATE:DOWNLOAD", {
+      const events = (await window.pywebview?.api.emit("API:UPDATE:DOWNLOAD", {
         current_version: useUpdateStore.getState().currentVersion,
       })) as any;
 
-      if (!result || !Array.isArray(result)) {
-        useUpdateStore.getState().finishDownload();
-        return;
-      }
-
-      const firstEv = result[0];
-      if (firstEv.error) {
-        useUpdateStore.getState().finishDownload();
-        return;
-      }
-      if (firstEv.up_to_date) {
-        useUpdateStore.getState().clearUpdate();
-        return;
-      }
-
-      const total = firstEv.total ?? result.length;
-      useUpdateStore.getState().startDownload(total);
-      // yield to React so the modal renders with totalFiles set
-      await new Promise(r => setTimeout(r, 50));
-
-      for (const ev of result) {
-        if (ev.done) {
-          useUpdateStore.getState().finishDownload();
-          return;
-        }
-        if (ev.progress !== undefined) {
-          useUpdateStore.getState().updateProgress(
-            ev.current ?? "下载中...",
-            ev.index ?? 0,
-          );
-          // yield to React between each file so progress bar animates
-          await new Promise(r => setTimeout(r, 10));
+      if (events && Array.isArray(events)) {
+        for (const ev of events) {
+          if (ev.error) {
+            useUpdateStore.getState().finishDownload();
+            return;
+          }
+          if (ev.up_to_date) {
+            useUpdateStore.getState().clearUpdate();
+            return;
+          }
+          if (ev.done) {
+            useUpdateStore.getState().finishDownload();
+            return;
+          }
+          if (ev.progress !== undefined) {
+            useUpdateStore.getState().updateProgress(
+              ev.current ?? "下载中...",
+              ev.index ?? 0,
+            );
+          }
         }
       }
     } catch {
