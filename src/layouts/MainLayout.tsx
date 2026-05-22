@@ -35,7 +35,9 @@ const MainLayout: FC = () => {
 
         const latest = await window.pywebview?.api.emit("API:UPDATE:CHECK") as any
         if (latest && latest.version && currentVersion) {
-          if (latest.version !== String(currentVersion)) {
+          const cur = String(currentVersion).replace(/^v/, "")
+          const lat = String(latest.version).replace(/^v/, "")
+          if (lat !== cur) {
             useUpdateStore.getState().setUpdate({
               version: latest.version,
               changelog: latest.changelog,
