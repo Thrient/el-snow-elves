@@ -112,8 +112,4 @@ del "%~f0"
             shell=True,
             creationflags=subprocess.CREATE_NEW_CONSOLE | 0x00000008,
         )
-        # 退出应用，让 bat 替换文件
-        w = webview.active_window()
-        if w:
-            w.destroy()
         return True
