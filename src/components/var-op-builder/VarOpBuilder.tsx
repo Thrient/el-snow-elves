@@ -69,7 +69,7 @@ const OPS_BY_TYPE: Record<string, OpDef[]> = {
     { key: "value",  title: "取值",       desc: "直接取列表引用",                           expr: "{var}" },
     { key: "loop",   title: "循环取值",   desc: "遍历每一项，自动注入 index/len/reset",      expr: "{var[循环]}" },
     { key: "index",  title: "取下标 [n]", desc: "按位置取第 n 项，从 0 开始",                expr: "{var[?]}",   arg: { label: "下标", type: "number" } },
-    { key: "random", title: "随机选择",   desc: "随机取列表中一项 random(var)",              expr: "{random(var)}" },
+    { key: "choice", title: "随机选择",   desc: "随机取列表中一项 choice(var)",              expr: "{choice(var)}" },
     { key: "len",    title: "求长度",     desc: "返回元素个数 len(var)",                      expr: "{len(var)}" },
     { key: "first",  title: "取第一个",   desc: "等价于 [0]",                                expr: "{var[0]}" },
     { key: "last",   title: "取最后一个", desc: "取列表末尾项",                              expr: "{var[last]}" },
