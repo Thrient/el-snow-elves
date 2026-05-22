@@ -1,5 +1,5 @@
 import { useState, type FC } from "react";
-import { Button, Input, Select, Tooltip, message } from "antd";
+import { Button, Input, InputNumber, Select, Tooltip, message } from "antd";
 import { CloseOutlined, DeleteOutlined, LeftOutlined, BugOutlined, ReloadOutlined, ApartmentOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
 import type { EditorCtx } from "./constants";

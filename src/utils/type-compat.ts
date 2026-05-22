@@ -8,7 +8,7 @@ export type ValueType = "string" | "number" | "boolean" | "list" | "empty";
 export const VAR_TYPE_META: Record<VarType, { label: string; desc: string; icon: string }> = {
   text:   { label: "文本", desc: "适合文字、名称、编号等任意文本内容", icon: "Aa" },
   number: { label: "数字", desc: "适合计数、坐标、阈值等需要计算的数值", icon: "12" },
-  bool:   { label: "布尔", desc: "只有真/假两种状态，适合开关、条件判断", icon: "⇄" },
+  switch: { label: "开关", desc: "只有真/假两种状态，适合开关、条件判断", icon: "⇄" },
   list:   { label: "列表", desc: "一组值的有序集合，适合遍历、多选等场景", icon: "[ ]" },
 };
 
@@ -17,7 +17,7 @@ export const VAR_TYPE_OPTS: { value: VarType; label: string; desc: string }[] =
 
 /** VarType → ValueType 映射 */
 const VTYPE_MAP: Record<VarType, ValueType> = {
-  text: "string", number: "number", bool: "boolean", list: "list",
+  text: "string", number: "number", switch: "boolean", list: "list",
 };
 
 /** 检测值的运行时类型（无显式类型时回退） */

@@ -1,4 +1,4 @@
-import { useMemo, type FC } from "react";
+import { type FC } from "react";
 import { Button, Input, InputNumber, Popover, Select } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import type { EditorCtx } from "./constants";
@@ -45,11 +45,6 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
       return o;
     });
   };
-
-  const stepParamKeys = useMemo(() => {
-    const def = getStepDefaults(baseName);
-    return Object.keys(def).map((k) => ({ value: k, label: k }));
-  }, [ctx.stepParamsMap, ctx.allStepsData, baseName]);
 
   return (
     <div className="group rounded-xl border border-dashed bg-white transition-colors flex-1 min-w-0"

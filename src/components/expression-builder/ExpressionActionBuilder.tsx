@@ -47,7 +47,7 @@ const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes
       for (const [k, vt] of Object.entries(valueTypes)) {
         if (vt === "list") m[k] = "list";
         else if (vt === "number") m[k] = "number";
-        else if (vt === "bool") m[k] = "boolean";
+        else if (vt === "switch") m[k] = "boolean";
       }
     }
     // 2. From layout cell models (fallback — declared type via control)

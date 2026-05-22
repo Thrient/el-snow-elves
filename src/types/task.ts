@@ -83,7 +83,7 @@ export type Cell = {
   autocompleteContext?: AutocompleteContext
 }
 
-export type VarType = "text" | "number" | "switch"
+export type VarType = "text" | "number" | "switch" | "list"
 
 export type TaskBase = {
   id: string

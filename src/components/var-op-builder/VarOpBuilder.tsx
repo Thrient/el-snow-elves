@@ -50,7 +50,7 @@ function detectType(v: VarItem, valueTypes?: Record<string, import("@/types/task
     const vt = valueTypes[bare];
     if (vt === "list") return "list";
     if (vt === "number") return "number";
-    if (vt === "bool") return "boolean";
+    if (vt === "switch") return "boolean";
     return "string";
   }
   // 2. 系统变量 — 名称推断

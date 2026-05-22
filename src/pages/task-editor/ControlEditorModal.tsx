@@ -69,7 +69,7 @@ export interface ControlEditorModalProps {
 }
 
 const ControlEditorModal: FC<ControlEditorModalProps> = ({
-  open, cell, ri, ci, values, valueTypes,
+  open, cell, ri, ci, values,
   onClose, onUpdateCell, onRemoveCell, onChangeControl, onChangeValue,
 }) => {
   const [visible, setVisible] = useState(false);

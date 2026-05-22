@@ -4,7 +4,7 @@ import {
 } from "react";
 import { Button, Input, Modal, message } from "antd";
 import type { Cell, CellModel, VarType } from "@/types/task";
-import { VAR_TYPE_OPTS, compatibleModels } from "@/utils/type-compat";
+import { VAR_TYPE_OPTS } from "@/utils/type-compat";
 import MiniPreview from "@/components/mini-preview/MiniPreview";
 import ComponentPickerModal from "./ComponentPickerModal";
 import ControlEditorModal from "./ControlEditorModal";
@@ -295,9 +295,8 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
             </div>
           ) : (
             unboundVars.map(({ key, value, type }) => {
-              const meta = VAR_TYPE_OPTS.find((o) => o.value === type);
-              const typeIcon = type === "number" ? "12" : type === "bool" ? "⇄" : type === "list" ? "[ ]" : "Aa";
-              const typeColor = type === "number" ? "#10b981" : type === "bool" ? "#f59e0b" : type === "list" ? "#ec4899" : "#6366f1";
+              const typeIcon = type === "number" ? "12" : type === "switch" ? "⇄" : type === "list" ? "[ ]" : "Aa";
+              const typeColor = type === "number" ? "#10b981" : type === "switch" ? "#f59e0b" : type === "list" ? "#ec4899" : "#6366f1";
               const valStr = value === null || value === undefined ? "" : String(value);
 
               return (
@@ -570,7 +569,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
               className="w-full text-left px-4 py-2 text-[12px] text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors duration-150 cursor-pointer flex items-center gap-3 select-none"
               onClick={() => {
                 const cell = layout[ctxMenu.ri]?.[ctxMenu.ci];
-                setPendingVar({ name: cell?.store ?? "", value: values[cell?.store ?? ""] ?? "", ri: ctxMenu.ri, ci: ctxMenu.ci });
+                setPendingVar({ name: cell?.store ?? "", value: values[cell?.store ?? ""] ?? "", type: valueTypes[cell?.store ?? ""] ?? "text", ri: ctxMenu.ri, ci: ctxMenu.ci });
                 setPickerOpen(true);
                 setCtxMenu(null);
               }}
@@ -714,7 +713,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
                         className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold text-white shrink-0"
                         style={{ backgroundColor: color }}
                       >
-                        {o.value === "text" ? "Aa" : o.value === "number" ? "12" : o.value === "bool" ? "⇄" : "[ ]"}
+                        {o.value === "text" ? "Aa" : o.value === "number" ? "12" : o.value === "switch" ? "⇄" : "[ ]"}
                       </span>
                       <span className="text-xs font-semibold text-slate-700">{o.label}</span>
                       {active && (

@@ -30,7 +30,7 @@ interface VarItem {
 interface Props {
   variables: VarItem[];
   onInsert: (expr: string) => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   placeholder?: string;
   context?: "set" | "when" | "args" | "params";
 }
