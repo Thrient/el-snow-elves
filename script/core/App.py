@@ -17,6 +17,8 @@ from script.core.FlowEngine import clear_common_cache
 from script.account import AccountManager
 from script.account.SessionManager import get_session
 from script.core.TemplateMatcher import TemplateMatcher
+from script.core.UpdateEngine import UpdateEngine
+from script.core.UpdateWorker import UpdateWorker
 from script.core.Window import Window
 from script.util.Utils import Utils
 from script.util.TrayIcon import TrayIcon
@@ -335,6 +337,20 @@ class App:
         api.on("API:ACCOUNT:REPLAY:STOP", self._session.stop_replay)
         api.on("API:AUTOSTART:GET", lambda: Utils.get_autostart())
         api.on("API:AUTOSTART:SET", Utils.set_autostart)
+        api.on("API:UPDATE:CHECK", UpdateEngine.check_version)
+
+        def _handle_update_diff(payload: dict):
+            return UpdateEngine.diff_manifest(
+                payload.get("current_version", "0.0.0"),
+                payload.get("manifest", {}),
+            )
+        api.on("API:UPDATE:DIFF", _handle_update_diff)
+
+        def _handle_update_download(payload: dict):
+            return UpdateWorker.download_updates(payload.get("current_version", "0.0.0"))
+        api.on("API:UPDATE:DOWNLOAD", _handle_update_download)
+
+        api.on("API:UPDATE:APPLY", lambda: UpdateWorker.apply_and_restart())
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
     def resume(self, hwnd):
