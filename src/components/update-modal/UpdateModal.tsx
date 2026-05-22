@@ -12,10 +12,37 @@ export default function UpdateModal() {
   // TODO: replace with actual current version from Python
   const currentVersion = "?.?.?";
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
+    useUpdateStore.getState().startDownload(0);
     closeCheckModal();
-    // TODO: trigger download flow (Task 6.3)
-    window.pywebview?.api.emit("API:UPDATE:DOWNLOAD", { current_version: currentVersion });
+
+    try {
+      const result = (await window.pywebview?.api.emit("API:UPDATE:DOWNLOAD", {
+        current_version: currentVersion,
+      })) as any;
+
+      // If the result is iterable progress events
+      if (result && typeof result[Symbol.iterator] === "function") {
+        for (const ev of result) {
+          if (ev.up_to_date) {
+            useUpdateStore.getState().clearUpdate();
+            return;
+          }
+          if (ev.done) {
+            useUpdateStore.getState().finishDownload();
+            return;
+          }
+          if (ev.progress !== undefined) {
+            useUpdateStore.getState().updateProgress(
+              ev.current ?? "下载中...",
+              ev.index ?? 0,
+            );
+          }
+        }
+      }
+    } catch {
+      useUpdateStore.getState().finishDownload();
+    }
   };
 
   return (

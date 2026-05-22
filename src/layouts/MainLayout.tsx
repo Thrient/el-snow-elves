@@ -7,6 +7,7 @@ import { Layout } from "antd";
 import AppHeader from "@/components/app-header/AppHeader.tsx";
 import DisclaimerModal from "@/components/disclaimer-modal/DisclaimerModal.tsx";
 import UpdateModal from "@/components/update-modal/UpdateModal";
+import UpdateProgress from "@/components/update-modal/UpdateProgress";
 import FloatingPanel from "@/components/floating-panel/FloatingPanel.tsx";
 import AppMenu from "@/components/app-menu/AppMenu.tsx";
 import { Outlet } from 'react-router-dom'
@@ -45,11 +46,35 @@ const MainLayout: FC = () => {
     init()
   }, [])
 
+  // SSE for real-time update push from hub
+  useEffect(() => {
+    const es = new EventSource("http://nas.elarion.cn/api/v1/client/stream");
+    es.onmessage = (e) => {
+      try {
+        const d = JSON.parse(e.data);
+        if (d.type === "update") {
+          useUpdateStore.getState().setUpdate({
+            version: d.version,
+            changelog: d.changelog,
+            is_mandatory: d.is_mandatory ?? false,
+          });
+        }
+      } catch {
+        // malformed SSE payload, ignore
+      }
+    };
+    es.onerror = () => {
+      // EventSource auto-reconnects
+    };
+    return () => es.close();
+  }, [])
+
   return (
     <>
       <FloatingPanel />
       <DisclaimerModal />
       <UpdateModal />
+      <UpdateProgress />
       <Layout className='h-full'>
         <Sider
           collapsible
