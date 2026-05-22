@@ -338,6 +338,7 @@ class App:
         api.on("API:AUTOSTART:GET", lambda: Utils.get_autostart())
         api.on("API:AUTOSTART:SET", Utils.set_autostart)
         api.on("API:UPDATE:CHECK", UpdateEngine.check_version)
+        api.on("API:APP:VERSION", lambda: VERSION)
 
         def _handle_update_diff(payload: dict):
             return UpdateEngine.diff_manifest(
