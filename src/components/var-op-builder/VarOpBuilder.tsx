@@ -209,7 +209,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
       const arg = opArg.replace(/^\{|\}$/g, "");
       const isNumber = /^-?\d+$/.test(arg);
       const isVarName = variables.some(v => v.syntax.replace(/^\{|\}$/g, "") === arg);
-      const val = (selectedOp.arg.type === "text" && !isNumber && !isVarName) ? `'${arg}'` : arg;
+      const isExpr = /[+\-*/().]/.test(arg);
+      const val = (selectedOp.arg.type === "text" && !isNumber && !isVarName && !isExpr) ? `'${arg}'` : arg;
       expr = expr.replace("?", val);
     }
     return expr.replace(/\?/g, "…");
@@ -628,7 +629,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                           const sub = argSubArg.replace(/^\{|\}$/g, "");
                           const isNum = /^-?\d+$/.test(sub);
                           const isVarName = variables.some(v => stripBraces(v.syntax) === sub);
-                          const v = (!isNum && !isVarName) ? `'${sub}'` : sub;
+                          const isExpr = /[+\-*/().]/.test(sub);
+                          const v = (!isNum && !isVarName && !isExpr) ? `'${sub}'` : sub;
                           expr = expr.replace("?", v);
                         }
                         setOpArg(expr);
