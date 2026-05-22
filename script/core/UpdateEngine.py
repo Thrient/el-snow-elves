@@ -7,9 +7,11 @@ import requests
 
 _log = logging.getLogger("Elves.UpdateEngine")
 
+from script.config.Setting import APP_DATA
+
 HUB_URL = "https://nas.elarion.cn:5173/api/v1"
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MANIFEST_PATH = os.path.join(APP_DIR, "manifest.json")
+MANIFEST_PATH = os.path.join(APP_DATA, "manifest.json")
 
 EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "temp", "build", "dist", "_update_staging"}
 EXCLUDE_FILES = {"manifest.json", "_restart.bat", "Elves.spec"}
@@ -44,6 +46,7 @@ class UpdateEngine:
 
     @staticmethod
     def save_manifest(manifest: dict[str, str]):
+        os.makedirs(os.path.dirname(MANIFEST_PATH), exist_ok=True)
         with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
 

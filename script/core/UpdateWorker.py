@@ -8,12 +8,13 @@ import json
 
 import webview
 
+from script.config.Setting import APP_DATA
 from script.core.UpdateEngine import UpdateEngine, APP_DIR, MANIFEST_PATH
 
 _log = logging.getLogger("Elves.UpdateWorker")
 
-STAGING_DIR = os.path.join(APP_DIR, "_update_staging")
-BAT_PATH = os.path.join(APP_DIR, "_restart.bat")
+STAGING_DIR = os.path.join(APP_DATA, "_update_staging")
+BAT_PATH = os.path.join(APP_DATA, "_restart.bat")
 
 
 def _push_js(code: str):
