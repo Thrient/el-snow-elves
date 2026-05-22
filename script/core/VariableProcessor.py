@@ -146,7 +146,7 @@ class SafeExpressionEvaluator:
                 return obj[node.attr]
             raise TypeError(f"不支持属性访问，对象类型: {type(obj)}")
 
-        # 新增：函数调用（仅允许 len()、split() 和 random()）
+        # 新增：函数调用（仅允许 len()、split() 和 choice()）
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and not node.keywords:
                 args = [self._eval_node(a) for a in node.args]
@@ -154,10 +154,10 @@ class SafeExpressionEvaluator:
                     return len(args[0])
                 if node.func.id == 'split' and len(args) == 2:
                     return str(args[0]).split(str(args[1]))
-                if node.func.id == 'random' and len(args) == 1:
+                if node.func.id == 'choice' and len(args) == 1:
                     import random
                     return random.choice(list(args[0]))
-            raise TypeError("仅支持 len()、split() 和 random() 函数调用")
+            raise TypeError("仅支持 len()、split() 和 choice() 函数调用")
 
         raise TypeError("不支持的 AST 节点类型: {}".format(type(node).__name__))
 
