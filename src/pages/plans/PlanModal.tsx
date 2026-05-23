@@ -8,6 +8,7 @@ import { useTaskStore } from "@/store/task-store";
 import { callApi } from "@/utils/pywebview";
 import type { FullTask } from "@/types/task";
 import SettingsField from "@/components/settings-field/SettingsField";
+import { useGroupLabelWidths } from "@/hooks/useRowLabelWidths";
 
 const CRON_PRESETS = [
   { label: "每分钟", value: "* * * * *" },
@@ -45,6 +46,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
   const watchedTaskId = Form.useWatch("taskId", form);
   const [taskLayout, setTaskLayout] = useState<FullTask["layout"] | null>(null);
   const [taskValues, setTaskValues] = useState<Record<string, unknown>>({});
+  const taskLabelWidths = useGroupLabelWidths(taskLayout ?? []);
   useEffect(() => {
     if (!watchedTaskId) {
       setTaskLayout(null);
@@ -283,7 +285,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
                   >
                     {taskLayout.map((row, rowIndex) => {
                       let col = 1;
-                      return row.map((cell) => {
+                      return row.map((cell, ci) => {
                         const start = col;
                         col += cell.span ?? 1;
                         return (
@@ -301,6 +303,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
                                 ? (v) => setTaskValues((prev) => ({ ...prev, [cell.store as string]: v }))
                                 : () => {}
                               }
+                              labelWidth={taskLabelWidths[rowIndex]?.[ci]}
                             />
                           </div>
                         );

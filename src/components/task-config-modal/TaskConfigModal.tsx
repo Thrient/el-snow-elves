@@ -3,6 +3,7 @@ import type { FC } from "react"
 import { Modal } from "antd"
 import type { Task } from "@/types/task.ts"
 import SettingsField from "@/components/settings-field/SettingsField"
+import { useGroupLabelWidths } from "@/hooks/useRowLabelWidths"
 
 interface Props {
   open: boolean
@@ -16,14 +17,15 @@ const TaskConfigModal: FC<Props> = ({ open, task, onClose, onSave }) => {
     () => task?.values ?? {}
   )
 
+  const layout = task?.layout ?? []
+  const labelWidths = useGroupLabelWidths(layout)
+
   const handleOk = () => {
     onSave(formValues)
     onClose()
   }
 
   if (!task) return null
-
-  const { layout } = task
 
   return (
     <Modal title={`配置 - ${task.name}`} open={open} onCancel={onClose} onOk={handleOk} centered>
@@ -33,7 +35,7 @@ const TaskConfigModal: FC<Props> = ({ open, task, onClose, onSave }) => {
       >
         {layout.map((row, rowIndex) => {
           let col = 1
-          return row.map((cell) => {
+          return row.map((cell, ci) => {
             const start = col
             col += cell.span ?? 1
             return (
@@ -51,6 +53,7 @@ const TaskConfigModal: FC<Props> = ({ open, task, onClose, onSave }) => {
                     ? (v) => setFormValues((prev) => ({ ...prev, [cell.store as string]: v }))
                     : () => {}
                   }
+                  labelWidth={labelWidths[rowIndex]?.[ci]}
                 />
               </div>
             )

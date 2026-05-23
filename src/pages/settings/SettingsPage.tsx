@@ -3,11 +3,13 @@ import { Empty } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import { useSettingsStore } from "@/store/settings-store";
 import SettingsField from "@/components/settings-field/SettingsField";
+import { useGroupLabelWidths } from "@/hooks/useRowLabelWidths";
 
 const SettingsPage: FC = () => {
   const values = useSettingsStore((s) => s.values);
   const layout = useSettingsStore((s) => s.layout);
   const updateValue = useSettingsStore((s) => s.updateValue);
+  const labelWidths = useGroupLabelWidths(layout);
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-4 shadow-sm">
@@ -30,7 +32,7 @@ const SettingsPage: FC = () => {
               const isHeader = row.length === 1 && !row[0].store;
 
               let col = 1;
-              return row.map((cell) => {
+              return row.map((cell, ci) => {
                 const start = col;
                 col += isHeader ? 24 : (cell.span ?? 1);
 
@@ -53,6 +55,7 @@ const SettingsPage: FC = () => {
                           ? (v) => updateValue(cell.store as string, v)
                           : () => {}
                         }
+                        labelWidth={labelWidths[rowIndex]?.[ci]}
                       />
                     )}
                   </div>

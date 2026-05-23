@@ -19,13 +19,14 @@ interface Props {
   cell: Cell
   value: unknown
   onChange: (value: unknown) => void
+  labelWidth?: number
 }
 
-const SettingsField: FC<Props> = ({ cell, value, onChange }) => {
+const SettingsField: FC<Props> = ({ cell, value, onChange, labelWidth }) => {
   const label = cell.text && (
     <span
       className="text-sm text-[#4a423b] whitespace-nowrap shrink-0 overflow-hidden text-ellipsis inline-block font-semibold"
-      style={{ width: "64px", textAlign: "justify", textAlignLast: "justify", textJustify: "inter-character" }}
+      style={{ width: labelWidth ?? 64, textAlign: "right" }}
       title={cell.text}
     >
       {cell.text}：
