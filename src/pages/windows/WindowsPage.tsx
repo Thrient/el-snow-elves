@@ -107,20 +107,21 @@ const WindowsPage: FC = () => {
   const taskCount = selectedCharacter?.executeList.length ?? 0;
   const isLocked = selectedCharacter?.locked !== false;
   const hasWindows = characterStore.characters.length > 0;
-  const boxShadow = "0 0 0 1px rgba(0,0,0,.03), 0 2px 8px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06)";
 
   return (
     <>
       <style>{`@keyframes win-pulse{0%,100%{opacity:1}50%{opacity:.5}}`}</style>
-      <div className="flex flex-col h-[calc(100%-48px)] mx-4 mb-4 p-5" style={{ background:"#fdfdfc", borderRadius:12, boxShadow }}>
+      <div className="page-container">
 
       {/* ── Header ── */}
-      <div className="flex justify-between items-center shrink-0 mb-5">
-        <div className="flex items-center gap-3">
-          <div style={{ width:3, height:18, borderRadius:2, background:"#1677ff" }} />
-          <span style={{ fontSize:15, fontWeight:650, color:"#1e1e24", letterSpacing:"-0.01em" }}>窗口管理</span>
+      <div className="page-header">
+        <div className="page-header__left">
+          <span className="page-header__accent" />
+          <h2 className="page-header__title">
+            窗口管理
+          </h2>
           {hasWindows && (
-            <span style={{ fontSize:10, color:"#9ca3af", background:"#f3f4f6", padding:"2px 8px", borderRadius:99, fontWeight:500, letterSpacing:"0.03em" }}>
+            <span className="page-header__badge">
               {characterStore.characters.length}
             </span>
           )}

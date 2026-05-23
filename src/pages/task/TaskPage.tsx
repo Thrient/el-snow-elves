@@ -1,11 +1,11 @@
-import { useRef, useState, useEffect, useCallback, type FC } from "react";
+import { useRef, useState, useEffect, useMemo, type FC } from "react";
 import type React from "react";
 import {
-  PlusOutlined, EditOutlined, ProfileOutlined,
+  PlusOutlined, EditOutlined,
   ExportOutlined, ImportOutlined, DeleteOutlined,
+  SearchOutlined, AppstoreAddOutlined,
 } from "@ant-design/icons";
-import { Button, message, Modal, Space, Table, Tag, Tooltip } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { Button, message, Modal, Space, Tag, Tooltip, Input, Checkbox, Spin } from "antd";
 import type { Task } from "@/types/task.ts";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx";
 import { useUserStore } from "@/store/user-store.ts";
@@ -27,19 +27,19 @@ const TaskPage: FC = () => {
   const [configTask, setConfigTask] = useState<Task | null>(null);
   const [importing, setImporting] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [tableH, setTableH] = useState(400);
-  const tableWrapRef = useRef<HTMLDivElement>(null);
+  const [search, setSearch] = useState("");
 
-  const measure = useCallback(() => {
-    if (tableWrapRef.current) setTableH(tableWrapRef.current.clientHeight);
-  }, []);
+  const filtered = useMemo(() => {
+    if (!search.trim()) return taskList;
+    const q = search.toLowerCase();
+    return taskList.filter((t) => t.name.toLowerCase().includes(q));
+  }, [taskList, search]);
 
-  useEffect(() => {
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (tableWrapRef.current) ro.observe(tableWrapRef.current);
-    return () => ro.disconnect();
-  }, [measure]);
+  const toggleSelect = (id: string) => {
+    setSelectedRowKeys((prev) =>
+      prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id]
+    );
+  };
 
   // ── Export ──
 
@@ -150,126 +150,190 @@ const TaskPage: FC = () => {
     closeConfig();
   };
 
-  const columns: ColumnsType<Task> = [
-    {
-      title: '任务名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 160,
-      render: (name: string) => (
-        <span className="font-medium text-[#1a1a2e]">{name}</span>
-      ),
-    },
-    {
-      title: '版本',
-      dataIndex: 'version',
-      key: 'version',
-      width: 80,
-      render: (v: string) => (
-        <Tag className="m-0 text-[11px] bg-[#f0f2f5] text-[#8b8fa3] border-none rounded font-mono">{v}</Tag>
-      ),
-    },
-    {
-      title: '作者',
-      dataIndex: 'author',
-      key: 'author',
-      width: 100,
-      render: (author: string) => (
-        <span className="text-[#6b7280] text-[13px]">{author || '—'}</span>
-      ),
-    },
-    {
-      title: '配置项',
-      key: 'config',
-      render: (_, record) => {
-        const layoutKeys = new Set((record.layout ?? []).flatMap((row) => row.map((c) => c.store).filter(Boolean)));
-        const entries = Object.entries(record.values).filter(([k]) => layoutKeys.has(k));
-        if (entries.length === 0) {
-          return <span className="text-[#ccc] text-xs">暂无配置</span>;
-        }
-        const shown = entries.slice(0, 4);
-        const rest = entries.length - shown.length;
-        return (
-          <Space size={[4, 4]} wrap>
-            {shown.map(([key, value], i) => (
-              <Tag
-                key={key}
-                className="h-6 leading-6 rounded text-white border-none flex items-center text-[11px] m-0 px-2"
-                style={{ backgroundColor: TAG_COLORS[i % TAG_COLORS.length] }}
-              >{`${key}: ${String(value)}`}</Tag>
-            ))}
-            {rest > 0 && (
-              <Tag className="h-6 leading-6 rounded border-[#eef0f2] text-[#8b8fa3] text-[11px] m-0">
-                +{rest}
-              </Tag>
-            )}
-          </Space>
-        );
-      },
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 160,
-      render: (_, record) => (
-        <Space size={4}>
-          <Tooltip title="添加"><Button size="small" type="primary" icon={<PlusOutlined />}
-            onClick={() => appendTask({
-              id: record.id,
-              name: record.name,
-              version: record.version,
-              values: { ...record.values },
-            })} /></Tooltip>
-          <Tooltip title="配置"><Button size="small" icon={<EditOutlined />} onClick={() => openConfig(record)} /></Tooltip>
-          <Tooltip title="导出"><Button size="small" icon={<ExportOutlined />} onClick={() => handleExportSingle(record)} /></Tooltip>
-          <Tooltip title="删除"><Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteSingle(record)} /></Tooltip>
-        </Space>
-      ),
-    },
-  ];
+  // ── Render helpers ──
+
+  const renderConfigPills = (task: Task) => {
+    const layoutKeys = new Set((task.layout ?? []).flatMap((row) => row.map((c) => c.store).filter(Boolean)));
+    const entries = Object.entries(task.values).filter(([k]) => layoutKeys.has(k));
+    if (entries.length === 0) {
+      return <span className="text-[11px] text-[#ccc] italic">暂无配置项</span>;
+    }
+    const shown = entries.slice(0, 3);
+    const rest = entries.length - shown.length;
+    return (
+      <Space size={[4, 4]} wrap>
+        {shown.map(([key, value], j) => (
+          <Tag
+            key={key}
+            className="h-5 leading-5 rounded text-white border-none flex items-center text-[10px] m-0 px-1.5 font-mono"
+            style={{ backgroundColor: TAG_COLORS[j % TAG_COLORS.length] }}
+          >{`${key}: ${String(value)}`}</Tag>
+        ))}
+        {rest > 0 && (
+          <Tag className="h-5 leading-5 rounded border-[#eef0f2] text-[#8b8fa3] text-[10px] m-0">
+            +{rest}
+          </Tag>
+        )}
+      </Space>
+    );
+  };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-4 shadow-sm">
-      <div className="flex items-center justify-between h-10 shrink-0 mb-1">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-5 rounded-full bg-[#1677ff]" />
-          <span className="text-base font-semibold text-[#1a1a2e] tracking-tight">
-            <ProfileOutlined className="mr-2 text-[#1677ff]" />
+    <div className="page-container">
+      {/* ── Header ── */}
+      <div className="page-header">
+        <div className="page-header__left">
+          <span className="page-header__accent" />
+          <h2 className="page-header__title">
             任务管理
-          </span>
-          <span className="text-xs text-[#8b8fa3] bg-[#f5f5f7] px-2 py-0.5 rounded-full">
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[28px] font-bold text-[#1677ff] leading-none tracking-tight">
             {taskList.length}
           </span>
+          <span className="text-[12px] text-[#8b8fa3]">个任务</span>
         </div>
+      </div>
+
+      {/* ── Toolbar ── */}
+      <div className="flex items-center justify-between shrink-0 mb-3 gap-3">
+        <Input
+          prefix={<SearchOutlined className="text-[#b0b5c0]" />}
+          placeholder="搜索任务名称..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          allowClear
+          size="small"
+          className="max-w-260px"
+        />
         <Space size="small">
-          <Tooltip title="批量导入">
-            <Button icon={<ImportOutlined />} loading={importing} onClick={handleImportClick} />
+          {selectedRowKeys.length > 0 && (
+            <span className="text-[11px] text-[#8b8fa3] font-medium">
+              已选 {selectedRowKeys.length} 项
+            </span>
+          )}
+          <Tooltip title="批量导入任务包 (.zip)">
+            <Button size="small" icon={<ImportOutlined />} loading={importing} onClick={handleImportClick}>
+              导入
+            </Button>
           </Tooltip>
-          <Tooltip title="批量导出">
-            <Button icon={<ExportOutlined />} onClick={handleExportBatch} />
+          <Tooltip title={selectedRowKeys.length > 0 ? `导出已选的 ${selectedRowKeys.length} 个任务` : '导出全部任务'}>
+            <Button size="small" icon={<ExportOutlined />} onClick={handleExportBatch}>
+              导出
+            </Button>
           </Tooltip>
-          <Tooltip title="批量删除">
-            <Button danger icon={<DeleteOutlined />} disabled={selectedRowKeys.length === 0} onClick={handleDeleteBatch} />
+          <Tooltip title="批量删除选中任务">
+            <Button size="small" danger icon={<DeleteOutlined />} disabled={selectedRowKeys.length === 0} onClick={handleDeleteBatch}>
+              删除
+            </Button>
           </Tooltip>
         </Space>
       </div>
 
-      <div ref={tableWrapRef} className="flex-1 min-h-0">
-        <Table
-          columns={columns}
-          dataSource={taskList}
-          rowKey="id"
-          size="small"
-          pagination={false}
-          loading={loading}
-          locale={{ emptyText: '暂无任务，请在编辑器新建' }}
-          scroll={{ y: tableH - 2 }}
-          rowClassName={() => 'task-row'}
-          rowSelection={{
-            selectedRowKeys,
-            onChange: (keys) => setSelectedRowKeys(keys),
-          }}
-        />
+      {/* ── Task grid ── */}
+      <div className="page-content thin-scrollbar">
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <Spin size="default" />
+          </div>
+        ) : filtered.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {filtered.map((task, i) => {
+              const selected = selectedRowKeys.includes(task.id);
+              const accentColor = TAG_COLORS[i % TAG_COLORS.length];
+
+              return (
+                <div
+                  key={task.id}
+                  className="task-card task-card-enter"
+                  style={{
+                    animationDelay: `${i * 50}ms`,
+                    borderTop: `3px solid ${accentColor}`,
+                    ...(selected ? {
+                      borderColor: accentColor,
+                      borderLeftColor: accentColor,
+                      borderRightColor: accentColor,
+                      borderBottomColor: accentColor,
+                      boxShadow: `0 0 0 1px ${accentColor}40, 0 4px 16px ${accentColor}18`,
+                      backgroundColor: `${accentColor}06`,
+                    } : {}),
+                  }}
+                >
+                  {/* Top row: checkbox + version */}
+                  <div className="flex items-center justify-between mb-2">
+                    <Checkbox
+                      checked={selected}
+                      onChange={() => toggleSelect(task.id)}
+                      className="scale-90 origin-left"
+                    />
+                    <Tag className="m-0 text-[10px] bg-[#f0f2f5] text-[#8b8fa3] border-none rounded font-mono px-1.5 leading-5">
+                      v{task.version}
+                    </Tag>
+                  </div>
+
+                  {/* Task name */}
+                  <div className="text-[15px] font-semibold text-[#1a1a2e] mb-1 leading-tight tracking-tight">
+                    {task.name}
+                  </div>
+
+                  {/* Author */}
+                  <div className="text-[11px] text-[#8b8fa3] mb-2.5">
+                    {task.author || '未知作者'}
+                  </div>
+
+                  {/* Config pills */}
+                  <div className="mb-3 min-h-[22px]">
+                    {renderConfigPills(task)}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 pt-2.5 border-t border-[#f5f5f7]">
+                    <Tooltip title="添加到执行队列">
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<PlusOutlined />}
+                        className="text-[12px]"
+                        onClick={() => appendTask({
+                          id: task.id,
+                          name: task.name,
+                          version: task.version,
+                          values: { ...task.values },
+                        })}
+                      >
+                        添加
+                      </Button>
+                    </Tooltip>
+                    <div className="flex-1" />
+                    <Tooltip title="配置参数">
+                      <Button size="small" type="text" icon={<EditOutlined />} onClick={() => openConfig(task)} />
+                    </Tooltip>
+                    <Tooltip title="导出任务">
+                      <Button size="small" type="text" icon={<ExportOutlined />} onClick={() => handleExportSingle(task)} />
+                    </Tooltip>
+                    <Tooltip title="删除任务">
+                      <Button size="small" type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteSingle(task)} />
+                    </Tooltip>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* ── Empty state ── */
+          <div className="flex flex-col items-center justify-center h-full select-none">
+            <div className="w-20 h-20 rounded-full bg-[#f5f7fa] flex items-center justify-center mb-5">
+              <AppstoreAddOutlined className="text-[32px] text-[#c8cdd5]" />
+            </div>
+            <div className="text-[14px] font-medium text-[#6b7280] mb-1">
+              {search ? '没有匹配的任务' : '暂无任务'}
+            </div>
+            <div className="text-[12px] text-[#b0b5c0]">
+              {search ? '试试其他关键词' : '前往编辑器创建你的第一个自动化任务'}
+            </div>
+          </div>
+        )}
       </div>
 
       <TaskConfigModal

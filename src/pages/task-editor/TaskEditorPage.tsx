@@ -323,7 +323,7 @@ const TaskEditorPage: FC = () => {
 
   if (!isEditing) {
     return (
-      <div className="flex flex-col h-full bg-white rounded-lg shadow-sm m-x-4 m-b-4 overflow-hidden border border-[#eef0f2]">
+      <div className="page-container !p-0 overflow-hidden border border-[#eef0f2]">
         <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#eef0f2] bg-[#fafbfc] shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center">

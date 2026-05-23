@@ -12,13 +12,18 @@ const SettingsPage: FC = () => {
   const labelWidths = useGroupLabelWidths(layout);
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-4 shadow-sm">
-      <div className="flex items-center gap-2 h-40px shrink-0">
-        <SettingOutlined className="text-lg" />
-        <span className="text-lg font-bold text-[#1a1a2e]">全局设置</span>
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header__left">
+          <span className="page-header__accent" />
+          <h2 className="page-header__title">
+            <SettingOutlined className="mr-2 text-[#1677ff]" />
+            全局设置
+          </h2>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="page-content thin-scrollbar">
         {layout.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <Empty description="暂无设置" />

@@ -169,15 +169,15 @@ const PlansPage: FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-4 shadow-sm">
-      <div className="flex items-center justify-between h-10 shrink-0 mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-5 rounded-full bg-[#1677ff]" />
-          <span className="text-base font-semibold text-[#1a1a2e] tracking-tight">
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header__left">
+          <span className="page-header__accent" />
+          <h2 className="page-header__title">
             <ScheduleOutlined className="mr-2 text-[#1677ff]" />
             计划任务
-          </span>
-          <span className="text-xs text-[#8b8fa3] bg-[#f5f5f7] px-2 py-0.5 rounded-full">
+          </h2>
+          <span className="page-header__badge">
             {plans.length}
           </span>
         </div>
@@ -186,7 +186,7 @@ const PlansPage: FC = () => {
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="page-content thin-scrollbar">
         <Table
           columns={columns}
           dataSource={plans}

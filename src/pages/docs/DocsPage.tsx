@@ -145,7 +145,7 @@ const DocsPage: FC = () => {
   }, []);
 
   return (
-    <div className="flex h-full bg-white">
+    <div className="page-container !flex-row !p-0">
       {/* ======= 左侧导航 ======= */}
       <aside className="w-[220px] flex-shrink-0 border-r border-[var(--color-border)] flex flex-col bg-[var(--color-bg-container)]">
         <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--color-border)]">

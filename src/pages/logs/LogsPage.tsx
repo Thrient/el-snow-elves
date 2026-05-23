@@ -95,11 +95,15 @@ const LogsPage: FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-4 shadow-sm">
-      <div className="flex justify-between items-center h-40px shrink-0">
-        <span className="text-lg font-bold text-[#1a1a2e]">
-          <ReadOutlined className="mr-2" />系统日志
-        </span>
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header__left">
+          <span className="page-header__accent" />
+          <h2 className="page-header__title">
+            <ReadOutlined className="mr-2 text-[#1677ff]" />
+            系统日志
+          </h2>
+        </div>
         <Space>
           <Select
             allowClear
@@ -132,7 +136,7 @@ const LogsPage: FC = () => {
         </Space>
       </div>
 
-      <div ref={containerRef} className="flex-1 min-h-0 pt-4">
+      <div ref={containerRef} className="page-content thin-scrollbar">
         <Table
           columns={columns}
           dataSource={data.logs}
