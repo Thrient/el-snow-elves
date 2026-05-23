@@ -550,5 +550,95 @@
       "x": 110,
       "y": 30
     }
+  },
+  "队员检测": {
+    "action": "{True}",
+    "next": "队员检测-离线"
+  },
+  "队员检测-离线": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "标志队伍离线"
+      ],
+      "y": 45,
+      "seconds": null
+    },
+    "success_extra": [
+      {
+        "step": "点击模板",
+        "args": {
+          "模板": "按钮队伍请离队伍"
+        }
+      }
+    ],
+    "success": "队员检测-离线",
+    "failure": "队员检测-召回"
+  },
+  "队员检测-召回": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮队伍一键召回"
+      ],
+      "seconds": null
+    },
+    "failure": "任务结束",
+    "success_extra": [
+      {
+        "step": "点击模板",
+        "args": {
+          "模板": "按钮是"
+        }
+      },
+      {
+        "step": "等待时间",
+        "args": {
+          "等待时间": 20
+        }
+      }
+    ],
+    "next": "队员检测-暂离"
+  },
+  "队员检测-暂离": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "标志队伍暂离"
+      ],
+      "y": 45,
+      "seconds": null
+    },
+    "success_extra": [
+      {
+        "step": "点击模板",
+        "args": {
+          "模板": "按钮队伍请离队伍"
+        }
+      }
+    ],
+    "success": "队员检测-暂离",
+    "failure": "任务结束"
+  },
+  "切换互联分线": {
+    "prefix": [
+      {
+        "step": "点击坐标",
+        "args": {
+          "x": 1240,
+          "y": 25
+        }
+      }
+    ],
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮互联分线"
+      ],
+      "x": 80
+    },
+    "postfix": [
+      "激活窗口"
+    ]
   }
 }

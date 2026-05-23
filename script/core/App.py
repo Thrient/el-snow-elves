@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import shutil
 import sys
 
 import webview
@@ -24,9 +25,44 @@ from script.util.Utils import Utils
 from script.util.TrayIcon import TrayIcon
 
 
+def _clear_webview_cache_if_version_changed():
+    """如果当前版本与上次运行版本不同，清除 WebView2 缓存（保留 localStorage）"""
+    version_file = os.path.join(STORAGE_PATH, "Config", ".last_version")
+    last_version = ""
+    try:
+        if os.path.exists(version_file):
+            with open(version_file, "r") as f:
+                last_version = f.read().strip()
+    except Exception:
+        pass
+
+    if last_version != VERSION:
+        logging.info(f"[Cache] 版本变更 {last_version!r} → {VERSION!r}，清除 WebView2 缓存")
+        cache_dirs = [
+            os.path.join(STORAGE_PATH, "EBWebView", "Cache"),
+            os.path.join(STORAGE_PATH, "EBWebView", "Code Cache"),
+            os.path.join(STORAGE_PATH, "EBWebView", "GPUCache"),
+        ]
+        for d in cache_dirs:
+            try:
+                if os.path.exists(d):
+                    shutil.rmtree(d)
+                    logging.info(f"[Cache] 已清除: {d}")
+            except Exception as e:
+                logging.warning(f"[Cache] 清除失败 {d}: {e}")
+
+        try:
+            os.makedirs(os.path.dirname(version_file), exist_ok=True)
+            with open(version_file, "w") as f:
+                f.write(VERSION)
+        except Exception as e:
+            logging.warning(f"[Cache] 写入版本文件失败: {e}")
+
+
 class App:
     def __init__(self, url):
         setup_logging()
+        _clear_webview_cache_if_version_changed()
         width, height = Utils.calc_window_size()
         saved_rect = Window.get_saved_rect("main")
         if saved_rect:

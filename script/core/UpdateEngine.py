@@ -78,7 +78,7 @@ class UpdateEngine:
     def download_blob(fingerprint_id: int, save_path: str):
         """下载单个 blob 到指定路径"""
         _log.debug(f"download_blob: id={fingerprint_id} → {save_path}")
-        resp = requests.get(f"{HUB_URL}/blobs/{fingerprint_id}", stream=True, timeout=60)
+        resp = requests.get(f"{HUB_URL}/versions/blobs/{fingerprint_id}", stream=True, timeout=60)
         resp.raise_for_status()
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "wb") as f:

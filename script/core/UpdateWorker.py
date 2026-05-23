@@ -7,13 +7,18 @@ import sys
 
 import webview
 
-from script.config.Setting import APP_DATA
+from script.config.Setting import APP_DATA, STORAGE_PATH
 from script.core.UpdateEngine import UpdateEngine, APP_DIR
 
 _log = logging.getLogger("Elves.UpdateWorker")
 
 STAGING_DIR = os.path.join(APP_DATA, "_update_staging")
 BAT_PATH = os.path.join(APP_DATA, "_restart.bat")
+WEBVIEW_CACHE_DIRS = [
+    os.path.join(STORAGE_PATH, "EBWebView", "Cache"),
+    os.path.join(STORAGE_PATH, "EBWebView", "Code Cache"),
+    os.path.join(STORAGE_PATH, "EBWebView", "GPUCache"),
+]
 
 
 def _push_js(code: str):
@@ -90,6 +95,10 @@ class UpdateWorker:
             entry = os.path.join(APP_DIR, "Elves.py")
             launch = f'start "" "{sys.executable}" "{entry}"'
 
+        webview_clear_lines = ""
+        for d in WEBVIEW_CACHE_DIRS:
+            webview_clear_lines += f'if exist "{d}" rmdir /s /q "{d}"\n'
+
         # 等待旧进程退出（PID 轮询），而非盲等 2 秒
         script = f'''@echo off
 echo [Elves] waiting for PID {pid} to exit...
@@ -108,6 +117,8 @@ if errorlevel 1 (
 )
 echo [Elves] cleaning staging...
 rmdir /s /q "{STAGING_DIR}"
+echo [Elves] clearing WebView2 cache...
+{webview_clear_lines}
 echo [Elves] launching...
 {launch}
 del "%~f0"

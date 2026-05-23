@@ -188,7 +188,7 @@ class ExpressionValue(Evaluable):
         self.var_names = var_names
 
     def evaluate(self, result, variables, computed=None):
-        evaluator = SafeExpressionEvaluator(variables, computed)
+        evaluator = SafeExpressionEvaluator({**variables, "result": result}, computed)
         return evaluator.evaluate(self.expr_template)
 
 

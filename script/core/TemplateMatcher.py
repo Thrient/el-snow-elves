@@ -48,10 +48,8 @@ class TemplateMatcher:
         results = TemplateMatcher._match(search, tpl_img, threshold)
         if not results:
             return []
-        best = results[0]
-        px, py = best["rectangle"][0]
         h, w = tpl_img.shape[:2]
-        return [(px + w // 2 + x1, py + h // 2 + y1)]
+        return [(r["rectangle"][0][0] + w // 2 + x1, r["rectangle"][0][1] + h // 2 + y1) for r in results]
 
     @staticmethod
     def _match(search_img, template_img, threshold):

@@ -335,7 +335,7 @@ class FlowEngine(Thread):
             self.step_name = self.process_result(result, step_def)
             if self._single_step:
                 self.step_name = "任务结束"
-            logging.debug(f"[{self.name}] {prev} → {self.step_name} | vars={self.vp.variables}")
+            logging.info(f"[{self.name}] {prev} → {self.step_name} | {self._format_action(step_def)} = {self._format_result(result)}")
         if not self._is_subflow:
             total_elapsed = (time.time() - t_start) * 1000
             logging.info(f"◀ {self.name} v{self.version} | 完成 | {total_elapsed:.0f}ms")
