@@ -88,18 +88,18 @@ export const PARAM_META: Record<string, ParamMeta> = {
 };
 
 export const ACTION_PARAMS: Record<string, string[]> = {
-  touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "pre_delay", "post_delay", "seconds", "k", "preprocess", "hwnd"],
+  touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "count", "pre_delay", "post_delay", "seconds", "k", "preprocess", "hwnd"],
   exits:          ["threshold", "box", "seconds", "preprocess", "hwnd"],
   wait:           ["threshold", "box", "seconds", "preprocess", "hwnd"],
   wait_disappear:          ["threshold", "box", "seconds", "k", "preprocess", "hwnd"],
   exits_color:             ["color", "tolerance", "box", "hwnd"],
-  touch_color:              ["color", "tolerance", "box", "pos", "click_mode", "pre_delay", "post_delay", "hwnd"],
+  touch_color:              ["color", "tolerance", "box", "pos", "click_mode", "count", "pre_delay", "post_delay", "hwnd"],
   wait_color:               ["color", "tolerance", "box", "seconds", "k", "hwnd"],
   wait_color_disappear:     ["color", "tolerance", "box", "seconds", "k", "hwnd"],
-  key_click:      ["key", "pre_delay", "post_delay", "hwnd"],
+  key_click:      ["key", "count", "pre_delay", "post_delay", "hwnd"],
   input:          ["text", "pre_delay", "post_delay", "hwnd"],
-  mouse_click:    ["pos", "pre_delay", "post_delay", "hwnd"],
-  mouse_drag:    ["start_pos", "end_pos", "x", "y", "end_x", "end_y", "duration", "pre_delay", "post_delay", "hwnd"],
+  mouse_click:    ["pos", "count", "pre_delay", "post_delay", "hwnd"],
+  mouse_drag:    ["start_pos", "end_pos", "x", "y", "end_x", "end_y", "duration", "count", "pre_delay", "post_delay", "hwnd"],
   set_character:  ["hwnd"],
   switch_account: ["account_name"],
   "{True}":       [],

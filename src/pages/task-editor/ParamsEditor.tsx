@@ -179,20 +179,11 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
       );
     }
     if (key === "seconds") {
-      if (typeof value !== "number" && value != null) {
-        const raw = String(value ?? "");
-        return (
-          <Input size="small" className="font-mono text-[12px]" style={{ width: 80 }}
-            value={raw}
-            onChange={(e) => onUpdate("params", { ...params, seconds: e.target.value })}
-            placeholder="1.8" />
-        );
-      }
       return (
         <InputNumber size="small" className="font-mono text-[12px]" style={{ width: 80 }}
           min={0} step={0.1}
           value={typeof value === "number" ? value : null}
-          onChange={(v) => onUpdate("params", { ...params, seconds: v })}
+          onChange={(v) => onUpdate("params", { ...params, seconds: v === 0 ? null : v })}
           placeholder="1.8" />
       );
     }

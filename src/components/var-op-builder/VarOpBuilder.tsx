@@ -78,11 +78,16 @@ const OPS_BY_TYPE: Record<string, OpDef[]> = {
     { key: "value",  title: "取值",       desc: "直接取数字值",                             expr: "{var}" },
     { key: "inc",    title: "自增 ++",    desc: "每次执行 +1",                               expr: "{var++}" },
     { key: "dec",    title: "自减 --",    desc: "每次执行 -1",                               expr: "{var--}" },
-    { key: "add",    title: "加法 +n",    desc: "加上一个数值",                             expr: "{var+?}",   arg: { label: "数值", type: "number" } },
-    { key: "sub",    title: "减法 -n",    desc: "减去一个数值",                             expr: "{var-?}",   arg: { label: "数值", type: "number" } },
+    { key: "add",    title: "加法 +n",    desc: "var + n",                                   expr: "{var+?}",   arg: { label: "数值", type: "number" } },
+    { key: "radd",   title: "被加 n+",    desc: "n + var",                                   expr: "{?+var}",   arg: { label: "数值", type: "number" } },
+    { key: "sub",    title: "减法 -n",    desc: "var - n",                                   expr: "{var-?}",   arg: { label: "数值", type: "number" } },
+    { key: "rsub",   title: "被减 n-",    desc: "n - var",                                   expr: "{?-var}",   arg: { label: "数值", type: "number" } },
     { key: "eq",     title: "等于 ==",    desc: "判断是否等于某值",                         expr: "{var==?}",  arg: { label: "值", type: "number" } },
     { key: "neq",    title: "不等于 !=",  desc: "判断是否不等于某值",                       expr: "{var!=?}",  arg: { label: "值", type: "number" } },
-    { key: "compare",title: "条件比较",   desc: ">, <, >=, <=, ==, !=",                     expr: "{var>?}",   arg: { label: "比较值", type: "number" } },
+    { key: "gt",     title: "大于 >",     desc: "var > n",                                  expr: "{var>?}",   arg: { label: "值", type: "number" } },
+    { key: "gte",    title: "大于等于 >=",desc: "var >= n",                                 expr: "{var>=?}",  arg: { label: "值", type: "number" } },
+    { key: "lt",     title: "小于 <",     desc: "var < n",                                  expr: "{var<?}",   arg: { label: "值", type: "number" } },
+    { key: "lte",    title: "小于等于 <=",desc: "var <= n",                                 expr: "{var<=?}",  arg: { label: "值", type: "number" } },
   ],
   string: [
     { key: "value",  title: "取值",       desc: "直接取字符串值",                           expr: "{var}" },
@@ -164,11 +169,20 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     return list;
   }, [variables, typeFilter, search]);
 
-  const ops = useMemo(() => {
+  const opsBySection = useMemo(() => {
     if (!selectedVar) return [];
     if (selectedVar.syntax === "True") return [];
-    const type = detectType(selectedVar, valueTypes);
-    return OPS_BY_TYPE[type] || OPS_BY_TYPE.string;
+    const bestType = detectType(selectedVar, valueTypes);
+    const sections: { type: string; label: string; recommended: boolean; ops: OpDef[] }[] = [];
+    // 推荐的操作排最前面
+    const bestOps = OPS_BY_TYPE[bestType] || OPS_BY_TYPE.string;
+    sections.push({ type: bestType, label: TYPE_LABELS[bestType] || bestType, recommended: true, ops: bestOps });
+    // 其他类型的操作排在后面
+    for (const t of Object.keys(OPS_BY_TYPE)) {
+      if (t === bestType) continue;
+      sections.push({ type: t, label: TYPE_LABELS[t] || t, recommended: false, ops: OPS_BY_TYPE[t] });
+    }
+    return sections;
   }, [selectedVar]);
 
   const needsArgStep = selectedOp?.arg != null;
@@ -418,42 +432,58 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
         {/* Step: Pick Operation */}
         {step === "op" && selectedVar && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, overflowY: "auto", alignContent: "start" }}>
-              {ops.map(op => {
-                const bare = stripBraces(selectedVar.syntax);
-                const preview = op.expr.replace("var", bare).replace(/\?/g, "…");
-                return (
-                  <div
-                    key={op.key}
-                    onClick={() => selectOp(op)}
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: 8,
-                      border: "1.5px solid #e8e3dc",
-                      background: "#fff",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = "#cbbdb0";
-                      e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = "#e8e3dc";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
-                  >
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#3d3630", lineHeight: 1.2 }}>{op.title}</div>
-                    <div style={{ fontSize: 10, color: "#8b857e", marginTop: 1, lineHeight: 1.2 }}>{op.desc}</div>
-                    <code style={{
-                      display: "inline-block", marginTop: 3,
-                      fontSize: 10, fontWeight: 500,
-                      color: "#d4513b", background: "rgba(212,81,59,0.05)",
-                      padding: "0 6px", borderRadius: 4,
-                    }}>{preview}</code>
+            <div style={{ maxHeight: 320, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
+              {opsBySection.map(section => (
+                <div key={section.type}>
+                  <div style={{
+                    fontSize: 10, fontWeight: 600, marginBottom: 4, paddingLeft: 2,
+                    color: section.recommended ? "#d4513b" : "#b8afa6",
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}>
+                    {section.recommended ? "⭐ 推荐操作" : `其他 · ${section.label}`}
                   </div>
-                );
-              })}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+                    {section.ops.map(op => {
+                      const bare = stripBraces(selectedVar.syntax);
+                      const preview = op.expr.replace("var", bare).replace(/\?/g, "…");
+                      return (
+                        <div
+                          key={op.key}
+                          onClick={() => selectOp(op)}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: 8,
+                            border: section.recommended ? "1.5px solid #e8e3dc" : "1.5px solid #f0ece6",
+                            background: section.recommended ? "#fff" : "#faf8f5",
+                            cursor: "pointer",
+                            opacity: section.recommended ? 1 : 0.72,
+                            transition: "all 0.15s",
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.borderColor = "#cbbdb0";
+                            e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                            e.currentTarget.style.opacity = "1";
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.borderColor = section.recommended ? "#e8e3dc" : "#f0ece6";
+                            e.currentTarget.style.boxShadow = "none";
+                            e.currentTarget.style.opacity = section.recommended ? "1" : "0.72";
+                          }}
+                        >
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "#3d3630", lineHeight: 1.2 }}>{op.title}</div>
+                          <div style={{ fontSize: 10, color: "#8b857e", marginTop: 1, lineHeight: 1.2 }}>{op.desc}</div>
+                          <code style={{
+                            display: "inline-block", marginTop: 3,
+                            fontSize: 10, fontWeight: 500,
+                            color: "#d4513b", background: "rgba(212,81,59,0.05)",
+                            padding: "0 6px", borderRadius: 4,
+                          }}>{preview}</code>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

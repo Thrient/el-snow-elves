@@ -11,14 +11,11 @@ export default function UpdateProgress() {
 
   if (!downloading && !downloadDone) return null;
 
+  const isPreparing = totalFiles === 0 && !downloadDone;
+
   const handleRestart = () => {
-    console.log("[update] restart button clicked, calling API:UPDATE:APPLY");
-    if (!window.pywebview) {
-      console.error("[update] window.pywebview is not available");
-      return;
-    }
+    if (!window.pywebview) return;
     window.pywebview.api.emit("API:UPDATE:APPLY");
-    console.log("[update] API:UPDATE:APPLY emitted");
   };
 
   return (
@@ -70,83 +67,96 @@ export default function UpdateProgress() {
               </h2>
             </div>
 
-            {/* Progress ring */}
+            {/* Progress area */}
             <div className="flex items-center gap-6 mb-7">
-              {/* Ring */}
+              {/* Ring / Spinner */}
               <div className="relative w-[76px] h-[76px] flex-shrink-0">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 76 76">
-                  <circle
-                    cx="38" cy="38" r="32"
-                    fill="none"
-                    stroke="#f1f5f9"
-                    strokeWidth="4"
-                  />
-                  <circle
-                    cx="38" cy="38" r="32"
-                    fill="none"
-                    stroke={downloadDone ? "#10b981" : "url(#progressGradient)"}
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    strokeDasharray={`${(progress / 100) * 201} 201`}
-                    className="transition-[stroke-dasharray] duration-700 ease-out"
-                  />
-                  {/* Gradient definition */}
-                  <defs>
-                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#6366f1" />
-                      <stop offset="100%" stopColor="#818cf8" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {downloadDone ? (
-                    <svg
-                      width="26" height="26" viewBox="0 0 24 24"
-                      fill="none" stroke="#10b981" strokeWidth="2.5"
-                      strokeLinecap="round" strokeLinejoin="round"
-                    >
-                      <path d="M7 12.5l3.5 3.5L17 9" />
+                {isPreparing ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg className="animate-spin" width="44" height="44" viewBox="0 0 44 44" fill="none">
+                      <circle cx="22" cy="22" r="18" stroke="#f1f5f9" strokeWidth="3" />
+                      <circle cx="22" cy="22" r="18" stroke="url(#spinnerGrad)" strokeWidth="3"
+                        strokeLinecap="round" strokeDasharray="28 85" />
+                      <defs>
+                        <linearGradient id="spinnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#6366f1" />
+                          <stop offset="100%" stopColor="#a78bfa" />
+                        </linearGradient>
+                      </defs>
                     </svg>
-                  ) : (
-                    <span className="text-[16px] font-semibold text-[#1e293b] tabular-nums">
-                      {progress}
-                    </span>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 76 76">
+                      <circle cx="38" cy="38" r="32" fill="none" stroke="#f1f5f9" strokeWidth="4" />
+                      <circle cx="38" cy="38" r="32" fill="none"
+                        stroke={downloadDone ? "#10b981" : "url(#progressGradient)"}
+                        strokeWidth="4" strokeLinecap="round"
+                        strokeDasharray={`${(progress / 100) * 201} 201`}
+                        className="transition-[stroke-dasharray] duration-700 ease-out" />
+                      <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#6366f1" />
+                          <stop offset="100%" stopColor="#818cf8" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {downloadDone ? (
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#10b981"
+                          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M7 12.5l3.5 3.5L17 9" />
+                        </svg>
+                      ) : (
+                        <span className="text-[16px] font-semibold text-[#1e293b] tabular-nums">{progress}</span>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* File stats */}
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-[#1e293b] tabular-nums">
-                  {completedFiles}
-                  <span className="text-[#cbd5e1] mx-1">/</span>
-                  {totalFiles}
-                  <span className="text-[11px] text-[#94a3b8] ml-1">个文件</span>
-                </div>
-                {!downloadDone && currentFile && (
-                  <div className="text-[11px] text-[#94a3b8] truncate mt-1.5">
-                    {currentFile}
+                {isPreparing ? (
+                  <div>
+                    <div className="text-[14px] font-medium text-[#1e293b]">正在准备下载...</div>
+                    <div className="text-[11px] text-[#94a3b8] mt-1">正在连接更新服务器</div>
                   </div>
-                )}
-                {downloadDone && (
-                  <div className="text-[12px] font-medium text-[#10b981] mt-1.5">
-                    全部就绪
-                  </div>
+                ) : (
+                  <>
+                    <div className="text-[13px] font-medium text-[#1e293b] tabular-nums">
+                      {completedFiles}
+                      <span className="text-[#cbd5e1] mx-1">/</span>
+                      {totalFiles}
+                      <span className="text-[11px] text-[#94a3b8] ml-1">个文件</span>
+                    </div>
+                    {!downloadDone && currentFile && (
+                      <div className="text-[11px] text-[#94a3b8] truncate mt-1.5">{currentFile}</div>
+                    )}
+                    {downloadDone && (
+                      <div className="text-[12px] font-medium text-[#10b981] mt-1.5">全部就绪</div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
 
             {/* Linear bar */}
             <div className="mb-7 h-1.5 rounded-full bg-[#f1f5f9] overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
-                style={{
-                  width: `${progress}%`,
-                  background: downloadDone
-                    ? "linear-gradient(90deg, #10b981, #34d399)"
-                    : "linear-gradient(90deg, #6366f1, #818cf8)",
-                }}
-              />
+              {isPreparing ? (
+                <div className="h-full rounded-full animate-pulse"
+                  style={{ width: "100%", background: "linear-gradient(90deg, #6366f1, #818cf8, #a78bfa)" }} />
+              ) : (
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${progress}%`,
+                    background: downloadDone
+                      ? "linear-gradient(90deg, #10b981, #34d399)"
+                      : "linear-gradient(90deg, #6366f1, #818cf8)",
+                  }}
+                />
+              )}
             </div>
 
             {/* Restart */}

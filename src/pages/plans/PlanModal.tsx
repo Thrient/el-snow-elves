@@ -1,4 +1,4 @@
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, useMemo, type FC } from "react";
 import { Button, Input, Modal, Select, Form, Tag } from "antd";
 import cronstrue from "cronstrue";
 import "cronstrue/locales/zh_CN";
@@ -12,21 +12,16 @@ import { useGroupLabelWidths } from "@/hooks/useRowLabelWidths";
 
 const CRON_PRESETS = [
   { label: "每分钟", value: "* * * * *" },
-  { label: "每5分钟", value: "*/5 * * * *" },
-  { label: "每15分钟", value: "*/15 * * * *" },
   { label: "每30分钟", value: "*/30 * * * *" },
   { label: "每小时整点", value: "0 * * * *" },
-  { label: "每2小时", value: "0 */2 * * *" },
-  { label: "每天3点", value: "0 3 * * *" },
-  { label: "每天5点", value: "0 5 * * *" },
-  { label: "每天9点", value: "0 9 * * *" },
-  { label: "每天12点", value: "0 12 * * *" },
-  { label: "每天17点", value: "0 17 * * *" },
-  { label: "每天0点", value: "0 0 * * *" },
-  { label: "工作日9点", value: "0 9 * * 1-5" },
-  { label: "每周一9点", value: "0 9 * * 1" },
-  { label: "每周六12点", value: "0 12 * * 6" },
-  { label: "每月1号0点", value: "0 0 1 * *" },
+  { label: "每2小时1点", value: "1 */2 * * *" },
+  { label: "每天19点", value: "0 19 * * *" },
+  { label: "每天19点25分", value: "25 19 * * *" },
+  { label: "工作日1点2分", value: "2 1 * * 1-5" },
+  { label: "每周六19点45分", value: "45 19 * * 6" },
+  { label: "每周一三五12点", value: "0 12 * * 1,3,5" },
+  { label: "每月1号2点3分", value: "3 2 1 * *" },
+  { label: "每月1号15号9点", value: "0 9 1,15 * *" },
 ];
 
 interface Props {
@@ -101,13 +96,17 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
     }
   };
 
-  const cronHuman = (() => {
+  const watchedCron: string = Form.useWatch("cron", form) ?? "";
+
+  const cronHuman = useMemo(() => {
+    const expr = watchedCron || template?.defaultCron || "";
+    if (!expr) return "";
     try {
-      return cronstrue.toString(form.getFieldValue("cron") || template?.defaultCron || "", { locale: "zh_CN" });
+      return cronstrue.toString(expr, { locale: "zh_CN" });
     } catch {
       return "";
     }
-  })();
+  }, [watchedCron, template]);
 
   const selectTemplate = (tmpl: PlanTemplate) => {
     setTemplate(tmpl);

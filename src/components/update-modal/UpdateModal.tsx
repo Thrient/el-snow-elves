@@ -1,4 +1,6 @@
 import { Button } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+import { useState } from "react";
 import { useUpdateStore } from "@/store/update-store";
 
 export default function UpdateModal() {
@@ -8,34 +10,31 @@ export default function UpdateModal() {
   const checkModalOpen = useUpdateStore((s) => s.checkModalOpen);
   const closeCheckModal = useUpdateStore((s) => s.closeCheckModal);
   const currentVersion = useUpdateStore((s) => s.currentVersion);
+  const [updating, setUpdating] = useState(false);
 
   if (!checkModalOpen) return null;
 
   const handleUpdate = async () => {
-    console.log("[update] update button clicked, calling API:UPDATE:DOWNLOAD");
     if (!window.pywebview) {
-      console.error("[update] window.pywebview is not available");
       closeCheckModal();
       return;
     }
-    closeCheckModal();
+    // Show progress modal immediately for instant feedback
+    setUpdating(true);
+    useUpdateStore.getState().startDownload(0);
 
     try {
       const result = (await window.pywebview.api.emit("API:UPDATE:DOWNLOAD", {
         current_version: useUpdateStore.getState().currentVersion,
       })) as any;
 
-      console.log("[update] download result:", JSON.stringify(result));
       if (result?.up_to_date) {
         useUpdateStore.getState().clearUpdate();
+        useUpdateStore.getState().cancelDownload();
       } else if (result?.error) {
-        console.log("[update] download error:", result.error);
         useUpdateStore.getState().finishDownload();
-      } else {
-        console.log("[update] download ok:", result);
       }
-    } catch (e) {
-      console.log("[update] download exception:", e);
+    } catch {
       useUpdateStore.getState().finishDownload();
     }
   };
@@ -72,21 +71,25 @@ export default function UpdateModal() {
             }}
           />
 
-          <div className="px-8 pt-8 pb-7">
+          <div className="px-7 pt-7 pb-6">
             {/* Header */}
-            <div className="flex items-start justify-between mb-7">
+            <div className="flex items-start justify-between mb-5">
               <div>
-                <p
-                  className="text-[10px] font-medium tracking-[0.2em] uppercase mb-2"
-                  style={{ color: "#94a3b8" }}
-                >
+                <p className="text-[10px] font-medium tracking-[0.2em] uppercase mb-1.5 text-[#94a3b8]">
                   时雪 · 创意工坊
                 </p>
-                <h2
-                  className="text-[22px] font-semibold tracking-tight"
-                  style={{ color: "#1e293b", letterSpacing: "-0.01em" }}
-                >
+                <h2 className="flex items-baseline gap-2 text-[20px] font-semibold tracking-tight text-[#1e293b]">
                   发现新版本
+                  <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+                    <span className="text-[#94a3b8]">v{currentVersion}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full font-semibold"
+                      style={{ background: "linear-gradient(135deg, #eef2ff, #e0e7ff)", color: "#4f46e5" }}>
+                      v{latestVersion}
+                    </span>
+                  </span>
                 </h2>
               </div>
               {!isMandatory && (
@@ -96,89 +99,29 @@ export default function UpdateModal() {
                     text-[#94a3b8] hover:text-[#475569] hover:bg-[#f1f5f9] cursor-pointer
                     transition-all duration-200"
                 >
-                  <svg
-                    width="14" height="14" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" strokeWidth="2"
-                    strokeLinecap="round"
-                  >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <path d="M18 6L6 18M6 6l12 12" />
                   </svg>
                 </button>
               )}
             </div>
 
-            {/* Version showcase */}
-            <div className="mb-7">
-              <div
-                className="relative flex items-center px-1 py-1 rounded-2xl"
-                style={{ background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}
-              >
-                {/* Current — muted, receding */}
-                <div className="flex-1 flex flex-col items-center py-3">
-                  <span className="text-[10px] font-medium tracking-widest uppercase mb-1 text-[#94a3b8]">
-                    当前
-                  </span>
-                  <span className="text-[28px] font-light tracking-tight text-[#cbd5e1] tabular-nums">
-                    {currentVersion}
-                  </span>
-                </div>
-
-                {/* Divider with arrow */}
-                <div className="relative flex-shrink-0">
-                  <div className="w-[2px] h-12 bg-[#e2e8f0] rounded-full" />
-                  <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                      w-7 h-7 rounded-full flex items-center justify-center"
-                    style={{
-                      background: "linear-gradient(135deg, #6366f1, #818cf8)",
-                      boxShadow: "0 2px 8px rgba(99,102,241,0.35)",
-                    }}
-                  >
-                    <svg
-                      width="12" height="12" viewBox="0 0 24 24"
-                      fill="none" stroke="white" strokeWidth="3"
-                      strokeLinecap="round" strokeLinejoin="round"
-                    >
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* New — prominent, glowing */}
-                <div className="flex-1 flex flex-col items-center py-3">
-                  <span className="text-[10px] font-medium tracking-widest uppercase mb-1 text-[#6366f1]">
-                    最新
-                  </span>
-                  <span
-                    className="text-[28px] font-semibold tracking-tight tabular-nums"
-                    style={{
-                      color: "#1e293b",
-                      textShadow: "0 0 20px rgba(99,102,241,0.2)",
-                    }}
-                  >
-                    {latestVersion}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Changelog */}
-            {changelog && (
-              <div className="mb-7">
-                <div className="flex items-center gap-2 mb-2.5">
+            {/* Changelog — main content */}
+            {changelog ? (
+              <div className="mb-5">
+                <div className="flex items-center gap-2 mb-2">
                   <div className="w-1 h-1 rounded-full bg-[#6366f1]" />
-                  <span className="text-[10px] font-medium tracking-[0.15em] uppercase text-[#94a3b8]">
-                    更新日志
-                  </span>
+                  <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-[#6366f1]">更新内容</span>
                 </div>
                 <div
-                  className="text-[12px] leading-relaxed rounded-xl px-4 py-3 max-h-24 overflow-y-auto
-                    thin-scrollbar"
-                  style={{ color: "#64748b", background: "#f8fafc" }}
+                  className="text-[13px] leading-relaxed rounded-xl px-4 py-3.5 max-h-48 overflow-y-auto thin-scrollbar whitespace-pre-wrap"
+                  style={{ color: "#334155", background: "#f8fafc", border: "1px solid #f1f5f9" }}
                 >
                   {changelog}
                 </div>
               </div>
+            ) : (
+              <p className="text-[13px] text-[#94a3b8] text-center mb-5 py-2">此版本无更新说明</p>
             )}
 
             {/* Actions */}
@@ -186,17 +129,20 @@ export default function UpdateModal() {
               <Button
                 type="primary"
                 onClick={handleUpdate}
+                disabled={updating}
+                icon={updating ? <LoadingOutlined /> : undefined}
                 className="flex-1 h-10 rounded-xl font-medium text-[13px] tracking-wide !border-none"
                 style={{
-                  background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-                  boxShadow: "0 2px 8px rgba(99,102,241,0.28), 0 1px 3px rgba(0,0,0,0.06)",
+                  background: updating ? undefined : "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                  boxShadow: updating ? undefined : "0 2px 8px rgba(99,102,241,0.28), 0 1px 3px rgba(0,0,0,0.06)",
                 }}
               >
-                立即更新
+                {updating ? "准备中..." : "立即更新"}
               </Button>
               {!isMandatory && (
                 <Button
                   onClick={closeCheckModal}
+                  disabled={updating}
                   className="h-10 rounded-xl font-medium text-[13px] tracking-wide
                     !border-[#e2e8f0] !text-[#64748b] hover:!border-[#cbd5e1] hover:!text-[#334155]"
                 >
@@ -205,9 +151,8 @@ export default function UpdateModal() {
               )}
             </div>
 
-            {/* Mandatory warning */}
             {isMandatory && (
-              <p className="mt-3.5 text-center text-[11px] tracking-wide" style={{ color: "#f43f5e" }}>
+              <p className="mt-3.5 text-center text-[11px] tracking-wide text-[#f43f5e]">
                 此版本为强制更新，必须升级后方可继续使用
               </p>
             )}

@@ -27,6 +27,7 @@ interface UpdateState {
   startDownload: (total: number) => void;
   updateProgress: (file: string, completed: number) => void;
   finishDownload: () => void;
+  cancelDownload: () => void;
 }
 
 export const useUpdateStore = create<UpdateState>((set) => ({
@@ -79,5 +80,13 @@ export const useUpdateStore = create<UpdateState>((set) => ({
     downloading: false,
     downloadDone: true,
     progress: 100,
+  }),
+  cancelDownload: () => set({
+    downloading: false,
+    downloadDone: false,
+    progress: 0,
+    totalFiles: 0,
+    completedFiles: 0,
+    currentFile: "",
   }),
 }));
