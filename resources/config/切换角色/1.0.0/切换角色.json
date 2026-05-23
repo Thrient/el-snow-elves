@@ -65,7 +65,15 @@
           742,
           892
         ]
-      }
+      },
+      "prefix": [
+        {
+          "step": "打开属性",
+          "args": {
+            "key": "{CONFIG.背包}"
+          }
+        }
+      ]
     },
     "切换角色1": {
       "action": "mouse_click",
@@ -78,11 +86,8 @@
       "prefix": [
         "按钮设置切换角色"
       ],
-      "postfix": [
-        {
-          "step": "点击登录"
-        }
-      ]
+      "postfix": [],
+      "next": "点击登录"
     },
     "切换角色2": {
       "action": "mouse_click",
@@ -95,11 +100,8 @@
       "prefix": [
         "按钮设置切换角色"
       ],
-      "postfix": [
-        {
-          "step": "点击登录"
-        }
-      ]
+      "postfix": [],
+      "next": "点击登录"
     },
     "切换角色3": {
       "action": "mouse_click",
@@ -112,11 +114,8 @@
       "prefix": [
         "按钮设置切换角色"
       ],
-      "postfix": [
-        {
-          "step": "点击登录"
-        }
-      ]
+      "postfix": [],
+      "next": "点击登录"
     },
     "切换角色4": {
       "action": "mouse_click",
@@ -129,11 +128,8 @@
       "prefix": [
         "按钮设置切换角色"
       ],
-      "postfix": [
-        {
-          "step": "点击登录"
-        }
-      ]
+      "postfix": [],
+      "next": "点击登录"
     },
     "切换角色5": {
       "action": "mouse_click",
@@ -146,11 +142,8 @@
       "prefix": [
         "按钮设置切换角色"
       ],
-      "postfix": [
-        {
-          "step": "点击登录"
-        }
-      ]
+      "postfix": [],
+      "next": "点击登录"
     },
     "打开属性": {
       "action": "touch",
@@ -231,7 +224,6 @@
           "step": "切换角色5",
           "when": "{切换角色 == '角色5'}"
         },
-        "打开属性",
         "设置角色信息"
       ],
       "postfix": [
