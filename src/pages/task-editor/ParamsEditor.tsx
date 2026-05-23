@@ -21,7 +21,7 @@ interface ParamsEditorProps {
 }
 
 const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
-  const [coordOpen, setCoordOpen] = useState(false);
+  const [coordKey, setCoordKey] = useState<string | null>(null);
   const [boxOpen, setBoxOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
   const [templateOptions, setTemplateOptions] = useState<{ value: string; label: string }[]>([]);
@@ -80,8 +80,8 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     if (key === "box") {
       return <BoxInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onBoxOpen={() => setBoxOpen(true)} />;
     }
-    if (key === "pos") {
-      return <PosInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onCoordOpen={() => setCoordOpen(true)} />;
+    if (key === "pos" || key === "start_pos" || key === "end_pos") {
+      return <PosInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onCoordOpen={() => setCoordKey(key)} paramKey={key} />;
     }
     if (key === "hwnd") {
       return (
@@ -291,7 +291,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
           return <div key={key}>{renderParamInput(key, params[key])}</div>;
         }
         const accentColor = meta?.color ?? "#9ca3af";
-        if (key === "pos" || key === "box" || key === "color" || key === "key" || key === "hwnd" || key === "text") {
+        if (key === "pos" || key === "start_pos" || key === "end_pos" || key === "box" || key === "color" || key === "key" || key === "hwnd" || key === "text") {
           return (
             <div key={key} className="group rounded-xl border border-dashed bg-white transition-colors"
               style={{ borderColor: `${accentColor}4d`, background: `linear-gradient(135deg, ${accentColor}0a, #fff)` }}>
@@ -365,9 +365,9 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
           </div>
         </div>
       )}
-      {ctx.hwnd && <CoordPickerModal open={coordOpen} hwnd={ctx.hwnd}
-        onClose={() => setCoordOpen(false)}
-        onPick={(x, y) => onUpdate("params", { ...params, pos: [x, y] })} />}
+      {ctx.hwnd && <CoordPickerModal open={coordKey !== null} hwnd={ctx.hwnd}
+        onClose={() => setCoordKey(null)}
+        onPick={(x, y) => { if (coordKey) onUpdate("params", { ...params, [coordKey]: [x, y] }); setCoordKey(null); }} />}
       {ctx.hwnd && <BoxPickerModal open={boxOpen} hwnd={ctx.hwnd}
         onClose={() => setBoxOpen(false)}
         onPick={(x1, y1, x2, y2) => onUpdate("params", { ...params, box: [x1, y1, x2, y2] })} />}

@@ -383,6 +383,7 @@ const DocsPage: FC = () => {
                   { action: "wait_color_disappear",desc: "等待目标颜色从屏幕上消失。用于等待加载画面消失、状态结束等",          returns: "消失 → True，超时 → None" },
                   { action: "key_click",      desc: "模拟键盘按键，支持 A~Z / ENTER / ESCAPE / SPACE / TAB / DIGIT0~9 等",        returns: "None" },
                   { action: "mouse_click",    desc: "模拟鼠标左键点击指定屏幕坐标",                                              returns: "None" },
+                  { action: "mouse_drag",    desc: "模拟鼠标拖拽：从起始坐标拖拽到终点坐标，支持平滑插值",                    returns: "None" },
                   { action: "{表达式}",       desc: "不对屏幕做任何操作，仅对表达式求值，结果（布尔）用于流程跳转",             returns: "True / False" },
                 ]}
                 columns={[
@@ -408,10 +409,14 @@ const DocsPage: FC = () => {
                   { param: "seconds",     type: "number | null",      act: "touch / wait / wait_disappear / wait_color / wait_color_disappear", desc: "最大等待秒数。touch 默认 1.8s，null 表示一直等不超时" },
                   { param: "box",         type: "[x1,y1,x2,y2]",      act: "touch / exits / wait / wait_disappear / 全部颜色动作", desc: "搜索区域限制，默认 [0,0,1335,750]，缩小可提速" },
                   { param: "click_mode",  type: "string",             act: "touch",                          desc: "点击策略：random（默认）/ first / last / all / all_reverse" },
-                  { param: "x / y",       type: "number",             act: "touch / mouse_click",            desc: "点击坐标在匹配位置上的偏移量" },
+                  { param: "x / y",       type: "number",             act: "touch / mouse_click / mouse_drag", desc: "点击/拖拽起始坐标在匹配位置上的偏移量" },
                   { param: "k",           type: "number",             act: "wait_disappear",                 desc: "连续确认消失帧数，默认 1。设为 6 需连续 6 帧未匹配才确认" },
                   { param: "key",         type: "string",             act: "key_click",                      desc: "按键名，支持 {CONFIG.键名} 引用全局设置" },
                   { param: "pos",         type: "[x,y]",              act: "mouse_click",                    desc: "点击的屏幕绝对坐标，如 [1335, 711]" },
+                  { param: "start_pos",   type: "[x,y]",              act: "mouse_drag",                     desc: "拖拽起始坐标，如 [100, 200]" },
+                  { param: "end_pos",     type: "[x,y]",              act: "mouse_drag",                     desc: "拖拽终点坐标，如 [300, 400]" },
+                  { param: "end_x / end_y", type: "number",           act: "mouse_drag",                     desc: "拖拽终点的坐标偏移量，默认 0" },
+                  { param: "duration",    type: "number",             act: "mouse_drag",                     desc: "拖拽持续时间（秒），越大越慢越平滑，默认 0.5" },
                   { param: "count",       type: "number",             act: "key_click / mouse_click",        desc: "重复次数，默认 1" },
                   { param: "pre_delay",   type: "number",             act: "全部",                           desc: "操作前延迟等待（ms），默认 1500" },
                   { param: "post_delay",  type: "number",             act: "全部",                           desc: "操作后延迟等待（ms），默认 1500" },

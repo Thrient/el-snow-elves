@@ -540,7 +540,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
       {ctxMenu && (
         <div
           className="fixed inset-0 z-40 animate-fadeIn"
-          style={{ background: "rgba(0,0,0,0.03)", backdropFilter: "blur(1px)" }}
+          style={{ zoom: "calc(1 / var(--zoom))", background: "rgba(0,0,0,0.03)", backdropFilter: "blur(1px)" }}
           onClick={() => setCtxMenu(null)}
           onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null); }}
         >
@@ -593,7 +593,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
       {leftCtxMenu && (
         <div
           className="fixed inset-0 z-40 animate-fadeIn"
-          style={{ background: "rgba(0,0,0,0.03)", backdropFilter: "blur(1px)" }}
+          style={{ zoom: "calc(1 / var(--zoom))", background: "rgba(0,0,0,0.03)", backdropFilter: "blur(1px)" }}
           onClick={() => setLeftCtxMenu(null)}
           onContextMenu={(e) => { e.preventDefault(); setLeftCtxMenu(null); }}
         >

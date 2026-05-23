@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { useSettingsStore } from "@/store/settings-store";
 import { useTaskStore } from "@/store/task-store";
 import { useUpdateStore } from "@/store/update-store";
@@ -19,8 +19,12 @@ const {Header, Sider, Content} = Layout
 const MainLayout: FC = () => {
 
   const [collapsed, setCollapsed] = useState<boolean>(false)
+  const checked = useRef(false)
 
   useEffect(() => {
+    if (checked.current) return
+    checked.current = true
+
     const init = async () => {
       await waitForPywebview()
       useSettingsStore.getState().loadSettings()
@@ -43,6 +47,8 @@ const MainLayout: FC = () => {
               changelog: latest.changelog,
               is_mandatory: latest.is_mandatory ?? false,
             })
+          } else {
+            import("antd").then(m => m.message.success("已是最新版本", 3))
           }
         }
       } catch {

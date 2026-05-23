@@ -18,11 +18,12 @@ interface Props {
   onUpdate: (field: string, value: unknown) => void;
   hwnd: string;
   onCoordOpen: () => void;
+  paramKey?: string;
 }
 
-const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen }) => {
-  const [x, y] = parsePos(params.pos);
-  const setPos = (nx: number, ny: number) => onUpdate("params", { ...params, pos: [nx, ny] });
+const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "pos" }) => {
+  const [x, y] = parsePos(params[paramKey]);
+  const setPos = (nx: number, ny: number) => onUpdate("params", { ...params, [paramKey]: [nx, ny] });
 
   return (
     <div className="flex-1 flex items-center gap-1.5">

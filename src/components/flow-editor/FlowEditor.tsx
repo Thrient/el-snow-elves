@@ -81,7 +81,7 @@ const FlowEditor: FC<Props> = ({
   };
 
   return (
-    <div ref={rfRef} style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div ref={rfRef} style={{ width: "100%", height: "100%", position: "relative", zoom: "calc(1 / var(--zoom))" }}>
       <ReactFlow
         nodes={nodes} edges={edges}
         onNodesChange={handleNodesChange} onEdgesChange={handleEdgesChange}
