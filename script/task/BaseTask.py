@@ -32,6 +32,10 @@ class BaseTask:
         self._input.mouse_click(*args, **kwargs)
         return True
 
+    def mouse_drag(self, *args, **kwargs):
+        self._input.mouse_drag(*args, **kwargs)
+        return True
+
     def exits(self, *args, **kwargs):
         return self.batch_template_match(*args, **kwargs)
 

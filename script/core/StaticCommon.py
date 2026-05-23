@@ -223,6 +223,7 @@ class StaticCommon:
             {"value": "key_click", "label": "key_click — 发送按键"},
             {"value": "input", "label": "input — 输入文本"},
             {"value": "mouse_click", "label": "mouse_click — 点击坐标"},
+            {"value": "mouse_drag", "label": "mouse_drag — 拖拽鼠标"},
             {"value": "set_character", "label": "set_character — 捕获角色头像"},
             {"value": "switch_account", "label": "switch_account — 切换游戏账号"},
         ]

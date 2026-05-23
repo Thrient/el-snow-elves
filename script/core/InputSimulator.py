@@ -68,6 +68,42 @@ class InputSimulator:
         return _inner(**kwargs)
 
     @staticmethod
+    def mouse_drag(*args, **kwargs):
+        """鼠标拖拽"""
+        hwnd = kwargs.get("hwnd")
+
+        @repeat()
+        @delay(post_delay=DELAY)
+        def _inner(**inner_kwargs):
+            start_pos = inner_kwargs.get("start_pos", (1335, 750))
+            end_pos = inner_kwargs.get("end_pos", (1335 + 100, 750))
+            duration = inner_kwargs.get("duration", 0.5)
+
+            start_x = start_pos[0] + inner_kwargs.get("x", 0)
+            start_y = start_pos[1] + inner_kwargs.get("y", 0)
+            end_x = end_pos[0] + inner_kwargs.get("end_x", 0)
+            end_y = end_pos[1] + inner_kwargs.get("end_y", 0)
+
+            lParam = (start_y << 16) | start_x
+            win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+
+            steps = max(2, int(duration * 60))
+            for i in range(1, steps + 1):
+                t = i / steps
+                x = int(start_x + (end_x - start_x) * t)
+                y = int(start_y + (end_y - start_y) * t)
+                lParam = (y << 16) | x
+                win32gui.PostMessage(hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, lParam)
+                time.sleep(duration / steps)
+
+            lParam = (end_y << 16) | end_x
+            win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
+
+            logging.info(f"拖拽: ({start_x},{start_y}) -> ({end_x},{end_y})")
+
+        return _inner(**kwargs)
+
+    @staticmethod
     def input(*args, **kwargs):
         """逐字输入文本"""
         hwnd = kwargs.get("hwnd")

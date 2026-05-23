@@ -284,6 +284,10 @@ class FlowEngine(Thread):
         if action == "mouse_click":
             pos = params.get("pos", (0, 0))
             return f"mouse_click ({pos[0]}, {pos[1]})"
+        if action == "mouse_drag":
+            start = params.get("start_pos", (0, 0))
+            end = params.get("end_pos", (0, 0))
+            return f"mouse_drag ({start[0]},{start[1]}) -> ({end[0]},{end[1]})"
         if action == "key_click":
             key = params.get("key", "?")
             return f"key_click {key}"

@@ -4,12 +4,11 @@ import os
 import shutil
 import subprocess
 import sys
-import json
 
 import webview
 
 from script.config.Setting import APP_DATA
-from script.core.UpdateEngine import UpdateEngine, APP_DIR, MANIFEST_PATH
+from script.core.UpdateEngine import UpdateEngine, APP_DIR
 
 _log = logging.getLogger("Elves.UpdateWorker")
 
@@ -35,11 +34,7 @@ class UpdateWorker:
     def download_updates(current_version: str) -> dict:
         """下载更新文件，通过 JS bridge 实时推送进度到前端。返回 {"ok": True} 或 {"error": "..."}。"""
         _log.info(f"download_updates: start current_version={current_version}")
-        local = UpdateEngine.load_local_manifest()
-        if not local:
-            _log.info("download_updates: no saved manifest, computing from disk")
-            local = UpdateEngine.compute_manifest()
-            UpdateEngine.save_manifest(local)
+        local = UpdateEngine.compute_manifest()
         _log.info(f"download_updates: manifest has {len(local)} entries")
         diff = UpdateEngine.diff_manifest(current_version, local)
 
@@ -76,11 +71,8 @@ class UpdateWorker:
                 _push_js("window.useUpdateStore.getState().finishDownload()")
                 return {"error": f"download {item['path']}: {e}"}
 
-        # 更新本地 manifest：合并已变更文件的 SHA256
-        new_manifest = dict(local)
-        for item in changed:
-            new_manifest[item["path"]] = item["sha256"]
-        UpdateEngine.save_manifest(new_manifest)
+        # 不在这里保存 manifest —— 文件还在暂存区，未应用到 APP_DIR。
+        # 重启后 compute_manifest() 会基于实际文件重新计算。
 
         _push_js("window.useUpdateStore.getState().finishDownload()")
         _log.info(f"download_updates: done, {total} files downloaded")
@@ -89,27 +81,45 @@ class UpdateWorker:
     @staticmethod
     def apply_and_restart():
         """写入重启脚本并退出应用。"""
+        pid = os.getpid()
+        _log.info(f"apply_and_restart: pid={pid} staging={STAGING_DIR} app_dir={APP_DIR}")
+
         if getattr(sys, 'frozen', False):
-            # 打包后：直接启动 exe
             launch = f'start "" "{sys.executable}"'
         else:
-            # 开发模式：python 执行入口脚本
             entry = os.path.join(APP_DIR, "Elves.py")
             launch = f'start "" "{sys.executable}" "{entry}"'
 
+        # 等待旧进程退出（PID 轮询），而非盲等 2 秒
         script = f'''@echo off
-timeout /t 2 /nobreak > nul
+echo [Elves] waiting for PID {pid} to exit...
+:waitloop
+tasklist /fi "PID eq {pid}" 2>nul | find /i "{pid}" >nul
+if not errorlevel 1 (
+    timeout /t 1 /nobreak > nul
+    goto waitloop
+)
+echo [Elves] copying files...
 xcopy /y /s /e "{STAGING_DIR}\\*" "{APP_DIR}\\"
+if errorlevel 1 (
+    echo [Elves] ERROR: xcopy failed, some files may be in use
+    pause
+    exit /b 1
+)
+echo [Elves] cleaning staging...
 rmdir /s /q "{STAGING_DIR}"
+echo [Elves] launching...
 {launch}
 del "%~f0"
 '''
+        os.makedirs(os.path.dirname(BAT_PATH), exist_ok=True)
         with open(BAT_PATH, "w", encoding="utf-8") as f:
             f.write(script)
 
+        _log.info("apply_and_restart: launching batch and exiting")
         subprocess.Popen(
             f'cmd /c "{BAT_PATH}"',
             shell=True,
-            creationflags=subprocess.CREATE_NEW_CONSOLE | 0x00000008,
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
         )
-        return True
+        os._exit(0)

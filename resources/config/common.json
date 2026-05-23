@@ -21,6 +21,20 @@
       ]
     }
   },
+  "拖拽鼠标": {
+    "action": "mouse_drag",
+    "params": {
+      "start_pos": [
+        "{start_x:1335}",
+        "{start_y:750}"
+      ],
+      "end_pos": [
+        "{end_x:1435}",
+        "{end_y:750}"
+      ],
+      "duration": "{duration:0.5}"
+    }
+  },
   "点击按键": {
     "action": "key_click",
     "params": {

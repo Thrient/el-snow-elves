@@ -1,13 +1,11 @@
 """更新引擎 — 版本检查 + manifest diff + 文件下载"""
 import hashlib
-import json
 import logging
 import os
+import sys
 import requests
 
 _log = logging.getLogger("Elves.UpdateEngine")
-
-from script.config.Setting import APP_DATA
 
 HUB_URL = "https://nas.elarion.cn:5173/api/v1"
 
@@ -15,8 +13,6 @@ if getattr(sys, 'frozen', False):
     APP_DIR = os.path.dirname(sys.executable)
 else:
     APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-MANIFEST_PATH = os.path.join(APP_DATA, "manifest.json")
 
 EXCLUDE_DIRS = {".git", "__pycache__", ".venv", "temp", "build", "dist", "_update_staging"}
 EXCLUDE_FILES = {"manifest.json", "_restart.bat", "Elves.spec"}
@@ -40,26 +36,6 @@ class UpdateEngine:
                 except OSError:
                     pass
         return manifest
-
-    @staticmethod
-    def load_local_manifest() -> dict[str, str]:
-        try:
-            with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            # 安装路径变了 → 抛弃旧 manifest，重新计算
-            if data.get("install_path") != APP_DIR:
-                _log.info("load_local_manifest: install_path changed, discarding cached manifest")
-                return {}
-            return data.get("files", {})
-        except (FileNotFoundError, json.JSONDecodeError):
-            return {}
-
-    @staticmethod
-    def save_manifest(manifest: dict[str, str]):
-        os.makedirs(os.path.dirname(MANIFEST_PATH), exist_ok=True)
-        data = {"install_path": APP_DIR, "files": manifest}
-        with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
 
     @staticmethod
     def check_version() -> dict | None:
