@@ -41,6 +41,18 @@ const TaskPage: FC = () => {
     );
   };
 
+  const filteredIds = useMemo(() => filtered.map((t) => t.id), [filtered]);
+  const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedRowKeys.includes(id));
+  const someSelected = filteredIds.some((id) => selectedRowKeys.includes(id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedRowKeys((prev) => prev.filter((id) => !filteredIds.includes(id)));
+    } else {
+      setSelectedRowKeys((prev) => [...new Set([...prev, ...filteredIds])]);
+    }
+  };
+
   // ── Export ──
 
   const handleExportSingle = async (task: Task) => {
@@ -208,6 +220,14 @@ const TaskPage: FC = () => {
           className="max-w-260px"
         />
         <Space size="small">
+          <Checkbox
+            checked={allSelected}
+            indeterminate={!allSelected && someSelected}
+            onChange={toggleSelectAll}
+            className="text-[11px]"
+          >
+            全选
+          </Checkbox>
           {selectedRowKeys.length > 0 && (
             <span className="text-[11px] text-[#8b8fa3] font-medium">
               已选 {selectedRowKeys.length} 项
