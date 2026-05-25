@@ -82,6 +82,33 @@ def _exchange_code(code: str, code_verifier: str) -> dict | None:
     return None
 
 
+def _refresh_access_token(refresh_token: str) -> str | None:
+    """用 refresh_token 刷新 access_token"""
+    if not refresh_token:
+        return None
+    try:
+        resp = requests.post(
+            HMS_TOKEN_URL,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+                "client_id": HMS_CLIENT_ID,
+                "redirect_uri": REDIRECT_URI,
+            },
+            timeout=15,
+        )
+        result = resp.json()
+        at = result.get("access_token", "")
+        if at:
+            logging.info("[HuaweiChannel] access_token 刷新成功")
+            return at
+        logging.error(f"[HuaweiChannel] token 刷新失败: {result}")
+    except Exception as e:
+        logging.error(f"[HuaweiChannel] token 刷新异常: {e}")
+    return None
+
+
 def _get_game_auth(access_token: str) -> dict | None:
     """调用华为 getGameAuthSign API，获取 gameAuthSign + playerId"""
     try:
@@ -239,9 +266,16 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
 
     ct = channel_auth.get("channel_type", "")
     access_token = channel_auth.get("access_token", "")
+    refresh_token = channel_auth.get("refresh_token", "")
 
     # 刷新 gameAuthSign
     ga = _get_game_auth(access_token) if access_token else None
+    if not ga and refresh_token:
+        logging.info("[HuaweiChannel] access_token 已过期，尝试刷新...")
+        new_at = _refresh_access_token(refresh_token)
+        if new_at:
+            channel_auth["access_token"] = new_at
+            ga = _get_game_auth(new_at)
     if ga:
         player_id = ga.get("playerId", channel_auth.get("player_id", ""))
         game_auth = ga.get("gameAuthSign", channel_auth.get("game_auth_sign", ""))

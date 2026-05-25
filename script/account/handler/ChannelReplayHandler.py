@@ -3,6 +3,7 @@
 from __future__ import annotations
 import json
 import logging
+import time
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
@@ -99,6 +100,12 @@ class ChannelReplayHandler(BaseHandler):
                 if scan_resp.status_code != 200:
                     logging.error(f"[Proxy] scan 失败: {scan_resp.status_code}")
                     return
+
+                # Step 1.5: 随机延迟模拟扫码（1.0~2.0 秒）
+                import random as _random
+                delay = _random.uniform(1.0, 2.0)
+                logging.debug(f"[Proxy] scan 完成, 延迟 {delay:.1f}s 后确认...")
+                time.sleep(delay)
 
                 # Step 2: 渠道构建 confirm 数据
                 confirm_body = self._build_confirm_data(ca, short)

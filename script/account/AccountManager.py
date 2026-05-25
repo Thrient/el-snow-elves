@@ -43,22 +43,47 @@ class AccountManager:
         with open(AccountManager._meta_path(name), "w", encoding="utf-8") as f:
             json.dump(meta, f, ensure_ascii=False)
 
+    # ── 排序 ──
+
+    @staticmethod
+    def _order_path() -> str:
+        return os.path.join(ACCOUNTS_DIR, "_order.json")
+
+    @staticmethod
+    def get_order() -> list[str]:
+        p = AccountManager._order_path()
+        if os.path.isfile(p):
+            try:
+                data = json.loads(open(p, "r", encoding="utf-8").read())
+                return data.get("names", []) if isinstance(data, dict) else []
+            except Exception:
+                return []
+        return []
+
+    @staticmethod
+    def save_order(names: list[str]):
+        _ensure_dir()
+        with open(AccountManager._order_path(), "w", encoding="utf-8") as f:
+            json.dump({"names": names}, f, ensure_ascii=False)
+
     # ── 账号 CRUD ──
 
     @staticmethod
     def list_accounts():
-        """返回账号列表（读.meta，不解密敏感数据）"""
+        """返回账号列表（读.meta，不解密敏感数据），按 _order.json 排序"""
         _ensure_dir()
-        names = []
+        accounts = []
         for f in os.listdir(ACCOUNTS_DIR):
             if f.endswith(".meta"):
                 try:
                     meta = json.loads(open(os.path.join(ACCOUNTS_DIR, f), "r", encoding="utf-8").read())
-                    names.append(meta)
+                    accounts.append(meta)
                 except Exception:
                     continue
-        names.sort(key=lambda x: x.get("createdAt", 0), reverse=True)
-        return names
+        order = AccountManager.get_order()
+        ordered = {name: i for i, name in enumerate(order)}
+        accounts.sort(key=lambda x: (ordered.get(x["name"], len(order)), -x.get("createdAt", 0)))
+        return accounts
 
     @staticmethod
     def list_account_names():

@@ -364,6 +364,7 @@ class App:
         api.on("API:ACCOUNT:SAVE", AccountManager.save_account)
         api.on("API:ACCOUNT:DELETE", AccountManager.delete_account)
         api.on("API:ACCOUNT:RENAME", AccountManager.rename_account)
+        api.on("API:ACCOUNT:SAVE_ORDER", AccountManager.save_order)
         api.on("API:ACCOUNT:RECORD:START", self._session.start_qr_recording)
         api.on("API:ACCOUNT:RECORD:START:CHANNEL", self._session.start_channel_recording)
         api.on("API:ACCOUNT:RECORD:STOP", self._session.stop_recording)
@@ -388,6 +389,49 @@ class App:
         api.on("API:UPDATE:DOWNLOAD", _handle_update_download)
 
         api.on("API:UPDATE:APPLY", lambda: UpdateWorker.apply_and_restart())
+
+        def _get_game_path():
+            import json as _json
+            p = os.path.join(STORAGE_PATH, "Config", "User", "game.json")
+            try:
+                if os.path.exists(p):
+                    with open(p, "r", encoding="utf-8") as f:
+                        return _json.load(f).get("game_exe", "")
+            except Exception:
+                pass
+            return ""
+
+        def _set_game_path():
+            result = self.window.create_file_dialog(
+                webview.FileDialog.OPEN,
+                directory="",
+                file_types=("可执行文件 (*.exe)",),
+            )
+            if not result:
+                return {"cancelled": True}
+            path = result[0] if isinstance(result, (list, tuple)) else result
+            if not path or not os.path.isfile(path):
+                return {"error": "无效的文件路径"}
+            import json as _json
+            config_path = os.path.join(STORAGE_PATH, "Config", "User", "game.json")
+            try:
+                os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                data = {}
+                if os.path.exists(config_path):
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        data = _json.load(f)
+                data["game_exe"] = path
+                with open(config_path, "w", encoding="utf-8") as f:
+                    _json.dump(data, f, ensure_ascii=False)
+                logging.info(f"[GamePath] 已更新游戏路径: {path}")
+                return {"success": True, "path": path}
+            except Exception as e:
+                logging.error(f"[GamePath] 保存失败: {e}")
+                return {"error": str(e)}
+
+        api.on("API:GAME:GET_PATH", _get_game_path)
+        api.on("API:GAME:SET_PATH", _set_game_path)
+
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
     def resume(self, hwnd):

@@ -168,6 +168,8 @@ class FlowEngine(Thread):
 
     def to_action(self, action_type, params, **extra_kwargs):
         args = params.get('args', ()) if isinstance(params, dict) else ()
+        if isinstance(args, str):
+            args = (args,)
         user_kwargs = {k: v for k, v in params.items() if k != 'args'} if isinstance(params, dict) else {}
         kwargs = {**extra_kwargs, **user_kwargs}
 
@@ -277,6 +279,8 @@ class FlowEngine(Thread):
         if not isinstance(params, dict):
             params = {}
         args = params.get("args", ())
+        if isinstance(args, str):
+            args = (args,)
 
         if isinstance(action, str) and action.startswith("{") and action.endswith("}"):
             return action

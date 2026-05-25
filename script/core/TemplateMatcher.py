@@ -17,6 +17,7 @@ def _imread_unicode(path: str):
     arr = np.frombuffer(data, dtype=np.uint8)
     return cv2.imdecode(arr, cv2.IMREAD_COLOR)
 from airtest.aircv.template_matching import TemplateMatching
+from airtest.aircv.keypoint_matching_contrib import SIFTMatching
 
 from script.config.Setting import BOX, THRESHOLD, PROJECT_ROOT, PREPROCESS_KEYS
 from script.core.ScreenCapture import ScreenCapture
@@ -40,26 +41,42 @@ class TemplateMatcher:
         return path if os.path.exists(path) else os.path.join(PROJECT_ROOT, "resources", "images", f"{image}.bmp")
 
     @staticmethod
-    def match_single(img, image, category, box, threshold=THRESHOLD, preprocess=None):
+    def match_single(img, image, category, box, threshold=THRESHOLD, preprocess=None, method="ccoeff"):
         """匹配单个模板文件（核心匹配入口）"""
         x1, y1, x2, y2 = box
         search = ScreenCapture.apply_preprocess(img[y1:y2, x1:x2], preprocess)
         tpl_img = ScreenCapture.apply_preprocess(_imread_unicode(TemplateMatcher.get_template_path(category, image)), preprocess)
-        results = TemplateMatcher._match(search, tpl_img, threshold)
+        results = TemplateMatcher._match(search, tpl_img, threshold, method)
         if not results:
             return []
         h, w = tpl_img.shape[:2]
         return [(r["rectangle"][0][0] + w // 2 + x1, r["rectangle"][0][1] + h // 2 + y1) for r in results]
 
     @staticmethod
-    def _match(search_img, template_img, threshold):
-        """核心匹配算法：所有匹配最终汇集于此。"""
+    def _match(search_img, template_img, threshold, method="ccoeff"):
+        """核心匹配算法：所有匹配最终汇集于此。method: "ccoeff" | "sift" """
+        if method == "sift":
+            return TemplateMatcher._match_sift(search_img, template_img, threshold)
         # airtest 内部 img_mat_rgb_2_gray 要求 3 通道输入（numpy 2.x 兼容）
         if search_img.ndim == 2:
             search_img = cv2.cvtColor(search_img, cv2.COLOR_GRAY2BGR)
         if template_img.ndim == 2:
             template_img = cv2.cvtColor(template_img, cv2.COLOR_GRAY2BGR)
         return TemplateMatching(template_img, search_img, threshold=threshold, rgb=False).find_all_results()
+
+    @staticmethod
+    def _match_sift(search_img, template_img, threshold):
+        """SIFT 特征匹配：对旋转/缩放/透视具有不变性（来自 airtest）。
+        修正 rectangle[0] 使 match_single 中 rectangle[0] + template_wh//2 = 正确中心点。"""
+        result = SIFTMatching(template_img, search_img, threshold=threshold, rgb=False).find_best_result()
+        if not result:
+            return []
+        th, tw = template_img.shape[:2]
+        cx, cy = result["result"]
+        pts = list(result["rectangle"])
+        pts[0] = (cx - tw // 2, cy - th // 2)
+        result["rectangle"] = tuple(pts)
+        return [result]
 
     @staticmethod
     def batch_match(*args, **kwargs):
@@ -70,6 +87,7 @@ class TemplateMatcher:
         box = kwargs.get("box", BOX)
         threshold = kwargs.get("threshold", THRESHOLD)
         preprocess = kwargs.get("preprocess", None)
+        method = kwargs.get("method", "ccoeff")
         name = kwargs.get("name", "default")
         version = kwargs.get("version", "1.0.0")
 
@@ -81,7 +99,7 @@ class TemplateMatcher:
             futures[TemplateMatcher.executor.submit(
                 TemplateMatcher.match_single,
                 img=img, image=image, category=os.path.join(name, version),
-                box=box, threshold=threshold, preprocess=preprocess,
+                box=box, threshold=threshold, preprocess=preprocess, method=method,
             )] = image
 
         for future in as_completed(futures):
@@ -98,7 +116,7 @@ class TemplateMatcher:
 
     @staticmethod
     def match_crop(search_img: np.ndarray, crop: dict, original: np.ndarray,
-                   preprocess_cfg: dict | None, threshold: float) -> list[dict]:
+                   preprocess_cfg: dict | None, threshold: float, method: str = "ccoeff") -> list[dict]:
         """对裁剪区域运行模板匹配。返回 [{"x","y","w","h","confidence"}, ...]"""
         x, y = int(crop["x"]), int(crop["y"])
         w, h = int(crop["w"]), int(crop["h"])
@@ -111,7 +129,7 @@ class TemplateMatcher:
         processed = ScreenCapture.apply_preprocess(search_img, preprocess_cfg)
         logging.debug(f"[Matcher] 模板: {template.shape[1]}x{template.shape[0]}, 搜索: {processed.shape[1]}x{processed.shape[0]}")
 
-        results = TemplateMatcher._match(processed, template, threshold)
+        results = TemplateMatcher._match(processed, template, threshold, method)
         return [{"x": int(r["rectangle"][0][0]), "y": int(r["rectangle"][0][1]),
                  "w": w, "h": h, "confidence": round(r["confidence"], 4)} for r in (results or [])]
 
@@ -209,7 +227,8 @@ class TemplateMatcher:
             pp = preprocess_cfg if preprocess_cfg else None
             processed = ScreenCapture.apply_preprocess(search_img, pp)
             threshold = float(args.get("match_threshold", THRESHOLD))
-            matches = TemplateMatcher.match_crop(processed, crop, original, pp, threshold) if crop and isinstance(crop, dict) else []
+            method = str(args.get("match_method", "ccoeff"))
+            matches = TemplateMatcher.match_crop(processed, crop, original, pp, threshold, method) if crop and isinstance(crop, dict) else []
 
             result = {"base64": TemplateMatcher.visualize(processed, matches),
                        "width": processed.shape[1], "height": processed.shape[0], "matches": matches}

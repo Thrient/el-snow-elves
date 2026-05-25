@@ -190,6 +190,10 @@ def post_signed_data(
             "[ChannelUtils] uni_sauth req login_channel=%s sdkuid=%s",
             data.get("login_channel"), data.get("sdkuid"),
         )
+        # 调试：打印请求体前 300 字符 + 签名
+        logging.debug("[ChannelUtils] uni_sauth body[:300]=%s", body[:300])
+        logging.debug("[ChannelUtils] uni_sauth sign=%s", headers.get("X-Client-Sign", "N/A"))
+        logging.debug("[ChannelUtils] uni_sauth url=%s", url)
     else:
         logging.info("[ChannelUtils] uni_sauth OK")
     logging.debug(

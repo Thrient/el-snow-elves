@@ -47,6 +47,7 @@
       "args": "{split(模板, ',')}",
       "click_mode": "{点击模式:random}",
       "threshold": "{阈值:0.85}",
+      "method": "{方法:ccoeff}",
       "x": "{X:0}",
       "y": "{Y:0}"
     }
@@ -293,17 +294,15 @@
       ],
       "secondes": null
     },
-    "retry": {
-      "times": 7,
-      "interval": 1000
-    },
     "prefix": [
       "激活窗口"
     ],
     "success_extra": [
       "确认退出场景",
       "等待场景加载"
-    ]
+    ],
+    "success": "退出场景",
+    "failure": "任务结束"
   },
   "确认退出场景": {
     "action": "touch",

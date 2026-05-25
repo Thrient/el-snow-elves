@@ -19,6 +19,15 @@ EXCLUDE_FILES = {"manifest.json", "_restart.bat", "Elves.spec"}
 
 
 class UpdateEngine:
+    _session: requests.Session | None = None
+
+    @classmethod
+    def _get_session(cls) -> requests.Session:
+        if cls._session is None:
+            cls._session = requests.Session()
+            cls._session.headers["Connection"] = "keep-alive"
+        return cls._session
+
     @staticmethod
     def compute_manifest() -> dict[str, str]:
         """扫描应用目录，返回 {relative_path: sha256}"""
@@ -42,7 +51,7 @@ class UpdateEngine:
         """返回最新版本信息 {'version','changelog','is_mandatory','is_latest'} 或 None"""
         try:
             _log.info(f"check_version: GET {HUB_URL}/versions")
-            resp = requests.get(f"{HUB_URL}/versions", timeout=10)
+            resp = UpdateEngine._get_session().get(f"{HUB_URL}/versions", timeout=10)
             data = resp.json()
             versions = data.get("data", [])
             for v in versions:
@@ -60,7 +69,7 @@ class UpdateEngine:
         """POST /versions/diff，返回 {latest_version, changelog, is_mandatory, changed, removed}"""
         try:
             _log.info(f"diff_manifest: POST {HUB_URL}/versions/diff current={current_version} manifest_keys={len(local_manifest)}")
-            resp = requests.post(
+            resp = UpdateEngine._get_session().post(
                 f"{HUB_URL}/versions/diff",
                 json={"current_version": current_version, "manifest": local_manifest},
                 timeout=30,
@@ -77,10 +86,17 @@ class UpdateEngine:
     @staticmethod
     def download_blob(fingerprint_id: int, save_path: str):
         """下载单个 blob 到指定路径"""
+        import time
         _log.debug(f"download_blob: id={fingerprint_id} → {save_path}")
-        resp = requests.get(f"{HUB_URL}/versions/blobs/{fingerprint_id}", stream=True, timeout=60)
+        t0 = time.time()
+        resp = UpdateEngine._get_session().get(f"{HUB_URL}/versions/blobs/{fingerprint_id}", stream=True, timeout=120)
         resp.raise_for_status()
+        total = int(resp.headers.get("Content-Length", 0))
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "wb") as f:
-            for chunk in resp.iter_content(chunk_size=8192):
+            for chunk in resp.iter_content(chunk_size=1024 * 1024):
                 f.write(chunk)
+        elapsed = time.time() - t0
+        if elapsed > 0 and total > 0:
+            speed_mbps = (total * 8) / elapsed / 1_000_000
+            _log.info(f"download_blob: id={fingerprint_id} {total/1024:.0f}KB in {elapsed:.1f}s = {speed_mbps:.1f}Mbps")
