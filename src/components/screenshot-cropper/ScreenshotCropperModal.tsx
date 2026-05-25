@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, type FC } from "react";
-import { Button, Input, message, Modal, Popover, Spin } from "antd";
+import { Button, Input, InputNumber, message, Modal, Popover, Radio, Spin } from "antd";
 import { useResponsiveStore } from "@/store/responsive-store";
 import {
   ScissorOutlined, LoadingOutlined, ZoomInOutlined, ZoomOutOutlined, DragOutlined, HighlightOutlined,
@@ -27,8 +27,6 @@ const HANDLE_VISUAL = 12;
 const MIN_CROP = 8;
 const VP_W = 720;
 const VP_H = 480;
-const MATCH_THRESHOLD = 0.85;
-
 const CORNERS: { corner: Corner; cursor: string }[] = [
   { corner: "nw", cursor: "nwse-resize" },
   { corner: "ne", cursor: "nesw-resize" },
@@ -240,6 +238,8 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
   const [tool, setTool] = useState<"select" | "pan">("select");
   const [hoverCursor, setHoverCursor] = useState("crosshair");
   const [preprocessCfg, setPreprocessCfg] = useState<PreprocessConfig>({});
+  const [matchMethod, setMatchMethod] = useState<"ccoeff" | "sift">("ccoeff");
+  const [matchThreshold, setMatchThreshold] = useState(0.85);
   const [previewImage, setPreviewImage] = useState<CaptureResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -277,7 +277,7 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
   useEffect(() => {
     if (!open || !hwnd) return;
     setLoading(true); setCapture(null); setCrop(null); setFilename(""); setTool("select");
-    setPreprocessCfg({}); setPreviewImage(null); setShowPreview(false);
+    setPreprocessCfg({}); setMatchMethod("ccoeff"); setMatchThreshold(0.85); setPreviewImage(null); setShowPreview(false);
     window.pywebview?.api.emit("API:TEMPLATE:CAPTURE", hwnd)
       .then((r: CaptureResult | null) => {
         if (r) {
@@ -512,7 +512,8 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
           x: Math.round(cropSnapshot.x), y: Math.round(cropSnapshot.y),
           w: Math.round(cropSnapshot.w), h: Math.round(cropSnapshot.h),
         },
-        match_threshold: MATCH_THRESHOLD,
+        match_threshold: matchThreshold,
+        match_method: matchMethod,
         base64: cap.base64,
         width: cap.width,
         height: cap.height,
@@ -528,7 +529,7 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
         setShowPreview(true);
         setPreprocessOpen(false);
         message.success(matchCount > 0
-          ? `找到 ${matchCount} 个匹配点（绿色≥0.95，橙色≥0.9，红色≥${MATCH_THRESHOLD}）`
+          ? `找到 ${matchCount} 个匹配点（绿色≥0.95，橙色≥0.9，红色≥${matchThreshold}）`
           : "预处理完成，未找到匹配点，点击切换对比");
       } else {
         message.error(res?.error ? `预处理失败: ${res.error}` : "后端返回无效，请检查后端日志");
@@ -601,7 +602,21 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
                           用框选区域作为匹配模板
                         </div>
                         <PreprocessConfigPanel cfg={preprocessCfg} onChange={setPreprocessCfg} />
-                        <div className="flex gap-2 mt-3 pt-3 border-t border-[#f0f0f5]">
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#f0f0f5]">
+                          <span className="text-[11px] text-[#374151]">匹配阈值</span>
+                          <InputNumber size="small" min={0} max={1} step={0.01}
+                            style={{ width: 72 }} value={matchThreshold}
+                            onChange={v => setMatchThreshold(v ?? 0.85)} />
+                        </div>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#f0f0f5]">
+                          <span className="text-[11px] text-[#374151]">匹配算法</span>
+                          <Radio.Group size="small" value={matchMethod}
+                            onChange={e => setMatchMethod(e.target.value)}>
+                            <Radio.Button value="ccoeff" style={{ fontSize: 10, padding: "0 8px" }}>模板</Radio.Button>
+                            <Radio.Button value="sift" style={{ fontSize: 10, padding: "0 8px" }}>SIFT</Radio.Button>
+                          </Radio.Group>
+                        </div>
+                        <div className="flex gap-2 mt-2 pt-2 border-t border-[#f0f0f5]">
                           <Button size="small" style={{ borderColor: "#8b5cf6", color: "#8b5cf6" }}
                             loading={previewLoading}
                             onClick={() => handlePreprocessTest("current")}>当前截图</Button>

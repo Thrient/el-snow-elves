@@ -47,7 +47,7 @@ const TaskPage: FC = () => {
 
   const toggleSelectAll = () => {
     if (allSelected) {
-      setSelectedRowKeys((prev) => prev.filter((id) => !filteredIds.includes(id)));
+      setSelectedRowKeys((prev) => prev.filter((id) => !filteredIds.includes(String(id))));
     } else {
       setSelectedRowKeys((prev) => [...new Set([...prev, ...filteredIds])]);
     }

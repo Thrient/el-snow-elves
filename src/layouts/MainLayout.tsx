@@ -3,6 +3,7 @@ import { useSettingsStore } from "@/store/settings-store";
 import { useTaskStore } from "@/store/task-store";
 import { useUpdateStore } from "@/store/update-store";
 import { waitForPywebview } from "@/utils/pywebview.ts";
+import { compareVersion } from "@/utils/version";
 import { Layout } from "antd";
 import AppHeader from "@/components/app-header/AppHeader.tsx";
 import DisclaimerModal from "@/components/disclaimer-modal/DisclaimerModal.tsx";
@@ -41,7 +42,7 @@ const MainLayout: FC = () => {
         if (latest && latest.version && currentVersion) {
           const cur = String(currentVersion).replace(/^v/, "")
           const lat = String(latest.version).replace(/^v/, "")
-          if (lat !== cur) {
+          if (compareVersion(lat, cur) > 0) {
             useUpdateStore.getState().setUpdate({
               version: latest.version,
               changelog: latest.changelog,
@@ -65,11 +66,16 @@ const MainLayout: FC = () => {
       try {
         const d = JSON.parse(e.data);
         if (d.type === "update") {
-          useUpdateStore.getState().setUpdate({
-            version: d.version,
-            changelog: d.changelog,
-            is_mandatory: d.is_mandatory ?? false,
-          });
+          const current = useUpdateStore.getState().currentVersion;
+          const dVer = String(d.version).replace(/^v/, "");
+          const cVer = String(current).replace(/^v/, "");
+          if (current && compareVersion(dVer, cVer) > 0) {
+            useUpdateStore.getState().setUpdate({
+              version: d.version,
+              changelog: d.changelog,
+              is_mandatory: d.is_mandatory ?? false,
+            });
+          }
         }
       } catch {
         // malformed SSE payload, ignore

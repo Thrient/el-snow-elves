@@ -82,16 +82,17 @@ export const PARAM_META: Record<string, ParamMeta> = {
   pre_delay:  { label: "操作前延迟",color: "#f97316", icon: <PauseOutlined />,         desc: "执行操作前等待的时间，确保界面稳定后再操作",                         range: "默认 1500 ms" },
   post_delay: { label: "操作后延迟",color: "#84cc16", icon: <CaretRightOutlined />,    desc: "执行操作后等待的时间，确保界面响应完成后再继续",                     range: "默认 1500 ms" },
   preprocess: { label: "图像预处理",color: "#8b5cf6", icon: <BulbOutlined />,          desc: "对截图的额外图像处理，提高特定场景下的匹配准确率。二值化、反转、自适应等独立开关组合" },
+  method:     { label: "匹配算法",  color: "#db2777", icon: <ScanOutlined />,         desc: "模板匹配算法。ccoeff=相关系数（默认，不抗旋转缩放），sift=特征点（抗旋转缩放透视）", range: "ccoeff / sift" },
   account_name: { label: "账号名称", color: "#1677ff", icon: <UserOutlined />,          desc: "已录制的账号名，用于登录时注入凭证。通常用变量 {account_name} 在任务配置中设定" },
   hwnd:         { label: "目标窗口", color: "#6366f1", icon: <DesktopOutlined />,      desc: "操作的目标窗口句柄。默认 {hwnd} 为当前窗口，可填固定句柄或变量", range: "如 0x12345 或 {my_hwnd}" },
   text:         { label: "输入文本", color: "#14b8a6", icon: <EditOutlined />,          desc: "模拟键盘逐字输入到窗口。支持 {变量} 表达式", range: "如 Hello World 或 {my_text}" },
 };
 
 export const ACTION_PARAMS: Record<string, string[]> = {
-  touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "count", "pre_delay", "post_delay", "seconds", "k", "preprocess", "hwnd"],
-  exits:          ["threshold", "box", "seconds", "preprocess", "hwnd"],
-  wait:           ["threshold", "box", "seconds", "preprocess", "hwnd"],
-  wait_disappear:          ["threshold", "box", "seconds", "k", "preprocess", "hwnd"],
+  touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "count", "pre_delay", "post_delay", "seconds", "k", "preprocess", "method", "hwnd"],
+  exits:          ["threshold", "box", "seconds", "preprocess", "method", "hwnd"],
+  wait:           ["threshold", "box", "seconds", "preprocess", "method", "hwnd"],
+  wait_disappear:          ["threshold", "box", "seconds", "k", "preprocess", "method", "hwnd"],
   exits_color:             ["color", "tolerance", "box", "hwnd"],
   touch_color:              ["color", "tolerance", "box", "pos", "click_mode", "count", "pre_delay", "post_delay", "hwnd"],
   wait_color:               ["color", "tolerance", "box", "seconds", "k", "hwnd"],

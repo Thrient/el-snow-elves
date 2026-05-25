@@ -33,6 +33,8 @@ export default function UpdateModal() {
         useUpdateStore.getState().cancelDownload();
       } else if (result?.error) {
         useUpdateStore.getState().finishDownload();
+      } else if (result?.ok) {
+        useUpdateStore.getState().finishDownload();
       }
     } catch {
       useUpdateStore.getState().finishDownload();

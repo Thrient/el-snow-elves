@@ -160,6 +160,17 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
         />
       );
     }
+    if (key === "method") {
+      return (
+        <Select size="small" style={{ width: 120 }}
+          value={(value as string) || "ccoeff"}
+          options={[
+            { value: "ccoeff", label: "ccoeff — 模板" },
+            { value: "sift", label: "sift — 特征点" },
+          ]}
+          onChange={(v) => onUpdate("params", { ...params, method: v })} />
+      );
+    }
     if (key === "threshold") {
       if (typeof value !== "number" && value != null) {
         const raw = String(value ?? "");

@@ -223,6 +223,44 @@ body {
     animation: taskCardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ── Account management cards ── */
+.account-card {
+    background: var(--color-bg-page);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: default;
+}
+.account-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-primary-border);
+}
+
+.account-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    flex-shrink: 0;
+    letter-spacing: 0;
+    user-select: none;
+}
+
+@keyframes accountCardIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.account-card-enter {
+    animation: accountCardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ── Thin scrollbar (shared by table & task editor) ── */
 .ant-table-body,
 .thin-scrollbar {
