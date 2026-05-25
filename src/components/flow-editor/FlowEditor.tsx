@@ -6,6 +6,7 @@ import {
   MarkerType, type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { SnippetsOutlined } from "@ant-design/icons";
 import StepNode from "./StepNode";
 import StepEdge from "./StepEdge";
 import type { StepNodeData, StepEdgeData } from "@/types/flow";
@@ -22,6 +23,8 @@ interface Props {
   onNodeClick: (nodeId: string) => void;
   onCreateStep: (x: number, y: number, isCommon: boolean) => void;
   onNodesDelete?: (ids: string[]) => void;
+  clipboardHasData?: boolean;
+  onPasteStep?: (x: number, y: number) => void;
 }
 
 const nodeTypes = { stepNode: StepNode };
@@ -29,6 +32,7 @@ const edgeTypes = { step: StepEdge };
 
 const FlowEditor: FC<Props> = ({
   nodes, edges, onNodesChange, onEdgesChange, onNodeClick, onCreateStep, onNodesDelete,
+  clipboardHasData, onPasteStep,
 }) => {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const rfRef = useRef<HTMLDivElement>(null);
@@ -80,6 +84,14 @@ const FlowEditor: FC<Props> = ({
     setMenu(null);
   };
 
+  const handlePasteAt = () => {
+    if (!menu || !rfInstance.current || !rfRef.current) return;
+    const rect = rfRef.current.getBoundingClientRect();
+    const pos = rfInstance.current.screenToFlowPosition({ x: menu.x + rect.left, y: menu.y + rect.top });
+    onPasteStep?.(pos.x, pos.y);
+    setMenu(null);
+  };
+
   return (
     <div ref={rfRef} style={{ width: "100%", height: "100%", position: "relative", zoom: "calc(1 / var(--zoom))" }}>
       <ReactFlow
@@ -99,7 +111,7 @@ const FlowEditor: FC<Props> = ({
         <Background /><Controls />
       </ReactFlow>
 
-      {/* Context menu */}
+      {/* Canvas context menu */}
       {menu && (
         <>
           <div className="fixed inset-0 z-50" onClick={() => setMenu(null)} />
@@ -125,9 +137,25 @@ const FlowEditor: FC<Props> = ({
                 <div className="text-[10px] text-[#8b8fa3] leading-tight">覆盖全局公共步骤</div>
               </div>
             </button>
+            {clipboardHasData && (
+              <>
+                <div className="border-t border-[#f0f0f0] my-1" />
+                <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
+                  onClick={handlePasteAt}>
+                  <div className="w-7 h-7 rounded-lg bg-[#f0fdf4] flex items-center justify-center shrink-0">
+                    <SnippetsOutlined className="text-[13px] text-[#52c41a]" />
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">粘贴步骤</div>
+                    <div className="text-[10px] text-[#8b8fa3] leading-tight">将复制的步骤粘贴到此处</div>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </>
       )}
+
     </div>
   );
 };

@@ -177,12 +177,12 @@ const TaskPage: FC = () => {
         {shown.map(([key, value], j) => (
           <Tag
             key={key}
-            className="h-5 leading-5 rounded text-white border-none flex items-center text-[10px] m-0 px-1.5 font-mono"
+            className="h-[22px] leading-[22px] rounded text-white border-none flex items-center text-[11px] m-0 px-2 font-mono"
             style={{ backgroundColor: TAG_COLORS[j % TAG_COLORS.length] }}
           >{`${key}: ${String(value)}`}</Tag>
         ))}
         {rest > 0 && (
-          <Tag className="h-5 leading-5 rounded border-[#eef0f2] text-[#8b8fa3] text-[10px] m-0">
+          <Tag className="h-[22px] leading-[22px] rounded border-[#eef0f2] text-[#8b8fa3] text-[11px] m-0">
             +{rest}
           </Tag>
         )}

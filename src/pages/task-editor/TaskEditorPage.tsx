@@ -49,6 +49,7 @@ const TaskEditorPage: FC = () => {
   const [newDesc, setNewDesc] = useState("");
 
   const [refreshKey, setRefreshKey] = useState(0);
+  const [clipboardHasData, setClipboardHasData] = useState(false);
 
   const loadTaskList = useCallback(async () => {
     try {
@@ -265,6 +266,48 @@ const TaskEditorPage: FC = () => {
     } catch (e: unknown) { message.error(e instanceof Error ? e.message : "创建失败"); }
   };
 
+  // ── Copy / Paste step ──
+
+  const handleCopyCurrentStep = useCallback(async () => {
+    if (!drawerStep || !editor.currentTask) return;
+    const steps = { ...editor.currentTask.steps, ...editor.currentTask.common };
+    const step = steps[drawerStep.name];
+    if (!step) return;
+    try {
+      const json = JSON.stringify({ _type: "elfStep", name: drawerStep.name, ...step });
+      await navigator.clipboard.writeText(json);
+      setClipboardHasData(true);
+      message.success("已复制到剪贴板");
+    } catch { message.error("复制失败"); }
+  }, [drawerStep, editor.currentTask]);
+
+  const handlePasteStep = useCallback(async (x: number, y: number) => {
+    if (!editor.currentTask) return;
+    try {
+      const text = await navigator.clipboard.readText();
+      const data = JSON.parse(text);
+      if (data._type !== "elfStep") { message.warning("剪贴板中没有有效的步骤数据"); return; }
+      const { _type, name: _oldName, ...stepData } = data;
+
+      // Auto-rename to avoid collision
+      const existing = new Set([...Object.keys(editor.currentTask.steps), ...Object.keys(editor.currentTask.common)]);
+      let newName = _oldName ?? "步骤";
+      if (existing.has(newName)) {
+        newName = `${newName}_副本`;
+        let n = 2;
+        while (existing.has(newName)) { newName = `${_oldName}_副本${n}`; n++; }
+      }
+
+      editor.addStep(newName, false);
+      editor.updateStep(newName, stepData as Step, false);
+      setFlowNodes((prev) => [...prev, {
+        id: newName, type: "stepNode", position: { x: x - 80, y: y - 20 },
+        data: { stepName: newName, action: (stepData as Step).action ?? "", isCommon: false, isStart: false },
+      }]);
+      message.success(`已粘贴: ${newName}`);
+    } catch { message.warning("剪贴板中没有有效的步骤数据"); }
+  }, [editor.currentTask, editor.addStep, editor.updateStep]);
+
   const handleSave = async () => {
     if (editor.currentTask) {
       const updated = flowToTask(flowNodes, flowEdges, editor.currentTask);
@@ -282,6 +325,16 @@ const TaskEditorPage: FC = () => {
   };
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
+
+  const drawerStepRef = useRef(drawerStep);
+  drawerStepRef.current = drawerStep;
+
+  const clipboardHasDataRef = useRef(clipboardHasData);
+  clipboardHasDataRef.current = clipboardHasData;
+  const handleCopyCurrentStepRef = useRef(handleCopyCurrentStep);
+  handleCopyCurrentStepRef.current = handleCopyCurrentStep;
+  const handlePasteStepRef = useRef(handlePasteStep);
+  handlePasteStepRef.current = handlePasteStep;
 
   // Temporal (undo/redo) subscription
   const syncFlowFromTask = useCallback(() => {
@@ -307,6 +360,22 @@ const TaskEditorPage: FC = () => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); handleSaveRef.current(); }
       if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); useEditorStore.temporal.getState().undo(); syncFlowFromTask(); }
       if ((e.ctrlKey || e.metaKey) && e.key === "y") { e.preventDefault(); useEditorStore.temporal.getState().redo(); syncFlowFromTask(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+        if (drawerStepRef.current && document.activeElement?.closest(".react-flow")) { e.preventDefault(); handleCopyCurrentStepRef.current(); }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+        if (clipboardHasDataRef.current) {
+          const tag = document.activeElement?.tagName?.toLowerCase();
+          const isInput = tag === "input" || tag === "textarea" || tag === "select" || document.activeElement?.getAttribute("contenteditable") === "true";
+          if (isInput) return;
+          e.preventDefault();
+          const rfEl = document.querySelector(".react-flow__viewport");
+          if (rfEl) {
+            const rect = rfEl.getBoundingClientRect();
+            handlePasteStepRef.current(rect.width / 2, rect.height / 2);
+          }
+        }
+      }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -472,7 +541,8 @@ const TaskEditorPage: FC = () => {
                 setDrawerStep(null);
                 setFlowNodes((prev) => prev.filter((n) => n.id !== name));
                 setFlowEdges((prev) => prev.filter((e) => e.source !== name && e.target !== name));
-              }} />
+              }}
+              onCopy={handleCopyCurrentStep} />
           )}
         </div>
         <VariablePanel taskValues={editor.currentTask?.values ?? {}} configKeys={configKeys}

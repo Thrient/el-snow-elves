@@ -279,6 +279,59 @@ body {
 .ant-table-body::-webkit-scrollbar-thumb:hover,
 .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
+/* ── Window management cards ── */
+.window-card {
+    background: var(--color-bg-page);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+}
+.window-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-primary-border);
+}
+
+.window-card-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    flex-shrink: 0;
+    letter-spacing: 0;
+    user-select: none;
+}
+
+/* ── Queue & plan item cards ── */
+.queue-item {
+    background: #fff;
+    border: 1px solid #eef0f2;
+    border-radius: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+.queue-item:hover {
+    border-color: #d0d4dd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+@keyframes queueItemIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.queue-item-enter {
+    animation: queueItemIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ── Update modal animation ── */
 @keyframes update-modal-in {
     from { opacity: 0; transform: scale(0.94) translateY(10px); }

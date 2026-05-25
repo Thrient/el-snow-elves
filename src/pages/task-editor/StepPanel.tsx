@@ -1,6 +1,6 @@
 import { useState, type FC } from "react";
 import { Button, Input, InputNumber, Select, Tooltip, message } from "antd";
-import { CloseOutlined, DeleteOutlined, LeftOutlined, BugOutlined, ReloadOutlined, ApartmentOutlined } from "@ant-design/icons";
+import { CloseOutlined, CopyOutlined, DeleteOutlined, LeftOutlined, BugOutlined, ReloadOutlined, ApartmentOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
 import type { EditorCtx } from "./constants";
 import { ACTION_OPTS, ACTION_PARAMS, REQUIRED_PARAMS } from "./constants";
@@ -19,6 +19,7 @@ interface Props {
   stepName: string; step: Step; isCommon: boolean; ctx: EditorCtx;
   onClose: () => void; onRename: (name: string) => void;
   onUpdate: (field: string, value: unknown) => void; onDelete: () => void;
+  onCopy?: () => void;
 }
 
 // ---- Card registry ----
@@ -48,7 +49,7 @@ const CARDS: { key: CardKey; label: string; color: string; light: string; desc: 
 
 // ---- Main ----
 
-const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename, onUpdate, onDelete }) => {
+const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename, onUpdate, onDelete, onCopy }) => {
   const [expanded, setExpanded] = useState<CardKey | null>(null);
   const [nameEdit, setNameEdit] = useState(false);
   const [nameDraft, setNameDraft] = useState(stepName);
@@ -71,6 +72,9 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
           <h3 className="flex-1 min-w-0 text-sm font-semibold text-[#1a1a2e] truncate cursor-pointer select-none"
             onDoubleClick={() => { setNameDraft(stepName); setNameEdit(true); }}
             title="双击重命名">{stepName}</h3>
+        )}
+        {onCopy && (
+          <Tooltip title="复制步骤"><Button type="text" size="small" icon={<CopyOutlined />} onClick={onCopy} /></Tooltip>
         )}
         <Tooltip title="删除步骤"><Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={onDelete} /></Tooltip>
         <Tooltip title="关闭面板"><Button type="text" size="small" icon={<CloseOutlined />} onClick={onClose} /></Tooltip>
