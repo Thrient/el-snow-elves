@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 import time
+import time
 
 from script.api.JsApi import js
 from script.config.Setting import APP_DATA, STORAGE_PATH

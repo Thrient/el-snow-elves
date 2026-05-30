@@ -29,14 +29,14 @@ class OnlinePresence:
 
     def stop(self):
         self._stop_event.set()
-        # 强制关闭连接，让阻塞的 iter_lines 立即抛异常退出
         if self._response:
             try:
                 self._response.close()
             except Exception:
                 pass
+        # join 会阻塞，但 _response.close() 应秒级生效；设置较短超时避免卡死
         if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=3)
+            self._thread.join(timeout=1.5)
         _log.info("在线状态上报已停止")
 
     def _run(self):
