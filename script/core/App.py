@@ -8,7 +8,7 @@ import webview
 from script.api.Api import api
 from script.api.JsApi import js
 from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH, PROJECT_ROOT
-from script.core.LogManager import setup_logging, read_logs, get_log_files
+from script.util.LogManager import setup_logging, read_logs, get_log_files
 from script.core.QuickStart import QuickStart
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
@@ -23,16 +23,19 @@ from script.core.TemplateMatcher import TemplateMatcher
 from script.core.UpdateEngine import UpdateEngine
 from script.core.UpdateWorker import UpdateWorker
 from script.core.OnlinePresence import presence
-from script.core.Window import Window
-from script.util.Utils import Utils
+from script.util.CacheManager import clear_webview_cache_if_version_changed
+from script.core.Window import Window, calc_window_size, get_hwnd_by_title
 from script.util.TrayIcon import TrayIcon
+from script.util.CloseDialog import load_close_preference, save_close_preference
+from script.util.GamePathManager import get_game_path, set_game_path
+from script.util.StartupManager import get_autostart, set_autostart
 
 
 class App:
     def __init__(self, url):
         setup_logging()
-        Utils.clear_webview_cache_if_version_changed()
-        width, height = Utils.calc_window_size()
+        clear_webview_cache_if_version_changed()
+        width, height = calc_window_size()
         saved_rect = Window.get_saved_rect("main")
         if saved_rect:
             width, height = saved_rect[2] - saved_rect[0], saved_rect[3] - saved_rect[1]
@@ -66,11 +69,11 @@ class App:
             on_show=lambda: self._show_main_window(),
             on_exit=self._do_exit,
             on_refresh=self._refresh_tray_accounts,
-            on_autostart=lambda enabled: Utils.set_autostart(enabled),
-            on_reset_close=self._toggle_close_preference,
+            on_autostart=lambda enabled: set_autostart(enabled),
+            on_reset_close=lambda enabled: save_close_preference("tray" if enabled else "exit"),
         )
-        self._tray.set_autostart_state(Utils.get_autostart())
-        close_pref = self._load_close_preference()
+        self._tray.set_autostart_state(get_autostart())
+        close_pref = load_close_preference()
         is_tray = close_pref == "tray"
         logging.info(f"[Setup] initial close_pref={close_pref!r}, tray_checkmark={is_tray}")
         self._tray.set_close_remembered_state(is_tray)
@@ -140,7 +143,7 @@ class App:
 
     def _on_window_closing(self) -> bool:
         """窗口关闭：托盘勾 → 最小化到托盘，托盘不勾 → 直接退出"""
-        pref = self._load_close_preference()
+        pref = load_close_preference()
         logging.info(f"[Close] pref={pref!r}")
         if pref == "tray":
             hwnd = self._get_main_hwnd()
@@ -150,133 +153,6 @@ class App:
         else:
             self._do_exit()
         return False
-
-    @staticmethod
-    def _close_pref_path() -> str:
-        return os.path.join(STORAGE_PATH, "Config", "User", "close_pref.json")
-
-    @staticmethod
-    def _load_close_preference() -> str:
-        try:
-            path = App._close_pref_path()
-            if os.path.exists(path):
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f).get("close_action", "")
-        except Exception:
-            pass
-        return ""
-
-    def _toggle_close_preference(self, enabled: bool):
-        """托盘菜单：切换关闭偏好。enabled=True 最小化到托盘，False 直接退出"""
-        App._save_close_preference("tray" if enabled else "exit")
-
-    @staticmethod
-    def _save_close_preference(action: str):
-        try:
-            path = App._close_pref_path()
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump({"close_action": action}, f)
-        except Exception:
-            pass
-
-    @staticmethod
-    def _show_close_dialog() -> str:
-        """弹出关闭确认对话框（带「不再询问」复选框），返回 'exit' 或 'tray'"""
-        import ctypes
-        from ctypes import wintypes
-
-        ID_TRAY = 100
-        ID_EXIT = 101
-
-        class TASKDIALOG_BUTTON(ctypes.Structure):
-            _fields_ = [
-                ("nButtonID", ctypes.c_int),
-                ("pszButtonText", wintypes.LPCWSTR),
-            ]
-
-        class TASKDIALOGCONFIG(ctypes.Structure):
-            _fields_ = [
-                ("cbSize", wintypes.UINT),
-                ("hwndParent", wintypes.HWND),
-                ("hInstance", wintypes.HINSTANCE),
-                ("dwFlags", wintypes.DWORD),
-                ("dwCommonButtons", wintypes.DWORD),
-                ("pszWindowTitle", wintypes.LPCWSTR),
-                ("pszMainIcon", wintypes.LPCWSTR),
-                ("pszMainInstruction", wintypes.LPCWSTR),
-                ("pszContent", wintypes.LPCWSTR),
-                ("cButtons", wintypes.UINT),
-                ("pButtons", ctypes.POINTER(TASKDIALOG_BUTTON)),
-                ("nDefaultButton", ctypes.c_int),
-                ("cRadioButtons", wintypes.UINT),
-                ("pRadioButtons", ctypes.c_void_p),
-                ("nDefaultRadioButton", ctypes.c_int),
-                ("pszVerificationText", wintypes.LPCWSTR),
-                ("pszExpandedInformation", wintypes.LPCWSTR),
-                ("pszExpandedControlText", wintypes.LPCWSTR),
-                ("pszCollapsedControlText", wintypes.LPCWSTR),
-                ("pszFooterIcon", wintypes.LPCWSTR),
-                ("pszFooter", wintypes.LPCWSTR),
-                ("pfCallback", ctypes.c_void_p),
-                ("lpCallbackData", wintypes.LPARAM),
-                ("cxWidth", wintypes.UINT),
-            ]
-
-        buttons = (TASKDIALOG_BUTTON * 2)()
-        buttons[0] = TASKDIALOG_BUTTON(ID_TRAY, "最小化到托盘，后台运行")
-        buttons[1] = TASKDIALOG_BUTTON(ID_EXIT, "退出程序")
-
-        config = TASKDIALOGCONFIG()
-        config.cbSize = ctypes.sizeof(TASKDIALOGCONFIG)
-        config.dwFlags = 0x0008  # TDF_ALLOW_DIALOG_CANCELLATION
-        config.pszWindowTitle = "时雪-创意工坊"
-        config.pszMainIcon = 0xFFFD  # TD_INFORMATION_ICON
-        config.pszMainInstruction = "关闭程序"
-        config.pszContent = "最小化到托盘：程序继续后台运行，可通过托盘图标恢复\n退出程序：立即结束所有任务"
-        config.cButtons = 2
-        config.pButtons = buttons
-        config.nDefaultButton = ID_TRAY
-        config.pszVerificationText = "不再询问，记住此选择"
-
-        pn_button = ctypes.c_int()
-        pf_checked = ctypes.c_int()
-
-        try:
-            ctypes.windll.comctl32.TaskDialogIndirect(
-                ctypes.byref(config),
-                ctypes.byref(pn_button),
-                None,
-                ctypes.byref(pf_checked),
-            )
-            choice = "tray" if pn_button.value == ID_TRAY else "exit"
-            logging.info(f"[CloseDlg] TaskDialog choice={choice}, checked={bool(pf_checked.value)}")
-            if pf_checked.value:
-                App._save_close_preference(choice)
-            return choice
-        except Exception as e:
-            logging.info(f"[CloseDlg] TaskDialogIndirect 不可用({e})，使用 MessageBox 回退")
-            MB_YESNO = 0x04
-            result = ctypes.windll.user32.MessageBoxW(
-                0,
-                "关闭 时雪-创意工坊\n\n"
-                "是(Y) — 最小化到托盘，后台运行\n"
-                "否(N) — 直接退出程序",
-                "时雪-创意工坊",
-                MB_YESNO | 0x30,
-            )
-            choice = "tray" if result == 6 else "exit"
-            # 回退时也询问是否记住选择
-            MB_YESNO2 = 0x04
-            remember = ctypes.windll.user32.MessageBoxW(
-                0,
-                f"是否记住此选择？\n\n以后关闭时将自动{ '最小化到托盘' if choice == 'tray' else '退出程序' }。",
-                "时雪-创意工坊",
-                MB_YESNO2 | 0x40,
-            )
-            if remember == 6:
-                App._save_close_preference(choice)
-            return choice
 
     def _do_exit(self):
         """真正退出程序"""
@@ -343,8 +219,8 @@ class App:
         api.on("API:ACCOUNT:REPLAY:START", self._session.start_replay)
         api.on("API:ACCOUNT:QUICK_START", self._qs.execute)
         api.on("API:ACCOUNT:REPLAY:STOP", self._session.stop_replay)
-        api.on("API:AUTOSTART:GET", lambda: Utils.get_autostart())
-        api.on("API:AUTOSTART:SET", Utils.set_autostart)
+        api.on("API:AUTOSTART:GET", lambda: get_autostart())
+        api.on("API:AUTOSTART:SET", set_autostart)
         api.on("API:UPDATE:CHECK", UpdateEngine.check_version)
         api.on("API:APP:VERSION", lambda: VERSION)
 
@@ -361,47 +237,8 @@ class App:
 
         api.on("API:UPDATE:APPLY", lambda: UpdateWorker.apply_and_restart())
 
-        def _get_game_path():
-            import json as _json
-            p = os.path.join(STORAGE_PATH, "Config", "User", "game.json")
-            try:
-                if os.path.exists(p):
-                    with open(p, "r", encoding="utf-8") as f:
-                        return _json.load(f).get("game_exe", "")
-            except Exception:
-                pass
-            return ""
-
-        def _set_game_path():
-            result = self.window.create_file_dialog(
-                webview.FileDialog.OPEN,
-                directory="",
-                file_types=("可执行文件 (*.exe)",),
-            )
-            if not result:
-                return {"cancelled": True}
-            path = result[0] if isinstance(result, (list, tuple)) else result
-            if not path or not os.path.isfile(path):
-                return {"error": "无效的文件路径"}
-            import json as _json
-            config_path = os.path.join(STORAGE_PATH, "Config", "User", "game.json")
-            try:
-                os.makedirs(os.path.dirname(config_path), exist_ok=True)
-                data = {}
-                if os.path.exists(config_path):
-                    with open(config_path, "r", encoding="utf-8") as f:
-                        data = _json.load(f)
-                data["game_exe"] = path
-                with open(config_path, "w", encoding="utf-8") as f:
-                    _json.dump(data, f, ensure_ascii=False)
-                logging.info(f"[GamePath] 已更新游戏路径: {path}")
-                return {"success": True, "path": path}
-            except Exception as e:
-                logging.error(f"[GamePath] 保存失败: {e}")
-                return {"error": str(e)}
-
-        api.on("API:GAME:GET_PATH", _get_game_path)
-        api.on("API:GAME:SET_PATH", _set_game_path)
+        api.on("API:GAME:GET_PATH", get_game_path)
+        api.on("API:GAME:SET_PATH", lambda: set_game_path(self.window))
 
         presence.start()
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
@@ -493,7 +330,7 @@ class App:
 
     def search(self):
         winList = []
-        for hwnd in Utils.get_hwnd_by_title():
+        for hwnd in get_hwnd_by_title():
             if hwnd in self._script_instances:
                 continue
             try:

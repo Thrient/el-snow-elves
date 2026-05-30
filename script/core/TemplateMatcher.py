@@ -21,9 +21,16 @@ from airtest.aircv.keypoint_matching_contrib import SIFTMatching
 
 from script.config.Setting import BOX, THRESHOLD, PROJECT_ROOT, PREPROCESS_KEYS
 from script.core.ScreenCapture import ScreenCapture
-from script.util.Utils import Utils
 
 logging.getLogger("airtest").setLevel(logging.WARNING)
+
+
+def clean_duplicate_points(positions, threshold=10):
+    cleaned = []
+    for pos in positions:
+        if not any(((pos[0] - ep[0]) ** 2 + (pos[1] - ep[1]) ** 2) ** 0.5 < threshold for ep in cleaned):
+            cleaned.append(pos)
+    return cleaned
 
 
 class TemplateMatcher:
@@ -108,7 +115,7 @@ class TemplateMatcher:
             except Exception as e:
                 logging.error(f"模板匹配失败: {futures[future]} | {e}")
 
-        results = sorted(Utils.clean_duplicate_points(results), key=lambda pos: (-pos[1], pos[0]))
+        results = sorted(clean_duplicate_points(results), key=lambda pos: (-pos[1], pos[0]))
         logging.debug(f"模板匹配完成，共 {len(results)} 个结果: {args}")
         return results
 

@@ -10,11 +10,11 @@ import zipfile
 
 from script.config.Setting import PROJECT_ROOT
 
-_TASK_CONFIG_CACHE = {}
+TASK_CONFIG_CACHE = {}
 
 
 def get_task_config_by_id(task_id):
-    return _TASK_CONFIG_CACHE.get(task_id)
+    return TASK_CONFIG_CACHE.get(task_id)
 
 
 def load_task_list():
@@ -45,7 +45,7 @@ def load_task_list():
             task_id = hashlib.sha256(f"{data.get('name')}_{data.get('version')}".encode('utf-8')).hexdigest()
             data['id'] = task_id
             data["_config_path"] = json_path
-            _TASK_CONFIG_CACHE[task_id] = dict(data)
+            TASK_CONFIG_CACHE[task_id] = dict(data)
 
             found = True
             for key in ("monitors", "common", "steps", "start"):
@@ -57,11 +57,11 @@ def load_task_list():
 
 
 def get_full_task_config(task_id):
-    return _TASK_CONFIG_CACHE.get(task_id)
+    return TASK_CONFIG_CACHE.get(task_id)
 
 
 def save_full_task_config(task_id, data):
-    config = _TASK_CONFIG_CACHE.get(task_id)
+    config = TASK_CONFIG_CACHE.get(task_id)
     if not config:
         raise ValueError(f"任务不存在: {task_id}")
     name = config.get("name", "")
@@ -82,7 +82,7 @@ def save_full_task_config(task_id, data):
 
     merged['id'] = task_id
     merged["_config_path"] = filepath
-    _TASK_CONFIG_CACHE[task_id] = merged
+    TASK_CONFIG_CACHE[task_id] = merged
 
 
 def create_task(name, version, author="", description=""):
@@ -107,7 +107,7 @@ def create_task(name, version, author="", description=""):
 
     task_json["id"] = task_id
     task_json["_config_path"] = filepath
-    _TASK_CONFIG_CACHE[task_id] = task_json
+    TASK_CONFIG_CACHE[task_id] = task_json
     return task_id
 
 
@@ -215,7 +215,7 @@ def _import_single(zip_base64):
         task_id = hashlib.sha256(f"{name}_{version}".encode('utf-8')).hexdigest()
         task_data["id"] = task_id
         task_data["_config_path"] = target_json
-        _TASK_CONFIG_CACHE[task_id] = task_data
+        TASK_CONFIG_CACHE[task_id] = task_data
 
         return {"name": name, "version": version, "author": author}
 
@@ -230,7 +230,7 @@ def _import_single(zip_base64):
 
 
 def delete_task(task_id):
-    config = _TASK_CONFIG_CACHE.get(task_id)
+    config = TASK_CONFIG_CACHE.get(task_id)
     if not config:
         return {"error": f"任务不存在: {task_id}"}
     name = config.get("name", "")
@@ -238,13 +238,13 @@ def delete_task(task_id):
     task_dir = os.path.dirname(config.get("_config_path", ""))
     if task_dir and os.path.isdir(task_dir):
         shutil.rmtree(task_dir, ignore_errors=True)
-    _TASK_CONFIG_CACHE.pop(task_id, None)
+    TASK_CONFIG_CACHE.pop(task_id, None)
     logging.info(f"[Task] 已删除: {name} v{version}")
     return {"success": True, "name": name, "version": version}
 
 
 def list_steps_for_task(task_id):
-    config = _TASK_CONFIG_CACHE.get(task_id)
+    config = TASK_CONFIG_CACHE.get(task_id)
     if not config:
         return []
     steps = list(config.get("steps", {}).keys())

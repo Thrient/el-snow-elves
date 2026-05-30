@@ -3,7 +3,7 @@ import logging
 import os
 
 from script.config.Setting import PROJECT_ROOT
-from script.core.TaskLibrary import _TASK_CONFIG_CACHE
+from script.core.TaskLibrary import TASK_CONFIG_CACHE
 
 
 def list_actions():
@@ -57,7 +57,7 @@ def list_global_common_steps():
 
 def load_positions(task_id):
     try:
-        config = _TASK_CONFIG_CACHE.get(task_id)
+        config = TASK_CONFIG_CACHE.get(task_id)
         if not config:
             return {}
         task_dir = os.path.dirname(config.get("_config_path", ""))
@@ -75,7 +75,7 @@ def load_positions(task_id):
 
 def save_positions(task_id, positions):
     try:
-        config = _TASK_CONFIG_CACHE.get(task_id)
+        config = TASK_CONFIG_CACHE.get(task_id)
         if not config:
             return False
         task_dir = os.path.dirname(config.get("_config_path", ""))

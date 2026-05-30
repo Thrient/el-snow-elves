@@ -7,9 +7,8 @@ from threading import Thread, Event, Lock
 
 from script.config.Setting import PROJECT_ROOT
 from script.core.VariableProcessor import VariableProcessor
-from script.core.Window import Window
-from script.task.BaseTask import BaseTask
-from script.util.Utils import Utils
+from script.core.Window import Window, find_window_by_title_and_owner_hwnd
+from script.core.BaseTask import BaseTask
 
 _COMMON_CACHE = None
 _COMMON_CACHE_LOCK = Lock()
@@ -43,7 +42,7 @@ class FlowEngine(Thread):
             value_types=self.work.get("valueTypes")
         )
         if "vp" not in kwargs:
-            self.vp.register_computed("ChildHwnd", lambda title="MPAY_USER_CENTER": Utils.find_window_by_title_and_owner_hwnd(title, self._hwnd) or "")
+            self.vp.register_computed("ChildHwnd", lambda title="MPAY_USER_CENTER": find_window_by_title_and_owner_hwnd(title, self._hwnd) or "")
 
         monitors = self.work.get("monitors", {})
         self._monitor_loop = monitors.get("loop", [])

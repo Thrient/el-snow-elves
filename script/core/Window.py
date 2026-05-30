@@ -1,9 +1,56 @@
 import json
 import logging
 import os
+import time
 
 import win32con
 import win32gui
+
+
+def get_hwnd_by_title(title="一梦江湖"):
+    results = []
+    def callback(hwnd, extra):
+        if win32gui.IsWindowVisible(hwnd):
+            if title == win32gui.GetWindowText(hwnd):
+                results.append(hwnd)
+    win32gui.EnumWindows(callback, None)
+    return results
+
+
+def find_window_by_title_and_owner_hwnd(title: str, owner_hwnd: int) -> int | None:
+    result: int | None = None
+    def callback(target, _):
+        nonlocal result
+        if win32gui.GetWindow(target, 4) == owner_hwnd and win32gui.GetWindowText(target) == title:
+            result = target
+        return True
+    win32gui.EnumWindows(callback, None)
+    return result
+
+def wait_for_new_game_window(existing: set[int], timeout: float = 60) -> int | None:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        for hwnd in get_hwnd_by_title():
+            if hwnd not in existing and win32gui.IsWindowVisible(hwnd):
+                return hwnd
+        time.sleep(1)
+    return None
+
+
+def calc_window_size():
+    import ctypes
+    from script.config.Setting import DESIGN_WIDTH, DESIGN_HEIGHT
+    try:
+        user32 = ctypes.windll.user32
+        sw, sh = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+    except Exception:
+        sw, sh = 1920, 1080
+    w = sw // 2
+    h = int(w * DESIGN_HEIGHT / DESIGN_WIDTH)
+    if h > sh // 2:
+        h = sh // 2
+        w = int(h * DESIGN_WIDTH / DESIGN_HEIGHT)
+    return w, h
 
 
 class Window:

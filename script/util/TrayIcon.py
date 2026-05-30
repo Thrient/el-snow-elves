@@ -71,12 +71,6 @@ class TrayIcon:
 
     # ── public API ──
 
-    def start(self, on_show: Callable, on_exit: Callable):
-        """启动托盘（阻塞当前线程直到托盘退出）"""
-        self._on_show = on_show
-        self._on_exit = on_exit
-        self._run()
-
     def start_async(self, on_show: Callable, on_exit: Callable, on_refresh: Optional[Callable] = None, on_autostart: Optional[Callable] = None, on_reset_close: Optional[Callable] = None):
         """在后台线程启动托盘"""
         self._on_show = on_show

@@ -1,9 +1,7 @@
 """账号文件加密 — AES-256-GCM + 机器绑定密钥"""
 
 import os
-import hashlib
 import json
-import logging
 import subprocess
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM

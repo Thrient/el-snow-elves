@@ -4,13 +4,12 @@ import json
 import logging
 import os
 import subprocess
-import time
 
 import webview
 
 from script.config.Setting import STORAGE_PATH
-from script.core.Window import Window
-from script.util.Utils import Utils
+from script.core.Window import Window, get_hwnd_by_title, wait_for_new_game_window, find_window_by_title_and_owner_hwnd
+from script.util.GameDetector import find_game_exe
 
 
 class QuickStart:
@@ -37,12 +36,12 @@ class QuickStart:
             return {"cancelled": True}
 
         # Step 3: 记录已有窗口，启动游戏
-        existing = set(Utils.get_hwnd_by_title())
+        existing = set(get_hwnd_by_title())
         logging.info(f"[QuickStart] 启动游戏: {game_exe}")
         subprocess.Popen([game_exe], cwd=os.path.dirname(game_exe))
 
         # Step 4: 等待新窗口出现（Launcher 会自重启，PID 不可靠）
-        hwnd = Utils.wait_for_new_game_window(existing, timeout=120)
+        hwnd = wait_for_new_game_window(existing, timeout=120)
         if not hwnd:
             return {"status": "waiting", "message": "游戏已启动，等待窗口出现..."}
 
@@ -57,7 +56,7 @@ class QuickStart:
     def _find_game_exe(self) -> str | None:
         """查找游戏 exe：已保存路径 → 注册表 → 弹窗选择 → 持久化"""
         config_path = os.path.join(STORAGE_PATH, "Config", "User", "game.json")
-        game_exe = Utils.find_game_exe(config_path)
+        game_exe = find_game_exe(config_path)
 
         if game_exe:
             return game_exe
@@ -109,7 +108,7 @@ class QuickStart:
 
         inp.mouse_click(hwnd=hwnd, pos=[610, 630])
 
-        inp.mouse_click(hwnd=Utils.find_window_by_title_and_owner_hwnd("登录", owner_hwnd=hwnd), pos=[180, 365])
+        inp.mouse_click(hwnd=find_window_by_title_and_owner_hwnd("登录", owner_hwnd=hwnd), pos=[180, 365])
 
         logging.info("[QuickStart] 已导航到登录界面")
 
