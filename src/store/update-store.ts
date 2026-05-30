@@ -27,6 +27,7 @@ interface UpdateState {
   clearUpdate: () => void;
   openCheckModal: () => void;
   closeCheckModal: () => void;
+  setDownloadedBytes: (bytes: number) => void;
   startDownload: (files: number, bytes: number) => void;
   updateProgress: (file: string, completed: number, bytes: number) => void;
   finishDownload: () => void;
@@ -71,6 +72,16 @@ export const useUpdateStore = create<UpdateState>((set) => ({
   }),
   openCheckModal: () => set({ checkModalOpen: true }),
   closeCheckModal: () => set({ checkModalOpen: false }),
+
+  setDownloadedBytes: (bytes: number) => set((s) => {
+    const now = Date.now();
+    const dt = (now - (_speedTime as number)) / 1000;
+    const db = bytes - (_speedLast as number);
+    const speed = dt > 0.1 ? Math.round(db / dt) : s.lastSpeed;
+    _speedTime = now;
+    _speedLast = bytes;
+    return { downloadedBytes: bytes, lastSpeed: speed };
+  }),
 
   startDownload: (files, bytes) => {
     _speedTime = Date.now();
