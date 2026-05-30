@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import shutil
 import sys
 
 import webview
@@ -20,49 +19,16 @@ from script.account.SessionManager import get_session
 from script.core.TemplateMatcher import TemplateMatcher
 from script.core.UpdateEngine import UpdateEngine
 from script.core.UpdateWorker import UpdateWorker
+from script.core.OnlinePresence import presence
 from script.core.Window import Window
 from script.util.Utils import Utils
 from script.util.TrayIcon import TrayIcon
 
 
-def _clear_webview_cache_if_version_changed():
-    """如果当前版本与上次运行版本不同，清除 WebView2 缓存（保留 localStorage）"""
-    version_file = os.path.join(STORAGE_PATH, "Config", ".last_version")
-    last_version = ""
-    try:
-        if os.path.exists(version_file):
-            with open(version_file, "r") as f:
-                last_version = f.read().strip()
-    except Exception:
-        pass
-
-    if last_version != VERSION:
-        logging.info(f"[Cache] 版本变更 {last_version!r} → {VERSION!r}，清除 WebView2 缓存")
-        cache_dirs = [
-            os.path.join(STORAGE_PATH, "EBWebView", "Cache"),
-            os.path.join(STORAGE_PATH, "EBWebView", "Code Cache"),
-            os.path.join(STORAGE_PATH, "EBWebView", "GPUCache"),
-        ]
-        for d in cache_dirs:
-            try:
-                if os.path.exists(d):
-                    shutil.rmtree(d)
-                    logging.info(f"[Cache] 已清除: {d}")
-            except Exception as e:
-                logging.warning(f"[Cache] 清除失败 {d}: {e}")
-
-        try:
-            os.makedirs(os.path.dirname(version_file), exist_ok=True)
-            with open(version_file, "w") as f:
-                f.write(VERSION)
-        except Exception as e:
-            logging.warning(f"[Cache] 写入版本文件失败: {e}")
-
-
 class App:
     def __init__(self, url):
         setup_logging()
-        _clear_webview_cache_if_version_changed()
+        Utils.clear_webview_cache_if_version_changed()
         width, height = Utils.calc_window_size()
         saved_rect = Window.get_saved_rect("main")
         if saved_rect:
@@ -311,6 +277,7 @@ class App:
 
     def _do_exit(self):
         """真正退出程序"""
+        presence.stop()
         hwnd = self._get_main_hwnd()
         if hwnd:
             Window.save_window_rect(hwnd, "main")
@@ -326,6 +293,7 @@ class App:
         api.on("API:SCRIPT:SAVE:CONFIG", StaticCommon.save_config)
         api.on("API:SCRIPT:LOAD:CONFIG", StaticCommon.load_config)
         api.on("API:SCRIPT:LOAD:CONFIG:LIST", StaticCommon.get_config_list)
+        api.on("API:SCRIPT:DELETE:CONFIG", StaticCommon.delete_config)
         api.on("API:SCRIPT:LOAD:LIST", StaticCommon.load_task_list)
         api.on("API:SCRIPT:SEARCH", self.search)
         api.on("API:SCRIPT:BIND", self.bind)
@@ -432,6 +400,7 @@ class App:
         api.on("API:GAME:GET_PATH", _get_game_path)
         api.on("API:GAME:SET_PATH", _set_game_path)
 
+        presence.start()
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
     def resume(self, hwnd):

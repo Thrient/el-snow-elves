@@ -7,7 +7,7 @@ import requests
 
 _log = logging.getLogger("Elves.UpdateEngine")
 
-HUB_URL = "https://nas.elarion.cn:5173/api/v1"
+HUB_URL = "https://elves.elarion.cn/api/v1"
 
 if getattr(sys, 'frozen', False):
     APP_DIR = os.path.dirname(sys.executable)

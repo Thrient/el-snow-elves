@@ -169,6 +169,16 @@ class StaticCommon:
         return data
 
     @staticmethod
+    def delete_config(*args):
+        """删除用户配置文件"""
+        name = args[0]
+        if not name:
+            return
+        path = Path(fr"{USER_CONFIG_PATH}\{name}.json")
+        if path.exists():
+            path.unlink()
+
+    @staticmethod
     def load_settings():
         # 从用户配置路径下读取指定的JSON配置文件
         with open(fr"{PROJECT_ROOT}\resources\config\settings.json", 'r', encoding='utf-8') as f:
