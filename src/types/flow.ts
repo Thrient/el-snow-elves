@@ -3,6 +3,10 @@ import type { FullTask, Step } from "@/types/task";
 
 const STEP_NODE = "stepNode";
 
+function edgeColor(flowType: string): string {
+  return flowType === "success" ? "#52c41a" : flowType === "failure" ? "#ff4d4f" : "#8b8fa3";
+}
+
 export interface StepNodeData {
   [key: string]: unknown;
   stepName: string;
@@ -69,14 +73,12 @@ export function taskToFlow(task: FullTask, savedPositions?: Record<string, { x: 
         animated: true,
         data: { flowType },
         style: {
-          stroke:
-            flowType === "success" ? "#52c41a" : flowType === "failure" ? "#ff4d4f" : "#8b8fa3",
+          stroke: edgeColor(flowType),
           strokeWidth: 2,
         },
         markerEnd: {
           type: "arrowclosed",
-          color:
-            flowType === "success" ? "#52c41a" : flowType === "failure" ? "#ff4d4f" : "#8b8fa3",
+          color: edgeColor(flowType),
         },
       });
     }

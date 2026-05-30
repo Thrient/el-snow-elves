@@ -18,17 +18,23 @@ interface UpdateState {
   currentFile: string;
   totalFiles: number;
   completedFiles: number;
+  totalBytes: number;
+  downloadedBytes: number;
+  lastSpeed: number;
   downloadDone: boolean;
   setCurrentVersion: (v: string) => void;
   setUpdate: (info: UpdateInfo) => void;
   clearUpdate: () => void;
   openCheckModal: () => void;
   closeCheckModal: () => void;
-  startDownload: (total: number) => void;
-  updateProgress: (file: string, completed: number) => void;
+  startDownload: (files: number, bytes: number) => void;
+  updateProgress: (file: string, completed: number, bytes: number) => void;
   finishDownload: () => void;
   cancelDownload: () => void;
 }
+
+let _speedTime = 0;
+let _speedLast = 0;
 
 export const useUpdateStore = create<UpdateState>((set) => ({
   hasUpdate: false,
@@ -42,6 +48,9 @@ export const useUpdateStore = create<UpdateState>((set) => ({
   currentFile: "",
   totalFiles: 0,
   completedFiles: 0,
+  totalBytes: 0,
+  downloadedBytes: 0,
+  lastSpeed: 0,
   downloadDone: false,
 
   setCurrentVersion: (v) => set({ currentVersion: v }),
@@ -63,19 +72,36 @@ export const useUpdateStore = create<UpdateState>((set) => ({
   openCheckModal: () => set({ checkModalOpen: true }),
   closeCheckModal: () => set({ checkModalOpen: false }),
 
-  startDownload: (total) => set({
-    downloading: true,
-    progress: 0,
-    totalFiles: total,
-    completedFiles: 0,
-    currentFile: "准备下载...",
-    downloadDone: false,
+  startDownload: (files, bytes) => {
+    _speedTime = Date.now();
+    _speedLast = 0;
+    set({
+      downloading: true,
+      progress: 0,
+      totalFiles: files,
+      completedFiles: 0,
+      totalBytes: bytes,
+      downloadedBytes: 0,
+      lastSpeed: 0,
+      currentFile: "准备下载...",
+      downloadDone: false,
+    });
+  },
+  updateProgress: (file, completed, bytes) => set((s) => {
+    const now = Date.now();
+    const dt = (now - (_speedTime as number)) / 1000;
+    const db = bytes - (_speedLast as number);
+    const speed = dt > 0.1 ? Math.round(db / dt) : s.lastSpeed;
+    _speedTime = now;
+    _speedLast = bytes;
+    return {
+      currentFile: file,
+      completedFiles: completed,
+      downloadedBytes: bytes,
+      lastSpeed: speed,
+      progress: s.totalFiles > 0 ? Math.round((completed / s.totalFiles) * 100) : 0,
+    };
   }),
-  updateProgress: (file, completed) => set((s) => ({
-    currentFile: file,
-    completedFiles: completed,
-    progress: s.totalFiles > 0 ? Math.round((completed / s.totalFiles) * 100) : 0,
-  })),
   finishDownload: () => set({
     downloading: false,
     downloadDone: true,
@@ -87,6 +113,9 @@ export const useUpdateStore = create<UpdateState>((set) => ({
     progress: 0,
     totalFiles: 0,
     completedFiles: 0,
+    totalBytes: 0,
+    downloadedBytes: 0,
+    lastSpeed: 0,
     currentFile: "",
   }),
 }));

@@ -21,7 +21,7 @@ export default function UpdateModal() {
     }
     // Show progress modal immediately for instant feedback
     setUpdating(true);
-    useUpdateStore.getState().startDownload(0);
+    useUpdateStore.getState().startDownload(0, 0);
 
     try {
       const result = (await window.pywebview.api.emit("API:UPDATE:DOWNLOAD", {
@@ -116,14 +116,14 @@ export default function UpdateModal() {
                   <span className="text-[11px] font-medium tracking-[0.15em] uppercase text-[#6366f1]">更新内容</span>
                 </div>
                 <div
-                  className="text-[13px] leading-relaxed rounded-xl px-4 py-3.5 max-h-48 overflow-y-auto thin-scrollbar whitespace-pre-wrap"
+                  className="text-left text-[13px] leading-relaxed rounded-xl px-4 py-3.5 max-h-48 overflow-y-auto thin-scrollbar whitespace-pre-wrap"
                   style={{ color: "#334155", background: "#f8fafc", border: "1px solid #f1f5f9" }}
                 >
                   {changelog}
                 </div>
               </div>
             ) : (
-              <p className="text-[13px] text-[#94a3b8] text-center mb-5 py-2">此版本无更新说明</p>
+              <p className="text-[13px] text-[#94a3b8] mb-5 py-2">此版本无更新说明</p>
             )}
 
             {/* Actions */}

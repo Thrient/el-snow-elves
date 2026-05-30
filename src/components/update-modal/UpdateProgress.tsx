@@ -1,6 +1,18 @@
 import { Button } from "antd";
 import { useUpdateStore } from "@/store/update-store";
 
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatSpeed(bps: number): string {
+  if (bps < 1024) return `${bps} B/s`;
+  if (bps < 1024 * 1024) return `${(bps / 1024).toFixed(1)} KB/s`;
+  return `${(bps / (1024 * 1024)).toFixed(1)} MB/s`;
+}
+
 export default function UpdateProgress() {
   const downloading = useUpdateStore((s) => s.downloading);
   const downloadDone = useUpdateStore((s) => s.downloadDone);
@@ -8,10 +20,14 @@ export default function UpdateProgress() {
   const currentFile = useUpdateStore((s) => s.currentFile);
   const completedFiles = useUpdateStore((s) => s.completedFiles);
   const totalFiles = useUpdateStore((s) => s.totalFiles);
+  const totalBytes = useUpdateStore((s) => s.totalBytes);
+  const downloadedBytes = useUpdateStore((s) => s.downloadedBytes);
+  const lastSpeed = useUpdateStore((s) => s.lastSpeed);
 
   if (!downloading && !downloadDone) return null;
 
   const isPreparing = totalFiles === 0 && !downloadDone;
+  const byteProgress = totalBytes > 0 ? Math.round((downloadedBytes / totalBytes) * 100) : 0;
 
   const handleRestart = () => {
     if (!window.pywebview) return;
@@ -38,7 +54,7 @@ export default function UpdateProgress() {
             shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_2px_4px_rgba(0,0,0,0.02),0_24px_64px_rgba(15,23,42,0.18)]
             animate-update-modal-in"
         >
-          {/* Aurora strip — green when done */}
+          {/* Aurora strip */}
           <div
             className="h-[3px] transition-all duration-700"
             style={{
@@ -69,7 +85,7 @@ export default function UpdateProgress() {
 
             {/* Progress area */}
             <div className="flex items-center gap-6 mb-7">
-              {/* Ring / Spinner */}
+              {/* Ring */}
               <div className="relative w-[76px] h-[76px] flex-shrink-0">
                 {isPreparing ? (
                   <div className="w-full h-full flex items-center justify-center">
@@ -115,7 +131,7 @@ export default function UpdateProgress() {
                 )}
               </div>
 
-              {/* File stats */}
+              {/* Stats */}
               <div className="flex-1 min-w-0">
                 {isPreparing ? (
                   <div>
@@ -130,6 +146,16 @@ export default function UpdateProgress() {
                       {totalFiles}
                       <span className="text-[11px] text-[#94a3b8] ml-1">个文件</span>
                     </div>
+                    {totalBytes > 0 && (
+                      <div className="text-[12px] font-medium text-[#1e293b] tabular-nums mt-1">
+                        {formatSize(downloadedBytes)}
+                        <span className="text-[#cbd5e1] mx-1">/</span>
+                        {formatSize(totalBytes)}
+                        {lastSpeed > 0 && !downloadDone && (
+                          <span className="text-[11px] text-[#94a3b8] ml-2">{formatSpeed(lastSpeed)}</span>
+                        )}
+                      </div>
+                    )}
                     {!downloadDone && currentFile && (
                       <div className="text-[11px] text-[#94a3b8] truncate mt-1.5">{currentFile}</div>
                     )}
@@ -141,7 +167,7 @@ export default function UpdateProgress() {
               </div>
             </div>
 
-            {/* Linear bar */}
+            {/* Linear bar — byte-based progress */}
             <div className="mb-7 h-1.5 rounded-full bg-[#f1f5f9] overflow-hidden">
               {isPreparing ? (
                 <div className="h-full rounded-full animate-pulse"
@@ -150,7 +176,7 @@ export default function UpdateProgress() {
                 <div
                   className="h-full rounded-full transition-all duration-700 ease-out"
                   style={{
-                    width: `${progress}%`,
+                    width: `${byteProgress}%`,
                     background: downloadDone
                       ? "linear-gradient(90deg, #10b981, #34d399)"
                       : "linear-gradient(90deg, #6366f1, #818cf8)",
