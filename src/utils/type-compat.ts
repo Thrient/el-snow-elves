@@ -2,7 +2,7 @@ import type { CellModel, VarType } from "@/types/task";
 
 export type { VarType } from "@/types/task";
 
-export type ValueType = "string" | "number" | "boolean" | "list" | "empty";
+type ValueType = "string" | "number" | "boolean" | "list" | "empty";
 
 /** 用户可见的类型元数据 */
 export const VAR_TYPE_META: Record<VarType, { label: string; desc: string; icon: string }> = {
@@ -44,7 +44,7 @@ const COMPATIBLE: Record<ValueType, CellModel[]> = {
   empty:   [],
 };
 
-export const ALL_COMPONENT_MODELS: CellModel[] = [
+const ALL_COMPONENT_MODELS: CellModel[] = [
   "el-input", "el-input-number", "el-switch", "el-select", "el-input-tags", "el-textarea",
   "el-checkbox", "el-checkbox-group", "el-radio", "el-slider", "el-date-picker", "el-color-picker",
 ];

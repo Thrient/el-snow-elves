@@ -163,7 +163,7 @@ const CropOverlay: FC<{ crop: CropRect; zoom: number; canvasW: number; canvasH: 
   const ch = crop.h * zoom;
 
   return (
-    <div className="absolute inset-0" style={{ pointerEvents: "none", zIndex: 5 }}>
+    <div className="absolute inset-0 pointer-events-none z-5">
       {/* Dim overlays — four rectangles surrounding the crop area */}
       <div style={S.dimOverlay(0, 0, canvasW, Math.max(0, cy))} />
       <div style={S.dimOverlay(0, cy + ch, canvasW, Math.max(0, canvasH - cy - ch))} />
@@ -592,8 +592,7 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
                     content={
                       <div className="w-[240px]">
                         <div className="flex items-center gap-1.5 mb-3">
-                          <span className="flex items-center justify-center w-4 h-4 rounded-md shrink-0 text-[11px]"
-                            style={{ background: "rgba(139,92,246,0.12)", color: "#8b5cf6" }}>
+                          <span className="flex items-center justify-center w-4 h-4 rounded-md shrink-0 text-[11px] bg-[rgba(139,92,246,0.12)] c-[#8b5cf6]">
                             <ExperimentOutlined />
                           </span>
                           <span className="text-[12px] font-semibold text-[#1a1a2e]">预处理测试</span>
@@ -605,15 +604,15 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#f0f0f5]">
                           <span className="text-[11px] text-[#374151]">匹配阈值</span>
                           <InputNumber size="small" min={0} max={1} step={0.01}
-                            style={{ width: 72 }} value={matchThreshold}
+                            className="w-72px" value={matchThreshold}
                             onChange={v => setMatchThreshold(v ?? 0.85)} />
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#f0f0f5]">
                           <span className="text-[11px] text-[#374151]">匹配算法</span>
                           <Radio.Group size="small" value={matchMethod}
                             onChange={e => setMatchMethod(e.target.value)}>
-                            <Radio.Button value="ccoeff" style={{ fontSize: 10, padding: "0 8px" }}>模板</Radio.Button>
-                            <Radio.Button value="sift" style={{ fontSize: 10, padding: "0 8px" }}>SIFT</Radio.Button>
+                            <Radio.Button value="ccoeff" className="text-[10px] px-2">模板</Radio.Button>
+                            <Radio.Button value="sift" className="text-[10px] px-2">SIFT</Radio.Button>
                           </Radio.Group>
                         </div>
                         <div className="flex gap-2 mt-2 pt-2 border-t border-[#f0f0f5]">
@@ -628,11 +627,11 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
                     }
                   >
                     <Button size="small" icon={<ExperimentOutlined />}
-                      style={{ borderColor: "#8b5cf6", color: "#8b5cf6" }}>预处理测试</Button>
+                      className="border-[#8b5cf6] c-[#8b5cf6]">预处理测试</Button>
                   </Popover>
                   {previewImage && (
                     <Button size="small" type="text" icon={<SwapOutlined />}
-                      style={{ color: showPreview ? "#8b5cf6" : "#8b8fa3" }}
+                      className={showPreview ? "c-[#8b5cf6]" : "c-[#8b8fa3]"}
                       onClick={() => setShowPreview(!showPreview)}>
                       {showPreview ? "处理后" : "原图"}
                     </Button>

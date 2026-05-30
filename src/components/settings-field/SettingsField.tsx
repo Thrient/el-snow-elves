@@ -25,8 +25,8 @@ interface Props {
 const SettingsField: FC<Props> = ({ cell, value, onChange, labelWidth }) => {
   const label = cell.text && (
     <span
-      className="text-sm text-[#4a423b] whitespace-nowrap shrink-0 overflow-hidden text-ellipsis inline-block font-semibold"
-      style={{ width: labelWidth ?? 64, textAlign: "right" }}
+      className="text-sm text-[#4a423b] whitespace-nowrap shrink-0 overflow-hidden text-ellipsis inline-block font-semibold text-right"
+      style={{ width: labelWidth ?? 64 }}
       title={cell.text}
     >
       {cell.text}：

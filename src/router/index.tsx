@@ -8,8 +8,6 @@ const WindowsPage = lazy(() => import('@/pages/windows/WindowsPage'));
 const TaskPage = lazy(() => import('@/pages/task/TaskPage'));
 const TaskEditorPage = lazy(() => import('@/pages/task-editor/TaskEditorPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
-const DocsPage = lazy(() => import('@/pages/docs/DocsPage'));
-const EditorDocsPage = lazy(() => import('@/pages/editor-docs/EditorDocsPage'));
 const LogsPage = lazy(() => import('@/pages/logs/LogsPage'));
 const PlansPage = lazy(() => import('@/pages/plans/PlansPage'));
 const AccountsPage = lazy(() => import('@/pages/accounts/AccountsPage'));
@@ -49,26 +47,10 @@ export const router = createHashRouter([
         )
       },
       {
-        path: '/docs',
-        element: (
-          <Suspense fallback={<div>加载中...</div>}>
-            <DocsPage/>
-          </Suspense>
-        )
-      },
-      {
         path: '/task-editor',
         element: (
           <Suspense fallback={<div>加载中...</div>}>
             <TaskEditorPage/>
-          </Suspense>
-        )
-      },
-      {
-        path: '/editor-docs',
-        element: (
-          <Suspense fallback={<div>加载中...</div>}>
-            <EditorDocsPage/>
           </Suspense>
         )
       },

@@ -3,13 +3,11 @@ import ConfigHeader from "@/components/config-header/ConfigHeader.tsx";
 import { Badge, Button, Typography } from "antd";
 import { StopOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import UpdateCheckBadge from "@/components/update-check/UpdateCheckBadge";
-// import { useCharacterStore } from "@/store/character.ts";
 
 const {Text} = Typography;
 
 const AppHeader: FC = () => {
-  const running = true
-  // const character = useCharacterStore()
+  const running = true;
 
   return (
     <div className="flex">

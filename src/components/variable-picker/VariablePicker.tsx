@@ -107,41 +107,31 @@ const VariablePicker: FC<Props> = ({ variables, onInsert, children, placeholder,
   };
 
   const content = (
-    <div style={{ width: 340, maxHeight: 420, display: "flex", flexDirection: "column" }}>
+    <div className="w-340px max-h-420px flex flex-col">
       {/* Search */}
-      <div style={{ padding: "0 0 10px", flexShrink: 0 }}>
+      <div className="pb-2.5 shrink-0">
         <Input
           size="small"
-          prefix={<SearchOutlined style={{ color: "#b8afa6" }} />}
+          prefix={<SearchOutlined className="c-[#b8afa6]" />}
           placeholder={placeholder ?? "搜索变量…"}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           allowClear
-          style={{ borderRadius: 10 }}
+          className="rounded-[10px]"
         />
       </div>
 
       {/* Variable list */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div className="flex-1 overflow-y-auto">
         {Array.from(grouped.entries()).map(([cat, items]) => {
           const dot = CAT_COLORS[cat] ?? "#9ca3af";
           return (
             <div key={cat} style={{ marginBottom: 12 }}>
-              <div style={{
-                fontSize: 10,
-                fontWeight: 600,
-                color: "#9ca3af",
-                letterSpacing: "0.04em",
-                marginBottom: 6,
-                padding: "0 4px",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-              }}>
+              <div className="text-[10px] font-semibold c-[#9ca3af] tracking-[0.04em] mb-1.5 px-1 flex items-center gap-1.5">
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, flexShrink: 0 }} />
                 {CAT_LABELS[cat] ?? cat}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div className="flex flex-col gap-[3px]">
                 {items.map((item) => {
                   const bare = item.syntax.replace(/^\{|\}$/g, "");
                   const isRecent = recentVar === bare;
@@ -151,30 +141,13 @@ const VariablePicker: FC<Props> = ({ variables, onInsert, children, placeholder,
                     <div
                       key={item.syntax}
                       onDoubleClick={() => handlePick(bare, orderedOps[0].key)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "5px 8px",
-                        borderRadius: 10,
-                        background: isRecent ? "#fef3ef" : "transparent",
-                        cursor: "default",
-                        transition: "background 0.15s",
-                      }}
+                      className={`flex items-center gap-1.5 py-[5px] px-2 rounded-[10px] cursor-default transition-colors duration-150 ${isRecent ? "bg-[#fef3ef]" : "bg-transparent"}`}
                       onMouseEnter={(e) => { if (!isRecent) e.currentTarget.style.background = "#f5f4f0"; }}
                       onMouseLeave={(e) => { if (!isRecent) e.currentTarget.style.background = "transparent"; }}
                     >
                       {/* Variable name */}
                       <code
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: "#3d3630",
-                          minWidth: 0,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                        className="text-xs font-semibold c-[#3d3630] min-w-0 truncate"
                         title={item.label}
                       >
                         {item.syntax}
@@ -241,13 +214,8 @@ const VariablePicker: FC<Props> = ({ variables, onInsert, children, placeholder,
 
                       {/* Expanded more ops row */}
                       {isExpanded && (
-                        <div style={{
-                          marginTop: 4,
-                          paddingTop: 4,
-                          borderTop: "1px solid #f0ede8",
-                          width: "100%",
-                        }}>
-                          <div style={{ display: "flex", gap: 3 }}>
+                        <div className="mt-1 pt-1 border-t border-solid border-[#f0ede8] w-full">
+                          <div className="flex gap-[3px]">
                             {moreOps.map((op) => (
                               <button
                                 key={op.key}
@@ -283,7 +251,7 @@ const VariablePicker: FC<Props> = ({ variables, onInsert, children, placeholder,
           );
         })}
         {filtered.length === 0 && (
-          <div style={{ textAlign: "center", padding: 24, fontSize: 12, color: "#c4bbb2" }}>
+          <div className="text-center p-6 text-xs c-[#c4bbb2]">
             无匹配变量
           </div>
         )}

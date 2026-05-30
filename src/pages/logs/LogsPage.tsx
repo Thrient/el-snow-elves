@@ -108,7 +108,7 @@ const LogsPage: FC = () => {
           <Select
             allowClear
             placeholder="日志等级"
-            style={{ width: 120 }}
+            className="w-120px"
             value={level}
             onChange={(v) => setLevel(v)}
             options={["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"].map((l) => ({
@@ -119,7 +119,7 @@ const LogsPage: FC = () => {
           <Input.Search
             allowClear
             placeholder="搜索日志内容"
-            style={{ width: 240 }}
+            className="w-240px"
             value={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value);

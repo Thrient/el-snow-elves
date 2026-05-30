@@ -304,11 +304,10 @@ const FloatingPanel: FC = () => {
               count={queue.length + plans.length}
               size="small"
               offset={[3, -5]}
-              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }}
+              className="shadow-[0_1px_3px_rgba(0,0,0,0.15)]"
             >
               <UnorderedListOutlined
-                className="text-white text-[17px] leading-none"
-                style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.18))" }}
+                className="text-white text-[17px] leading-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.18)]"
               />
             </Badge>
           </div>

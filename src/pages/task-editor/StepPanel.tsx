@@ -131,11 +131,11 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                         <code className="text-[11px] font-semibold px-1.5 py-px rounded" style={{ background: `${o.color}14`, color: o.color }}>
                           {o.label}
                         </code>
-                        <span className="text-[9px] uppercase tracking-wider font-semibold px-1 rounded" style={{ background: "#f3f0ec", color: "#9a8e82" }}>
+                        <span className="text-[9px] uppercase tracking-wider font-semibold px-1 rounded bg-[#f3f0ec] c-[#9a8e82]">
                           {o.group}
                         </span>
                       </div>
-                      <span className="text-[11px] leading-tight" style={{ color: "#8b8fa3" }}>{o.desc}</span>
+                      <span className="text-[11px] leading-tight c-[#8b8fa3]">{o.desc}</span>
                     </div>
                   </div>
                 );
@@ -167,7 +167,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
             </div>
             <div className="flex gap-2">
               <Button size="small" type="primary"
-                style={{ borderColor: '#fa8c16', background: '#fa8c16' }}
+                className="border-[#fa8c16] bg-[#fa8c16]"
                 onClick={() => {
                   const task = useEditorStore.getState().currentTask;
                   if (!task) return;
@@ -183,7 +183,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                 从此步骤开始
               </Button>
               <Button size="small"
-                style={{ borderColor: '#fa8c16', color: '#fa8c16' }}
+                className="border-[#fa8c16] c-[#fa8c16]"
                 onClick={() => {
                   const task = useEditorStore.getState().currentTask;
                   if (!task) return;

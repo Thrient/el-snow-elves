@@ -124,8 +124,6 @@ export const REQUIRED_PARAMS: Record<string, string[]> = {
 };
 
 export const ACTIONS_WITH_TEMPLATES = new Set(["touch", "exits", "wait", "wait_disappear"]);
-export const PLAIN_VALUE_PARAMS = new Set(["threshold", "seconds", "k", "pos", "box", "pre_delay", "post_delay"]);
-
 export const BUILTIN_VARS: { value: string; label: string }[] = [
   { value: "{result}",    label: "{result}" },
   { value: "{hwnd}",      label: "{hwnd}" },

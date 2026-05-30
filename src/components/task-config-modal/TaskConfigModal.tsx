@@ -30,8 +30,7 @@ const TaskConfigModal: FC<Props> = ({ open, task, onClose, onSave }) => {
   return (
     <Modal title={`配置 - ${task.name}`} open={open} onCancel={onClose} onOk={handleOk} centered>
       <div
-        className="grid gap-x-4 gap-y-3 mt-4"
-        style={{ gridTemplateColumns: `repeat(24, 1fr)` }}
+        className="grid gap-x-4 gap-y-3 mt-4 grid-cols-[repeat(24,1fr)]"
       >
         {layout.map((row, rowIndex) => {
           let col = 1

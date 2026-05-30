@@ -1,17 +1,15 @@
 import { useRef, useState, useEffect, useMemo, type FC } from "react";
 import type React from "react";
 import {
-  PlusOutlined, EditOutlined,
   ExportOutlined, ImportOutlined, DeleteOutlined,
   SearchOutlined, AppstoreAddOutlined,
 } from "@ant-design/icons";
-import { Button, message, Modal, Space, Tag, Tooltip, Input, Checkbox, Spin } from "antd";
+import { Button, message, Modal, Space, Tooltip, Input, Checkbox, Spin } from "antd";
 import type { Task } from "@/types/task.ts";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx";
+import TaskCard from "@/pages/task/TaskCard";
 import { useUserStore } from "@/store/user-store.ts";
 import { useTaskStore } from "@/store/task-store.ts";
-
-const TAG_COLORS = ['#1677ff', '#13c2c2', '#2f54eb', '#722ed1', '#fa8c16', '#52c41a']
 
 const TaskPage: FC = () => {
   const appendTask = useUserStore((s) => s.appendTask);
@@ -162,34 +160,6 @@ const TaskPage: FC = () => {
     closeConfig();
   };
 
-  // ── Render helpers ──
-
-  const renderConfigPills = (task: Task) => {
-    const layoutKeys = new Set((task.layout ?? []).flatMap((row) => row.map((c) => c.store).filter(Boolean)));
-    const entries = Object.entries(task.values).filter(([k]) => layoutKeys.has(k));
-    if (entries.length === 0) {
-      return <span className="text-[11px] text-[#ccc] italic">暂无配置项</span>;
-    }
-    const shown = entries.slice(0, 3);
-    const rest = entries.length - shown.length;
-    return (
-      <Space size={[4, 4]} wrap>
-        {shown.map(([key, value], j) => (
-          <Tag
-            key={key}
-            className="h-[22px] leading-[22px] rounded text-white border-none flex items-center text-[11px] m-0 px-2 font-mono"
-            style={{ backgroundColor: TAG_COLORS[j % TAG_COLORS.length] }}
-          >{`${key}: ${String(value)}`}</Tag>
-        ))}
-        {rest > 0 && (
-          <Tag className="h-[22px] leading-[22px] rounded border-[#eef0f2] text-[#8b8fa3] text-[11px] m-0">
-            +{rest}
-          </Tag>
-        )}
-      </Space>
-    );
-  };
-
   return (
     <div className="page-container">
       {/* ── Header ── */}
@@ -259,86 +229,19 @@ const TaskPage: FC = () => {
           </div>
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
-            {filtered.map((task, i) => {
-              const selected = selectedRowKeys.includes(task.id);
-              const accentColor = TAG_COLORS[i % TAG_COLORS.length];
-
-              return (
-                <div
-                  key={task.id}
-                  className="task-card task-card-enter"
-                  style={{
-                    animationDelay: `${i * 50}ms`,
-                    borderTop: `3px solid ${accentColor}`,
-                    ...(selected ? {
-                      borderColor: accentColor,
-                      borderLeftColor: accentColor,
-                      borderRightColor: accentColor,
-                      borderBottomColor: accentColor,
-                      boxShadow: `0 0 0 1px ${accentColor}40, 0 4px 16px ${accentColor}18`,
-                      backgroundColor: `${accentColor}06`,
-                    } : {}),
-                  }}
-                >
-                  {/* Top row: checkbox + version */}
-                  <div className="flex items-center justify-between mb-2">
-                    <Checkbox
-                      checked={selected}
-                      onChange={() => toggleSelect(task.id)}
-                      className="scale-90 origin-left"
-                    />
-                    <Tag className="m-0 text-[10px] bg-[#f0f2f5] text-[#8b8fa3] border-none rounded font-mono px-1.5 leading-5">
-                      v{task.version}
-                    </Tag>
-                  </div>
-
-                  {/* Task name */}
-                  <div className="text-[15px] font-semibold text-[#1a1a2e] mb-1 leading-tight tracking-tight">
-                    {task.name}
-                  </div>
-
-                  {/* Author */}
-                  <div className="text-[11px] text-[#8b8fa3] mb-2.5">
-                    {task.author || '未知作者'}
-                  </div>
-
-                  {/* Config pills */}
-                  <div className="mb-3 min-h-[22px]">
-                    {renderConfigPills(task)}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 pt-2.5 border-t border-[#f5f5f7]">
-                    <Tooltip title="添加到执行队列">
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<PlusOutlined />}
-                        className="text-[12px]"
-                        onClick={() => appendTask({
-                          id: task.id,
-                          name: task.name,
-                          version: task.version,
-                          values: { ...task.values },
-                        })}
-                      >
-                        添加
-                      </Button>
-                    </Tooltip>
-                    <div className="flex-1" />
-                    <Tooltip title="配置参数">
-                      <Button size="small" type="text" icon={<EditOutlined />} onClick={() => openConfig(task)} />
-                    </Tooltip>
-                    <Tooltip title="导出任务">
-                      <Button size="small" type="text" icon={<ExportOutlined />} onClick={() => handleExportSingle(task)} />
-                    </Tooltip>
-                    <Tooltip title="删除任务">
-                      <Button size="small" type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteSingle(task)} />
-                    </Tooltip>
-                  </div>
-                </div>
-              );
-            })}
+            {filtered.map((task, i) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                index={i}
+                selected={selectedRowKeys.includes(task.id)}
+                onToggle={toggleSelect}
+                onAppend={() => appendTask({ id: task.id, name: task.name, version: task.version, values: { ...task.values } })}
+                onConfig={() => openConfig(task)}
+                onExport={() => handleExportSingle(task)}
+                onDelete={() => handleDeleteSingle(task)}
+              />
+            ))}
           </div>
         ) : (
           /* ── Empty state ── */

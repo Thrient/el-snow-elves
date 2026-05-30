@@ -134,7 +134,7 @@ const AutocompleteInput: FC<Props> = ({
       placeholder={placeholder}
       disabled={disabled}
       allowClear={allowClear}
-      style={{ width: "100%" }}
+      className="w-full"
       filterOption={(inputValue, option) =>
         option?.label?.toLowerCase().includes(inputValue.toLowerCase()) ?? false
       }

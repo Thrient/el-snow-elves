@@ -27,7 +27,7 @@ const PreprocessConfigPanel: FC<Props> = ({ cfg, onChange }) => {
       {cfg.binarize && (
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-[#8b8fa3] ml-4">阈值</span>
-          <InputNumber size="small" min={0} max={255} step={5} style={{ width: 72 }}
+          <InputNumber size="small" min={0} max={255} step={5} className="w-72px"
             value={cfg.binarize_threshold ?? 0}
             onChange={(v) => set("binarize_threshold", v === 0 ? undefined : (v ?? undefined))} />
         </div>
@@ -52,13 +52,13 @@ const PreprocessConfigPanel: FC<Props> = ({ cfg, onChange }) => {
         <>
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-[#8b8fa3] ml-4">块大小</span>
-            <InputNumber size="small" min={5} max={31} step={2} style={{ width: 72 }}
+            <InputNumber size="small" min={5} max={31} step={2} className="w-72px"
               value={cfg.adaptive_block ?? 11}
               onChange={(v) => set("adaptive_block", v === 11 ? undefined : (v ?? 11))} />
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-[#8b8fa3] ml-4">常数</span>
-            <InputNumber size="small" min={0} max={10} style={{ width: 72 }}
+            <InputNumber size="small" min={0} max={10} className="w-72px"
               value={cfg.adaptive_c ?? 2}
               onChange={(v) => set("adaptive_c", v === 2 ? undefined : (v ?? 2))} />
           </div>

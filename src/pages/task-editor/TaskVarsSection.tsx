@@ -209,7 +209,7 @@ const TaskVarsSection: FC<Props> = ({ values, valueTypes = {}, layout, onChange,
         </div>
 
         {/* cells */}
-        <div className="flex items-stretch" style={{ minHeight: 52 }}>
+        <div className="flex items-stretch min-h-52">
           {row.map((cell, ci) => {
             const span = cell.span ?? 1;
             const col = MODEL_COLOR[cell.model ?? "el-input"] ?? "#9ca3af";
@@ -258,9 +258,9 @@ const TaskVarsSection: FC<Props> = ({ values, valueTypes = {}, layout, onChange,
   };
 
   return (
-    <div className="flex gap-4" style={{ minHeight: 320 }}>
+    <div className="flex gap-4 min-h-320px">
       {/* ── Left: grid ── */}
-      <div className="flex-1 flex flex-col gap-2 min-w-0 overflow-y-auto thin-scrollbar" style={{ maxHeight: 420 }}>
+      <div className="flex-1 flex flex-col gap-2 min-w-0 overflow-y-auto thin-scrollbar max-h-420px">
         {orphanedKeys.length > 0 && (
           <div className="bg-[#fffbeb] border border-[#fde68a] rounded-lg px-3 py-2 text-[10px] text-[#92400e]">
             <span className="font-semibold">未绑定布局的值：</span>
@@ -288,7 +288,7 @@ const TaskVarsSection: FC<Props> = ({ values, valueTypes = {}, layout, onChange,
       </div>
 
       {/* ── Right: editor panel ── */}
-      <div className="w-[310px] shrink-0 border-l border-[#eef0f2] pl-4 overflow-y-auto thin-scrollbar" style={{ maxHeight: 420 }}>
+      <div className="w-[310px] shrink-0 border-l border-[#eef0f2] pl-4 overflow-y-auto thin-scrollbar max-h-420px">
         {selectedCell ? (
           <CellEditor
             cell={selectedCell}

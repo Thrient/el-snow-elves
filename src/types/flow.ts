@@ -1,7 +1,7 @@
 import type { Node, Edge } from "@xyflow/react";
 import type { FullTask, Step } from "@/types/task";
 
-export const STEP_NODE = "stepNode";
+const STEP_NODE = "stepNode";
 
 export interface StepNodeData {
   [key: string]: unknown;

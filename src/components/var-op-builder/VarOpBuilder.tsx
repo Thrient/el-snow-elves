@@ -283,7 +283,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
 
   // ── Popover content ──
   const content = (
-    <div style={{ width: 320, maxHeight: 440, display: "flex", flexDirection: "column" }}>
+    <div className="w-320px max-h-440px flex flex-col">
       {/* ── Step indicators ── */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "center", gap: 0, padding: "0 0 14px",
@@ -357,12 +357,12 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
 
             <Input
               size="small"
-              prefix={<SearchOutlined style={{ color: "#b8afa6" }} />}
+              prefix={<SearchOutlined className="c-[#b8afa6]" />}
               placeholder={placeholder ?? "搜索变量…"}
               value={search}
               onChange={e => setSearch(e.target.value)}
               allowClear
-              style={{ borderRadius: 10 }}
+              className="rounded-10px"
             />
 
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>

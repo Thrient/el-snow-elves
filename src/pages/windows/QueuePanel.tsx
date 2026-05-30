@@ -1,0 +1,112 @@
+import { type FC, useState } from "react";
+import { Tag, Empty } from "antd";
+import { CloseOutlined } from "@ant-design/icons";
+import { useCharacterStore } from "@/store/character";
+import { useTaskStore } from "@/store/task-store";
+import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal";
+import type { Task } from "@/types/task";
+
+const DOT_COLORS = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"];
+
+const QueuePanel: FC = () => {
+  const characterStore = useCharacterStore();
+  const selected = characterStore.characters.find((c) => c.hwnd === characterStore.selectedHwnd);
+  const [dragUid, setDragUid] = useState<number | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [configTask, setConfigTask] = useState<Task | null>(null);
+  const [configUid, setConfigUid] = useState<number | null>(null);
+
+  if (!selected) return null;
+  const taskCount = selected.executeList.length;
+
+  const handleDragStart = (uid: number) => (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(uid)); setDragUid(uid);
+  };
+  const handleDragEnd = () => setDragUid(null);
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
+  const handleDrop = (targetUid: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const sourceUid = Number(e.dataTransfer.getData("text/plain"));
+    if (isNaN(sourceUid) || sourceUid === targetUid) return;
+    const uids = selected.executeList.map((item) => item._uid);
+    const srcIdx = uids.indexOf(sourceUid), tgtIdx = uids.indexOf(targetUid);
+    if (srcIdx === -1 || tgtIdx === -1) return;
+    uids.splice(srcIdx, 1); uids.splice(tgtIdx, 0, sourceUid);
+    characterStore.reorderExecute(selected.hwnd, uids); setDragUid(null);
+  };
+
+  const openConfig = (uid: number) => {
+    const item = selected.executeList.find((i) => i._uid === uid);
+    if (!item) return;
+    const original = useTaskStore.getState().taskList.find((t) => t.id === item.id);
+    if (original) { setConfigUid(uid); setConfigTask({ ...original, values: { ...item.values } }); setConfigOpen(true); }
+  };
+  const closeConfig = () => { setConfigOpen(false); setConfigTask(null); setConfigUid(null); };
+  const handleSave = (values: Record<string, unknown>) => {
+    if (configUid !== null) characterStore.updateExecuteValues(selected.hwnd, configUid, values);
+    closeConfig();
+  };
+
+  return (
+    <>
+      <div className="flex flex-col min-h-0 bg-white rounded-xl border border-solid border-[#eef0f2] shadow-[0_1px_3px_rgba(0,0,0,.03)] overflow-hidden">
+        <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-solid border-[#f3f4f6]">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[13px] font-semibold text-[#1a1a2e]">待执行任务</span>
+            <span className="text-[11px] font-semibold text-[#1677ff] bg-[#eff6ff] px-2 py-0.5 rounded-full font-mono">
+              {taskCount}
+            </span>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto thin-scrollbar p-4">
+          {taskCount === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center gap-2">
+              <Empty description={<span className="text-xs text-[#b0b8c4]">队列为空</span>} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              <span className="text-[11px] text-[#d1d5db]">从任务列表添加任务到队列</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {selected.executeList.map((item, idx) => {
+                const accent = DOT_COLORS[idx % DOT_COLORS.length];
+                return (
+                  <div key={item._uid} draggable
+                    onDragStart={handleDragStart(item._uid)} onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver} onDrop={handleDrop(item._uid)}
+                    onClick={() => openConfig(item._uid)}
+                    className="queue-item queue-item-enter group"
+                    style={{
+                      animationDelay: `${idx * 40}ms`,
+                      borderLeft: `3px solid ${accent}`,
+                      opacity: dragUid === item._uid ? 0.3 : 1,
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-[12px] font-medium text-[#1a1a2e] truncate">
+                          {item.name}
+                        </span>
+                        <Tag style={{ fontSize: 9, lineHeight: 1, border: "none", borderRadius: 4, padding: "1px 6px", margin: 0, color: "#9ca3af", background: "#f3f4f6", fontFamily: "ui-monospace,Consolas,monospace" }}>
+                          v{item.version}
+                        </Tag>
+                      </div>
+                      <span className="flex items-center justify-center w-6 h-6 cursor-pointer opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                        style={{ borderRadius: 6, color: "#d1d5db" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.background = "#fef2f2"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#d1d5db"; e.currentTarget.style.background = "transparent"; }}
+                        onClick={(e) => { e.stopPropagation(); characterStore.removeExecute(selected.hwnd, item._uid); }}>
+                        <CloseOutlined style={{ fontSize: 10 }} />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+      <TaskConfigModal key={configUid ?? "none"} open={configOpen} task={configTask} onClose={closeConfig} onSave={handleSave} />
+    </>
+  );
+};
+
+export default QueuePanel;

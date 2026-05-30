@@ -101,7 +101,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     }
     if (key === "click_mode") {
       return (
-        <Select size="small" style={{ width: 150 }} allowClear
+        <Select size="small" className="w-150px"allowClear
           value={(value as string) || undefined}
           placeholder="默认 random"
           options={[
@@ -148,7 +148,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
       return (
         <AutoComplete
           size="small"
-          style={{ width: 160 }}
+          className="w-160px"
           value={value as string}
           onChange={(v) => onUpdate("params", { ...params, account_name: v })}
           options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
@@ -162,7 +162,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     }
     if (key === "method") {
       return (
-        <Select size="small" style={{ width: 120 }}
+        <Select size="small" className="w-120px"
           value={(value as string) || "ccoeff"}
           options={[
             { value: "ccoeff", label: "ccoeff — 模板" },
@@ -175,14 +175,14 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
       if (typeof value !== "number" && value != null) {
         const raw = String(value ?? "");
         return (
-          <Input size="small" className="font-mono text-[12px]" style={{ width: 80 }}
+          <Input size="small" className="font-mono text-[12px] w-80px"
             value={raw}
             onChange={(e) => onUpdate("params", { ...params, threshold: e.target.value })}
             placeholder="0.85" />
         );
       }
       return (
-        <InputNumber size="small" className="font-mono text-[12px]" style={{ width: 80 }}
+        <InputNumber size="small" className="font-mono text-[12px] w-80px"
           min={0} max={1} step={0.01}
           value={typeof value === "number" ? value : null}
           onChange={(v) => onUpdate("params", { ...params, threshold: v })}
@@ -191,7 +191,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     }
     if (key === "seconds") {
       return (
-        <InputNumber size="small" className="font-mono text-[12px]" style={{ width: 80 }}
+        <InputNumber size="small" className="font-mono text-[12px] w-80px"
           min={0} step={0.1}
           value={typeof value === "number" ? value : null}
           onChange={(v) => onUpdate("params", { ...params, seconds: v === 0 ? null : v })}
@@ -205,14 +205,14 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
       if (typeof value !== "number" && value != null) {
         const raw = String(value ?? "");
         return (
-          <Input size="small" className="font-mono text-[12px]" style={{ width: 80 }}
+          <Input size="small" className="font-mono text-[12px] w-80px"
             value={raw}
             onChange={(e) => onUpdate("params", { ...params, tolerance: e.target.value })}
             placeholder="10" />
         );
       }
       return (
-        <InputNumber size="small" className="font-mono text-[12px]" style={{ width: 80 }}
+        <InputNumber size="small" className="font-mono text-[12px] w-80px"
           min={0} max={255}
           value={typeof value === "number" ? value : null}
           onChange={(v) => onUpdate("params", { ...params, tolerance: v })}
@@ -223,7 +223,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
         key === "pre_delay" || key === "post_delay") {
       const raw = typeof value === "string" ? value : String(value ?? "");
       return (
-        <Input size="small" className="font-mono text-[12px]" style={{ width: 80 }}
+        <Input size="small" className="font-mono text-[12px] w-80px"
           value={raw}
           onChange={(e) => {
             const v = e.target.value;
@@ -239,7 +239,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     const raw = typeof value === "string" ? value : JSON.stringify(value ?? "");
     return (
       <div className="flex items-center gap-1">
-        <Input size="small" className="font-mono text-[12px]" style={{ width: 140 }}
+        <Input size="small" className="font-mono text-[12px] w-140px"
           value={raw}
           onChange={(e) => {
             let v: unknown = e.target.value;

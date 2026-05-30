@@ -1,5 +1,4 @@
 import type { FC } from "react";
-import "@/components/app-menu/index.css"
 import { useNavigate } from 'react-router-dom'
 import { Menu, Typography } from "antd";
 import {
@@ -7,8 +6,6 @@ import {
   DesktopOutlined,
   ProfileOutlined,
   SettingOutlined,
-  BookOutlined,
-  EditOutlined,
   ReadOutlined,
   ScheduleOutlined,
   UserOutlined,
@@ -45,16 +42,6 @@ const AppMenu: FC<Props> = ({ collapsed }) => {
       key: '/settings',
       icon: <SettingOutlined/>,
       label: '全局设置',
-    },
-    {
-      key: '/docs',
-      icon: <BookOutlined/>,
-      label: '使用手册',
-    },
-    {
-      key: '/editor-docs',
-      icon: <EditOutlined/>,
-      label: '编辑教程',
     },
     {
       key: '/accounts',

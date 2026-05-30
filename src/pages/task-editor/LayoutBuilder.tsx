@@ -8,6 +8,7 @@ import { VAR_TYPE_OPTS } from "@/utils/type-compat";
 import MiniPreview from "@/components/mini-preview/MiniPreview";
 import ComponentPickerModal from "./ComponentPickerModal";
 import ControlEditorModal from "./ControlEditorModal";
+import { MODEL_META, DEFAULT_CELL_SPAN } from "./LayoutBuilder/modelDefs";
 
 /* ── helpers ── */
 
@@ -24,25 +25,6 @@ function usedStores(layout: Cell[][]): Set<string> {
 function rowUsedSpan(row: Cell[]): number {
   return row.reduce((s, c) => s + (c.span ?? 1), 0);
 }
-
-/* ── model display metadata ── */
-
-const MODEL_META: Record<string, { label: string; short: string; color: string; bg: string }> = {
-  "el-input":        { label: "文本输入", short: "Aa", color: "#6366f1", bg: "#eef2ff" },
-  "el-input-number": { label: "数字输入", short: "12", color: "#10b981", bg: "#ecfdf5" },
-  "el-switch":       { label: "开关",     short: "⇄",  color: "#f59e0b", bg: "#fffbeb" },
-  "el-select":       { label: "下拉选择", short: "☰",  color: "#8b5cf6", bg: "#f5f3ff" },
-  "el-textarea":     { label: "多行文本", short: "¶",  color: "#06b6d4", bg: "#ecfeff" },
-  "el-checkbox":     { label: "复选框",   short: "☑",  color: "#ef4444", bg: "#fef2f2" },
-  "el-checkbox-group":{ label: "多选组",  short: "☑☑",color: "#ec4899", bg: "#fdf2f8" },
-  "el-radio":        { label: "单选组",   short: "◉",  color: "#f97316", bg: "#fff7ed" },
-  "el-slider":       { label: "滑块",     short: "—",  color: "#6366f1", bg: "#eef2ff" },
-  "el-date-picker":  { label: "日期选择", short: "📅", color: "#14b8a6", bg: "#f0fdfa" },
-  "el-color-picker": { label: "颜色选择", short: "◐",  color: "#a855f7", bg: "#faf5ff" },
-  "el-input-tags":  { label: "标签输入", short: "#",  color: "#0891b2", bg: "#ecfeff" },
-};
-
-const DEFAULT_CELL_SPAN = 12;
 
 /* ── props ── */
 
@@ -262,7 +244,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
      ═══════════════════════════════════════════════ */
 
   return (
-    <div className="flex gap-4 select-none" style={{ minHeight: 480, maxHeight: "calc(100vh - 200px)" }}>
+    <div className="flex gap-4 select-none min-h-480px" style={{ maxHeight: "calc(100vh - 200px)" }}>
 
       {/* ═══ LEFT: 待布局变量 ═══ */}
       <div
@@ -409,8 +391,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
 
                     {/* cells row */}
                     <div
-                      className="relative flex items-stretch gap-2 px-2 pb-2"
-                      style={{ display: "grid", gridTemplateColumns: "repeat(24, 1fr)", minHeight: 72 }}
+                      className="relative flex items-stretch gap-2 px-2 pb-2 grid grid-cols-[repeat(24,1fr)] min-h-72"
                     >
                       {row.map((cell, ci) => {
                         const span = cell.span ?? 1;
