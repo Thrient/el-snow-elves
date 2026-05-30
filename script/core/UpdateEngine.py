@@ -84,18 +84,20 @@ class UpdateEngine:
             return {"error": str(e)}
 
     @staticmethod
-    def download_blob(fingerprint_id: int, save_path: str):
-        """下载单个 blob 到指定路径"""
-        import time
-        _log.debug(f"download_blob: id={fingerprint_id} → {save_path}")
+    def download_blob(fingerprint_id: int, save_path: str, on_progress=None):
+        """下载单个 blob 到指定路径。on_progress(received, total) 每 1MB 回调一次。"""
         t0 = time.time()
         resp = UpdateEngine._get_session().get(f"{HUB_URL}/versions/blobs/{fingerprint_id}", stream=True, timeout=120)
         resp.raise_for_status()
         total = int(resp.headers.get("Content-Length", 0))
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        received = 0
         with open(save_path, "wb") as f:
             for chunk in resp.iter_content(chunk_size=1024 * 1024):
                 f.write(chunk)
+                received += len(chunk)
+                if on_progress:
+                    on_progress(received, total)
         elapsed = time.time() - t0
         if elapsed > 0 and total > 0:
             speed_mbps = (total * 8) / elapsed / 1_000_000

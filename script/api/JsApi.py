@@ -37,6 +37,10 @@ class JsApi:
         self.window.evaluate_js(
             f"window.useUpdateStore.getState().updateProgress('{escaped}',{completed_files},{downloaded_bytes})")
 
+    def update_progress_bytes(self, downloaded_bytes: int):
+        """文件下载中，实时更新已下载字节数（每 1MB 触发）"""
+        self.window.evaluate_js(f"window.useUpdateStore.getState().setDownloadedBytes({downloaded_bytes})")
+
     def update_finish_download(self):
         self.window.evaluate_js("window.useUpdateStore.getState().finishDownload()")
 
