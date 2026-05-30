@@ -8,7 +8,7 @@ _log = logging.getLogger("Elves.OnlinePresence")
 
 HUB_URL = "https://elves.elarion.cn/api/v1"
 SSE_URL = f"{HUB_URL}/client/stream"
-RECONNECT_DELAY = 15  # 断连后重试间隔（秒）
+RECONNECT_DELAY = 15
 
 
 class OnlinePresence:
@@ -17,6 +17,7 @@ class OnlinePresence:
     def __init__(self):
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
+        self._response: requests.Response | None = None
 
     def start(self):
         if self._thread and self._thread.is_alive():
@@ -28,6 +29,14 @@ class OnlinePresence:
 
     def stop(self):
         self._stop_event.set()
+        # 强制关闭连接，让阻塞的 iter_lines 立即抛异常退出
+        if self._response:
+            try:
+                self._response.close()
+            except Exception:
+                pass
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=3)
         _log.info("在线状态上报已停止")
 
     def _run(self):
@@ -37,17 +46,23 @@ class OnlinePresence:
             try:
                 _log.info(f"连接 SSE: {SSE_URL}")
                 resp = session.get(SSE_URL, stream=True, timeout=(10, None))
+                self._response = resp
                 resp.raise_for_status()
                 _log.info("SSE 已连接，开始接收心跳")
-                # 阻塞读取直到连接断开
-                for line in resp.iter_lines(decode_unicode=True):
+                for _line in resp.iter_lines(decode_unicode=True):
                     if self._stop_event.is_set():
                         resp.close()
                         return
                 _log.warning("SSE 流结束，将重连")
             except Exception as e:
-                _log.error(f"SSE 连接异常: {e}")
-            # 指数退避前先等固定间隔
+                if not self._stop_event.is_set():
+                    _log.error(f"SSE 连接异常: {e}")
+            finally:
+                self._response = None
+                try:
+                    resp.close()
+                except Exception:
+                    pass
             for _ in range(RECONNECT_DELAY):
                 if self._stop_event.is_set():
                     return
