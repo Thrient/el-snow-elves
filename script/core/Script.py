@@ -4,7 +4,7 @@ from threading import Thread, Event
 
 from script.api.JsApi import js
 from script.core.FlowEngine import FlowEngine
-from script.core.StaticCommon import StaticCommon
+from script.core.TaskLibrary import get_task_config_by_id
 
 
 class Script(Thread):
@@ -52,7 +52,7 @@ class Script(Thread):
                 break
             task = self._wait_for_task()
             if task is not None:
-                work = StaticCommon.get_task_config_by_id(task["id"])
+                work = get_task_config_by_id(task["id"])
                 work["values"] = task.get("values", work.get("values", {}))
                 work["valueTypes"] = task.get("valueTypes", work.get("valueTypes", {}))
                 debug_start = task.get("debugStart")

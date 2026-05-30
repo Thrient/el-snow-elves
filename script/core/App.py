@@ -12,9 +12,12 @@ from script.core.LogManager import setup_logging, read_logs, get_log_files
 from script.core.QuickStart import QuickStart
 from script.core.ScreenCapture import ScreenCapture
 from script.core.Script import Script
-from script.core.StaticCommon import StaticCommon
+from script.core.TaskConfig import get_config_list, save_config, load_config, delete_config
+from script.core.TaskLibrary import load_task_list, get_full_task_config, save_full_task_config, create_task, delete_task, import_task, list_steps_for_task, build_task_zip
+from script.core.TemplateAssets import list_actions, list_template_images, list_global_common_steps, load_positions, save_positions
+from script.core.AppConfig import load_settings, load_plans, save_plans
 from script.core.FlowEngine import clear_common_cache
-from script.account import AccountManager
+from script.account.AccountManager import AccountManager
 from script.account.SessionManager import get_session
 from script.core.TemplateMatcher import TemplateMatcher
 from script.core.UpdateEngine import UpdateEngine
@@ -289,12 +292,12 @@ class App:
         self.window.destroy()
 
     def init(self):
-        api.on("API:SETTINGS:LOAD", StaticCommon.load_settings)
-        api.on("API:SCRIPT:SAVE:CONFIG", StaticCommon.save_config)
-        api.on("API:SCRIPT:LOAD:CONFIG", StaticCommon.load_config)
-        api.on("API:SCRIPT:LOAD:CONFIG:LIST", StaticCommon.get_config_list)
-        api.on("API:SCRIPT:DELETE:CONFIG", StaticCommon.delete_config)
-        api.on("API:SCRIPT:LOAD:LIST", StaticCommon.load_task_list)
+        api.on("API:SETTINGS:LOAD", load_settings)
+        api.on("API:SCRIPT:SAVE:CONFIG", save_config)
+        api.on("API:SCRIPT:LOAD:CONFIG", load_config)
+        api.on("API:SCRIPT:LOAD:CONFIG:LIST", get_config_list)
+        api.on("API:SCRIPT:DELETE:CONFIG", delete_config)
+        api.on("API:SCRIPT:LOAD:LIST", load_task_list)
         api.on("API:SCRIPT:SEARCH", self.search)
         api.on("API:SCRIPT:BIND", self.bind)
         api.on("API:SCRIPT:UNBIND", self.unbind)
@@ -304,28 +307,28 @@ class App:
         api.on("API:SCRIPT:LOCK", self.lock_window)
         api.on("API:SCRIPT:UNLOCK", self.unlock_window)
         api.on("API:SCRIPT:SET_OPACITY", self.set_window_opacity)
-        api.on("API:TASK:LOAD:FULL", StaticCommon.get_full_task_config)
-        api.on("API:TASK:SAVE:FULL", StaticCommon.save_full_task_config)
-        api.on("API:TASK:CREATE", StaticCommon.create_task)
-        api.on("API:TASK:DELETE", StaticCommon.delete_task)
+        api.on("API:TASK:LOAD:FULL", get_full_task_config)
+        api.on("API:TASK:SAVE:FULL", save_full_task_config)
+        api.on("API:TASK:CREATE", create_task)
+        api.on("API:TASK:DELETE", delete_task)
         api.on("API:TASK:EXPORT", self.export_task)
         api.on("API:TASK:EXPORT:BATCH", self.export_tasks_batch)
-        api.on("API:TASK:IMPORT", StaticCommon.import_task)
-        api.on("API:AUTOCOMPLETE:ACTIONS", StaticCommon.list_actions)
-        api.on("API:AUTOCOMPLETE:TEMPLATES", StaticCommon.list_template_images)
-        api.on("API:AUTOCOMPLETE:STEPS", StaticCommon.list_steps_for_task)
-        api.on("API:AUTOCOMPLETE:COMMON:STEPS", StaticCommon.list_global_common_steps)
+        api.on("API:TASK:IMPORT", import_task)
+        api.on("API:AUTOCOMPLETE:ACTIONS", list_actions)
+        api.on("API:AUTOCOMPLETE:TEMPLATES", list_template_images)
+        api.on("API:AUTOCOMPLETE:STEPS", list_steps_for_task)
+        api.on("API:AUTOCOMPLETE:COMMON:STEPS", list_global_common_steps)
         api.on("API:COMMON:CACHE:CLEAR", clear_common_cache)
-        api.on("API:TASK:LOAD:POSITIONS", StaticCommon.load_positions)
-        api.on("API:TASK:SAVE:POSITIONS", StaticCommon.save_positions)
+        api.on("API:TASK:LOAD:POSITIONS", load_positions)
+        api.on("API:TASK:SAVE:POSITIONS", save_positions)
         api.on("API:TEMPLATE:CAPTURE", self.capture_for_template)
         api.on("API:TEMPLATE:CAPTURE:PNG", self.capture_for_template_png)
         api.on("API:TEMPLATE:SAVE", self.save_template_image)
         api.on("API:PREPROCESS:APPLY", self.preprocess_apply)
         api.on("API:LOG:READ", read_logs)
         api.on("API:LOG:FILES", get_log_files)
-        api.on("API:PLAN:LOAD", StaticCommon.load_plans)
-        api.on("API:PLAN:SAVE", StaticCommon.save_plans)
+        api.on("API:PLAN:LOAD", load_plans)
+        api.on("API:PLAN:SAVE", save_plans)
         api.on("API:CRON:TRIGGER", self._on_cron_trigger)
         api.on("API:ACCOUNT:LIST", AccountManager.list_accounts)
         api.on("API:ACCOUNT:LIST:NAMES", AccountManager.list_account_names)
@@ -527,7 +530,7 @@ class App:
 
     def export_task(self, task_id):
         """导出单个任务为 zip"""
-        built = StaticCommon.build_task_zip(task_id)
+        built = build_task_zip(task_id)
         if isinstance(built, dict):
             return built
         buf, default_name = built
@@ -565,7 +568,7 @@ class App:
         saved = []
         errors = []
         for tid in task_ids:
-            built = StaticCommon.build_task_zip(tid)
+            built = build_task_zip(tid)
             if isinstance(built, dict):
                 errors.append(built)
                 continue

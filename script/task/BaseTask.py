@@ -12,7 +12,9 @@ from script.core.InputSimulator import InputSimulator
 from script.core.ScreenCapture import ScreenCapture
 from script.core.TemplateMatcher import TemplateMatcher
 from script.functools.Functools import during, wait_until
-from script.account import AccountManager, HostsManager, INJECTION, get_proxy
+from script.account.AccountManager import AccountManager
+from script.account.AccountProxy import INJECTION, get_proxy
+from script.account.HostsManager import HostsManager
 
 
 class BaseTask:

@@ -1,0 +1,34 @@
+import json
+import logging
+import os
+
+from script.config.Setting import PROJECT_ROOT
+
+
+def load_settings():
+    with open(fr"{PROJECT_ROOT}\resources\config\settings.json", 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def load_plans():
+    file_path = os.path.join(PROJECT_ROOT, "resources", "config", "plans.json")
+    if not os.path.isfile(file_path):
+        return []
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logging.warning(f"加载计划列表失败: {e}")
+        return []
+
+
+def save_plans(data):
+    file_path = os.path.join(PROJECT_ROOT, "resources", "config", "plans.json")
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        logging.warning(f"保存计划列表失败: {e}")
+        return False
