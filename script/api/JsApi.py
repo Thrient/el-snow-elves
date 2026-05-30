@@ -29,12 +29,13 @@ class JsApi:
 
     # ── 更新进度推送 ──
 
-    def update_start_download(self, total: int):
-        self.window.evaluate_js(f"window.useUpdateStore.getState().startDownload({total})")
+    def update_start_download(self, total_files: int, total_bytes: int):
+        self.window.evaluate_js(f"window.useUpdateStore.getState().startDownload({total_files},{total_bytes})")
 
-    def update_progress(self, path: str, completed: int):
+    def update_progress(self, path: str, completed_files: int, downloaded_bytes: int):
         escaped = path.replace("\\", "\\\\").replace("'", "\\'")
-        self.window.evaluate_js(f"window.useUpdateStore.getState().updateProgress('{escaped}',{completed})")
+        self.window.evaluate_js(
+            f"window.useUpdateStore.getState().updateProgress('{escaped}',{completed_files},{downloaded_bytes})")
 
     def update_finish_download(self):
         self.window.evaluate_js("window.useUpdateStore.getState().finishDownload()")

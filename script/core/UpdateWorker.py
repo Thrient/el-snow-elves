@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 
 from script.api.JsApi import js
 from script.config.Setting import APP_DATA, STORAGE_PATH
@@ -23,7 +24,6 @@ WEBVIEW_CACHE_DIRS = [
 class UpdateWorker:
     @staticmethod
     def download_updates(current_version: str) -> dict:
-        """下载更新文件，通过 JsApi 实时推送进度到前端。返回 {"ok": True} 或 {"error": "..."}。"""
         _log.info(f"download_updates: start current_version={current_version}")
         local = UpdateEngine.compute_manifest()
         _log.info(f"download_updates: manifest has {len(local)} entries")
@@ -39,31 +39,36 @@ class UpdateWorker:
             return {"up_to_date": True}
 
         changed = diff["changed"]
-        total = len(changed)
-        _log.info(f"download_updates: {total} files to download")
+        total_files = len(changed)
+        total_bytes = sum(item["size"] for item in changed)
+        _log.info(f"download_updates: {total_files} files, {total_bytes} bytes")
 
-        js.update_start_download(total)
+        js.update_start_download(total_files, total_bytes)
 
-        # 清空暂存区
         if os.path.exists(STAGING_DIR):
             shutil.rmtree(STAGING_DIR)
         os.makedirs(STAGING_DIR)
 
+        downloaded_bytes = 0
         for i, item in enumerate(changed):
             save_path = os.path.join(STAGING_DIR, item["path"])
-            _log.info(
-                f"download_updates: [{i + 1}/{total}] {item['path']} (id={item['fingerprint_id']}, size={item['size']})")
+            _log.info(f"download_updates: [{i + 1}/{total_files}] {item['path']} (id={item['fingerprint_id']}, size={item['size']})")
             try:
+                t0 = time.time()
                 UpdateEngine.download_blob(item["fingerprint_id"], save_path)
-                js.update_progress(item["path"], i + 1)
+                elapsed = time.time() - t0
+                speed = int(item["size"] / elapsed) if elapsed > 0 else 0
+                downloaded_bytes += item["size"]
+                _log.info(f"download_updates: {item['path']} done, {downloaded_bytes}/{total_bytes} bytes, {speed} B/s")
+                js.update_progress(item["path"], i + 1, downloaded_bytes)
             except Exception as e:
                 _log.error(f"download_updates: failed {item['path']}: {e}")
                 js.update_finish_download()
                 return {"error": f"download {item['path']}: {e}"}
 
         js.update_finish_download()
-        _log.info(f"download_updates: done, {total} files downloaded")
-        return {"ok": True, "file_count": total}
+        _log.info(f"download_updates: done, {total_files} files, {total_bytes} bytes")
+        return {"ok": True, "file_count": total_files}
 
     @staticmethod
     def _build_bat(pid: int, launch: str, cache_dirs: list[str]) -> str:
