@@ -53,14 +53,15 @@ class UpdateWorker:
         downloaded_bytes = 0
         for i, item in enumerate(changed):
             save_path = os.path.join(STAGING_DIR, item["path"])
-            _log.info(f"download_updates: [{i + 1}/{total_files}] {item['path']} (id={item['fingerprint_id']}, size={item['size']})")
+            blob_id = item.get("record_id") or item["fingerprint_id"]
+            _log.info(f"download_updates: [{i + 1}/{total_files}] {item['path']} (id={blob_id}, size={item['size']})")
             try:
                 file_bytes_before = downloaded_bytes
 
                 def on_chunk(received: int, _total: int):
                     js.update_progress_bytes(file_bytes_before + received)
 
-                UpdateEngine.download_blob(item["fingerprint_id"], save_path, on_progress=on_chunk)
+                UpdateEngine.download_blob(blob_id, save_path, on_progress=on_chunk)
                 downloaded_bytes += item["size"]
                 _log.info(f"download_updates: {item['path']} done, {downloaded_bytes}/{total_bytes} bytes")
                 js.update_progress(item["path"], i + 1, downloaded_bytes)
