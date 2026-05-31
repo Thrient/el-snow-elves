@@ -22,6 +22,7 @@ from script.account.SessionManager import get_session
 from script.core.TemplateMatcher import TemplateMatcher
 from script.core.UpdateEngine import UpdateEngine
 from script.core.UpdateWorker import UpdateWorker
+from script.core.OnlinePresence import presence
 from script.util.CacheManager import clear_webview_cache_if_version_changed
 from script.core.Window import Window, calc_window_size, get_hwnd_by_title
 from script.util.TrayIcon import TrayIcon
@@ -155,6 +156,7 @@ class App:
 
     def _do_exit(self):
         """真正退出程序"""
+        presence.stop()
         hwnd = self._get_main_hwnd()
         if hwnd:
             Window.save_window_rect(hwnd, "main")
@@ -238,6 +240,7 @@ class App:
         api.on("API:GAME:GET_PATH", get_game_path)
         api.on("API:GAME:SET_PATH", lambda: set_game_path(self.window))
 
+        presence.start()
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
     def resume(self, hwnd):
