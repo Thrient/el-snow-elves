@@ -86,10 +86,10 @@ class UpdateEngine:
             return {"error": str(e)}
 
     @staticmethod
-    def download_blob(fingerprint_id: int, save_path: str, on_progress=None):
-        """下载单个 blob 到指定路径。on_progress(received, total) 最多每秒回调一次。"""
+    def download_blob(record_id: int, save_path: str, on_progress=None):
+        """通过 record_id 下载单个 blob。on_progress(received, total) 最多每秒回调一次。"""
         t0 = time.time()
-        resp = UpdateEngine._get_session().get(f"{HUB_URL}/versions/blobs/{fingerprint_id}", stream=True, timeout=120)
+        resp = UpdateEngine._get_session().get(f"{HUB_URL}/versions/blobs/record/{record_id}", stream=True, timeout=120)
         resp.raise_for_status()
         total = int(resp.headers.get("Content-Length", 0))
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -106,4 +106,4 @@ class UpdateEngine:
         elapsed = time.time() - t0
         if elapsed > 0 and total > 0:
             speed_mbps = (total * 8) / elapsed / 1_000_000
-            _log.info(f"download_blob: id={fingerprint_id} {total/1024:.0f}KB in {elapsed:.1f}s = {speed_mbps:.1f}Mbps")
+            _log.info(f"download_blob: id={record_id} {total/1024:.0f}KB in {elapsed:.1f}s = {speed_mbps:.1f}Mbps")
