@@ -126,7 +126,6 @@ body {
     border-radius: var(--radius-lg);
     margin: 0 16px 16px 16px;
     padding: 20px;
-    box-shadow: var(--shadow-sm);
 }
 
 .page-header {

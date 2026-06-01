@@ -61,7 +61,7 @@ const MainLayout: FC = () => {
 
   // SSE for real-time update push from hub
   useEffect(() => {
-    const es = new EventSource("https://nas.elarion.cn:5173/api/v1/client/stream");
+    const es = new EventSource("https://elves.elarion.cn/api/v1/client/stream");
     es.onmessage = (e) => {
       try {
         const d = JSON.parse(e.data);

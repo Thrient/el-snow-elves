@@ -43,7 +43,7 @@ const PlanCard: FC<Props> = ({ plan, idx, accent, now, onEdit }) => {
       onClick={() => onEdit(plan)}
       style={{
         animationDelay: `${idx * 50}ms`,
-        borderLeft: `3px solid ${plan.enabled ? accent : "#e5e7eb"}`,
+        borderLeft: `2px solid ${plan.enabled ? accent : "#e5e7eb"}`,
         boxShadow: plan.enabled ? "0 2px 8px rgba(0,0,0,.03)" : "0 1px 2px rgba(0,0,0,.01)",
         borderColor: plan.enabled ? "#d0d4dd" : "#eef0f2",
       }}

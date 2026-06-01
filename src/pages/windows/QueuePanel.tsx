@@ -49,8 +49,8 @@ const QueuePanel: FC = () => {
 
   return (
     <>
-      <div className="flex flex-col min-h-0 bg-white rounded-xl border border-solid border-[#eef0f2] shadow-[0_1px_3px_rgba(0,0,0,.03)] overflow-hidden">
-        <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-solid border-[#f3f4f6]">
+      <div className="flex flex-col min-h-0 bg-white rounded-xl border border-solid border-[#eef0f2] overflow-hidden">
+        <div className="shrink-0 flex items-center justify-between px-4 py-3" style={{ boxShadow: "inset 0 -1px 0 #f3f4f6" }}>
           <div className="flex items-center gap-2.5">
             <span className="text-[13px] font-semibold text-[#1a1a2e]">待执行任务</span>
             <span className="text-[11px] font-semibold text-[#1677ff] bg-[#eff6ff] px-2 py-0.5 rounded-full font-mono">
@@ -76,7 +76,7 @@ const QueuePanel: FC = () => {
                     className="queue-item queue-item-enter group"
                     style={{
                       animationDelay: `${idx * 40}ms`,
-                      borderLeft: `3px solid ${accent}`,
+                      borderLeft: `2px solid ${accent}`,
                       opacity: dragUid === item._uid ? 0.3 : 1,
                     }}
                   >

@@ -3,8 +3,20 @@ import type { FullTask, Step } from "@/types/task";
 
 const STEP_NODE = "stepNode";
 
+type FlowType = "success" | "failure" | "next";
+const FLOW_TYPES: FlowType[] = ["success", "failure", "next"];
+
 function edgeColor(flowType: string): string {
   return flowType === "success" ? "#52c41a" : flowType === "failure" ? "#ff4d4f" : "#8b8fa3";
+}
+
+function collectTargets(step: Step): { target: string; flowType: FlowType }[] {
+  const targets: { target: string; flowType: FlowType }[] = [];
+  for (const ft of FLOW_TYPES) {
+    const t = step[ft] as string | undefined;
+    if (t) targets.push({ target: t, flowType: ft });
+  }
+  return targets;
 }
 
 export interface StepNodeData {
@@ -18,7 +30,7 @@ export interface StepNodeData {
 
 export interface StepEdgeData {
   [key: string]: unknown;
-  flowType: "success" | "failure" | "next";
+  flowType: FlowType;
 }
 
 export function taskToFlow(task: FullTask, savedPositions?: Record<string, { x: number; y: number }>): {
@@ -57,12 +69,7 @@ export function taskToFlow(task: FullTask, savedPositions?: Record<string, { x: 
 
   // Edges
   for (const [name, step] of Object.entries(allSteps)) {
-    const targets: { target: string; flowType: "success" | "failure" | "next" }[] = [];
-    if (step.success) targets.push({ target: step.success, flowType: "success" });
-    if (step.failure) targets.push({ target: step.failure, flowType: "failure" });
-    if (step.next) targets.push({ target: step.next, flowType: "next" });
-
-    for (const { target, flowType } of targets) {
+    for (const { target, flowType } of collectTargets(step)) {
       if (!(target in allSteps)) continue;
       edges.push({
         id: `${name}-${flowType}-${target}`,
@@ -117,11 +124,9 @@ export function flowToTask(
   // Apply edges
   for (const edge of edges) {
     const sourceStep = steps[edge.source] ?? common[edge.source];
-    if (!sourceStep) continue;
-    const ft = edge.data?.flowType;
-    if (ft === "success") sourceStep.success = edge.target;
-    else if (ft === "failure") sourceStep.failure = edge.target;
-    else if (ft === "next") sourceStep.next = edge.target;
+    if (sourceStep && edge.data?.flowType) {
+      (sourceStep as Record<string, unknown>)[edge.data.flowType] = edge.target;
+    }
   }
 
   return { ...original, steps, common };

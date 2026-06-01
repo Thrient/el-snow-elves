@@ -21,9 +21,9 @@ const ControlPanel: FC = () => {
   };
 
   return (
-    <div className="shrink-0 mb-4 bg-white rounded-xl border border-solid border-[#eef0f2] shadow-[0_1px_3px_rgba(0,0,0,.03)] overflow-hidden">
+    <div className="shrink-0 mb-4 bg-white rounded-xl border border-solid border-[#eef0f2] overflow-hidden">
       {/* Status bar */}
-      <div className="flex items-center gap-3 px-5 py-3 border-b border-solid border-[#f3f4f6]">
+      <div className="flex items-center gap-3 px-4 py-3" style={{ boxShadow: "inset 0 -1px 0 #f3f4f6" }}>
         <div className="flex items-center gap-2">
           <div style={{
             width: 7, height: 7, borderRadius: "50%",

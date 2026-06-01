@@ -29,12 +29,12 @@ const WindowSelector: FC<Props> = ({ onBind }) => {
           return (
             <div
               key={c.hwnd}
-              className="window-card win-card-enter"
+              className="window-card win-card-enter relative"
               onClick={() => characterStore.setSelectedHwnd(c.hwnd)}
               title={`HWND: ${c.hwnd}`}
               style={{
                 animationDelay: `${i * 50}ms`,
-                borderTop: `3px solid ${accent}`,
+                borderTop: `2px solid ${accent}`,
                 padding: "10px 14px 12px",
                 minWidth: 130,
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
@@ -45,6 +45,10 @@ const WindowSelector: FC<Props> = ({ onBind }) => {
                 } : {}),
               }}
             >
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{
+                background: c.running ? "#52c41a" : "#d1d5db",
+                boxShadow: c.running ? "0 0 6px rgba(82,196,26,.4)" : undefined,
+              }} />
               {c.character ? (
                 <img src={c.character} alt=""
                   style={{
@@ -62,17 +66,6 @@ const WindowSelector: FC<Props> = ({ onBind }) => {
                   <DesktopOutlined style={{ fontSize: 18, color: accent }} />
                 </div>
               )}
-              <div className="flex items-center gap-1.5">
-                <span style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: c.running ? "#52c41a" : "#d1d5db",
-                  boxShadow: c.running ? "0 0 6px rgba(82,196,26,.4)" : undefined,
-                  flexShrink: 0,
-                }} />
-                <span className="text-[11px] font-medium" style={{ color: c.running ? "#374151" : "#8b8fa3" }}>
-                  {c.running ? "运行中" : "已停止"}
-                </span>
-              </div>
             </div>
           );
         })}
@@ -86,15 +79,16 @@ const WindowSelector: FC<Props> = ({ onBind }) => {
             background: "#fafbfc",
             padding: "10px 20px 12px",
             minWidth: 100,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           }}
         >
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 28, height: 28, borderRadius: 8,
             background: "#eef2ff", border: "1px dashed #b0c8f0",
             display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
           }}>
-            <PlusOutlined style={{ fontSize: 16, color: "#1677ff" }} />
+            <PlusOutlined style={{ fontSize: 14, color: "#1677ff" }} />
           </div>
           <span className="text-[11px] font-medium text-[#1677ff]">绑定窗口</span>
         </div>
