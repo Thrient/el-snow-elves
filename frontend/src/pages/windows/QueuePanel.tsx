@@ -1,8 +1,7 @@
 import { type FC, useState } from "react";
 import { Tag, Empty } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
-import { useCharacterStore } from "@/store/character";
-import { useTaskStore } from "@/store/task-store";
+import { useCharacterStore } from "@/store/character-store";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal";
 import type { Task } from "@/types/task";
 
@@ -38,7 +37,7 @@ const QueuePanel: FC = () => {
   const openConfig = (uid: number) => {
     const item = selected.executeList.find((i) => i._uid === uid);
     if (!item) return;
-    const original = useTaskStore.getState().taskList.find((t) => t.id === item.id);
+    const original = useCharacterStore.getState().taskList.find((t) => t.id === item.id);
     if (original) { setConfigUid(uid); setConfigTask({ ...original, values: { ...item.values } }); setConfigOpen(true); }
   };
   const closeConfig = () => { setConfigOpen(false); setConfigTask(null); setConfigUid(null); };

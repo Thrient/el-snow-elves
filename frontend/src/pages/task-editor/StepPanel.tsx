@@ -8,7 +8,7 @@ import FlowEditor from "./FlowEditor";
 import ParamsEditor from "./ParamsEditor";
 import SubListEditor from "./SubListEditor";
 import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
-import { useCharacterStore } from "@/store/character";
+import { useCharacterStore } from "@/store/character-store";
 import { useEditorStore } from "@/store/editor-store";
 
 /* ================================================================

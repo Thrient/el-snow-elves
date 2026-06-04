@@ -4,9 +4,9 @@ import { ClockCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { Cron } from "croner";
 import cronstrue from "cronstrue";
 import "cronstrue/locales/zh_CN";
-import type { PlanEntry } from "@/store/user-store";
-import { useUserStore } from "@/store/user-store";
-import { useCharacterStore } from "@/store/character";
+import type { PlanEntry } from "@/store/session-store";
+import { useSessionStore } from "@/store/session-store";
+import { useCharacterStore } from "@/store/character-store";
 import { PLAN_TEMPLATES } from "@/types/plan";
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
 }
 
 const PlanCard: FC<Props> = ({ plan, idx, accent, now, onEdit }) => {
-  const userStore = useUserStore();
+  const userStore = useSessionStore();
   const characterStore = useCharacterStore();
   const tmpl = PLAN_TEMPLATES.find((t) => t.id === plan.templateId);
   const cronHuman = (() => { try { return cronstrue.toString(plan.cron, { locale: "zh_CN" }); } catch { return plan.cron; } })();
@@ -29,12 +29,12 @@ const PlanCard: FC<Props> = ({ plan, idx, accent, now, onEdit }) => {
 
   const handleToggle = () => {
     userStore.togglePlan(plan._uid);
-    characterStore.setPlans(characterStore.selectedHwnd!, useUserStore.getState().plans);
+    characterStore.setPlans(characterStore.selectedHwnd!, useSessionStore.getState().plans);
   };
 
   const handleDelete = () => {
     userStore.removePlan(plan._uid);
-    characterStore.setPlans(characterStore.selectedHwnd!, useUserStore.getState().plans);
+    characterStore.setPlans(characterStore.selectedHwnd!, useSessionStore.getState().plans);
   };
 
   return (

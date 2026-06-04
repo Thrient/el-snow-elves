@@ -4,7 +4,7 @@ import cronstrue from "cronstrue";
 import "cronstrue/locales/zh_CN";
 import type { Plan, PlanBase, PlanTemplate } from "@/types/plan";
 import { PLAN_TEMPLATES } from "@/types/plan";
-import { useTaskStore } from "@/store/task-store";
+import { useCharacterStore } from "@/store/character-store";
 import { callApi } from "@/utils/pywebview";
 import type { FullTask } from "@/types/task";
 import SettingsField from "@/components/settings-field/SettingsField";
@@ -36,7 +36,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
   const [template, setTemplate] = useState<PlanTemplate | null>(null);
   const [cronError, setCronError] = useState<string | null>(null);
   const [configFiles, setConfigFiles] = useState<string[]>([]);
-  const taskList = useTaskStore((s) => s.taskList);
+  const taskList = useCharacterStore((s) => s.taskList);
   const watchedSource = Form.useWatch("source", form);
   const watchedTaskId = Form.useWatch("taskId", form);
   const [taskLayout, setTaskLayout] = useState<FullTask["layout"] | null>(null);

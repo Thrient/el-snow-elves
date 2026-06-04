@@ -23,7 +23,7 @@ type State = {
   loadConfig: (payload: Record<string, unknown>) => void
 }
 
-export const useUserStore = create<State>((set) => ({
+export const useSessionStore = create<State>((set) => ({
   queue: [],
   plans: [],
 

@@ -9,8 +9,8 @@ import cronstrue from "cronstrue";
 import "cronstrue/locales/zh_CN";
 import type { Plan, PlanBase } from "@/types/plan";
 import { PLAN_TEMPLATES } from "@/types/plan";
-import { useUserStore } from "@/store/user-store";
-import { useTaskStore } from "@/store/task-store";
+import { useSessionStore } from "@/store/session-store";
+import { useCharacterStore } from "@/store/character-store";
 import PlanModal from "./PlanModal";
 
 let _planUid = Date.now();
@@ -53,7 +53,7 @@ const PlansPage: FC = () => {
     await writePlans(plans.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
   };
 
-  const addPlan = useUserStore((s) => s.addPlan);
+  const addPlan = useSessionStore((s) => s.addPlan);
 
   const handleAddToQueue = (plan: Plan) => {
     addPlan({
@@ -131,7 +131,7 @@ const PlansPage: FC = () => {
           return <span className="text-xs text-[#6b7280]">{source}</span>;
         }
         if (record.action.type === "push_task") {
-          const taskList = useTaskStore.getState().taskList;
+          const taskList = useCharacterStore.getState().taskList;
           const task = taskList.find((t) => t.id === params.taskId);
           const label = task ? `${task.name} v${task.version}` : (params.taskId as string);
           return <span className="text-xs text-[#6b7280]">推送: {label}</span>;

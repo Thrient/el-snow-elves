@@ -8,15 +8,15 @@ import { Button, message, Modal, Space, Tooltip, Input, Checkbox, Spin } from "a
 import type { Task } from "@/types/task.ts";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx";
 import TaskCard from "@/pages/task/TaskCard";
-import { useUserStore } from "@/store/user-store.ts";
-import { useTaskStore } from "@/store/task-store.ts";
+import { useSessionStore } from "@/store/session-store.ts";
+import { useCharacterStore } from "@/store/character-store.ts";
 
 const TaskPage: FC = () => {
-  const appendTask = useUserStore((s) => s.appendTask);
-  const taskList = useTaskStore((s) => s.taskList);
-  const loading = useTaskStore((s) => s.loading);
-  const loadTasks = useTaskStore((s) => s.loadTasks);
-  const updateTaskValues = useTaskStore((s) => s.updateTaskValues);
+  const appendTask = useSessionStore((s) => s.appendTask);
+  const taskList = useCharacterStore((s) => s.taskList);
+  const loading = useCharacterStore((s) => s.taskLoading);
+  const loadTasks = useCharacterStore((s) => s.loadTasks);
+  const updateTaskValues = useCharacterStore((s) => s.updateTaskValues);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
@@ -101,7 +101,7 @@ const TaskPage: FC = () => {
         if (ok.length) message.success(`成功导入 ${ok.length} 个任务`);
         if (fail.length) message.error(`${fail.length} 个导入失败`);
       }
-      useTaskStore.getState().loadTasks();
+      useCharacterStore.getState().loadTasks();
     } catch { message.error("导入失败"); }
     finally {
       setImporting(false);
@@ -118,7 +118,7 @@ const TaskPage: FC = () => {
       okText: "删除", okType: "danger", cancelText: "取消",
       onOk: async () => {
         await window.pywebview?.api.emit("API:TASK:DELETE", task.id);
-        useTaskStore.getState().loadTasks();
+        useCharacterStore.getState().loadTasks();
         message.success("任务已删除");
       },
     });
@@ -135,7 +135,7 @@ const TaskPage: FC = () => {
           await window.pywebview?.api.emit("API:TASK:DELETE", id);
         }
         setSelectedRowKeys([]);
-        useTaskStore.getState().loadTasks();
+        useCharacterStore.getState().loadTasks();
         message.success(`已删除 ${selectedRowKeys.length} 个任务`);
       },
     });

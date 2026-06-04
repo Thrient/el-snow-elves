@@ -4,8 +4,8 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { Button, Empty, Space } from "antd";
-import { useCharacterStore } from "@/store/character.ts";
-import { useUserStore, type PlanEntry } from "@/store/user-store.ts";
+import { useCharacterStore } from "@/store/character-store.ts";
+import { useSessionStore, type PlanEntry } from "@/store/session-store.ts";
 import type { PlanBase } from "@/types/plan.ts";
 import HwndPreviewModal from "@/components/hwnd-preview-modal/HwndPreviewModal.tsx";
 import PlanModal from "@/pages/plans/PlanModal.tsx";
@@ -17,7 +17,7 @@ import QueuePanel from "@/pages/windows/QueuePanel";
 const DOT_COLORS = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"];
 
 const WindowsPage: FC = () => {
-  const userStore = useUserStore();
+  const userStore = useSessionStore();
   const characterStore = useCharacterStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [planEditOpen, setPlanEditOpen] = useState(false);
@@ -41,7 +41,7 @@ const WindowsPage: FC = () => {
     if (!editingPlan) return;
     userStore.updatePlan(editingPlan._uid, planBase);
     if (selectedCharacter) {
-      characterStore.setPlans(selectedCharacter.hwnd, useUserStore.getState().plans);
+      characterStore.setPlans(selectedCharacter.hwnd, useSessionStore.getState().plans);
     }
     setPlanEditOpen(false);
     setEditingPlan(null);

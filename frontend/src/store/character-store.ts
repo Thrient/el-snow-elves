@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { useSettingsStore } from '@/store/settings-store'
-import type { TaskBase } from '@/types/task'
+import type { TaskBase, Task } from '@/types/task'
 import type { PlanBase } from '@/types/plan'
 import { getCronEngine, removeCronEngine } from '@/engine/CronEngine'
 
@@ -24,6 +24,8 @@ type Character = {
 type State = {
   characters: Character[]
   selectedHwnd: string | null
+  taskList: Task[]
+  taskLoading: boolean
   add: (data: Omit<Character, 'executeList' | 'plans'> & { executeList: ExecuteItem[]; plans?: PlanBase[] }) => void
   remove: (hwnd: string) => void
   update: (data: Partial<Character> & { hwnd: string }) => void
@@ -37,11 +39,15 @@ type State = {
   reorderExecute: (hwnd: string, orderedUids: number[]) => void
   setPlans: (hwnd: string, plans: PlanBase[]) => void
   syncPlansToAllWindows: (plans: PlanBase[]) => void
+  loadTasks: () => Promise<void>
+  updateTaskValues: (id: string, values: Record<string, unknown>) => void
 }
 
 export const useCharacterStore = create<State>((set, get) => ({
   characters: [],
   selectedHwnd: null,
+  taskList: [],
+  taskLoading: true,
   add: (data) => {
     const plans = data.plans ?? [];
     const executeList = data.executeList;
@@ -195,6 +201,18 @@ export const useCharacterStore = create<State>((set, get) => ({
                 .filter((item): item is ExecuteEntry => item !== undefined),
             }
           : character
+      ),
+    })),
+  loadTasks: async () => {
+    try {
+      const result = await window.pywebview?.api.emit("API:SCRIPT:LOAD:LIST");
+      set({ taskList: (result ?? []) as Task[], taskLoading: false });
+    } catch { set({ taskLoading: false }); }
+  },
+  updateTaskValues: (id, values) =>
+    set((state) => ({
+      taskList: state.taskList.map((t) =>
+        t.id === id ? { ...t, values } : t
       ),
     })),
 }))

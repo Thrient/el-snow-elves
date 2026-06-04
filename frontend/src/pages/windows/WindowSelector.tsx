@@ -1,6 +1,6 @@
 import { type FC } from "react";
 import { DesktopOutlined, PlusOutlined } from "@ant-design/icons";
-import { useCharacterStore } from "@/store/character";
+import { useCharacterStore } from "@/store/character-store";
 
 const DOT_COLORS = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"];
 

@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { AutoComplete, Button, message, Modal, Select, Space, Spin } from "antd";
 import { DeleteOutlined, FileOutlined, DownloadOutlined, SaveOutlined } from "@ant-design/icons";
-import { useUserStore } from "@/store/user-store.ts";
+import { useSessionStore } from "@/store/session-store.ts";
 import { useSysStore } from "@/store/sys-store.ts";
 import { callApi, waitForPywebview } from "@/utils/pywebview.ts";
 
@@ -14,7 +14,7 @@ const ConfigHeader: FC = () => {
   const [saveName, setSaveName] = useState("")
   const [loadingConfig, setLoadingConfig] = useState(false)
   const sysStore = useSysStore()
-  const userStore = useUserStore()
+  const userStore = useSessionStore()
 
   const fetchConfigFiles = useCallback(async () => {
     try {
@@ -69,7 +69,7 @@ const ConfigHeader: FC = () => {
     if (!saveName.trim()) return
     setSaving(true)
     setSaveModalOpen(false)
-    const state = useUserStore.getState()
+    const state = useSessionStore.getState()
     const payload: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(state)) {
       if (typeof value !== "function") {

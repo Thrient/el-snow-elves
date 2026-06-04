@@ -1,10 +1,10 @@
 import { Cron } from "croner";
 import type { PlanBase } from "@/types/plan";
-import type { ExecuteItem } from "@/store/character";
+import type { ExecuteItem } from "@/store/character-store";
 import { callApi } from "@/utils/pywebview";
 
 function getCharStore() { return window.useCharacterStore!.getState(); }
-function getTaskStore() { return window.useTaskStore!.getState(); }
+function getTaskStore() { return window.useCharacterStore!.getState(); }
 
 type CronJob = Cron;
 

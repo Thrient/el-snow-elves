@@ -8,7 +8,7 @@ import {
   ReloadOutlined, PlayCircleOutlined, SettingOutlined,
 } from "@ant-design/icons";
 import { useEditorStore } from "@/store/editor-store";
-import { useCharacterStore } from "@/store/character";
+import { useCharacterStore } from "@/store/character-store";
 import ScreenshotCropperModal from "@/pages/task-editor/components/screenshot-cropper/ScreenshotCropperModal";
 import FlowEditor from "@/pages/task-editor/components/flow-editor/FlowEditor";
 import VariablePanel from "@/pages/task-editor/components/variable-panel/VariablePanel";

@@ -4,7 +4,7 @@ import {
   ClearOutlined, LockOutlined, UnlockOutlined,
   PauseCircleOutlined, PlayCircleOutlined, StopOutlined,
 } from "@ant-design/icons";
-import { useCharacterStore } from "@/store/character";
+import { useCharacterStore } from "@/store/character-store";
 
 const ControlPanel: FC = () => {
   const characterStore = useCharacterStore();

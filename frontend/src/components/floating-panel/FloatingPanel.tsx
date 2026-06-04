@@ -2,9 +2,8 @@ import { type FC, type MouseEvent } from "react"
 import { useEffect, useRef, useState } from "react"
 import { Badge, Switch, Tabs } from "antd"
 import { ArrowDownOutlined, UnorderedListOutlined, InboxOutlined, ClockCircleOutlined, HolderOutlined } from "@ant-design/icons"
-import { useUserStore } from "@/store/user-store.ts"
-import { useCharacterStore } from "@/store/character.ts"
-import { useTaskStore } from "@/store/task-store.ts"
+import { useSessionStore } from "@/store/session-store.ts"
+import { useCharacterStore } from "@/store/character-store.ts"
 import { useResponsiveStore } from "@/store/responsive-store.ts"
 import type { Task } from "@/types/task.ts"
 import { PLAN_TEMPLATES } from "@/types/plan.ts"
@@ -36,8 +35,8 @@ const cardBorderColors = [
 const dotColors = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"]
 
 const FloatingPanel: FC = () => {
-  const queue = useUserStore((s) => s.queue)
-  const plans = useUserStore((s) => s.plans)
+  const queue = useSessionStore((s) => s.queue)
+  const plans = useSessionStore((s) => s.plans)
   const [expanded, setExpanded] = useState(false)
   const [position, setPosition] = useState({ x: 16, y: 120 })
   const posRef = useRef(position)
@@ -48,7 +47,7 @@ const FloatingPanel: FC = () => {
 
   const [activeTab, setActiveTab] = useState<"queue" | "plans">("queue")
 
-  const updatePlan = useUserStore((s) => s.updatePlan);
+  const updatePlan = useSessionStore((s) => s.updatePlan);
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [planModalUid, setPlanModalUid] = useState<number | null>(null);
   const [planModalData, setPlanModalData] = useState<PlanBase | null>(null);
@@ -57,11 +56,11 @@ const FloatingPanel: FC = () => {
   const [configTask, setConfigTask] = useState<Task | null>(null)
   const [configUid, setConfigUid] = useState<number | null>(null)
 
-  const updateTaskValues = useUserStore((s) => s.updateTaskValues)
-  const removeTask = useUserStore((s) => s.removeTask)
-  const reorderQueue = useUserStore((s) => s.reorderQueue)
-  const removePlan = useUserStore((s) => s.removePlan)
-  const togglePlan = useUserStore((s) => s.togglePlan)
+  const updateTaskValues = useSessionStore((s) => s.updateTaskValues)
+  const removeTask = useSessionStore((s) => s.removeTask)
+  const reorderQueue = useSessionStore((s) => s.reorderQueue)
+  const removePlan = useSessionStore((s) => s.removePlan)
+  const togglePlan = useSessionStore((s) => s.togglePlan)
 
   type SwipeTarget = { uid: number; type: "queue" | "plan" }
   const [swiping, setSwiping] = useState<SwipeTarget | null>(null)
@@ -98,10 +97,10 @@ const FloatingPanel: FC = () => {
           const charStore = useCharacterStore.getState()
           if (charStore.selectedHwnd) {
             if (swiping.type === "queue") {
-              const task = useUserStore.getState().queue.find((t) => t._uid === swiping.uid)
+              const task = useSessionStore.getState().queue.find((t) => t._uid === swiping.uid)
               if (task) charStore.pushExecute(charStore.selectedHwnd, { id: task.id, name: task.name, version: task.version, values: task.values })
             } else {
-              charStore.syncPlansToAllWindows(useUserStore.getState().plans)
+              charStore.syncPlansToAllWindows(useSessionStore.getState().plans)
             }
           }
         }
@@ -234,10 +233,10 @@ const FloatingPanel: FC = () => {
 
   // ---- Config modal ----
   const openConfig = (uid: number) => {
-    const itemQueue = useUserStore.getState().queue
+    const itemQueue = useSessionStore.getState().queue
     const item = itemQueue.find((t) => t._uid === uid)
     if (!item) return
-    const taskStore = useTaskStore.getState()
+    const taskStore = useCharacterStore.getState()
     const original = taskStore.taskList.find((t) => t.id === item.id)
     if (original) {
       setConfigTask({ ...original, values: item.values })
@@ -500,7 +499,7 @@ const FloatingPanel: FC = () => {
                                     onClick={(_, e) => e.stopPropagation()}
                                     onChange={() => {
                                       togglePlan(plan._uid);
-                                      useCharacterStore.getState().syncPlansToAllWindows(useUserStore.getState().plans);
+                                      useCharacterStore.getState().syncPlansToAllWindows(useSessionStore.getState().plans);
                                     }}
                                   />
                                 </div>
@@ -537,7 +536,7 @@ const FloatingPanel: FC = () => {
         onSave={(saved) => {
           if (planModalUid !== null) {
             updatePlan(planModalUid, saved);
-            useCharacterStore.getState().syncPlansToAllWindows(useUserStore.getState().plans);
+            useCharacterStore.getState().syncPlansToAllWindows(useSessionStore.getState().plans);
           }
           setPlanModalOpen(false);
           setPlanModalData(null);

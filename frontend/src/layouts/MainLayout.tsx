@@ -1,6 +1,6 @@
 import { type FC, useEffect, useRef, useState } from "react";
 import { useSettingsStore } from "@/store/settings-store";
-import { useTaskStore } from "@/store/task-store";
+import { useCharacterStore } from "@/store/character-store";
 import { useUpdateStore } from "@/store/update-store";
 import { waitForPywebview } from "@/utils/pywebview.ts";
 import { compareVersion } from "@/utils/version";
@@ -29,7 +29,7 @@ const MainLayout: FC = () => {
     const init = async () => {
       await waitForPywebview()
       useSettingsStore.getState().loadSettings()
-      useTaskStore.getState().loadTasks()
+      useCharacterStore.getState().loadTasks()
 
       // Check for updates on startup
       try {
