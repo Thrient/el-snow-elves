@@ -13,7 +13,7 @@ import ScreenshotCropperModal from "@/components/screenshot-cropper/ScreenshotCr
 import FlowEditor from "@/components/flow-editor/FlowEditor";
 import VariablePanel from "@/components/variable-panel/VariablePanel";
 import { useSettingsStore } from "@/store/settings-store";
-import { taskToFlow, flowToTask } from "@/types/flow";
+import { taskToFlow, flowToTask } from "@/utils/flow-convert";
 import type { FullTask, Step } from "@/types/task";
 import type { StepNodeData, StepEdgeData } from "@/types/flow";
 import type { Node, Edge } from "@xyflow/react";
