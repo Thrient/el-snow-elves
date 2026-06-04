@@ -4,8 +4,8 @@ export async function checkUpdate(): Promise<Record<string, unknown> | null> {
   return callApi<Record<string, unknown>>("API:UPDATE:CHECK");
 }
 
-export async function downloadUpdate(version: string): Promise<void> {
-  return callApi("API:UPDATE:DOWNLOAD", version);
+export async function downloadUpdate(currentVersion: string): Promise<void> {
+  return callApi("API:UPDATE:DOWNLOAD", { current_version: currentVersion });
 }
 
 export async function applyUpdate(): Promise<void> {
@@ -17,7 +17,7 @@ export async function getVersion(): Promise<string> {
 }
 
 export async function getUpdateDiff(
-  current: string, target: string,
+  currentVersion: string, manifest: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  return callApi("API:UPDATE:DIFF", current, target) ?? {};
+  return callApi("API:UPDATE:DIFF", { current_version: currentVersion, manifest }) ?? {};
 }

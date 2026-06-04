@@ -16,6 +16,14 @@ export async function renameAccount(oldName: string, newName: string): Promise<v
   return callApi("API:ACCOUNT:RENAME", oldName, newName);
 }
 
+export async function saveOrder(order: string[]): Promise<void> {
+  return callApi("API:ACCOUNT:SAVE_ORDER", order);
+}
+
+export async function quickStart(): Promise<void> {
+  return callApi("API:ACCOUNT:QUICK_START");
+}
+
 export async function startRecord(): Promise<void> {
   return callApi("API:ACCOUNT:RECORD:START");
 }

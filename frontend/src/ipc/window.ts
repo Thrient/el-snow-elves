@@ -31,10 +31,14 @@ export async function stopWindow(hwnd: string): Promise<void> {
   return callApi("API:SCRIPT:STOP", hwnd);
 }
 
-export async function setWindowOpacity(hwnd: string, opacity: number): Promise<void> {
-  return callApi("API:SCRIPT:SET_OPACITY", hwnd, opacity);
+export async function lockWindow(hwnd: string): Promise<void> {
+  return callApi("API:SCRIPT:LOCK", hwnd);
 }
 
-export async function pushExecute(hwnd: string, payload: Record<string, unknown>): Promise<void> {
-  return callApi("API:SCRIPT:PUSH_EXECUTE", hwnd, payload);
+export async function unlockWindow(hwnd: string): Promise<void> {
+  return callApi("API:SCRIPT:UNLOCK", hwnd);
+}
+
+export async function setWindowOpacity(hwnd: string, opacity: number): Promise<void> {
+  return callApi("API:SCRIPT:SET_OPACITY", hwnd, opacity);
 }
