@@ -420,7 +420,7 @@ const TaskEditorPage: FC = () => {
       </div>
 
       <div className="flex flex-1 min-h-0">
-        <div className="flex-1 min-h-0 bg-[#fcfcfd]">
+        <div className="flex-1 min-h-0 bg-white">
           <FlowEditor task={editor.currentTask!} nodes={flowNodes} edges={flowEdges}
             onNodesChange={(ns) => { setFlowNodes(ns); if (!initRef.current) editor.setDirty(true); }}
             onEdgesChange={(es) => { setFlowEdges(es); if (!initRef.current) editor.setDirty(true); }}
