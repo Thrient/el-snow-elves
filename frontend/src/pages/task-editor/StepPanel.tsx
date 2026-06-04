@@ -84,7 +84,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 thin-scrollbar">
 
         {/* Basic info */}
-        <div className="rounded-xl border border-[#eef0f2] bg-white p-3.5 space-y-2.5">
+        <div className="rounded-xl bg-white shadow-sm p-3.5 space-y-2.5">
           <div className="flex items-center gap-2">
             <div className="w-1 h-4 rounded-full bg-[#1677ff]" />
             <span className="text-[11px] font-semibold text-[#1a1a2e]">基础</span>
@@ -244,7 +244,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
         ) : (
           /* ── Expanded section ── */
           card && (
-          <div className="rounded-xl border border-[#eef0f2] bg-white overflow-hidden">
+          <div className="rounded-xl bg-white shadow-sm overflow-hidden">
             {/* Section header with back button */}
             <div className="flex items-center gap-2 px-3 py-1.5" style={{ background: card.light }}>
               <button onClick={() => setExpanded(null)}

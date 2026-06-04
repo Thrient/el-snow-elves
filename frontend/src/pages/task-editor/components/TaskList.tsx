@@ -29,7 +29,7 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
   };
 
   return (
-    <div className="page-container !p-0 overflow-hidden border border-[#eef0f2]">
+    <div className="page-container !p-0 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#eef0f2] bg-[#fafbfc] shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center">
@@ -53,7 +53,7 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
             {filtered.map((t) => (
               <div key={t.id} onClick={() => onOpenTask(t)}
                 className="flex items-center gap-4 px-5 py-4 rounded-xl cursor-pointer
-                  transition-all border border-[#eef0f2] hover:border-[#d0dbff] hover:bg-[#fafbff] hover:shadow-sm">
+                  transition-all hover:scale-[1.01] hover:shadow-card-hover">
                 <div className="w-10 h-10 rounded-xl bg-[#f0f2f5] flex items-center justify-center shrink-0">
                   <CodeOutlined className="text-sm text-[#6b7280]" /></div>
                 <div className="flex-1 min-w-0">

@@ -48,7 +48,7 @@ const QueuePanel: FC = () => {
 
   return (
     <>
-      <div className="flex flex-col min-h-0 bg-white rounded-xl border border-solid border-[#eef0f2] overflow-hidden">
+      <div className="flex flex-col min-h-0 bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="shrink-0 flex items-center justify-between px-4 py-3" style={{ boxShadow: "inset 0 -1px 0 #f3f4f6" }}>
           <div className="flex items-center gap-2.5">
             <span className="text-[13px] font-semibold text-[#1a1a2e]">待执行任务</span>

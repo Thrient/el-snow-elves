@@ -98,7 +98,7 @@ const HwndPreviewModal: FC<Props> = (props) => {
             <div
               key={item.hwnd}
               onClick={() => handleClick(item)}
-              className="group rounded-xl overflow-hidden cursor-pointer border border-[#eef0f2] bg-white transition-all duration-200 hover:border-[#1677ff] hover:shadow-[0_4px_16px_rgba(22,119,255,0.1)] hover:-translate-y-0.5"
+              className="group rounded-xl overflow-hidden cursor-pointer bg-white shadow-sm transition-all duration-200 hover:border-[#1677ff] hover:shadow-[0_4px_16px_rgba(22,119,255,0.1)] hover:-translate-y-0.5"
             >
               <div className="relative overflow-hidden">
                 <img
