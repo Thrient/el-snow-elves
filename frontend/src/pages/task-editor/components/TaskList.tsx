@@ -30,7 +30,7 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
 
   return (
     <div className="page-container !p-0 overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#eef0f2] bg-[#fafbfc] shrink-0">
+      <div className="page-header">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center">
             <CodeOutlined className="text-sm text-[#1677ff]" /></div>
