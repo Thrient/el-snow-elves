@@ -8,25 +8,23 @@ import webview
 from script.api.Api import api
 from script.api.JsApi import js
 from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH, PROJECT_ROOT
-from script.util.LogManager import setup_logging, read_logs, get_log_files
+from script.util.LogManager import setup_logging
 from script.core.QuickStart import QuickStart
 from script.engine.screen_capture import ScreenCapture
 from script.window.script import Script
-from script.settings.task_config import get_config_list, save_config, load_config, delete_config
-from script.task_editor.task_library import load_task_list, get_full_task_config, save_full_task_config, create_task, delete_task, import_task, list_steps_for_task, build_task_zip
-from script.task_editor.template_assets import list_actions, list_template_images, list_global_common_steps, load_positions, save_positions
-from script.settings.app_config import load_settings, load_plans, save_plans
-from script.engine.flow_engine import clear_common_cache
+
+from script.task_editor.task_library import build_task_zip
+
+
 from script.account.AccountManager import AccountManager
 from script.account.SessionManager import get_session
 from script.engine.template_matcher import TemplateMatcher
-from script.infrastructure.update_engine import UpdateEngine
-from script.infrastructure.update_worker import UpdateWorker
+
 from script.util.CacheManager import clear_webview_cache_if_version_changed
 from script.window.window_utils import Window, calc_window_size, get_hwnd_by_title
 from script.util.TrayIcon import TrayIcon
 from script.util.CloseDialog import load_close_preference, save_close_preference
-from script.util.GamePathManager import get_game_path, set_game_path
+
 from script.util.StartupManager import get_autostart, set_autostart
 
 
@@ -166,83 +164,24 @@ class App:
         self.window.destroy()
 
     def init(self):
-        api.on("API:SETTINGS:LOAD", load_settings)
-        api.on("API:SCRIPT:SAVE:CONFIG", save_config)
-        api.on("API:SCRIPT:LOAD:CONFIG", load_config)
-        api.on("API:SCRIPT:LOAD:CONFIG:LIST", get_config_list)
-        api.on("API:SCRIPT:DELETE:CONFIG", delete_config)
-        api.on("API:SCRIPT:LOAD:LIST", load_task_list)
-        api.on("API:SCRIPT:SEARCH", self.search)
-        api.on("API:SCRIPT:BIND", self.bind)
-        api.on("API:SCRIPT:UNBIND", self.unbind)
-        api.on("API:SCRIPT:RESUME", self.resume)
-        api.on("API:SCRIPT:PAUSE", self.pause)
-        api.on("API:SCRIPT:STOP", self.stop_task)
-        api.on("API:SCRIPT:LOCK", self.lock_window)
-        api.on("API:SCRIPT:UNLOCK", self.unlock_window)
-        api.on("API:SCRIPT:SET_OPACITY", self.set_window_opacity)
-        api.on("API:TASK:LOAD:FULL", get_full_task_config)
-        api.on("API:TASK:SAVE:FULL", save_full_task_config)
-        api.on("API:TASK:CREATE", create_task)
-        api.on("API:TASK:DELETE", delete_task)
-        api.on("API:TASK:EXPORT", self.export_task)
-        api.on("API:TASK:EXPORT:BATCH", self.export_tasks_batch)
-        api.on("API:TASK:IMPORT", import_task)
-        api.on("API:AUTOCOMPLETE:ACTIONS", list_actions)
-        api.on("API:AUTOCOMPLETE:TEMPLATES", list_template_images)
-        api.on("API:AUTOCOMPLETE:STEPS", list_steps_for_task)
-        api.on("API:AUTOCOMPLETE:COMMON:STEPS", list_global_common_steps)
-        api.on("API:COMMON:CACHE:CLEAR", clear_common_cache)
-        api.on("API:TASK:LOAD:POSITIONS", load_positions)
-        api.on("API:TASK:SAVE:POSITIONS", save_positions)
-        api.on("API:TEMPLATE:CAPTURE", self.capture_for_template)
-        api.on("API:TEMPLATE:CAPTURE:PNG", self.capture_for_template_png)
-        api.on("API:TEMPLATE:SAVE", self.save_template_image)
-        api.on("API:PREPROCESS:APPLY", self.preprocess_apply)
-        api.on("API:LOG:READ", read_logs)
-        api.on("API:LOG:FILES", get_log_files)
-        api.on("API:PLAN:LOAD", load_plans)
-        api.on("API:PLAN:SAVE", save_plans)
-        api.on("API:CRON:TRIGGER", self._on_cron_trigger)
-        api.on("API:ACCOUNT:LIST", AccountManager.list_accounts)
-        api.on("API:ACCOUNT:LIST:NAMES", AccountManager.list_account_names)
-        api.on("API:ACCOUNT:SAVE", AccountManager.save_account)
-        api.on("API:ACCOUNT:DELETE", AccountManager.delete_account)
-        api.on("API:ACCOUNT:RENAME", AccountManager.rename_account)
-        api.on("API:ACCOUNT:SAVE_ORDER", AccountManager.save_order)
-        api.on("API:ACCOUNT:RECORD:START", self._session.start_qr_recording)
-        api.on("API:ACCOUNT:RECORD:START:CHANNEL", self._session.start_channel_recording)
-        api.on("API:ACCOUNT:RECORD:STOP", self._session.stop_recording)
-        api.on("API:ACCOUNT:RECORD:STATUS", self._session.recording_status)
-        api.on("API:ACCOUNT:REPLAY:START", self._session.start_replay)
-        api.on("API:ACCOUNT:QUICK_START", self._qs.execute)
-        api.on("API:ACCOUNT:REPLAY:STOP", self._session.stop_replay)
-        api.on("API:AUTOSTART:GET", lambda: get_autostart())
-        api.on("API:AUTOSTART:SET", set_autostart)
-        api.on("API:UPDATE:CHECK", UpdateEngine.check_version)
-        api.on("API:APP:VERSION", lambda: VERSION)
+        """初始化应用 — 注册所有领域的 IPC 事件处理器。"""
+        from script.task_editor import register as reg_task_editor
+        from script.task import register as reg_task
+        from script.window import register as reg_window
+        from script.account import register as reg_account
+        from script.plan import register as reg_plan
+        from script.settings import register as reg_settings
+        from script.log import register as reg_log
+        from script.infrastructure import register as reg_infra
 
-        def _handle_update_diff(payload: dict):
-            return UpdateEngine.diff_manifest(
-                payload.get("current_version", "0.0.0"),
-                payload.get("manifest", {}),
-            )
-        api.on("API:UPDATE:DIFF", _handle_update_diff)
-
-        def _handle_update_download(payload: dict):
-            return UpdateWorker.download_updates(payload.get("current_version", "0.0.0"))
-        api.on("API:UPDATE:DOWNLOAD", _handle_update_download)
-
-        def _handle_update_apply():
-            UpdateWorker.apply_and_restart()  # 写 batch + 启动
-            import time
-            time.sleep(0.3)  # 让 batch 进入等待循环
-            self._do_exit()   # 正常退出 → window.destroy() → WebView2 干净退出
-
-        api.on("API:UPDATE:APPLY", lambda: _handle_update_apply())
-
-        api.on("API:GAME:GET_PATH", get_game_path)
-        api.on("API:GAME:SET_PATH", lambda: set_game_path(self.window))
+        reg_task_editor(api, self)
+        reg_task(api, self)
+        reg_window(api, self)
+        reg_account(api, self)
+        reg_plan(api, self)
+        reg_settings(api)
+        reg_log(api)
+        reg_infra(api, self)
 
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
