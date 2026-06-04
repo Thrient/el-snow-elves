@@ -4,7 +4,7 @@ import {
 } from "react";
 import { Button, Input, Modal, message } from "antd";
 import type { Cell, CellModel, VarType } from "@/types/task";
-import { VAR_TYPE_OPTS } from "@/utils/type-compat";
+import { VAR_TYPE_OPTS } from "@/types/variable/system-vars";
 import MiniPreview from "@/pages/task-editor/components/mini-preview/MiniPreview";
 import ComponentPickerModal from "./ComponentPickerModal";
 import ControlEditorModal from "./ControlEditorModal";
