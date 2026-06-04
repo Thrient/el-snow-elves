@@ -31,10 +31,9 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
   return (
     <div className="page-container !p-0 overflow-hidden">
       <div className="page-header">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center">
-            <CodeOutlined className="text-sm text-[#1677ff]" /></div>
-          <span className="text-sm font-bold text-[#1a1a2e]">任务编辑</span>
+        <div className="page-header__left">
+          <span className="page-header__accent" />
+          <h2 className="page-header__title">任务编辑</h2>
         </div>
         <Button icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>新建任务</Button>
       </div>
