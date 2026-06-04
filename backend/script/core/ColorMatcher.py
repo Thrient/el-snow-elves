@@ -2,7 +2,7 @@
 import logging
 import numpy as np
 from script.config.Setting import BOX
-from script.core.ScreenCapture import ScreenCapture
+from script.engine.screen_capture import ScreenCapture
 
 
 class ColorMatcher:

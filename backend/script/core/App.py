@@ -10,20 +10,20 @@ from script.api.JsApi import js
 from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH, PROJECT_ROOT
 from script.util.LogManager import setup_logging, read_logs, get_log_files
 from script.core.QuickStart import QuickStart
-from script.core.ScreenCapture import ScreenCapture
-from script.core.Script import Script
-from script.core.TaskConfig import get_config_list, save_config, load_config, delete_config
-from script.core.TaskLibrary import load_task_list, get_full_task_config, save_full_task_config, create_task, delete_task, import_task, list_steps_for_task, build_task_zip
-from script.core.TemplateAssets import list_actions, list_template_images, list_global_common_steps, load_positions, save_positions
-from script.core.AppConfig import load_settings, load_plans, save_plans
-from script.core.FlowEngine import clear_common_cache
+from script.engine.screen_capture import ScreenCapture
+from script.window.script import Script
+from script.settings.task_config import get_config_list, save_config, load_config, delete_config
+from script.task_editor.task_library import load_task_list, get_full_task_config, save_full_task_config, create_task, delete_task, import_task, list_steps_for_task, build_task_zip
+from script.task_editor.template_assets import list_actions, list_template_images, list_global_common_steps, load_positions, save_positions
+from script.settings.app_config import load_settings, load_plans, save_plans
+from script.engine.flow_engine import clear_common_cache
 from script.account.AccountManager import AccountManager
 from script.account.SessionManager import get_session
-from script.core.TemplateMatcher import TemplateMatcher
-from script.core.UpdateEngine import UpdateEngine
-from script.core.UpdateWorker import UpdateWorker
+from script.engine.template_matcher import TemplateMatcher
+from script.infrastructure.update_engine import UpdateEngine
+from script.infrastructure.update_worker import UpdateWorker
 from script.util.CacheManager import clear_webview_cache_if_version_changed
-from script.core.Window import Window, calc_window_size, get_hwnd_by_title
+from script.window.window_utils import Window, calc_window_size, get_hwnd_by_title
 from script.util.TrayIcon import TrayIcon
 from script.util.CloseDialog import load_close_preference, save_close_preference
 from script.util.GamePathManager import get_game_path, set_game_path

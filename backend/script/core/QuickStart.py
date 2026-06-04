@@ -8,7 +8,7 @@ import subprocess
 import webview
 
 from script.config.Setting import STORAGE_PATH
-from script.core.Window import Window, get_hwnd_by_title, wait_for_new_game_window, find_window_by_title_and_owner_hwnd
+from script.window.window_utils import Window, get_hwnd_by_title, wait_for_new_game_window, find_window_by_title_and_owner_hwnd
 from script.util.GameDetector import find_game_exe
 
 
@@ -91,8 +91,8 @@ class QuickStart:
     @staticmethod
     def _navigate_to_login(hwnd):
         """模板匹配点击流程：从游戏主界面导航到扫码登录界面"""
-        from script.core.InputSimulator import InputSimulator
-        from script.core.TemplateMatcher import TemplateMatcher
+        from script.engine.input_simulator import InputSimulator
+        from script.engine.template_matcher import TemplateMatcher
         from script.functools.Functools import wait_until
 
         inp = InputSimulator()

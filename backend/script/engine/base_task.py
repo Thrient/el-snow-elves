@@ -8,9 +8,9 @@ import cv2
 from script.api.JsApi import js
 from script.config.Setting import OVERTIME
 from script.core.ColorMatcher import ColorMatcher
-from script.core.InputSimulator import InputSimulator
-from script.core.ScreenCapture import ScreenCapture
-from script.core.TemplateMatcher import TemplateMatcher
+from script.engine.input_simulator import InputSimulator
+from script.engine.screen_capture import ScreenCapture
+from script.engine.template_matcher import TemplateMatcher
 from script.functools.Functools import during, wait_until
 from script.account.AccountManager import AccountManager
 from script.account.AccountProxy import INJECTION, get_proxy

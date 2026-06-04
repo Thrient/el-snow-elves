@@ -3,8 +3,8 @@ import time
 from threading import Thread, Event
 
 from script.api.JsApi import js
-from script.core.FlowEngine import FlowEngine
-from script.core.TaskLibrary import get_task_config_by_id
+from script.engine.flow_engine import FlowEngine
+from script.task_editor.task_library import get_task_config_by_id
 
 
 class Script(Thread):
