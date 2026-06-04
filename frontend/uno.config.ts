@@ -12,7 +12,7 @@ import {
 export default defineConfig({
   shortcuts: [
     // ── Page shell ──
-    ['page-container', 'flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-5 shadow-sm border border-solid border-border'],
+    ['page-container', 'flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-5 shadow-sm'],
     ['page-header',   'flex items-center justify-between px-6 py-3 border-b border-solid border-border bg-container shrink-0'],
     ['page-content',  'flex-1 overflow-y-auto p-5'],
 
@@ -21,7 +21,7 @@ export default defineConfig({
     ['header-accent',  'w-1 h-5 rounded-full shrink-0 bg-primary'],
 
     // ── Cards ──
-    ['card-interactive', 'rounded-card border border-solid border-border bg-white hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 cursor-pointer'],
+    ['card-interactive', 'rounded-card bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 cursor-pointer'],
 
     // ── Border radius semantic tokens ──
     ['rounded-card',  'rounded-12px'],
