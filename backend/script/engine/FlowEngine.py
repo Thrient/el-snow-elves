@@ -6,9 +6,9 @@ import time
 from threading import Thread, Event, Lock
 
 from script.config.Setting import PROJECT_ROOT
-from script.engine.variable_processor import VariableProcessor
-from script.window.window_utils import Window, find_window_by_title_and_owner_hwnd
-from script.engine.base_task import BaseTask
+from script.engine.VariableProcessor import VariableProcessor
+from script.window.WindowUtils import Window, find_window_by_title_and_owner_hwnd
+from script.engine.BaseTask import BaseTask
 
 _COMMON_CACHE = None
 _COMMON_CACHE_LOCK = Lock()

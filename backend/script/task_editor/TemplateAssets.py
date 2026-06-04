@@ -3,7 +3,7 @@ import logging
 import os
 
 from script.config.Setting import PROJECT_ROOT
-from script.task_editor.task_library import TASK_CONFIG_CACHE
+from script.task_editor.TaskLibrary import TASK_CONFIG_CACHE
 
 
 def list_actions():

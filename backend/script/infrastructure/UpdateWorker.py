@@ -6,7 +6,7 @@ import subprocess
 import sys
 from script.api.JsApi import js
 from script.config.Setting import APP_DATA, STORAGE_PATH
-from script.infrastructure.update_engine import UpdateEngine, APP_DIR
+from script.infrastructure.UpdateEngine import UpdateEngine, APP_DIR
 
 _log = logging.getLogger("Elves.UpdateWorker")
 

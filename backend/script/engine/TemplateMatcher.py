@@ -20,7 +20,7 @@ from airtest.aircv.template_matching import TemplateMatching
 from airtest.aircv.keypoint_matching_contrib import SIFTMatching
 
 from script.config.Setting import BOX, THRESHOLD, PROJECT_ROOT, PREPROCESS_KEYS
-from script.engine.screen_capture import ScreenCapture
+from script.engine.ScreenCapture import ScreenCapture
 
 logging.getLogger("airtest").setLevel(logging.WARNING)
 

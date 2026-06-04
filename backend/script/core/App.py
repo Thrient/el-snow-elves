@@ -10,18 +10,18 @@ from script.api.JsApi import js
 from script.config.Setting import APP_TITLE, VERSION, STORAGE_PATH, PROJECT_ROOT
 from script.util.LogManager import setup_logging
 from script.core.QuickStart import QuickStart
-from script.engine.screen_capture import ScreenCapture
-from script.window.script import Script
+from script.engine.ScreenCapture import ScreenCapture
+from script.window.Script import Script
 
-from script.task_editor.task_library import build_task_zip
+from script.task_editor.TaskLibrary import build_task_zip
 
 
 from script.account.AccountManager import AccountManager
 from script.account.SessionManager import get_session
-from script.engine.template_matcher import TemplateMatcher
+from script.engine.TemplateMatcher import TemplateMatcher
 
 from script.util.CacheManager import clear_webview_cache_if_version_changed
-from script.window.window_utils import Window, calc_window_size, get_hwnd_by_title
+from script.window.WindowUtils import Window, calc_window_size, get_hwnd_by_title
 from script.util.TrayIcon import TrayIcon
 from script.util.CloseDialog import load_close_preference, save_close_preference
 

@@ -5,8 +5,8 @@ from script.api.Api import Api
 def register(api: Api, app) -> None:
     """注册 infrastructure 领域所有 IPC 事件处理器。"""
     from script.config.Setting import VERSION
-    from script.infrastructure.update_engine import UpdateEngine
-    from script.infrastructure.update_worker import UpdateWorker
+    from script.infrastructure.UpdateEngine import UpdateEngine
+    from script.infrastructure.UpdateWorker import UpdateWorker
 
     api.on("API:UPDATE:CHECK", UpdateEngine.check_version)
     api.on("API:APP:VERSION", lambda: VERSION)
