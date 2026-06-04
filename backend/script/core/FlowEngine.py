@@ -311,7 +311,7 @@ class FlowEngine(Thread):
             pts = ", ".join(f"({x},{y})" for x, y in result[:6])
             more = f" +{n - 6}" if n > 6 else ""
             return f"{n}匹配 [{pts}{more}]"
-        if result is True:
+        if result:
             return "成功"
         if result is False or result is None or result == []:
             return "失败"

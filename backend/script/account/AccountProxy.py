@@ -13,6 +13,7 @@ import time
 from mitmproxy.options import Options
 from mitmproxy.tools.dump import DumpMaster
 from script.account.HostsManager import LOGIN_DOMAINS, HostsManager
+from script.config.Setting import APP_DATA
 
 logging.getLogger("mitmproxy").setLevel(logging.ERROR)
 
@@ -232,9 +233,7 @@ def get_proxy() -> "AccountProxy":
 class AccountProxy:
     """基于mitmproxy的HTTPS账号代理"""
 
-    CONF_DIR = os.path.join(
-        os.path.dirname(__file__), "..", "..", "mitmproxy-conf"
-    )
+    CONF_DIR = os.path.join(APP_DATA, "mitmproxy")
     CA_CERT = os.path.join(CONF_DIR, "mitmproxy-ca-cert.pem")
 
     def __init__(self, port=None, mode=RECORDING, token_info=None):

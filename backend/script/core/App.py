@@ -233,7 +233,13 @@ class App:
             return UpdateWorker.download_updates(payload.get("current_version", "0.0.0"))
         api.on("API:UPDATE:DOWNLOAD", _handle_update_download)
 
-        api.on("API:UPDATE:APPLY", lambda: UpdateWorker.apply_and_restart())
+        def _handle_update_apply():
+            UpdateWorker.apply_and_restart()  # 写 batch + 启动
+            import time
+            time.sleep(0.3)  # 让 batch 进入等待循环
+            self._do_exit()   # 正常退出 → window.destroy() → WebView2 干净退出
+
+        api.on("API:UPDATE:APPLY", lambda: _handle_update_apply())
 
         api.on("API:GAME:GET_PATH", get_game_path)
         api.on("API:GAME:SET_PATH", lambda: set_game_path(self.window))

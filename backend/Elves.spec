@@ -5,7 +5,9 @@ a = Analysis(
     ['Elves.py'],
     pathex=[],
     binaries=[('script.pyd', '.')],
-    datas=[],
+    datas=[
+        ('resources', 'resources'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

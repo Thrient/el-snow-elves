@@ -4,9 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
-import time
-
 from script.api.JsApi import js
 from script.config.Setting import APP_DATA, STORAGE_PATH
 from script.core.UpdateEngine import UpdateEngine, APP_DIR
@@ -75,34 +72,55 @@ class UpdateWorker:
 
     @staticmethod
     def _build_bat(pid: int, launch: str, cache_dirs: list[str]) -> str:
+        log = os.path.join(APP_DATA, "_update.log")
+        tee = f'>> "{log}" 2>&1'
+
         lines = ["@echo off"]
-        lines.append(f'echo [Elves] waiting for PID {pid} to exit...')
+        # 日志头
+        lines.append(f'echo [Elves] ==== UPDATE START %date% %time% ==== {tee}')
+        lines.append(f'echo [Elves] PID={pid} STAGING={STAGING_DIR} APP_DIR={APP_DIR} {tee}')
+
+        # 等主进程退出
+        lines.append(f'echo [Elves] waiting for PID {pid} to exit... {tee}')
         lines.append(":waitloop")
         lines.append(f'tasklist /fi "PID eq {pid}" 2>nul | find /i "{pid}" >nul')
         lines.append("if not errorlevel 1 (")
         lines.append("    timeout /t 1 /nobreak > nul")
         lines.append("    goto waitloop")
         lines.append(")")
-        lines.append("echo [Elves] copying files...")
-        lines.append(f'xcopy /y /s /e "{STAGING_DIR}\\*" "{APP_DIR}\\"')
+
+        # 主进程已退出，额外等 3 秒让 Windows 释放子进程文件句柄
+        lines.append(f'echo [Elves] PID {pid} exited, waiting for file handles... {tee}')
+        lines.append("timeout /t 3 /nobreak > nul")
+
+        # 复制文件
+        lines.append(f'echo [Elves] copying files... {tee}')
+        lines.append(f'xcopy /y /s /e "{STAGING_DIR}\\*" "{APP_DIR}\\\\" {tee}')
         lines.append("if errorlevel 1 (")
-        lines.append("    echo [Elves] ERROR: xcopy failed, some files may be in use")
-        lines.append("    pause")
-        lines.append("    exit /b 1")
+        lines.append(f'    echo [Elves] ERROR: xcopy failed, retrying with robocopy... {tee}')
+        lines.append(f'    robocopy "{STAGING_DIR}" "{APP_DIR}" /e /is /it /r:3 /w:3 {tee}')
+        lines.append("    if errorlevel 8 (")
+        lines.append(f"        echo [Elves] FATAL: robocopy also failed {tee}")
+        lines.append("    )")
         lines.append(")")
-        lines.append("echo [Elves] cleaning staging...")
-        lines.append(f'rmdir /s /q "{STAGING_DIR}"')
-        lines.append("echo [Elves] clearing WebView2 cache...")
+
+        # 清理
+        lines.append(f'echo [Elves] cleaning staging... {tee}')
+        lines.append(f'rmdir /s /q "{STAGING_DIR}" {tee} 2>nul')
+
+        lines.append(f'echo [Elves] clearing WebView2 cache... {tee}')
         for d in cache_dirs:
-            lines.append(f'if exist "{d}" rmdir /s /q "{d}"')
-        lines.append("echo [Elves] launching...")
+            lines.append(f'if exist "{d}" rmdir /s /q "{d}" {tee} 2>nul')
+
+        lines.append(f'echo [Elves] launching... {tee}')
         lines.append(launch)
+        lines.append(f'echo [Elves] ==== UPDATE DONE %date% %time% ==== {tee}')
         lines.append('del "%~f0"')
         return "\n".join(lines)
 
     @staticmethod
     def apply_and_restart():
-        """写入重启脚本并退出应用。"""
+        """写入重启脚本并启动 batch（batch 会等本进程退出后替换文件并重启）"""
         pid = os.getpid()
         _log.info(f"apply_and_restart: pid={pid} staging={STAGING_DIR} app_dir={APP_DIR}")
 
@@ -115,13 +133,13 @@ class UpdateWorker:
         script = UpdateWorker._build_bat(pid, launch, WEBVIEW_CACHE_DIRS)
 
         os.makedirs(os.path.dirname(BAT_PATH), exist_ok=True)
-        with open(BAT_PATH, "w", encoding="utf-8") as f:
+        with open(BAT_PATH, "w") as f:
             f.write(script)
 
-        _log.info("apply_and_restart: launching batch and exiting")
+        _log.info("apply_and_restart: launching batch (will wait for us to exit)")
         subprocess.Popen(
             f'cmd /c "{BAT_PATH}"',
             shell=True,
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
+            creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == 'win32' else 0,
         )
-        os._exit(0)
+        # 不调 os._exit(0)，由调用方走正常退出流程 → window.destroy() → WebView2 干净退出
