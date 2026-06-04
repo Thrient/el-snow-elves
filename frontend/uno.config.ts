@@ -11,38 +11,68 @@ import {
 
 export default defineConfig({
   shortcuts: [
-    // Page container
-    ['page-container', 'flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-4 shadow-sm border border-[var(--color-border)]'],
-    // Section header with colored dot
-    ['section-dot', 'w-1 h-4 rounded-full shrink-0'],
-    // Interactive card
-    ['card-interactive', 'rounded-xl border border-[var(--color-border)] bg-white hover:border-[#dde0e6] hover:shadow-sm transition-all cursor-pointer'],
+    // ── Page shell ──
+    ['page-container', 'flex flex-col h-full bg-white rounded-lg mx-4 mb-4 p-5 shadow-sm border border-solid border-border'],
+    ['page-header',   'flex items-center justify-between px-6 py-3 border-b border-solid border-border bg-container shrink-0'],
+    ['page-content',  'flex-1 overflow-y-auto p-5'],
+
+    // ── Decorative ──
+    ['section-dot',    'w-1 h-4 rounded-full shrink-0 bg-primary'],
+    ['header-accent',  'w-1 h-5 rounded-full shrink-0 bg-primary'],
+
+    // ── Cards ──
+    ['card-interactive', 'rounded-card border border-solid border-border bg-white hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 cursor-pointer'],
+
+    // ── Border radius semantic tokens ──
+    ['rounded-card',  'rounded-12px'],
+    ['rounded-btn',   'rounded-8px'],
+    ['rounded-tag',   'rounded-6px'],
+
+    // ── Scrollbar ──
+    ['thin-scrollbar', 'scrollbar-thin scrollbar-thumb-rounded scrollbar-track-transparent'],
   ],
+
   theme: {
     colors: {
-      primary: '#1677ff',
-      'primary-bg': 'rgba(22, 119, 255, 0.08)',
-      success: '#52c41a',
-      warning: '#fa8c16',
-      danger: '#ff4d4f',
-      purple: '#722ed1',
-      cyan: '#13c2c2',
-      heading: '#1a1a2e',
-      muted: '#8b8fa3',
-      border: '#eef0f2',
-      container: '#fafbfc',
+      primary:     '#1677ff',
+      'primary-bg':'rgba(22, 119, 255, 0.08)',
+      success:     '#52c41a',
+      warning:     '#fa8c16',
+      danger:      '#ff4d4f',
+      purple:      '#722ed1',
+      cyan:        '#13c2c2',
+
+      heading:     '#1a1a2e',
+      body:        '#374151',
+      secondary:   '#6b7280',
+      muted:       '#8b8fa3',
+
+      border:      '#eef0f2',
+      container:   '#fafbfc',
+    },
+
+    boxShadow: {
+      'card':        '0 1px 2px rgba(0,0,0,0.04)',
+      'card-hover':  '0 8px 24px rgba(0,0,0,0.08)',
+      'popover':     '0 20px 60px rgba(0,0,0,0.12)',
+    },
+
+    borderRadius: {
+      '6px':  '6px',
+      '8px':  '8px',
+      '12px': '12px',
+      '16px': '16px',
     },
   },
+
   presets: [
     presetWind3(),
     presetAttributify(),
     presetIcons(),
     presetTypography(),
-    presetWebFonts({
-      fonts: {
-      },
-    }),
+    presetWebFonts({ fonts: {} }),
   ],
+
   transformers: [
     transformerDirectives(),
     transformerVariantGroup(),
