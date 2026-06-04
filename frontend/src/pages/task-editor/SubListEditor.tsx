@@ -2,9 +2,9 @@ import { useState, type FC } from "react";
 import type React from "react";
 import { AutoComplete } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import type { EditorCtx } from "./constants";
+import type { EditorCtx } from "@/types/task-editor/actions";
 import SubflowModalItem from "./SubflowModalItem";
-import VarOpBuilder from "@/components/var-op-builder/VarOpBuilder";
+import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
 
 interface SubListEditorProps {
   list: any[];

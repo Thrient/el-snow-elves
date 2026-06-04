@@ -5,10 +5,10 @@ import {
 import { Button, Input, Modal, message } from "antd";
 import type { Cell, CellModel, VarType } from "@/types/task";
 import { VAR_TYPE_OPTS } from "@/utils/type-compat";
-import MiniPreview from "@/components/mini-preview/MiniPreview";
+import MiniPreview from "@/pages/task-editor/components/mini-preview/MiniPreview";
 import ComponentPickerModal from "./ComponentPickerModal";
 import ControlEditorModal from "./ControlEditorModal";
-import { MODEL_META, DEFAULT_CELL_SPAN } from "./LayoutBuilder/modelDefs";
+import { MODEL_META, DEFAULT_CELL_SPAN } from "@/types/task-editor/field-config";
 
 /* ── helpers ── */
 

@@ -2,17 +2,17 @@ import { useState, useEffect, type FC } from "react";
 import { AutoComplete, Input, InputNumber, Select, Tooltip } from "antd";
 import { PictureOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
-import type { EditorCtx } from "./constants";
-import { ACTIONS_WITH_TEMPLATES, ACTION_PARAMS, PARAM_META, REQUIRED_PARAMS } from "./constants";
+import type { EditorCtx } from "@/types/task-editor/actions";
+import { ACTIONS_WITH_TEMPLATES, ACTION_PARAMS, PARAM_META, REQUIRED_PARAMS } from "@/types/task-editor/actions";
 import ColorInput from "./ColorInput";
 import PosInput from "./PosInput";
 import BoxInput from "./BoxInput";
-import BoxPickerModal from "@/components/box-picker/BoxPickerModal";
+import BoxPickerModal from "@/pages/task-editor/components/box-picker/BoxPickerModal";
 import PreprocessEditor from "./PreprocessEditor";
 import KeyInput from "@/components/settings-field/components/KeyInput";
-import CoordPickerModal from "@/components/coord-picker/CoordPickerModal";
-import ColorPickerModal from "@/components/color-picker/ColorPickerModal";
-import VarOpBuilder from "@/components/var-op-builder/VarOpBuilder";
+import CoordPickerModal from "@/pages/task-editor/components/coord-picker/CoordPickerModal";
+import ColorPickerModal from "@/pages/task-editor/components/color-picker/ColorPickerModal";
+import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
 
 interface ParamsEditorProps {
   step: Step;

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo, type FC } from "reac
 import { Select, Input, Button } from "antd";
 import { ThunderboltOutlined, BranchesOutlined, FilterOutlined } from "@ant-design/icons";
 import { buildExpr, parseExpr, defaultCond, COMPARE_OPS, type Cond } from "@/utils/expression";
-import VariablePicker from "@/components/variable-picker/VariablePicker";
+import VariablePicker from "@/pages/task-editor/components/variable-picker/VariablePicker";
 
 type Mode = "true" | "var" | "compare";
 

@@ -2,12 +2,12 @@ import { useState, type FC } from "react";
 import { Button, Input, InputNumber, Select, Tooltip, message } from "antd";
 import { CloseOutlined, CopyOutlined, DeleteOutlined, LeftOutlined, BugOutlined, ReloadOutlined, ApartmentOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
-import type { EditorCtx } from "./constants";
-import { ACTION_OPTS, ACTION_PARAMS, REQUIRED_PARAMS } from "./constants";
+import type { EditorCtx } from "@/types/task-editor/actions";
+import { ACTION_OPTS, ACTION_PARAMS, REQUIRED_PARAMS } from "@/types/task-editor/actions";
 import FlowEditor from "./FlowEditor";
 import ParamsEditor from "./ParamsEditor";
 import SubListEditor from "./SubListEditor";
-import VarOpBuilder from "@/components/var-op-builder/VarOpBuilder";
+import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
 import { useCharacterStore } from "@/store/character";
 import { useEditorStore } from "@/store/editor-store";
 

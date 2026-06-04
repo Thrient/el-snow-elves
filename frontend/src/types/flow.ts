@@ -8,8 +8,12 @@ export interface StepNodeData {
   description?: string;
   isCommon: boolean;
   isStart: boolean;
+  /** ReactFlow requires Record<string, unknown> — do not remove */
+  [key: string]: unknown;
 }
 
 export interface StepEdgeData {
   flowType: FlowType;
+  /** ReactFlow requires Record<string, unknown> — do not remove */
+  [key: string]: unknown;
 }

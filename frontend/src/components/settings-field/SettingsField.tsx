@@ -12,7 +12,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import type { Cell } from "@/types/task";
-import AutocompleteInput from "@/components/autocomplete-input/AutocompleteInput";
+import AutocompleteInput from "@/pages/task-editor/components/autocomplete-input/AutocompleteInput";
 import KeyInput from "./components/KeyInput";
 
 interface Props {

@@ -1,8 +1,8 @@
 import { type FC } from "react";
 import { Button, Input, InputNumber, Popover, Select } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
-import type { EditorCtx } from "./constants";
-import VarOpBuilder from "@/components/var-op-builder/VarOpBuilder";
+import type { EditorCtx } from "@/types/task-editor/actions";
+import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
 import { extractAllParams } from "@/utils/expression";
 
 interface Props {

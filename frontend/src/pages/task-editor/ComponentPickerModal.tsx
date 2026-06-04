@@ -2,8 +2,8 @@ import { useMemo, type FC } from "react";
 import { Modal } from "antd";
 import type { CellModel, VarType } from "@/types/task";
 import { compatibleModels, VAR_TYPE_META } from "@/utils/type-compat";
-import MiniPreview from "@/components/mini-preview/MiniPreview";
-import { MODEL_META } from "./LayoutBuilder/modelDefs";
+import MiniPreview from "@/pages/task-editor/components/mini-preview/MiniPreview";
+import { MODEL_META } from "@/types/task-editor/field-config";
 
 interface Props {
   open: boolean;

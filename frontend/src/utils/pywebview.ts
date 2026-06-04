@@ -9,7 +9,7 @@ export const waitForPywebview = async (): Promise<boolean> => {
   return false
 }
 
-export const callApi = async <T>(name: string, ...args: unknown[]): Promise<T | undefined> => {
-  if (!window.pywebview) return undefined
-  return window.pywebview.api.emit(name, ...args) as Promise<T>
+/** Typed IPC wrapper. PyWebView is always available at runtime. */
+export const callApi = async <T>(name: string, ...args: unknown[]): Promise<T> => {
+  return window.pywebview.api.emit(name, ...args) as Promise<T>;
 }

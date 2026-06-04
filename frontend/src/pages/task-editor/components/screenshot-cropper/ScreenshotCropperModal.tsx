@@ -6,7 +6,7 @@ import {
   ExperimentOutlined, SwapOutlined,
 } from "@ant-design/icons";
 import type { PreprocessConfig } from "@/pages/task-editor/PreprocessEditor";
-import PreprocessConfigPanel from "@/components/preprocess-config-panel/PreprocessConfigPanel";
+import PreprocessConfigPanel from "@/pages/task-editor/components/preprocess-config-panel/PreprocessConfigPanel";
 
 /* ============================================================
    Canvas-based architecture (no CSS transform):

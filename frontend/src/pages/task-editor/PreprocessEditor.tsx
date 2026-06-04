@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { BulbOutlined } from "@ant-design/icons";
-import PreprocessConfigPanel from "@/components/preprocess-config-panel/PreprocessConfigPanel";
+import PreprocessConfigPanel from "@/pages/task-editor/components/preprocess-config-panel/PreprocessConfigPanel";
 
 export interface PreprocessConfig {
   binarize?: boolean;

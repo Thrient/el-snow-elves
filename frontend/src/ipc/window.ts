@@ -7,7 +7,8 @@ export interface WindowInfo {
 }
 
 export async function searchWindows(): Promise<WindowInfo[]> {
-  return callApi<WindowInfo[]>("API:SCRIPT:SEARCH") ?? [];
+  const result = await callApi<WindowInfo[]>("API:SCRIPT:SEARCH");
+  return result ?? [];
 }
 
 export async function bindWindow(hwnd: string, characterName: string): Promise<void> {

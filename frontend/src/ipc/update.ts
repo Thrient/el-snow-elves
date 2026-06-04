@@ -19,5 +19,5 @@ export async function getVersion(): Promise<string> {
 export async function getUpdateDiff(
   current: string, target: string,
 ): Promise<Record<string, unknown>> {
-  return callApi("API:UPDATE:DIFF", current, target);
+  return callApi("API:UPDATE:DIFF", current, target) ?? {};
 }

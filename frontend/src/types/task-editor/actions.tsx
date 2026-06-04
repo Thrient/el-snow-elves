@@ -1,29 +1,15 @@
 import type { ReactNode } from "react";
 import {
-  AimOutlined,
-  FieldTimeOutlined,
-  ScanOutlined,
-  DeploymentUnitOutlined,
-  BorderOutlined,
-  CodeSandboxOutlined,
-  PushpinOutlined,
-  FieldNumberOutlined,
-  ColumnWidthOutlined,
-  ColumnHeightOutlined,
-  PauseOutlined,
-  CaretRightOutlined,
-  BulbOutlined,
-  UserOutlined,
-  DesktopOutlined,
-  EditOutlined,
-  PictureOutlined,
-  SearchOutlined,
-  ClockCircleOutlined,
-  EyeInvisibleOutlined,
-  BgColorsOutlined,
-  SwapOutlined,
-  BranchesOutlined,
+  AimOutlined, FieldTimeOutlined, ScanOutlined, DeploymentUnitOutlined,
+  BorderOutlined, CodeSandboxOutlined, PushpinOutlined, FieldNumberOutlined,
+  ColumnWidthOutlined, ColumnHeightOutlined, PauseOutlined, CaretRightOutlined,
+  BulbOutlined, UserOutlined, DesktopOutlined, EditOutlined, PictureOutlined,
+  SearchOutlined, ClockCircleOutlined, EyeInvisibleOutlined, BgColorsOutlined,
+  SwapOutlined, BranchesOutlined,
 } from "@ant-design/icons";
+import type { VarType, SubflowRef } from "./index";
+
+// ── Action definitions ──
 
 export interface ActionOpt {
   value: string;
@@ -51,6 +37,8 @@ export const ACTION_OPTS: ActionOpt[] = [
   { value: "switch_account", label: "switch_account", desc: "切换游戏账号",    icon: <SwapOutlined />,           color: "#1677ff", group: "角色账号" },
   { value: "{True}",         label: "{True}",         desc: "表达式",      icon: <BranchesOutlined />,       color: "#d4513b", group: "流程控制" },
 ];
+
+// ── Param metadata ──
 
 export interface ParamMeta {
   label: string;
@@ -88,25 +76,26 @@ export const PARAM_META: Record<string, ParamMeta> = {
   text:         { label: "输入文本", color: "#14b8a6", icon: <EditOutlined />,          desc: "模拟键盘逐字输入到窗口。支持 {变量} 表达式", range: "如 Hello World 或 {my_text}" },
 };
 
+// ── Action param config ──
+
 export const ACTION_PARAMS: Record<string, string[]> = {
   touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "count", "pre_delay", "post_delay", "seconds", "k", "preprocess", "method", "hwnd"],
   exits:          ["threshold", "box", "seconds", "preprocess", "method", "hwnd"],
   wait:           ["threshold", "box", "seconds", "preprocess", "method", "hwnd"],
-  wait_disappear:          ["threshold", "box", "seconds", "k", "preprocess", "method", "hwnd"],
-  exits_color:             ["color", "tolerance", "box", "hwnd"],
-  touch_color:              ["color", "tolerance", "box", "pos", "click_mode", "count", "pre_delay", "post_delay", "hwnd"],
-  wait_color:               ["color", "tolerance", "box", "seconds", "k", "hwnd"],
-  wait_color_disappear:     ["color", "tolerance", "box", "seconds", "k", "hwnd"],
+  wait_disappear: ["threshold", "box", "seconds", "k", "preprocess", "method", "hwnd"],
+  exits_color:    ["color", "tolerance", "box", "hwnd"],
+  touch_color:    ["color", "tolerance", "box", "pos", "click_mode", "count", "pre_delay", "post_delay", "hwnd"],
+  wait_color:     ["color", "tolerance", "box", "seconds", "k", "hwnd"],
+  wait_color_disappear: ["color", "tolerance", "box", "seconds", "k", "hwnd"],
   key_click:      ["key", "count", "pre_delay", "post_delay", "hwnd"],
   input:          ["text", "pre_delay", "post_delay", "hwnd"],
   mouse_click:    ["pos", "count", "pre_delay", "post_delay", "hwnd"],
-  mouse_drag:    ["start_pos", "end_pos", "x", "y", "end_x", "end_y", "duration", "count", "pre_delay", "post_delay", "hwnd"],
+  mouse_drag:     ["start_pos", "end_pos", "x", "y", "end_x", "end_y", "duration", "count", "pre_delay", "post_delay", "hwnd"],
   set_character:  ["hwnd"],
   switch_account: ["account_name"],
   "{True}":       [],
 };
 
-/** 必填参数 — 切换动作时自动注入 */
 export const REQUIRED_PARAMS: Record<string, string[]> = {
   touch: ["args"],
   exits: ["args"],
@@ -124,11 +113,16 @@ export const REQUIRED_PARAMS: Record<string, string[]> = {
 };
 
 export const ACTIONS_WITH_TEMPLATES = new Set(["touch", "exits", "wait", "wait_disappear"]);
+
+// ── Builtin variables ──
+
 export const BUILTIN_VARS: { value: string; label: string }[] = [
   { value: "{result}",    label: "{result}" },
   { value: "{hwnd}",      label: "{hwnd}" },
   { value: "{ChildHwnd}", label: "{ChildHwnd}" },
 ];
+
+// ── Editor context ──
 
 export interface EditorCtx {
   stepKeys: string[];
@@ -139,21 +133,17 @@ export interface EditorCtx {
   taskCommonSteps: { value: string; label: string }[];
   globalCommonSteps: { value: string; label: string }[];
   stepParamsMap: Record<string, Record<string, unknown>>;
-  /** Raw step data — for looking up params directly */
   allStepsData: Record<string, {
     action?: string; params?: Record<string, unknown>;
-    prefix?: any[]; postfix?: any[]; failure_extra?: any[]; success_extra?: any[];
+    prefix?: (string | SubflowRef)[]; postfix?: (string | SubflowRef)[];
+    failure_extra?: (string | SubflowRef)[]; success_extra?: (string | SubflowRef)[];
     next?: string; success?: string; failure?: string;
   }>;
-  /** Bump when user clicks refresh — children watch this to reload disk data */
   refreshKey: number;
   hwnd: string;
   taskName?: string;
   version?: string;
-  /** Task runtime values — for variable type detection */
   values?: Record<string, unknown>;
-  /** 变量显式类型 — 用户创建时手动指定 */
-  valueTypes?: Record<string, import("@/types/task").VarType>;
-  /** Layout — for inferring variable types from cell models */
+  valueTypes?: Record<string, VarType>;
   layout?: { model?: string; store?: string }[][];
 }

@@ -9,7 +9,7 @@ import { useUserStore, type PlanEntry } from "@/store/user-store.ts";
 import type { PlanBase } from "@/types/plan.ts";
 import HwndPreviewModal from "@/components/hwnd-preview-modal/HwndPreviewModal.tsx";
 import PlanModal from "@/pages/plans/PlanModal.tsx";
-import PlanCard from "@/pages/windows/PlanCard";
+import PlanCard from "@/pages/plan/components/PlanCard";
 import WindowSelector from "@/pages/windows/WindowSelector";
 import ControlPanel from "@/pages/windows/ControlPanel";
 import QueuePanel from "@/pages/windows/QueuePanel";

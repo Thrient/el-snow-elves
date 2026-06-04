@@ -2,7 +2,7 @@ import { useState, useMemo, type FC } from "react";
 import { Button, Input, InputNumber, Select, Switch, Tooltip, Divider } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import type { Cell, CellModel, CellOption, VarType } from "@/types/task";
-import MiniPreview from "@/components/mini-preview/MiniPreview";
+import MiniPreview from "@/pages/task-editor/components/mini-preview/MiniPreview";
 
 /* ── constants ── */
 

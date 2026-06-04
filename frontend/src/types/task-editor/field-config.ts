@@ -1,3 +1,22 @@
+import type { CellModel } from "./index";
+
+export const OPTION_MODELS = new Set<CellModel>(["el-select", "el-checkbox-group", "el-radio"]);
+
+export const MODEL_FIELDS: Record<string, string[]> = {
+  "el-input":         ["text","placeholder","disabled","maxLength","allowClear"],
+  "el-input-number":  ["text","placeholder","disabled","min","max","step"],
+  "el-select":        ["text","placeholder","disabled","mode","allowClear"],
+  "el-textarea":      ["text","placeholder","disabled","rows","maxLength"],
+  "el-slider":        ["text","disabled","min","max","step"],
+  "el-switch":        ["text","disabled"],
+  "el-checkbox":      ["text","disabled"],
+  "el-checkbox-group":["text","disabled"],
+  "el-radio":         ["text","disabled","optionType"],
+  "el-date-picker":   ["text","placeholder","disabled","format"],
+  "el-color-picker":  ["text","disabled"],
+  "el-input-tags":    ["text","placeholder","disabled","allowClear"],
+};
+
 export const MODEL_META: Record<string, { label: string; short: string; color: string; bg: string }> = {
   "el-input":         { label: "文本输入", short: "Aa", color: "#6366f1", bg: "#eef2ff" },
   "el-input-number":  { label: "数字输入", short: "12", color: "#10b981", bg: "#ecfdf5" },

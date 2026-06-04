@@ -4,8 +4,8 @@ import {
 } from "react";
 import { Button, Input, InputNumber, Select, Switch } from "antd";
 import type { Cell, CellOption, VarType } from "@/types/task";
-import { MODEL_META } from "./LayoutBuilder/modelDefs";
-import { MODEL_FIELDS, OPTION_MODELS } from "./fieldConfig";
+import { MODEL_META } from "@/types/task-editor/field-config";
+import { MODEL_FIELDS, OPTION_MODELS } from "@/types/task-editor/field-config";
 
 /* ── sub-components ── */
 
