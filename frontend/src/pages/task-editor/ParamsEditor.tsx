@@ -1,18 +1,13 @@
 import { useState, useEffect, type FC } from "react";
-import { AutoComplete, Input, InputNumber, Select, Tooltip } from "antd";
+import { Select, Tooltip } from "antd";
 import { PictureOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
 import type { EditorCtx } from "@/types/task-editor/actions";
 import { ACTIONS_WITH_TEMPLATES, ACTION_PARAMS, PARAM_META, REQUIRED_PARAMS } from "@/types/task-editor/actions";
-import ColorInput from "./ColorInput";
-import PosInput from "./PosInput";
-import BoxInput from "./BoxInput";
 import BoxPickerModal from "@/pages/task-editor/components/box-picker/BoxPickerModal";
-import PreprocessEditor from "./PreprocessEditor";
-import KeyInput from "@/components/settings-field/components/KeyInput";
 import CoordPickerModal from "@/pages/task-editor/components/coord-picker/CoordPickerModal";
 import ColorPickerModal from "@/pages/task-editor/components/color-picker/ColorPickerModal";
-import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
+import ParamInputRenderer from "./components/ParamInputRenderer";
 
 interface ParamsEditorProps {
   step: Step;
@@ -63,204 +58,18 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     })();
   }, [showArgs, ctx.taskName, ctx.version, ctx.refreshKey]);
 
-  const varItems = (ctx: EditorCtx, category: "system" | "config" | "task") => {
-    const arr = category === "system" ? ctx.builtinVars : category === "config" ? ctx.configVars : ctx.taskValueVars;
-    return arr.map(v => ({ syntax: v.value, label: v.label, category }));
-  };
-
-  const renderParamInput = (key: string, value: unknown) => {
-    if (key === "preprocess") {
-      return (
-        <PreprocessEditor
-          value={(value ?? {}) as Record<string, unknown>}
-          onChange={(v) => onUpdate("params", { ...params, preprocess: v })}
-          onRemove={() => { const p = { ...params }; delete p.preprocess; onUpdate("params", p); }} />
-      );
-    }
-    if (key === "box") {
-      return <BoxInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onBoxOpen={() => setBoxOpen(true)} />;
-    }
-    if (key === "pos" || key === "start_pos" || key === "end_pos") {
-      return <PosInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onCoordOpen={() => setCoordKey(key)} paramKey={key} />;
-    }
-    if (key === "hwnd") {
-      return (
-        <AutoComplete
-          size="small"
-          className="w-full"
-          value={(value as string) ?? ""}
-          onChange={(v) => onUpdate("params", { ...params, hwnd: v ?? "" })}
-          options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
-          placeholder="{hwnd}"
-          allowClear
-          filterOption={(input, option) =>
-            option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
-          }
-        />
-      );
-    }
-    if (key === "click_mode") {
-      return (
-        <Select size="small" className="w-150px"allowClear
-          value={(value as string) || undefined}
-          placeholder="默认 random"
-          options={[
-            { value: "random", label: "random — 随机选一个" },
-            { value: "first", label: "first — 第一个" },
-            { value: "last", label: "last — 最后一个" },
-            { value: "all", label: "all — 全部点击" },
-            { value: "all_reverse", label: "all_reverse — 倒序全部" },
-          ]}
-          onChange={(v) => onUpdate("params", { ...params, click_mode: v ?? "" })} />
-      );
-    }
-    if (key === "text") {
-      return (
-        <div className="flex items-center gap-1 w-full">
-          <AutoComplete
-            size="small"
-            className="flex-1"
-            value={(value as string) ?? ""}
-            onChange={(v) => onUpdate("params", { ...params, text: v ?? "" })}
-            options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
-            placeholder="输入文本，支持 {变量}"
-            filterOption={(input, option) =>
-              option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
-            }
-          />
-          <VarOpBuilder
-            context="params"
-            valueTypes={ctx.valueTypes}
-            variables={[...varItems(ctx, "system"), ...varItems(ctx, "config"), ...varItems(ctx, "task")]}
-            onInsert={(expr) => onUpdate("params", { ...params, text: (value as string ?? "") + expr })}
-          />
-        </div>
-      );
-    }
-    if (key === "key") {
-      return (
-        <KeyInput value={(value as string) ?? ""}
-          onChange={(v) => onUpdate("params", { ...params, key: v })}
-          varOptions={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]} />
-      );
-    }
-    if (key === "account_name") {
-      return (
-        <AutoComplete
-          size="small"
-          className="w-160px"
-          value={value as string}
-          onChange={(v) => onUpdate("params", { ...params, account_name: v })}
-          options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]}
-          placeholder="{account_name}"
-          allowClear
-          filterOption={(input, option) =>
-            option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
-          }
-        />
-      );
-    }
-    if (key === "method") {
-      return (
-        <Select size="small" className="w-120px"
-          value={(value as string) || "ccoeff"}
-          options={[
-            { value: "ccoeff", label: "ccoeff — 模板" },
-            { value: "sift", label: "sift — 特征点" },
-          ]}
-          onChange={(v) => onUpdate("params", { ...params, method: v })} />
-      );
-    }
-    if (key === "threshold") {
-      if (typeof value !== "number" && value != null) {
-        const raw = String(value ?? "");
-        return (
-          <Input size="small" className="font-mono text-[12px] w-80px"
-            value={raw}
-            onChange={(e) => onUpdate("params", { ...params, threshold: e.target.value })}
-            placeholder="0.85" />
-        );
-      }
-      return (
-        <InputNumber size="small" className="font-mono text-[12px] w-80px"
-          min={0} max={1} step={0.01}
-          value={typeof value === "number" ? value : null}
-          onChange={(v) => onUpdate("params", { ...params, threshold: v })}
-          placeholder="0.85" />
-      );
-    }
-    if (key === "seconds") {
-      return (
-        <InputNumber size="small" className="font-mono text-[12px] w-80px"
-          min={0} step={0.1}
-          value={typeof value === "number" ? value : null}
-          onChange={(v) => onUpdate("params", { ...params, seconds: v === 0 ? null : v })}
-          placeholder="1.8" />
-      );
-    }
-    if (key === "color") {
-      return <ColorInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onColorOpen={() => setColorOpen(true)} />;
-    }
-    if (key === "tolerance") {
-      if (typeof value !== "number" && value != null) {
-        const raw = String(value ?? "");
-        return (
-          <Input size="small" className="font-mono text-[12px] w-80px"
-            value={raw}
-            onChange={(e) => onUpdate("params", { ...params, tolerance: e.target.value })}
-            placeholder="10" />
-        );
-      }
-      return (
-        <InputNumber size="small" className="font-mono text-[12px] w-80px"
-          min={0} max={255}
-          value={typeof value === "number" ? value : null}
-          onChange={(v) => onUpdate("params", { ...params, tolerance: v })}
-          placeholder="10" />
-      );
-    }
-    if (key === "k" || key === "count" || key === "x" || key === "y" ||
-        key === "pre_delay" || key === "post_delay") {
-      const raw = typeof value === "string" ? value : String(value ?? "");
-      return (
-        <Input size="small" className="font-mono text-[12px] w-80px"
-          value={raw}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === "" || v === "null") {
-              onUpdate("params", { ...params, [key]: v === "null" ? null : "" });
-              return;
-            }
-            const n = Number(v);
-            onUpdate("params", { ...params, [key]: !isNaN(n) ? n : v });
-          }} />
-      );
-    }
-    const raw = typeof value === "string" ? value : JSON.stringify(value ?? "");
-    return (
-      <div className="flex items-center gap-1">
-        <Input size="small" className="font-mono text-[12px] w-140px"
-          value={raw}
-          onChange={(e) => {
-            let v: unknown = e.target.value;
-            const n = Number(v);
-            if (v !== "" && !isNaN(n)) v = n;
-            onUpdate("params", { ...params, [key]: v });
-          }} />
-        <VarOpBuilder
-          context="params"
-          valueTypes={ctx.valueTypes}
-          variables={[...varItems(ctx, "system"), ...varItems(ctx, "config"), ...varItems(ctx, "task")]}
-          onInsert={(expr) => {
-            let newVal = (typeof value === "string" ? value : JSON.stringify(value ?? "")) + expr;
-            const n = Number(newVal);
-            if (newVal !== "" && !isNaN(n)) newVal = String(n);
-            onUpdate("params", { ...params, [key]: newVal });
-          }}
-        />
-      </div>
-    );
-  };
+  const renderInput = (key: string) => (
+    <ParamInputRenderer
+      paramKey={key}
+      value={params[key]}
+      params={params}
+      ctx={ctx}
+      onUpdate={onUpdate}
+      setCoordKey={setCoordKey}
+      setBoxOpen={setBoxOpen}
+      setColorOpen={setColorOpen}
+    />
+  );
 
   return (
     <div className="space-y-2.5">
@@ -290,7 +99,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
       {other.map(key => {
         const meta = PARAM_META[key];
         if (key === "preprocess") {
-          return <div key={key}>{renderParamInput(key, params[key])}</div>;
+          return <div key={key}>{renderInput(key)}</div>;
         }
         const accentColor = meta?.color ?? "#9ca3af";
         if (key === "pos" || key === "start_pos" || key === "end_pos" || key === "box" || key === "color" || key === "key" || key === "hwnd" || key === "text") {
@@ -310,7 +119,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
                   className="text-[#c0c4cc] hover:text-[#ff4d4f] opacity-0 group-hover:opacity-100 transition-all text-xs shrink-0 border-0 bg-transparent cursor-pointer">×</button>
               </div>
               <div className="px-3.5 pb-2.5">
-                {renderParamInput(key, params[key])}
+                {renderInput(key)}
               </div>
             </div>
           );
@@ -331,7 +140,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
                 </div>
               </Tooltip>
               <div className="flex items-center gap-1.5 shrink-0">
-                {renderParamInput(key, params[key])}
+                {renderInput(key)}
                 <button onClick={() => { const p = { ...params }; delete p[key]; onUpdate("params", p); }}
                   className="text-[#c0c4cc] hover:text-[#ff4d4f] opacity-0 group-hover:opacity-100 transition-all text-xs border-0 bg-transparent cursor-pointer">×</button>
               </div>
