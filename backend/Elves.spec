@@ -6,6 +6,7 @@ a = Analysis(
     pathex=[],
     binaries=[('script.pyd', '.')],
     datas=[
+        ('../frontend/dist', 'dist'),
         ('resources', 'resources'),
     ],
     hiddenimports=[],
