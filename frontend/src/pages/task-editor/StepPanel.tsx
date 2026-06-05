@@ -1,6 +1,6 @@
 import { useState, type FC } from "react";
-import { Button, Input, InputNumber, Select, Tooltip, message } from "antd";
-import { CloseOutlined, CopyOutlined, DeleteOutlined, LeftOutlined, BugOutlined, ReloadOutlined, ApartmentOutlined } from "@ant-design/icons";
+import { Button, Input, InputNumber, Select, Tooltip } from "antd";
+import { CloseOutlined, CopyOutlined, DeleteOutlined, LeftOutlined, ReloadOutlined, ApartmentOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
 import type { EditorCtx } from "@/types/task-editor/actions";
 import { ACTION_OPTS, ACTION_PARAMS, REQUIRED_PARAMS } from "@/types/task-editor/actions";
@@ -8,8 +8,8 @@ import FlowEditor from "./FlowEditor";
 import ParamsEditor from "./ParamsEditor";
 import SubListEditor from "./SubListEditor";
 import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
-import { useCharacterStore } from "@/store/character-store";
 import { useEditorStore } from "@/store/editor-store";
+import DebugExecutionPanel from "./components/DebugExecutionPanel";
 
 /* ================================================================
    StepPanel — dashboard + single-expand editing panel
@@ -158,53 +158,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
         </div>
 
         {/* ── Debug execution ── */}
-        {ctx.hwnd && (
-          <div className="rounded-xl border border-dashed border-[#ffa940] bg-[#fffbe6] p-3.5 space-y-2">
-            <div className="flex items-center gap-2">
-              <BugOutlined className="text-[#fa8c16] text-sm" />
-              <span className="text-[11px] font-semibold text-[#1a1a2e]">调试运行</span>
-              <span className="text-[10px] text-[#8b8fa3]">窗口 {ctx.hwnd}</span>
-            </div>
-            <div className="flex gap-2">
-              <Button size="small" type="primary"
-                className="border-[#fa8c16] bg-[#fa8c16]"
-                onClick={() => {
-                  const task = useEditorStore.getState().currentTask;
-                  if (!task) return;
-                  const charStore = useCharacterStore.getState();
-                  const hwnd = charStore.selectedHwnd;
-                  if (!hwnd) { message.warning("请先在窗口管理中选择一个窗口"); return; }
-                  charStore.pushExecute(hwnd, {
-                    id: task.id, name: task.name, version: task.version,
-                    values: task.values, debugStart: stepName,
-                  });
-                  message.success(`已添加到窗口 ${hwnd}：从「${stepName}」开始`);
-                }}>
-                从此步骤开始
-              </Button>
-              <Button size="small"
-                className="border-[#fa8c16] c-[#fa8c16]"
-                onClick={() => {
-                  const task = useEditorStore.getState().currentTask;
-                  if (!task) return;
-                  const charStore = useCharacterStore.getState();
-                  const hwnd = charStore.selectedHwnd;
-                  if (!hwnd) { message.warning("请先在窗口管理中选择一个窗口"); return; }
-                  charStore.pushExecute(hwnd, {
-                    id: task.id, name: task.name, version: task.version,
-                    values: task.values, debugStart: stepName, debugSingle: true,
-                  });
-                  message.success(`已添加到窗口 ${hwnd}：单步执行「${stepName}」`);
-                }}>
-                单步执行
-              </Button>
-            </div>
-            <div className="text-[10px] text-[#8b8fa3] leading-relaxed">
-              从此步骤开始：覆盖任务入口，后续正常流转。<br />
-              单步执行：仅执行此步骤，完成后立即结束（忽略跳转）。
-            </div>
-          </div>
-        )}
+        {ctx.hwnd && <DebugExecutionPanel hwnd={ctx.hwnd} stepName={stepName} />}
 
         {/* Dashboard or Expanded */}
         {expanded === null ? (
