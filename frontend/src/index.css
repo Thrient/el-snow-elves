@@ -328,6 +328,7 @@ body {
 
 
 /* ── Ant Design theme compatibility ── */
+[data-theme] .ant-layout { overflow: hidden; }
 [data-theme] .ant-layout-header,
 [data-theme] .ant-layout-sider,
 [data-theme] .ant-layout-content { background: var(--color-bg-page) !important; }
