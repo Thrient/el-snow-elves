@@ -111,19 +111,23 @@ class App:
 
     def set_titlebar_theme(self, dark: bool) -> None:
         """设置 Windows 标题栏暗色/亮色主题"""
+        logging.info(f"[Theme] set_titlebar_theme called, dark={dark}")
         hwnd = self._get_main_hwnd()
+        logging.info(f"[Theme] main hwnd={hwnd}")
         if hwnd is None:
+            logging.warning("[Theme] 无法获取主窗口 HWND，标题栏主题设置失败")
             return
         try:
             import ctypes
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
             value = ctypes.c_int(1 if dark else 0)
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
                 hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
                 ctypes.byref(value), ctypes.sizeof(value),
             )
-        except Exception:
-            pass
+            logging.info(f"[Theme] DwmSetWindowAttribute hwnd={hwnd} dark={dark} result={result}")
+        except Exception as e:
+            logging.warning(f"[Theme] DwmSetWindowAttribute 失败: {e}")
 
     def _get_main_hwnd(self) -> int | None:
         """获取主窗口原生 HWND"""
@@ -397,3 +401,4 @@ class App:
             storage_path=STORAGE_PATH,
             debug=debug,
         )
+
