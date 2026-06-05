@@ -2,10 +2,11 @@ import {
   useState, useEffect, useCallback,
   type FC,
 } from "react";
-import { Button, Input, InputNumber, Select, Switch } from "antd";
+import { Button, Input, InputNumber } from "antd";
 import type { Cell, CellOption, VarType } from "@/types/task";
 import { MODEL_META } from "@/types/task-editor/field-config";
 import { MODEL_FIELDS, OPTION_MODELS } from "@/types/task-editor/field-config";
+import FieldRenderer from "./components/FieldRenderer";
 
 /* ── sub-components ── */
 
@@ -63,118 +64,9 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
 
   /* ── field renderer ── */
 
-  const renderField = (field: string) => {
-    const val = (cell as any)[field];
-    const set = (v: any) => onUpdateCell(ri, ci, { [field]: v === undefined || v === "" || v === false ? undefined : v });
-
-    const baseInputCls = "!text-xs !rounded-xl";
-
-    switch (field) {
-      case "text":
-        return (
-          <div key="text">
-            <FieldLabel>标签</FieldLabel>
-            <Input size="small" className={baseInputCls} value={val ?? ""} placeholder="控件标签"
-              onChange={(e) => set(e.target.value || undefined)} />
-          </div>
-        );
-      case "placeholder":
-        return (
-          <div key="ph">
-            <FieldLabel>占位提示</FieldLabel>
-            <Input size="small" className={baseInputCls} value={val ?? ""} placeholder="placeholder"
-              onChange={(e) => set(e.target.value || undefined)} />
-          </div>
-        );
-      case "disabled":
-        return (
-          <div key="dis">
-            <FieldLabel>禁用</FieldLabel>
-            <div className="pt-0.5">
-              <Switch size="small" checked={val ?? false} onChange={set} />
-            </div>
-          </div>
-        );
-      case "min":
-        return (
-          <div key="min">
-            <FieldLabel>最小值</FieldLabel>
-            <InputNumber size="small" className={`w-full ${baseInputCls}`}
-              value={val ?? undefined} placeholder="不限" onChange={(v) => set(v ?? undefined)} />
-          </div>
-        );
-      case "max":
-        return (
-          <div key="max">
-            <FieldLabel>最大值</FieldLabel>
-            <InputNumber size="small" className={`w-full ${baseInputCls}`}
-              value={val ?? undefined} placeholder="不限" onChange={(v) => set(v ?? undefined)} />
-          </div>
-        );
-      case "step":
-        return (
-          <div key="step">
-            <FieldLabel>步长</FieldLabel>
-            <InputNumber size="small" className={`w-full ${baseInputCls}`}
-              value={val ?? undefined} placeholder="1" onChange={(v) => set(v ?? undefined)} />
-          </div>
-        );
-      case "rows":
-        return (
-          <div key="rows">
-            <FieldLabel>行数</FieldLabel>
-            <InputNumber size="small" className={`w-full ${baseInputCls}`} min={1} value={val ?? 4}
-              onChange={(v) => onUpdateCell(ri, ci, { rows: v ?? 4 })} />
-          </div>
-        );
-      case "allowClear":
-        return (
-          <div key="ac">
-            <FieldLabel>可清除</FieldLabel>
-            <div className="pt-0.5">
-              <Switch size="small" checked={val ?? false} onChange={set} />
-            </div>
-          </div>
-        );
-      case "maxLength":
-        return (
-          <div key="ml">
-            <FieldLabel>最大长度</FieldLabel>
-            <InputNumber size="small" className={`w-full ${baseInputCls}`} min={0} value={val} placeholder="不限"
-              onChange={(v) => set(v ?? undefined)} />
-          </div>
-        );
-      case "mode":
-        return (
-          <div key="mode">
-            <FieldLabel>多选</FieldLabel>
-            <div className="pt-0.5">
-              <Switch size="small" checked={val === "multiple"}
-                onChange={(v) => set(v ? "multiple" : undefined)} />
-            </div>
-          </div>
-        );
-      case "optionType":
-        return (
-          <div key="ot">
-            <FieldLabel>样式</FieldLabel>
-            <Select size="small" className="w-full" value={val} allowClear placeholder="默认"
-              options={[{ value: "default", label: "默认" }, { value: "button", label: "按钮" }]}
-              onChange={(v) => set(v || undefined)} />
-          </div>
-        );
-      case "format":
-        return (
-          <div key="fmt">
-            <FieldLabel>日期格式</FieldLabel>
-            <Input size="small" className={baseInputCls} value={val ?? ""} placeholder="YYYY-MM-DD"
-              onChange={(e) => set(e.target.value || undefined)} />
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+  const renderField = (field: string) => (
+    <FieldRenderer field={field} cell={cell} ri={ri} ci={ci} onUpdateCell={onUpdateCell} />
+  );
 
   /* ── animation helpers ── */
 
