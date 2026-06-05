@@ -387,7 +387,7 @@ const TaskEditorPage: FC = () => {
   }
 
   return (
-    <div className="page-container !p-0 overflow-hidden">
+    <div className="page-container">
       <div className="page-header gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <Button type="text" icon={<ArrowLeftOutlined />} onClick={closeTask} className="!text-[#6b7280] hover:!text-[#1a1a2e]">返回</Button>

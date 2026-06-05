@@ -29,7 +29,7 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
   };
 
   return (
-    <div className="page-container !p-0 overflow-hidden">
+    <div className="page-container">
       <div className="page-header">
         <div className="page-header__left">
           <span className="page-header__accent" />
