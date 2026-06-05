@@ -31,7 +31,7 @@ export default function DisclaimerModal() {
     >
       <div className="flex flex-col gap-4 py-2">
         <div className="text-center">
-          <Title level={3} className="!mb-1 !text-[#1a1a2e]">用户协议与免责声明</Title>
+          <Title level={3} className="!mb-1 !text-heading">用户协议与免责声明</Title>
           <Text type="secondary" className="text-[12px]">在使用本工具之前，请仔细阅读以下条款</Text>
         </div>
 

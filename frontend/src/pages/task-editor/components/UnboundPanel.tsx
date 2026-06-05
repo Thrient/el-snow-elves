@@ -28,7 +28,7 @@ const UnboundPanel: FC<UnboundPanelProps> = ({
   return (
     <>
       <div
-        className="w-[250px] shrink-0 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-md"
+        className="w-[250px] shrink-0 bg-container/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-md"
         onContextMenu={(e) => {
           e.preventDefault();
           setLeftCtxMenu({ x: e.clientX, y: e.clientY });
@@ -72,7 +72,7 @@ const UnboundPanel: FC<UnboundPanelProps> = ({
                   }}
                   onDragEnd={onDragEnd}
                   className="flex flex-col gap-1 px-3 py-2.5 rounded-xl border border-slate-100
-                    bg-white hover:border-indigo-200 hover:shadow-md hover:-translate-y-0.5 cursor-grab active:cursor-grabbing
+                    bg-container hover:border-indigo-200 hover:shadow-md hover:-translate-y-0.5 cursor-grab active:cursor-grabbing
                     transition-all duration-200 group"
                 >
                   <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ const UnboundPanel: FC<UnboundPanelProps> = ({
           onContextMenu={(e) => { e.preventDefault(); setLeftCtxMenu(null); }}
         >
           <div
-            className="absolute z-50 bg-white/95 backdrop-blur-xl rounded-2xl py-2 min-w-[170px] border border-slate-200/80 shadow-[0_20px_60px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden"
+            className="absolute z-50 bg-container/95 backdrop-blur-xl rounded-2xl py-2 min-w-[170px] border border-slate-200/80 shadow-[0_20px_60px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden"
             style={{ left: leftCtxMenu.x, top: leftCtxMenu.y }}
           >
             <div className="px-4 py-1 text-[10px] font-semibold text-slate-400 tracking-wider uppercase select-none mb-0.5">变量操作</div>

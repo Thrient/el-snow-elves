@@ -213,8 +213,8 @@ const AccountsPage: FC = () => {
         style={{ borderColor: "var(--color-border)", background: "var(--color-bg-container)" }}
       >
         <ThunderboltOutlined className="text-[#1677ff] text-[14px]" />
-        <span className="text-[#8b8fa3] shrink-0">游戏路径</span>
-        <span className="flex-1 truncate text-[#374151] font-mono">
+        <span className="text-muted shrink-0">游戏路径</span>
+        <span className="flex-1 truncate text-body font-mono">
           {gamePath || "未设置 — 首次一键启动时将提示选择"}
         </span>
         <Button
@@ -271,7 +271,7 @@ const AccountsPage: FC = () => {
                     }}
                   >
                     {/* Drag handle */}
-                    <div className="absolute top-1.5 right-2 text-[#d0d4dc] hover:text-[#8b8fa3] text-[13px] leading-none select-none"
+                    <div className="absolute top-1.5 right-2 text-[#d0d4dc] hover:text-muted text-[13px] leading-none select-none"
                       style={{ cursor: "grab", opacity: 0, transition: "opacity 0.15s" }}
                       onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
                       onMouseLeave={e => (e.currentTarget.style.opacity = "")}>
@@ -289,7 +289,7 @@ const AccountsPage: FC = () => {
                       {account.name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[15px] font-semibold text-[#1a1a2e] leading-tight truncate">
+                      <div className="text-[15px] font-semibold text-heading leading-tight truncate">
                         {account.name}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -367,7 +367,7 @@ const AccountsPage: FC = () => {
             <div className="w-20 h-20 rounded-full bg-[#f5f7fa] flex items-center justify-center mb-5">
               <UserOutlined className="text-[32px] text-[#c8cdd5]" />
             </div>
-            <div className="text-[14px] font-medium text-[#6b7280] mb-1">
+            <div className="text-[14px] font-medium text-secondary mb-1">
               暂无账号
             </div>
             <div className="text-[12px] text-[#b0b5c0]">
@@ -408,7 +408,7 @@ const AccountsPage: FC = () => {
           />
           {!recording && (
             <div>
-              <div className="text-[12px] text-[#8b8fa3] mb-2">登录方式</div>
+              <div className="text-[12px] text-muted mb-2">登录方式</div>
               <Radio.Group
                 value={recordMode}
                 onChange={(e) => setRecordMode(e.target.value)}
@@ -428,7 +428,7 @@ const AccountsPage: FC = () => {
           {recording && (
             <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[#f6f8fb] border border-[#eef0f2]">
               <Spin size="small" />
-              <span className="text-[13px] text-[#6b7280]">{recordStatus}</span>
+              <span className="text-[13px] text-secondary">{recordStatus}</span>
             </div>
           )}
           <div className="text-[12px] text-[#b0b5c0] leading-relaxed">

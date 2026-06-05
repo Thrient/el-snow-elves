@@ -19,15 +19,15 @@ const FlowEditor: FC<FlowEditorProps> = ({ step, stepOpts, stepName, onUpdate })
   return (
     <div className="space-y-2">
       {items.map(({ k, label, hint, color, icon }) => (
-        <div key={k} className="group rounded-xl border border-dashed bg-white transition-colors"
+        <div key={k} className="group rounded-xl border border-dashed bg-container transition-colors"
           style={{ borderColor: `${color}4d`, background: `linear-gradient(135deg, ${color}0a, #fff)` }}>
           <div className="flex items-center gap-2 px-3.5 py-2">
             <span className="flex items-center justify-center w-5 h-5 rounded-md shrink-0 text-[13px]"
               style={{ background: `${color}18`, color }}>
               {icon}
             </span>
-            <span className="text-[12px] text-[#374151]">{label}</span>
-            <span className="text-[10px] text-[#8b8fa3]">{hint}</span>
+            <span className="text-[12px] text-body">{label}</span>
+            <span className="text-[10px] text-muted">{hint}</span>
             <Select className="flex-1 min-w-0 ml-auto" size="small" allowClear showSearch
               placeholder="选择目标步骤" popupMatchSelectWidth={false}
               value={(step as any)[k] || undefined}

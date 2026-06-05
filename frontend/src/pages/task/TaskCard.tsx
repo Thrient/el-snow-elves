@@ -34,7 +34,7 @@ function renderPills(task: Task) {
         >{`${key}: ${String(value)}`}</Tag>
       ))}
       {rest > 0 && (
-        <Tag className="h-[22px] leading-[22px] rounded border-[#eef0f2] text-[#8b8fa3] text-[11px] m-0">
+        <Tag className="h-[22px] leading-[22px] rounded border-[#eef0f2] text-muted text-[11px] m-0">
           +{rest}
         </Tag>
       )}
@@ -63,16 +63,16 @@ const TaskCard: FC<Props> = ({ task, index, selected, onToggle, onAppend, onConf
     >
       <div className="flex items-center justify-between mb-2">
         <Checkbox checked={selected} onChange={() => onToggle(task.id)} className="scale-90 origin-left" />
-        <Tag className="m-0 text-[10px] bg-[#f0f2f5] text-[#8b8fa3] border-none rounded font-mono px-1.5 leading-5">
+        <Tag className="m-0 text-[10px] bg-[#f0f2f5] text-muted border-none rounded font-mono px-1.5 leading-5">
           v{task.version}
         </Tag>
       </div>
 
-      <div className="text-[15px] font-semibold text-[#1a1a2e] mb-1 leading-tight tracking-tight">
+      <div className="text-[15px] font-semibold text-heading mb-1 leading-tight tracking-tight">
         {task.name}
       </div>
 
-      <div className="text-[11px] text-[#8b8fa3] mb-2.5">
+      <div className="text-[11px] text-muted mb-2.5">
         {task.author || "未知作者"}
       </div>
 

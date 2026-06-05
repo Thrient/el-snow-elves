@@ -96,7 +96,7 @@ const PlansPage: FC = () => {
       width: 180,
       render: (name: string, record) => (
         <div className="flex items-center gap-2">
-          <span className="font-medium text-[#1a1a2e]">{name}</span>
+          <span className="font-medium text-heading">{name}</span>
           {(() => {
             const t = PLAN_TEMPLATES.find((t) => t.id === record.templateId);
             return t ? <Tag className="!m-0 text-[10px]" color="blue">{t.name}</Tag> : null;
@@ -112,10 +112,10 @@ const PlansPage: FC = () => {
       render: (cron: string) => (
         <div className="text-xs">
           <div className="flex items-center gap-1">
-            <ClockCircleOutlined className="text-[#8b8fa3]" />
+            <ClockCircleOutlined className="text-muted" />
             <span className="font-mono">{cron}</span>
           </div>
-          <div className="text-[#8b8fa3] mt-0.5">{cronHuman(cron)}</div>
+          <div className="text-muted mt-0.5">{cronHuman(cron)}</div>
         </div>
       ),
     },
@@ -128,13 +128,13 @@ const PlansPage: FC = () => {
           const source = params.source === "config"
             ? `配置文件: ${params.configName || "—"}`
             : "默认队列";
-          return <span className="text-xs text-[#6b7280]">{source}</span>;
+          return <span className="text-xs text-secondary">{source}</span>;
         }
         if (record.action.type === "push_task") {
           const taskList = useCharacterStore.getState().taskList;
           const task = taskList.find((t) => t.id === params.taskId);
           const label = task ? `${task.name} v${task.version}` : (params.taskId as string);
-          return <span className="text-xs text-[#6b7280]">推送: {label}</span>;
+          return <span className="text-xs text-secondary">推送: {label}</span>;
         }
         return <span className="text-xs text-[#ccc]">—</span>;
       },

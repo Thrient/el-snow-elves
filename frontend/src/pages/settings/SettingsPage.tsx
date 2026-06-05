@@ -51,7 +51,7 @@ const SettingsPage: FC = () => {
                     }}
                   >
                     {isHeader ? (
-                      <span className="text-sm font-bold text-[#1a1a2e]">{cell.text}</span>
+                      <span className="text-sm font-bold text-heading">{cell.text}</span>
                     ) : (
                       <SettingsField
                         cell={cell}

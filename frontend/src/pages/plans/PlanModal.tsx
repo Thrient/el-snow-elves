@@ -161,7 +161,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
       {/* Step 1: Select template */}
       {!template && !isEdit && (
         <div className="flex flex-col gap-2">
-          <div className="text-sm text-[#8b8fa3] mb-1">请选择计划模板</div>
+          <div className="text-sm text-muted mb-1">请选择计划模板</div>
           {PLAN_TEMPLATES.map((tmpl) => (
             <div
               key={tmpl.id}
@@ -170,9 +170,9 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
             >
               <div className="flex items-center gap-2 mb-1">
                 <Tag color="blue">{tmpl.name}</Tag>
-                <span className="font-mono text-xs text-[#8b8fa3]">{tmpl.defaultCron}</span>
+                <span className="font-mono text-xs text-muted">{tmpl.defaultCron}</span>
               </div>
-              <div className="text-xs text-[#8b8fa3]">{tmpl.description}</div>
+              <div className="text-xs text-muted">{tmpl.description}</div>
             </div>
           ))}
         </div>
@@ -184,7 +184,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
           {!isEdit && template && (
             <div className="flex items-center gap-2 mb-4 p-3 bg-[#f0f5ff] rounded-lg">
               <Tag color="blue">{template.name}</Tag>
-              <span className="text-xs text-[#8b8fa3]">{template.description}</span>
+              <span className="text-xs text-muted">{template.description}</span>
               <Button type="link" size="small" className="ml-auto" onClick={() => setTemplate(null)}>
                 更换模板
               </Button>
@@ -227,7 +227,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
               />
             </Form.Item>
             {cronError && <div className="text-[#ff4d4f] text-xs mt-1">{cronError}</div>}
-            {!cronError && cronHuman && <div className="text-[#8b8fa3] text-xs mt-1">「{cronHuman}」</div>}
+            {!cronError && cronHuman && <div className="text-muted text-xs mt-1">「{cronHuman}」</div>}
           </Form.Item>
 
           {template?.id === "restart" && (
@@ -277,7 +277,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
               </Form.Item>
               {taskLayout && (
                 <div className="mb-4 p-3 bg-[#fafbfc] rounded-lg border border-[#f0f0f5]">
-                  <div className="text-xs text-[#8b8fa3] mb-2">任务参数</div>
+                  <div className="text-xs text-muted mb-2">任务参数</div>
                   <div
                     className="grid gap-x-4 gap-y-3"
                     style={{ gridTemplateColumns: `repeat(24, 1fr)` }}

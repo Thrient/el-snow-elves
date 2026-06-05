@@ -157,7 +157,7 @@ const TaskVarsSection: FC<Props> = ({ values, valueTypes = {}, layout, onChange,
     const isOver = totalSpan > 24;
 
     return (
-      <div key={ri} className="rounded-lg border border-[#e5e7eb] overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+      <div key={ri} className="rounded-lg border border-[#e5e7eb] overflow-hidden bg-container shadow-sm hover:shadow-md transition-shadow">
         {/* header */}
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#f9fafb] border-b border-[#f3f4f6]">
           <span className="text-[10px] text-[#9ca3af] font-medium">行 {ri + 1}</span>
@@ -173,7 +173,7 @@ const TaskVarsSection: FC<Props> = ({ values, valueTypes = {}, layout, onChange,
             onClick={() => moveRow(ri, 1)}>↓</Button></Tooltip>
           <span className="w-px h-3 bg-[#e5e7eb]" />
           <Button type="text" size="small"
-            className="!text-[10px] !p-0 !w-5 !h-5 !text-[#6b7280]"
+            className="!text-[10px] !p-0 !w-5 !h-5 !text-secondary"
             onClick={() => addCell(ri)}>+</Button>
           <Button type="text" size="small"
             className="!text-[10px] !p-0 !w-5 !h-5 !text-[#d0d5dd] hover:!text-[#dc2626]"

@@ -54,7 +54,7 @@ const PlanCard: FC<Props> = ({ plan, idx, accent, now, onEdit }) => {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="text-[12px] font-semibold text-[#1a1a2e] truncate">{plan.name}</span>
+            <span className="text-[12px] font-semibold text-heading truncate">{plan.name}</span>
             {tmpl && (
               <Tag style={{ fontSize: 8, lineHeight: 1, border: "none", borderRadius: 4, padding: "1px 6px", margin: 0, color: "#6366f1", background: "#eef2ff" }}>
                 {tmpl.name}
@@ -87,7 +87,7 @@ const PlanCard: FC<Props> = ({ plan, idx, accent, now, onEdit }) => {
           ) : (
             <div className="flex items-center gap-2 px-3 py-1.5 text-[10px] text-[#9ca3af] bg-[#f9fafb] rounded-lg">
               <span>下次</span>
-              <span className="font-semibold text-[#374151] ml-auto">
+              <span className="font-semibold text-body ml-auto">
                 {nextRun.toLocaleDateString("zh-CN", { month: "short", day: "numeric" })} {nextRun.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
               </span>
             </div>

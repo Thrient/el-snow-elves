@@ -145,7 +145,7 @@ const Toolbar: FC<{
     <Button size="small" type="text" icon={<ZoomOutOutlined />}
       disabled={zoom <= minZoom}
       onClick={() => onZoom(Math.max(minZoom, zoom / 1.25))} />
-    <span className="text-xs text-[#8b8fa3] px-1 min-w-[40px] text-center">{Math.round(zoom * 100)}%</span>
+    <span className="text-xs text-muted px-1 min-w-[40px] text-center">{Math.round(zoom * 100)}%</span>
     <Button size="small" type="text" icon={<ZoomInOutlined />}
       disabled={zoom >= 4}
       onClick={() => onZoom(Math.min(4, zoom * 1.25))} />
@@ -201,7 +201,7 @@ const SaveModal: FC<{
   open: boolean; saving: boolean; filename: string; crop: CropRect | null;
   onFilename: (v: string) => void; onOk: () => void; onCancel: () => void;
 }> = ({ open, saving, filename, crop, onFilename, onOk, onCancel }) => (
-  <Modal title={<span className="text-sm font-semibold text-[#1a1a2e]">保存模板图片</span>}
+  <Modal title={<span className="text-sm font-semibold text-heading">保存模板图片</span>}
     open={open} onOk={onOk} onCancel={onCancel} centered
     okText="保存" cancelText="取消" confirmLoading={saving}
     okButtonProps={{ disabled: !filename.trim() }}
@@ -209,7 +209,7 @@ const SaveModal: FC<{
   >
     <div className="flex flex-col gap-4 pt-1">
       <div className="flex flex-col gap-1.5">
-        <span className="text-[11px] font-medium text-[#6b7280]">文件名</span>
+        <span className="text-[11px] font-medium text-secondary">文件名</span>
         <Input placeholder="输入模板图片名" value={filename}
           onChange={e => onFilename(e.target.value)}
           suffix={<span className="text-[10px] text-[#9ca3af]">.bmp</span>}
@@ -217,8 +217,8 @@ const SaveModal: FC<{
       </div>
       {crop && (
         <div className="flex items-center gap-3 px-3 py-2.5 bg-[#f8f9fb] rounded-lg border border-[#eef0f2]">
-          <span className="text-[11px] text-[#8b8fa3]">选区尺寸</span>
-          <span className="text-xs font-medium text-[#1a1a2e]">{Math.round(crop.w)} × {Math.round(crop.h)} px</span>
+          <span className="text-[11px] text-muted">选区尺寸</span>
+          <span className="text-xs font-medium text-heading">{Math.round(crop.w)} × {Math.round(crop.h)} px</span>
         </div>
       )}
     </div>
@@ -561,7 +561,7 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
       <Modal title={<span><ScissorOutlined className="mr-2" />创建模板图片</span>}
         open={open} onCancel={onClose} centered width={780}
         footer={<div className="flex justify-between items-center">
-          <span className="text-xs text-[#8b8fa3]">右键清除 · 滚轮缩放 · 拖拽画布/选区 · 四角调整大小</span>
+          <span className="text-xs text-muted">右键清除 · 滚轮缩放 · 拖拽画布/选区 · 四角调整大小</span>
           <div className="flex items-center gap-2">
             <Button onClick={onClose}>取消</Button>
             <Button type="primary" disabled={!crop || crop.w < MIN_CROP}
@@ -595,20 +595,20 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
                           <span className="flex items-center justify-center w-4 h-4 rounded-md shrink-0 text-[11px] bg-[rgba(139,92,246,0.12)] c-[#8b5cf6]">
                             <ExperimentOutlined />
                           </span>
-                          <span className="text-[12px] font-semibold text-[#1a1a2e]">预处理测试</span>
+                          <span className="text-[12px] font-semibold text-heading">预处理测试</span>
                         </div>
-                        <div className="text-[10px] text-[#8b8fa3] mb-2 leading-tight">
+                        <div className="text-[10px] text-muted mb-2 leading-tight">
                           用框选区域作为匹配模板
                         </div>
                         <PreprocessConfigPanel cfg={preprocessCfg} onChange={setPreprocessCfg} />
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#f0f0f5]">
-                          <span className="text-[11px] text-[#374151]">匹配阈值</span>
+                          <span className="text-[11px] text-body">匹配阈值</span>
                           <InputNumber size="small" min={0} max={1} step={0.01}
                             className="w-72px" value={matchThreshold}
                             onChange={v => setMatchThreshold(v ?? 0.85)} />
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#f0f0f5]">
-                          <span className="text-[11px] text-[#374151]">匹配算法</span>
+                          <span className="text-[11px] text-body">匹配算法</span>
                           <Radio.Group size="small" value={matchMethod}
                             onChange={e => setMatchMethod(e.target.value)}>
                             <Radio.Button value="ccoeff" className="text-[10px] px-2">模板</Radio.Button>
@@ -660,7 +660,7 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
               </div>
             ) : !loading ? (
               <div style={S.empty()}>
-                <span className="text-sm text-[#8b8fa3]">截图加载失败</span>
+                <span className="text-sm text-muted">截图加载失败</span>
               </div>
             ) : null}
           </div>

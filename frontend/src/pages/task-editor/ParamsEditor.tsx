@@ -74,18 +74,18 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
   return (
     <div className="space-y-2.5">
       {showArgs && (
-        <div className="rounded-xl border border-dashed bg-white"
+        <div className="rounded-xl border border-dashed bg-container"
           style={{ borderColor: "rgba(59,130,246,0.25)", background: "linear-gradient(135deg, rgba(59,130,246,0.04), #fff)" }}>
           <div className="flex items-center gap-2 px-3.5 py-2.5">
             <span className="flex items-center justify-center w-5 h-5 rounded-md shrink-0 text-[13px]"
               style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}>
               <PictureOutlined />
             </span>
-            <span className="text-[12px] font-semibold text-[#1a1a2e]">模板图片</span>
+            <span className="text-[12px] font-semibold text-heading">模板图片</span>
             <Tooltip title="模板图片名列表，不含路径和 .bmp 后缀。支持 {变量} 嵌入" placement="top">
-              <span className="text-[10px] text-[#c0c4cc] cursor-help hover:text-[#6b7280]">?</span>
+              <span className="text-[10px] text-[#c0c4cc] cursor-help hover:text-secondary">?</span>
             </Tooltip>
-            <span className="text-[10px] text-[#8b8fa3] ml-auto">输入图片名后回车添加</span>
+            <span className="text-[10px] text-muted ml-auto">输入图片名后回车添加</span>
           </div>
           <div className="px-3.5 pb-3">
             <Select mode="tags" className="w-full" size="small" placeholder="输入图片名回车添加，如 按钮登录"
@@ -104,7 +104,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
         const accentColor = meta?.color ?? "#9ca3af";
         if (key === "pos" || key === "start_pos" || key === "end_pos" || key === "box" || key === "color" || key === "key" || key === "hwnd" || key === "text") {
           return (
-            <div key={key} className="group rounded-xl border border-dashed bg-white transition-colors"
+            <div key={key} className="group rounded-xl border border-dashed bg-container transition-colors"
               style={{ borderColor: `${accentColor}4d`, background: `linear-gradient(135deg, ${accentColor}0a, #fff)` }}>
               <div className="flex items-center justify-between px-3.5 py-2">
                 <Tooltip title={meta?.tip || meta?.desc} placement="left">
@@ -112,7 +112,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
                     <span className="flex items-center justify-center w-5 h-5 rounded-md shrink-0" style={{ background: `${accentColor}18`, color: accentColor, fontSize: "13px" }}>
                       {meta?.icon}
                     </span>
-                    <span className="text-[12px] text-[#374151] select-none">{meta?.label ?? key}</span>
+                    <span className="text-[12px] text-body select-none">{meta?.label ?? key}</span>
                   </div>
                 </Tooltip>
                 <button onClick={() => { const p = { ...params }; delete p[key]; onUpdate("params", p); }}
@@ -125,7 +125,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
           );
         }
         return (
-          <div key={key} className="group rounded-xl border border-dashed bg-white transition-colors"
+          <div key={key} className="group rounded-xl border border-dashed bg-container transition-colors"
             style={{ borderColor: `${accentColor}4d`, background: `linear-gradient(135deg, ${accentColor}0a, #fff)` }}>
             <div className="flex items-center justify-between px-3.5 py-2">
               <Tooltip title={meta?.tip || meta?.desc} placement="left">
@@ -133,7 +133,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
                   <span className="flex items-center justify-center w-5 h-5 rounded-md shrink-0" style={{ background: `${accentColor}18`, color: accentColor, fontSize: "13px" }}>
                     {meta?.icon}
                   </span>
-                  <span className="text-[12px] text-[#374151] select-none truncate">{meta?.label ?? key}</span>
+                  <span className="text-[12px] text-body select-none truncate">{meta?.label ?? key}</span>
                   {meta?.range && (
                     <span className="text-[10px] text-[#c0c4cc] font-mono shrink-0 hidden sm:inline">{meta.range}</span>
                   )}
@@ -150,10 +150,10 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
       })}
 
       {canAdd.length > 0 && (
-        <div className="rounded-xl border border-dashed bg-white"
+        <div className="rounded-xl border border-dashed bg-container"
           style={{ borderColor: "rgba(148,163,184,0.3)", background: "linear-gradient(135deg, rgba(148,163,184,0.03), #fff)" }}>
           <div className="flex items-center gap-2 px-3.5 py-2">
-            <span className="text-[11px] font-medium text-[#8b8fa3] shrink-0">添加参数</span>
+            <span className="text-[11px] font-medium text-muted shrink-0">添加参数</span>
             <span className="h-px flex-1" style={{ background: "linear-gradient(to right, #e5e7eb, transparent)" }} />
           </div>
           <div className="px-3.5 pb-3 flex flex-wrap gap-1.5">
@@ -163,7 +163,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
             return (
               <Tooltip key={k} title={meta?.desc}>
                 <button onClick={() => onUpdate("params", { ...params, [k]: "" })}
-                  className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg border border-dashed border-[#dde0e6] text-[#6b7280] bg-white hover:text-[#1677ff] hover:border-[#1677ff] hover:shadow-sm transition-all cursor-pointer border-0 bg-transparent"
+                  className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg border border-dashed border-[#dde0e6] text-secondary bg-container hover:text-[#1677ff] hover:border-[#1677ff] hover:shadow-sm transition-all cursor-pointer border-0 bg-transparent"
                   style={{ border: `1px dashed ${accent}40`, background: `${accent}06` } as React.CSSProperties}>
                   <span className="flex items-center justify-center w-4 h-4 rounded shrink-0 text-[10px]" style={{ background: `${accent}18`, color: accent }}>
                     {meta?.icon}

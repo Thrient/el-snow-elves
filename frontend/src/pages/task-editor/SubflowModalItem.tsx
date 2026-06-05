@@ -47,7 +47,7 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
   };
 
   return (
-    <div className="group rounded-xl border border-dashed bg-white transition-colors flex-1 min-w-0"
+    <div className="group rounded-xl border border-dashed bg-container transition-colors flex-1 min-w-0"
       style={{ borderColor: `${color}4d`, background: `linear-gradient(135deg, ${color}0a, #fff)` }}>
       <div className="flex items-center gap-1.5 px-4 py-2.5">
         <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-semibold shrink-0"

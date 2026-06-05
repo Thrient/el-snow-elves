@@ -393,12 +393,12 @@ const TaskEditorPage: FC = () => {
     <div className="page-container">
       <div className="page-header gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Button type="text" icon={<ArrowLeftOutlined />} onClick={closeTask} className="!text-[#6b7280] hover:!text-[#1a1a2e]">返回</Button>
+          <Button type="text" icon={<ArrowLeftOutlined />} onClick={closeTask} className="!text-secondary hover:!text-heading">返回</Button>
           <div className="w-px h-5 bg-[#e5e7eb]" />
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center">
               <CodeOutlined className="text-sm text-[#1677ff]" /></div>
-            <span className="text-sm font-bold text-[#1a1a2e]">{editor.currentTask!.name}</span>
+            <span className="text-sm font-bold text-heading">{editor.currentTask!.name}</span>
             <Tag color="blue" className="m-0 text-[11px]">v{editor.currentTask!.version}</Tag>
             {editor.isDirty && <Tag color="orange" className="m-0 text-[11px]">已修改</Tag>}
             {loopCount > 0 && <Tag color="purple" className="m-0 text-[11px]"><SyncOutlined className="mr-1" />{loopCount}</Tag>}
@@ -423,7 +423,7 @@ const TaskEditorPage: FC = () => {
       </div>
 
       <div className="flex flex-1 min-h-0">
-        <div className="flex-1 min-h-0 bg-white">
+        <div className="flex-1 min-h-0 bg-container">
           <FlowEditor task={editor.currentTask!} nodes={flowNodes} edges={flowEdges}
             onNodesChange={(ns) => { setFlowNodes(ns); if (!initRef.current) editor.setDirty(true); }}
             onEdgesChange={(es) => { setFlowEdges(es); if (!initRef.current) editor.setDirty(true); }}
@@ -444,7 +444,7 @@ const TaskEditorPage: FC = () => {
             onToggleLoop={handleToggleLoop}
           />
         </div>
-        <div className={`shrink-0 border-l border-[#e8eaed] bg-white flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${drawerStep ? "w-[440px]" : "w-0 border-l-0"}`}>
+        <div className={`shrink-0 border-l border-[#e8eaed] bg-container flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${drawerStep ? "w-[440px]" : "w-0 border-l-0"}`}>
           {drawerStep && drawerData && (
             <StepPanel stepName={drawerStep.name} step={drawerData} isCommon={drawerStep.isCommon} ctx={ctx}
               onClose={() => setDrawerStep(null)}

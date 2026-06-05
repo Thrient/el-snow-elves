@@ -42,8 +42,8 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
           <div className="text-center mb-6">
             <div className="w-16 h-16 rounded-2xl bg-[#f0f2f5] flex items-center justify-center mx-auto mb-3">
               <FolderOpenOutlined className="text-2xl text-[#a0aec0]" /></div>
-            <h2 className="text-base font-bold text-[#1a1a2e] mb-1">选择或创建任务</h2>
-            <p className="text-xs text-[#8b8fa3]">打开已有任务开始编辑，或创建一个新任务</p>
+            <h2 className="text-base font-bold text-heading mb-1">选择或创建任务</h2>
+            <p className="text-xs text-muted">打开已有任务开始编辑，或创建一个新任务</p>
           </div>
           <Input size="large" prefix={<span className="text-[#a0aec0]">🔍</span>}
             placeholder="搜索任务..." value={search} allowClear
@@ -54,10 +54,10 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
                 className="flex items-center gap-4 px-5 py-4 rounded-xl cursor-pointer
                   transition-all hover:scale-[1.01] hover:shadow-card-hover">
                 <div className="w-10 h-10 rounded-xl bg-[#f0f2f5] flex items-center justify-center shrink-0">
-                  <CodeOutlined className="text-sm text-[#6b7280]" /></div>
+                  <CodeOutlined className="text-sm text-secondary" /></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[14px] font-semibold text-[#1a1a2e]">{t.name}</span>
+                    <span className="text-[14px] font-semibold text-heading">{t.name}</span>
                     {t.start && <PlayCircleOutlined className="text-[11px] text-[#52c41a]" />}</div>
                   <div className="flex items-center gap-3 mt-0.5">
                     <span className="text-xs text-[#9ca3af]">v{t.version}</span>

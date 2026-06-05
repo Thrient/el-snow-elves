@@ -13,8 +13,8 @@ const DebugExecutionPanel: FC<DebugExecutionPanelProps> = ({ hwnd, stepName }) =
   <div className="rounded-xl border border-dashed border-[#ffa940] bg-[#fffbe6] p-3.5 space-y-2">
     <div className="flex items-center gap-2">
       <BugOutlined className="text-[#fa8c16] text-sm" />
-      <span className="text-[11px] font-semibold text-[#1a1a2e]">调试运行</span>
-      <span className="text-[10px] text-[#8b8fa3]">窗口 {hwnd}</span>
+      <span className="text-[11px] font-semibold text-heading">调试运行</span>
+      <span className="text-[10px] text-muted">窗口 {hwnd}</span>
     </div>
     <div className="flex gap-2">
       <Button size="small" type="primary"
@@ -48,7 +48,7 @@ const DebugExecutionPanel: FC<DebugExecutionPanelProps> = ({ hwnd, stepName }) =
         单步执行
       </Button>
     </div>
-    <div className="text-[10px] text-[#8b8fa3] leading-relaxed">
+    <div className="text-[10px] text-muted leading-relaxed">
       从此步骤开始：覆盖任务入口，后续正常流转。<br />
       单步执行：仅执行此步骤，完成后立即结束（忽略跳转）。
     </div>

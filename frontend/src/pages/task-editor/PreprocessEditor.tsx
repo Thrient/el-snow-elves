@@ -29,7 +29,7 @@ const PreprocessEditor: FC<Props> = ({ value, onChange, onRemove }) => {
 
   return (
     <div
-      className="rounded-xl border border-dashed bg-white"
+      className="rounded-xl border border-dashed bg-container"
       style={{ borderColor: "rgba(139,92,246,0.3)", background: "linear-gradient(135deg, rgba(139,92,246,0.04), #fff)" }}
     >
       <div className="flex items-center gap-2 px-3.5 py-2.5">
@@ -39,8 +39,8 @@ const PreprocessEditor: FC<Props> = ({ value, onChange, onRemove }) => {
         >
           <BulbOutlined />
         </span>
-        <span className="text-[12px] font-semibold text-[#1a1a2e]">图像预处理</span>
-        <span className="text-[10px] text-[#8b8fa3] ml-auto">选填，不设则不处理</span>
+        <span className="text-[12px] font-semibold text-heading">图像预处理</span>
+        <span className="text-[10px] text-muted ml-auto">选填，不设则不处理</span>
         {onRemove && (
           <button
             onClick={onRemove}

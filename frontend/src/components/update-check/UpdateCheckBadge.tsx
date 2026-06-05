@@ -43,7 +43,7 @@ export default function UpdateCheckBadge() {
           size="small"
           icon={<SyncOutlined spin={spinning} />}
           onClick={handleCheck}
-          className="!text-[#6b7280] hover:!text-[#1677ff]"
+          className="!text-secondary hover:!text-[#1677ff]"
         />
         {hasUpdate && (
           <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[#f5222d] rounded-full ring-2 ring-white" />

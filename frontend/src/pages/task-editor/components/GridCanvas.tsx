@@ -85,7 +85,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
   }, [ctxMenu, onCellRemove]);
 
   return (
-    <div className="relative flex-1 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-lg">
+    <div className="relative flex-1 bg-container/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-lg">
       {/* toolbar */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">
         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
       >
         {layout.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400">
-            <div className="w-20 h-20 rounded-3xl bg-white shadow-md border border-slate-100 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-3xl bg-container shadow-md border border-slate-100 flex items-center justify-center">
               <span className="text-3xl text-slate-300">⊞</span>
             </div>
             <div className="flex flex-col items-center gap-1">
@@ -125,7 +125,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
               return (
                 <div
                   key={ri}
-                  className={`rounded-2xl transition-all duration-300 bg-white shadow-sm
+                  className={`rounded-2xl transition-all duration-300 bg-container shadow-sm
                     ${canDrop && dragFromLeft ? "ring-2 ring-indigo-200 shadow-lg" : "shadow-sm hover:shadow-md"}`}
                   onDragOver={(e) => onRowDragOver(ri, e)}
                   onDrop={(e) => onDrop(ri, row.length, e)}
@@ -266,7 +266,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
           onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null); }}
         >
           <div
-            className="absolute z-50 bg-white/95 backdrop-blur-xl rounded-2xl py-1.5 min-w-[180px] border border-slate-200/80 shadow-[0_20px_60px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden"
+            className="absolute z-50 bg-container/95 backdrop-blur-xl rounded-2xl py-1.5 min-w-[180px] border border-slate-200/80 shadow-[0_20px_60px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)] overflow-hidden"
             style={{ left: ctxMenu.x, top: ctxMenu.y }}
           >
             <div className="px-4 py-1.5 text-[10px] font-semibold text-slate-400 tracking-wider uppercase select-none">调整宽度</div>

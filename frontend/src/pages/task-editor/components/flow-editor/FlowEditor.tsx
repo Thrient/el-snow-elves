@@ -146,8 +146,8 @@ const FlowEditor: FC<Props> = ({
                       <StopOutlined className="text-[13px] text-[#722ed1]" />
                     </div>
                     <div>
-                      <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">关闭循环检测</div>
-                      <div className="text-[10px] text-[#8b8fa3] leading-tight">从循环列表中移除</div>
+                      <div className="text-[13px] font-medium text-heading leading-tight">关闭循环检测</div>
+                      <div className="text-[10px] text-muted leading-tight">从循环列表中移除</div>
                     </div>
                   </button>
                 ) : (
@@ -162,8 +162,8 @@ const FlowEditor: FC<Props> = ({
                       <SyncOutlined className="text-[13px] text-[#722ed1]" />
                     </div>
                     <div>
-                      <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">开启循环检测</div>
-                      <div className="text-[10px] text-[#8b8fa3] leading-tight">加入监控循环列表</div>
+                      <div className="text-[13px] font-medium text-heading leading-tight">开启循环检测</div>
+                      <div className="text-[10px] text-muted leading-tight">加入监控循环列表</div>
                     </div>
                   </button>
                 )}
@@ -177,8 +177,8 @@ const FlowEditor: FC<Props> = ({
                     <span className="text-[13px] text-[#1677ff]">+</span>
                   </div>
                   <div>
-                    <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">普通步骤</div>
-                    <div className="text-[10px] text-[#8b8fa3] leading-tight">添加一个任务步骤</div>
+                    <div className="text-[13px] font-medium text-heading leading-tight">普通步骤</div>
+                    <div className="text-[10px] text-muted leading-tight">添加一个任务步骤</div>
                   </div>
                 </button>
                 <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
@@ -187,8 +187,8 @@ const FlowEditor: FC<Props> = ({
                     <span className="text-[13px] text-[#f59e0b]">+</span>
                   </div>
                   <div>
-                    <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">公共步骤</div>
-                    <div className="text-[10px] text-[#8b8fa3] leading-tight">覆盖全局公共步骤</div>
+                    <div className="text-[13px] font-medium text-heading leading-tight">公共步骤</div>
+                    <div className="text-[10px] text-muted leading-tight">覆盖全局公共步骤</div>
                   </div>
                 </button>
                 {clipboardHasData && (
@@ -200,8 +200,8 @@ const FlowEditor: FC<Props> = ({
                         <SnippetsOutlined className="text-[13px] text-[#52c41a]" />
                       </div>
                       <div>
-                        <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">粘贴步骤</div>
-                        <div className="text-[10px] text-[#8b8fa3] leading-tight">将复制的步骤粘贴到此处</div>
+                        <div className="text-[13px] font-medium text-heading leading-tight">粘贴步骤</div>
+                        <div className="text-[10px] text-muted leading-tight">将复制的步骤粘贴到此处</div>
                       </div>
                     </button>
                   </>

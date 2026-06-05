@@ -195,7 +195,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: #fff;
+    background: var(--color-bg-page);
     border-radius: var(--radius-lg);
     margin: 0 16px 16px 16px;
     padding: 20px;
@@ -212,22 +212,22 @@ body {
     width: 4px;
     height: 20px;
     border-radius: 999px;
-    background: #1677ff;
+    background: var(--color-primary);
     flex-shrink: 0;
 }
 
 .page-header__title {
     font-size: 15px;
     font-weight: 600;
-    color: #1a1a2e;
+    color: var(--color-text-heading);
     letter-spacing: -0.01em;
     margin: 0;
 }
 
 .page-header__badge {
     font-size: 12px;
-    color: #8b8fa3;
-    background: #f5f5f7;
+    color: var(--color-text-muted);
+    background: var(--color-bg-container);
     padding: 2px 10px;
     border-radius: 999px;
     font-weight: 500;
@@ -376,7 +376,7 @@ body {
 
 /* ── Queue & plan item cards ── */
 .queue-item {
-    background: #fff;
+    background: var(--color-bg-page);
     border: 1px solid #eef0f2;
     border-radius: 10px;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;

@@ -259,7 +259,7 @@ const ExpressionActionBuilder: FC<Props> = ({ value, varOptions, onChange, modes
                   </div>
                 )}
 
-                <div className="flex items-stretch rounded-lg border bg-white transition-all duration-200 overflow-hidden"
+                <div className="flex items-stretch rounded-lg border bg-container transition-all duration-200 overflow-hidden"
                   style={{ borderColor: "#e8e3dc", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
                   <div className="shrink-0 transition-all duration-200" style={{ width: 3,
                     background: c.var ? "linear-gradient(180deg, #d4513b, #e87a5a)" : "#d9cfc4", borderRadius: "3px 0 0 3px" }} />

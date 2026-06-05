@@ -39,7 +39,7 @@ const SubListEditor: FC<SubListEditorProps> = ({ list, ctx, isKeyValue, color, o
         <div key={i} draggable
           onDragStart={() => handleDragStart(i)} onDragEnd={handleDragEnd}
           onDragOver={(e) => handleDragOver(i, e)} onDrop={() => handleDrop(i)}
-          className={`group rounded-xl border border-dashed bg-white transition-colors cursor-grab active:cursor-grabbing
+          className={`group rounded-xl border border-dashed bg-container transition-colors cursor-grab active:cursor-grabbing
             ${dropTarget === i ? "border-indigo-400 shadow-md shadow-indigo-100 -translate-y-0.5" : ""}`}
           style={{ borderColor: dropTarget === i ? "#818cf8" : `${color}4d`, background: `linear-gradient(135deg, ${color}0a, #fff)` }}>
           <div className="flex items-center gap-2 px-3.5 py-2">
@@ -50,7 +50,7 @@ const SubListEditor: FC<SubListEditorProps> = ({ list, ctx, isKeyValue, color, o
               options={ctx.taskValueVars.map(v => ({ value: v.value.replace(/^\{|\}$/g, ""), label: v.label.replace(/^\{|\}$/g, "") }))}
               filterOption={(iv, opt) => opt?.label?.toLowerCase().includes(iv.toLowerCase()) ?? false}
               onChange={(v) => { const u = [...arr]; u[i] = { ...u[i], name: (v ?? "").replace(/^\{|\}$/g, "") }; onChange(u); }} />
-            <span className="font-mono text-[10px] text-[#8b8fa3] shrink-0">=</span>
+            <span className="font-mono text-[10px] text-muted shrink-0">=</span>
             <AutoComplete className="flex-1" size="small" variant="borderless" placeholder="值" value={item.value as string}
               popupMatchSelectWidth={false}
               options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps]}
@@ -88,17 +88,17 @@ const SubListEditor: FC<SubListEditorProps> = ({ list, ctx, isKeyValue, color, o
           </span>
         </div>
       )}
-      <div className="rounded-xl border border-dashed bg-white"
+      <div className="rounded-xl border border-dashed bg-container"
         style={{ borderColor: "rgba(148,163,184,0.3)", background: "linear-gradient(135deg, rgba(148,163,184,0.03), #fff)" }}>
         <div className="flex items-center gap-2 px-3.5 py-2">
-          <span className="text-[11px] font-medium text-[#8b8fa3] shrink-0">
+          <span className="text-[11px] font-medium text-muted shrink-0">
             添加{isKeyValue ? "变量" : "步骤"}
           </span>
           <span className="h-px flex-1" style={{ background: "linear-gradient(to right, #e5e7eb, transparent)" }} />
         </div>
         <div className="px-3.5 pb-3 flex flex-wrap gap-1.5">
           <button onClick={() => onChange([...arr, isKeyValue ? { name: "", value: "" } : { step: "" }])}
-            className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg border border-dashed border-[#dde0e6] text-[#6b7280] bg-white hover:text-[#1677ff] hover:border-[#1677ff] hover:shadow-sm transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg border border-dashed border-[#dde0e6] text-secondary bg-container hover:text-[#1677ff] hover:border-[#1677ff] hover:shadow-sm transition-all cursor-pointer"
             style={{ background: "transparent" } as React.CSSProperties}>
             <PlusOutlined className="text-[10px]" />
             新增{isKeyValue ? "变量" : "步骤"}

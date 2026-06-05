@@ -32,7 +32,7 @@ const StepNode: FC<NodeProps & { data: StepNodeData }> = ({ data, selected }) =>
       {/* Name row */}
       <div className="flex items-center justify-center gap-1.5 min-w-0">
         {isStart && <PlayCircleOutlined className="text-[#52c41a] text-xs shrink-0" />}
-        <span className="text-[13px] font-semibold text-[#1a1a2e] truncate" title={label}>{label}</span>
+        <span className="text-[13px] font-semibold text-heading truncate" title={label}>{label}</span>
       </div>
 
       {/* Badge row */}
@@ -54,7 +54,7 @@ const StepNode: FC<NodeProps & { data: StepNodeData }> = ({ data, selected }) =>
       <div className="flex justify-between px-1" style={{ paddingLeft: "8%", paddingRight: "8%" }}>
         <span className="text-[8px] text-[#52c41a] font-medium">成功</span>
         <span className="text-[8px] text-[#ff4d4f] font-medium">失败</span>
-        <span className="text-[8px] text-[#8b8fa3] font-medium">下步</span>
+        <span className="text-[8px] text-muted font-medium">下步</span>
       </div>
 
       <Handle type="source" position={Position.Bottom} id="success"

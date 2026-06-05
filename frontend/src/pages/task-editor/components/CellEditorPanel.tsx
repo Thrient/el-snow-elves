@@ -35,7 +35,7 @@ const MODELS_WITH_PLACEHOLDER = new Set<CellModel>([
 
 const Field: FC<{ label: string; children: React.ReactNode; className?: string }> = ({ label, children, className }) => (
   <div className={className}>
-    <span className="text-[10px] text-[#8b8fa3] block mb-0.5">{label}</span>
+    <span className="text-[10px] text-muted block mb-0.5">{label}</span>
     {children}
   </div>
 );
@@ -63,7 +63,7 @@ const CellEditorPanel: FC<CellEditorProps> = ({ cell, ri, ci, onUpdate, onUpdate
       {/* header */}
       <div className="flex items-center gap-2">
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col }} />
-        <span className="text-[12px] font-semibold text-[#1a1a2e]">
+        <span className="text-[12px] font-semibold text-heading">
           {MODEL_OPTIONS.find((m) => m.value === model)?.label ?? model}
         </span>
         <span className="text-[10px] text-[#9ca3af]">
@@ -231,7 +231,7 @@ const CellEditorPanel: FC<CellEditorProps> = ({ cell, ri, ci, onUpdate, onUpdate
           <Divider className="!my-0" />
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-medium text-[#6b7280]">选项列表</span>
+              <span className="text-[10px] font-medium text-secondary">选项列表</span>
               <Button type="dashed" size="small" className="text-[10px]"
                 onClick={() => onSetOpts(ri, ci, [...(cell.options ?? []), { label: "", value: "" }])}>
                 + 添加
@@ -270,7 +270,7 @@ const CellEditorPanel: FC<CellEditorProps> = ({ cell, ri, ci, onUpdate, onUpdate
       {/* preview */}
       <Divider className="!my-0" />
       <div>
-        <span className="text-[10px] font-medium text-[#8b8fa3] block mb-1.5">预览</span>
+        <span className="text-[10px] font-medium text-muted block mb-1.5">预览</span>
         <div className="rounded-md border border-[#e5e7eb] bg-[#fcfcfd] px-3 py-2">
           <MiniPreview cell={cell} />
         </div>

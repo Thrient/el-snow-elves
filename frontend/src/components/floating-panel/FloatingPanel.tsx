@@ -331,7 +331,7 @@ const FloatingPanel: FC = () => {
             style={{ borderColor: "rgba(0,0,0,0.05)", background: "rgba(255,255,255,0.6)" }}
             onMouseDown={handleMouseDown}
           >
-            <span className="text-[13px] font-semibold text-[#1a1a2e] tracking-tight">待执行</span>
+            <span className="text-[13px] font-semibold text-heading tracking-tight">待执行</span>
             <span
               className="text-[11px] text-[#bbb] cursor-pointer hover:text-[#1677ff] transition-colors flex items-center gap-1"
               onClick={toggle}
@@ -419,7 +419,7 @@ const FloatingPanel: FC = () => {
                                     <HolderOutlined className="text-[11px]" />
                                   </span>
                                   <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotColors[index % dotColors.length] }} />
-                                  <span className="text-[12px] font-medium text-[#1a1a2e] truncate leading-normal">{item.name}</span>
+                                  <span className="text-[12px] font-medium text-heading truncate leading-normal">{item.name}</span>
                                 </div>
                               </div>
                             </div>
@@ -487,8 +487,8 @@ const FloatingPanel: FC = () => {
                                 <div className="flex items-center gap-3">
                                   <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: plan.enabled ? dotColors[index % dotColors.length] : "#d9d9d9" }} />
                                   <div className="min-w-0 flex-1">
-                                    <div className="text-[12px] font-medium text-[#1a1a2e] truncate">{plan.name}</div>
-                                    <div className="text-[10px] text-[#8b8fa3] mt-0.5 font-mono">
+                                    <div className="text-[12px] font-medium text-heading truncate">{plan.name}</div>
+                                    <div className="text-[10px] text-muted mt-0.5 font-mono">
                                       {plan.cron}
                                       {tmpl && <span className="ml-1 text-[#bbb]">{tmpl.name}</span>}
                                     </div>

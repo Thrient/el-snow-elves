@@ -79,24 +79,6 @@ Remove-Item script.pyd -Force
 Remove-Item script.pyi -Force
 ```
 
-**5. 复制前端产物**
-
-```bash
-robocopy "D:\Code\el-snow-elves-react\dist" "dist\Elves\_internal\dist" /E
-```
-
-**6. 复制 resources**
-
-```bash
-robocopy "resources" "dist\Elves\_internal\resources" /E
-```
-
-**7. 清理旧压缩包**
-
-```bash
-Remove-Item 'dist\Elves.zip'  -Force
-```
-
 ## 开发
 
 安装依赖：

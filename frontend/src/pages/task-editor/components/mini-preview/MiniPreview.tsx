@@ -16,14 +16,14 @@ const MiniPreview: FC<Props> = ({ cell }) => {
         <span className="inline-flex items-center gap-1.5">
           {label && <span className="text-[10px] font-medium text-slate-600">{label}</span>}
           <span className="inline-block w-7 h-[15px] rounded-full bg-slate-300 relative align-middle shadow-inner">
-            <span className="absolute top-[2px] left-[2px] w-[11px] h-[11px] rounded-full bg-white shadow-sm transition-all" />
+            <span className="absolute top-[2px] left-[2px] w-[11px] h-[11px] rounded-full bg-container shadow-sm transition-all" />
           </span>
         </span>
       );
     case "el-checkbox":
       return (
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded-[4px] border-2 border-slate-300 bg-white shadow-sm" />
+          <span className="w-3.5 h-3.5 rounded-[4px] border-2 border-slate-300 bg-container shadow-sm" />
           {label && <span className="text-[10px] font-medium text-slate-600">{label}</span>}
         </span>
       );
@@ -34,7 +34,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
           {(cell.options ?? []).length > 0
             ? cell.options!.slice(0, 3).map((o, i) => (
               <span key={i} className="inline-flex items-center gap-1.5 text-[10px] text-slate-500">
-                <span className="w-3 h-3 rounded-[3px] border-2 border-slate-300 bg-white shadow-sm" />{o.label || o.value}
+                <span className="w-3 h-3 rounded-[3px] border-2 border-slate-300 bg-container shadow-sm" />{o.label || o.value}
               </span>
             ))
             : <span className="text-[9px] text-slate-300 italic">无选项</span>
@@ -48,7 +48,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
           {(cell.options ?? []).length > 0
             ? cell.options!.slice(0, 3).map((o, i) => (
               <span key={i} className="inline-flex items-center gap-1.5 text-[10px] text-slate-500">
-                <span className="w-3 h-3 rounded-full border-2 border-slate-300 bg-white shadow-sm" />{o.label || o.value}
+                <span className="w-3 h-3 rounded-full border-2 border-slate-300 bg-container shadow-sm" />{o.label || o.value}
               </span>
             ))
             : <span className="text-[9px] text-slate-300 italic">无选项</span>
@@ -60,7 +60,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
         <span className="inline-flex items-center gap-1.5 w-full">
           {label && <span className="text-[10px] font-medium text-slate-600 shrink-0">{label}</span>}
           <span className="flex-1 h-1.5 rounded-full bg-slate-200 relative shadow-inner">
-            <span className="absolute left-[30%] top-[-4px] w-[14px] h-[14px] rounded-full bg-white border-2 border-indigo-400 shadow-md" />
+            <span className="absolute left-[30%] top-[-4px] w-[14px] h-[14px] rounded-full bg-container border-2 border-indigo-400 shadow-md" />
           </span>
         </span>
       );
@@ -68,7 +68,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
       return (
         <span className="inline-flex items-center gap-1.5 w-full">
           {label && <span className="text-[10px] font-medium text-slate-600 shrink-0">{label}</span>}
-          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-white px-2.5 flex items-center gap-1 shadow-sm">
+          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-container px-2.5 flex items-center gap-1 shadow-sm">
             <span className="text-[9px] text-slate-400 w-0 flex-1 truncate">{ph || "0"}</span>
             <span className="flex flex-col leading-none text-slate-300 text-[8px] scale-75">▲▼</span>
           </span>
@@ -78,7 +78,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
       return (
         <span className="inline-flex items-center gap-1.5 w-full">
           {label && <span className="text-[10px] font-medium text-slate-600 shrink-0">{label}</span>}
-          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-white px-2.5 flex items-center justify-between shadow-sm">
+          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-container px-2.5 flex items-center justify-between shadow-sm">
             <span className="text-[9px] text-slate-400">{ph || "选择..."}</span>
             <span className="text-[8px] text-slate-300 ml-1">▾</span>
           </span>
@@ -88,7 +88,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
       return (
         <span className="inline-flex flex-col gap-[3px] w-full">
           {label && <span className="text-[10px] font-medium text-slate-600">{label}</span>}
-          <span className="h-[30px] rounded-lg border border-slate-200 bg-white px-2.5 py-1 shadow-sm">
+          <span className="h-[30px] rounded-lg border border-slate-200 bg-container px-2.5 py-1 shadow-sm">
             <span className="text-[9px] text-slate-400">{ph || ""}</span>
           </span>
         </span>
@@ -97,7 +97,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
       return (
         <span className="inline-flex items-center gap-1.5 w-full">
           {label && <span className="text-[10px] font-medium text-slate-600 shrink-0">{label}</span>}
-          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-white px-2.5 flex items-center gap-1 shadow-sm">
+          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-container px-2.5 flex items-center gap-1 shadow-sm">
             <span className="text-[10px] opacity-60">📅</span>
             <span className="text-[9px] text-slate-400">{ph || cell.format || "YYYY-MM-DD"}</span>
           </span>
@@ -125,7 +125,7 @@ const MiniPreview: FC<Props> = ({ cell }) => {
       return (
         <span className="inline-flex items-center gap-1.5 w-full">
           {label && <span className="text-[10px] font-medium text-slate-600 shrink-0">{label}</span>}
-          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-white px-2.5 flex items-center shadow-sm">
+          <span className="flex-1 h-[22px] rounded-lg border border-slate-200 bg-container px-2.5 flex items-center shadow-sm">
             <span className="text-[9px] text-slate-400">{ph || ""}</span>
           </span>
         </span>

@@ -59,7 +59,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
   return (
     <div className="flex flex-col h-full bg-[#fafbfc]">
       {/* ── Header ── */}
-      <div className="shrink-0 px-4 py-3 flex items-center gap-2 bg-white border-b border-[#eef0f2]">
+      <div className="shrink-0 px-4 py-3 flex items-center gap-2 bg-container border-b border-[#eef0f2]">
         {isCommon && (
           <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#fff7e6] text-[#f59e0b] font-semibold tracking-wide shrink-0">公共</span>
         )}
@@ -69,7 +69,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
             onBlur={() => { if (nameDraft && nameDraft !== stepName) onRename(nameDraft); setNameEdit(false); }}
             onPressEnter={() => { if (nameDraft && nameDraft !== stepName) onRename(nameDraft); setNameEdit(false); }} />
         ) : (
-          <h3 className="flex-1 min-w-0 text-sm font-semibold text-[#1a1a2e] truncate cursor-pointer select-none"
+          <h3 className="flex-1 min-w-0 text-sm font-semibold text-heading truncate cursor-pointer select-none"
             onDoubleClick={() => { setNameDraft(stepName); setNameEdit(true); }}
             title="双击重命名">{stepName}</h3>
         )}
@@ -84,10 +84,10 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 thin-scrollbar">
 
         {/* Basic info */}
-        <div className="rounded-xl bg-white shadow-sm p-3.5 space-y-2.5">
+        <div className="rounded-xl bg-container shadow-sm p-3.5 space-y-2.5">
           <div className="flex items-center gap-2">
             <div className="w-1 h-4 rounded-full bg-[#1677ff]" />
-            <span className="text-[11px] font-semibold text-[#1a1a2e]">基础</span>
+            <span className="text-[11px] font-semibold text-heading">基础</span>
           </div>
           <div className="flex items-center gap-1">
             <Select className="flex-1" size="small" allowClear showSearch placeholder="选择动作…"
@@ -172,12 +172,12 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                   className={`group flex flex-col gap-2 px-3.5 py-3 rounded-xl border border-solid text-left transition-all duration-150 outline-none
                     focus-visible:ring-2 focus-visible:ring-[#1677ff]/20
                     ${on
-                      ? "border-[#eef0f2] bg-white hover:border-[#d0d5dd] hover:shadow-sm"
-                      : "border-dashed border-[#dde0e6] bg-white/50 hover:border-[#1677ff] hover:bg-[#f0f5ff]"}`}>
+                      ? "border-[#eef0f2] bg-container hover:border-[#d0d5dd] hover:shadow-sm"
+                      : "border-dashed border-[#dde0e6] bg-container/50 hover:border-[#1677ff] hover:bg-[#f0f5ff]"}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: on ? c.color : "#d0d5dd" }} />
-                      <span className="text-[11px] font-semibold text-[#1a1a2e]">{c.label}</span>
+                      <span className="text-[11px] font-semibold text-heading">{c.label}</span>
                     </div>
                     {on && (
                       <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
@@ -187,7 +187,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                     )}
                   </div>
                   <div className="flex-1 flex items-center min-w-0">
-                    <span className={`text-[10px] leading-tight truncate w-full ${on ? "text-[#6b7280]" : "text-[#c0c4cc]"}`}>
+                    <span className={`text-[10px] leading-tight truncate w-full ${on ? "text-secondary" : "text-[#c0c4cc]"}`}>
                       {on ? s : c.desc}
                     </span>
                   </div>
@@ -198,7 +198,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
         ) : (
           /* ── Expanded section ── */
           card && (
-          <div className="rounded-xl bg-white shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-container shadow-sm overflow-hidden">
             {/* Section header with back button */}
             <div className="flex items-center gap-2 px-3 py-1.5" style={{ background: card.light }}>
               <button onClick={() => setExpanded(null)}
@@ -209,7 +209,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
               </button>
               <span className="text-[10px] leading-none opacity-40" style={{ color: card.color }}>|</span>
               <span className="text-[11px] leading-none font-semibold" style={{ color: card.color }}>{card.label}</span>
-              <span className="text-[10px] leading-none text-[#8b8fa3] ml-auto">{card.desc}</span>
+              <span className="text-[10px] leading-none text-muted ml-auto">{card.desc}</span>
             </div>
             {/* Section body */}
             <div className="p-4">
@@ -230,33 +230,33 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                     onChange={(v) => onUpdate("set", v)} />
                 )}
                 {expanded === "retry" && (
-                  <div className="rounded-xl border border-dashed bg-white"
+                  <div className="rounded-xl border border-dashed bg-container"
                     style={{ borderColor: "rgba(220,38,38,0.3)", background: "linear-gradient(135deg, rgba(220,38,38,0.04), #fff)" }}>
                     <div className="flex items-center gap-2 px-3.5 py-2.5">
                       <span className="flex items-center justify-center w-5 h-5 rounded-md shrink-0 text-[13px]"
                         style={{ background: "rgba(220,38,38,0.1)", color: "#dc2626" }}>
                         <ReloadOutlined />
                       </span>
-                      <span className="text-[12px] font-semibold text-[#1a1a2e]">失败重试</span>
-                      <span className="text-[10px] text-[#8b8fa3] ml-auto">失败后自动重试</span>
+                      <span className="text-[12px] font-semibold text-heading">失败重试</span>
+                      <span className="text-[10px] text-muted ml-auto">失败后自动重试</span>
                     </div>
                     <div className="px-3.5 pb-3 space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-[12px] text-[#374151] shrink-0 w-[60px]">重试次数</span>
+                        <span className="text-[12px] text-body shrink-0 w-[60px]">重试次数</span>
                         <InputNumber size="small" min={0} variant="borderless" className="flex-1"
                           value={step.retry?.times ?? 0}
                           onChange={v => onUpdate("retry", { times: v ?? 0, interval: step.retry?.interval ?? 0 })} />
                         <span className="text-[11px] text-[#c0c4cc] shrink-0">次</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[12px] text-[#374151] shrink-0 w-[60px]">重试间隔</span>
+                        <span className="text-[12px] text-body shrink-0 w-[60px]">重试间隔</span>
                         <InputNumber size="small" min={0} step={100} variant="borderless" className="flex-1"
                           value={step.retry?.interval ?? 0}
                           onChange={v => onUpdate("retry", { times: step.retry?.times ?? 1, interval: v ?? 0 })} />
                         <span className="text-[11px] text-[#c0c4cc] shrink-0">ms</span>
                       </div>
                       {step.retry?.times ? (
-                        <div className="text-[10px] text-[#8b8fa3] leading-relaxed">
+                        <div className="text-[10px] text-muted leading-relaxed">
                           失败后将自动重试 {step.retry.times} 次，每次间隔 {step.retry.interval ?? 0}ms
                         </div>
                       ) : (
@@ -268,15 +268,15 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                   </div>
                 )}
                 {expanded === "extends" && (
-                  <div className="rounded-xl border border-dashed bg-white"
+                  <div className="rounded-xl border border-dashed bg-container"
                     style={{ borderColor: "rgba(139,92,246,0.3)", background: "linear-gradient(135deg, rgba(139,92,246,0.04), #fff)" }}>
                     <div className="flex items-center gap-2 px-3.5 py-2.5">
                       <span className="flex items-center justify-center w-5 h-5 rounded-md shrink-0 text-[13px]"
                         style={{ background: "rgba(139,92,246,0.1)", color: "#8b5cf6" }}>
                         <ApartmentOutlined />
                       </span>
-                      <span className="text-[12px] font-semibold text-[#1a1a2e]">继承模板</span>
-                      <span className="text-[10px] text-[#8b8fa3] ml-auto">复用已有步骤配置</span>
+                      <span className="text-[12px] font-semibold text-heading">继承模板</span>
+                      <span className="text-[10px] text-muted ml-auto">复用已有步骤配置</span>
                     </div>
                     <div className="px-3.5 pb-3">
                       <Select className="w-full" size="small" allowClear showSearch placeholder="选择一个步骤作为模板"
@@ -284,7 +284,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                         options={[...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps].filter(o => o.value !== stepName)}
                         onChange={v => onUpdate("extends", v ?? "")} />
                       {step.extends ? (
-                        <div className="text-[10px] text-[#8b8fa3] leading-relaxed mt-2">
+                        <div className="text-[10px] text-muted leading-relaxed mt-2">
                           将继承「{step.extends}」的全部配置，当前步骤的显式设置会覆盖继承值
                         </div>
                       ) : (

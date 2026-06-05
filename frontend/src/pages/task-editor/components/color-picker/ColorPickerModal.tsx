@@ -68,7 +68,7 @@ const ColorPickerModal: FC<Props> = ({ open, hwnd, onClose, onPick }) => {
             {picked ? (
               <>
                 <span className="inline-block w-5 h-5 rounded border border-[#d0d5dd]" style={{ background: swatch }} />
-                <span className="text-[11px] text-[#6b7280] font-mono">
+                <span className="text-[11px] text-secondary font-mono">
                   [{picked.r}, {picked.g}, {picked.b}]
                 </span>
                 <span className="text-[10px] text-[#9ca3af]">@{picked.x},{picked.y}</span>

@@ -48,9 +48,9 @@ const HwndPreviewModal: FC<Props> = (props) => {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2.5">
             <div className="w-1 h-5 rounded-full bg-[#1677ff]" />
-            <span className="text-[15px] font-semibold text-[#1a1a2e] tracking-tight">绑定窗口</span>
+            <span className="text-[15px] font-semibold text-heading tracking-tight">绑定窗口</span>
             {!loading && (
-              <span className="text-[11px] text-[#8b8fa3] bg-[#f5f5f7] px-2 py-0.5 rounded-full font-medium">
+              <span className="text-[11px] text-muted bg-[#f5f5f7] px-2 py-0.5 rounded-full font-medium">
                 {data.length} 个可用
               </span>
             )}
@@ -59,7 +59,7 @@ const HwndPreviewModal: FC<Props> = (props) => {
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-[#eef0f2]" />
               <span
-                className="text-[11px] text-[#8b8fa3] hover:text-[#1677ff] cursor-pointer transition-colors shrink-0"
+                className="text-[11px] text-muted hover:text-[#1677ff] cursor-pointer transition-colors shrink-0"
                 onClick={() => { onSelectAll(data.map((d) => d.hwnd)); onClose(); }}
               >
                 绑定全部 {data.length} 个窗口
@@ -79,7 +79,7 @@ const HwndPreviewModal: FC<Props> = (props) => {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <Spin indicator={<LoadingOutlined spin className="!text-3xl !text-[#1677ff]" />} />
-          <span className="text-[13px] text-[#8b8fa3]">正在搜索可绑定窗口...</span>
+          <span className="text-[13px] text-muted">正在搜索可绑定窗口...</span>
         </div>
       ) : data.length === 0 ? (
         <div className="py-16">
@@ -98,7 +98,7 @@ const HwndPreviewModal: FC<Props> = (props) => {
             <div
               key={item.hwnd}
               onClick={() => handleClick(item)}
-              className="group rounded-xl overflow-hidden cursor-pointer bg-white shadow-sm transition-all duration-200 hover:border-[#1677ff] hover:shadow-[0_4px_16px_rgba(22,119,255,0.1)] hover:-translate-y-0.5"
+              className="group rounded-xl overflow-hidden cursor-pointer bg-container shadow-sm transition-all duration-200 hover:border-[#1677ff] hover:shadow-[0_4px_16px_rgba(22,119,255,0.1)] hover:-translate-y-0.5"
             >
               <div className="relative overflow-hidden">
                 <img
@@ -116,7 +116,7 @@ const HwndPreviewModal: FC<Props> = (props) => {
 
               <div className="flex items-center gap-2 px-3.5 py-2.5 bg-[#fafbfc] border-t border-[#eef0f2] group-hover:bg-[#eef2ff] transition-colors duration-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
-                <span className="text-[11px] text-[#6b7280] font-mono tracking-wide truncate group-hover:text-[#1677ff] transition-colors">
+                <span className="text-[11px] text-secondary font-mono tracking-wide truncate group-hover:text-[#1677ff] transition-colors">
                   {item.hwnd}
                 </span>
               </div>

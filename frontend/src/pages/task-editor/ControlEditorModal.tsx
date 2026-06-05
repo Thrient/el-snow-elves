@@ -281,7 +281,7 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
                         onUpdateCell(ri, ci, { options: opts });
                       }} />
                     <button
-                      className="w-6 h-6 rounded-lg bg-white hover:bg-rose-100 text-slate-300 hover:text-rose-500
+                      className="w-6 h-6 rounded-lg bg-container hover:bg-rose-100 text-slate-300 hover:text-rose-500
                         flex items-center justify-center text-sm transition-all duration-200 shrink-0 shadow-sm
                         opacity-0 group-hover:opacity-100"
                       onClick={() => {
@@ -309,7 +309,7 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
           }}
         >
           <button
-            className="text-[12px] font-medium px-4 py-2 rounded-xl bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-500
+            className="text-[12px] font-medium px-4 py-2 rounded-xl bg-container hover:bg-rose-50 text-slate-500 hover:text-rose-500
               border border-slate-200 hover:border-rose-200 transition-all duration-200 flex items-center gap-1.5 shadow-sm"
             onClick={() => { onRemoveCell(ri, ci); handleClose(); }}
           >

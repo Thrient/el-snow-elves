@@ -79,8 +79,8 @@ const ComponentPickerModal: FC<Props> = ({ open, varName, varValue, varType, onS
               key={model}
               onClick={() => onSelect(model)}
               className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-slate-100
-                hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-1 hover:bg-white
-                transition-all duration-200 cursor-pointer text-left bg-white group"
+                hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-1 hover:bg-container
+                transition-all duration-200 cursor-pointer text-left bg-container group"
             >
               <div className="flex items-center gap-2.5">
                 <span

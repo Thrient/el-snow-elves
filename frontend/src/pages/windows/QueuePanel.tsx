@@ -48,10 +48,10 @@ const QueuePanel: FC = () => {
 
   return (
     <>
-      <div className="flex flex-col min-h-0 bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="flex flex-col min-h-0 bg-container rounded-xl shadow-sm overflow-hidden">
         <div className="shrink-0 flex items-center justify-between px-4 py-3" style={{ boxShadow: "inset 0 -1px 0 #f3f4f6" }}>
           <div className="flex items-center gap-2.5">
-            <span className="text-[13px] font-semibold text-[#1a1a2e]">待执行任务</span>
+            <span className="text-[13px] font-semibold text-heading">待执行任务</span>
             <span className="text-[11px] font-semibold text-[#1677ff] bg-[#eff6ff] px-2 py-0.5 rounded-full font-mono">
               {taskCount}
             </span>
@@ -81,7 +81,7 @@ const QueuePanel: FC = () => {
                   >
                     <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-[12px] font-medium text-[#1a1a2e] truncate">
+                        <span className="text-[12px] font-medium text-heading truncate">
                           {item.name}
                         </span>
                         <Tag style={{ fontSize: 9, lineHeight: 1, border: "none", borderRadius: 4, padding: "1px 6px", margin: 0, color: "#9ca3af", background: "#f3f4f6", fontFamily: "ui-monospace,Consolas,monospace" }}>

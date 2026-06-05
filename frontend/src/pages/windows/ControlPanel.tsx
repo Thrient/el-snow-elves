@@ -21,7 +21,7 @@ const ControlPanel: FC = () => {
   };
 
   return (
-    <div className="shrink-0 mb-4 bg-white rounded-xl shadow-sm overflow-hidden">
+    <div className="shrink-0 mb-4 bg-container rounded-xl shadow-sm overflow-hidden">
       {/* Status bar */}
       <div className="flex items-center gap-3 px-4 py-3" style={{ boxShadow: "inset 0 -1px 0 #f3f4f6" }}>
         <div className="flex items-center gap-2">
@@ -30,9 +30,9 @@ const ControlPanel: FC = () => {
             background: selected.currentTask ? "#52c41a" : "#d1d5db",
             boxShadow: selected.currentTask ? "0 0 6px rgba(82,196,26,.4)" : undefined,
           }} />
-          <span className="text-[11px] text-[#8b8fa3] uppercase tracking-wider">当前任务</span>
+          <span className="text-[11px] text-muted uppercase tracking-wider">当前任务</span>
         </div>
-        <span className="text-[13px] font-medium text-[#1a1a2e] truncate">
+        <span className="text-[13px] font-medium text-heading truncate">
           {selected.currentTask ?? "—"}
         </span>
         <div className="flex-1" />
@@ -107,7 +107,7 @@ const ControlPanel: FC = () => {
             value={selected.opacity ?? 255}
             onChange={(v) => { characterStore.update({ hwnd: selected.hwnd, opacity: v }); window.pywebview?.api.emit("API:SCRIPT:SET_OPACITY", selected.hwnd, v); }}
             styles={{ track: { background: "#1677ff" }, rail: { background: "#e5e7eb" } }} />
-          <span className="text-[12px] font-semibold text-[#374151] font-mono w-7 text-right">
+          <span className="text-[12px] font-semibold text-body font-mono w-7 text-right">
             {selected.opacity ?? 255}
           </span>
         </div>

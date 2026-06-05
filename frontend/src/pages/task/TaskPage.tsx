@@ -174,7 +174,7 @@ const TaskPage: FC = () => {
           <span className="text-[28px] font-bold text-[#1677ff] leading-none tracking-tight">
             {taskList.length}
           </span>
-          <span className="text-[12px] text-[#8b8fa3]">个任务</span>
+          <span className="text-[12px] text-muted">个任务</span>
         </div>
       </div>
 
@@ -199,7 +199,7 @@ const TaskPage: FC = () => {
             全选
           </Checkbox>
           {selectedRowKeys.length > 0 && (
-            <span className="text-[11px] text-[#8b8fa3] font-medium">
+            <span className="text-[11px] text-muted font-medium">
               已选 {selectedRowKeys.length} 项
             </span>
           )}
@@ -249,7 +249,7 @@ const TaskPage: FC = () => {
             <div className="w-20 h-20 rounded-full bg-[#f5f7fa] flex items-center justify-center mb-5">
               <AppstoreAddOutlined className="text-[32px] text-[#c8cdd5]" />
             </div>
-            <div className="text-[14px] font-medium text-[#6b7280] mb-1">
+            <div className="text-[14px] font-medium text-secondary mb-1">
               {search ? '没有匹配的任务' : '暂无任务'}
             </div>
             <div className="text-[12px] text-[#b0b5c0]">
