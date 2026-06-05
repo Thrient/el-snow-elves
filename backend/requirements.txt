@@ -1,0 +1,9 @@
+opencv-contrib-python
+airtest
+numpy
+pywebview
+pywin32
+mitmproxy
+cryptography
+pythonnet
+requests
