@@ -484,7 +484,7 @@ const TaskEditorPage: FC = () => {
       </div>
 
       <Modal title="变量与布局" open={varsOpen} onCancel={() => setVarsOpen(false)}
-        footer={null} width={900} destroyOnClose>
+        footer={null} width={1050} destroyOnClose>
         {editor.currentTask && (
           <LayoutBuilder
             initialLayout={editor.currentTask.layout ?? []}

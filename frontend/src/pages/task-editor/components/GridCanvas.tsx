@@ -151,7 +151,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
 
                   {/* cells row */}
                   <div
-                    className="relative flex items-stretch gap-2 px-2 pb-2 grid grid-cols-[repeat(24,1fr)] min-h-24"
+                    className="relative flex items-stretch gap-2 px-2 pb-2 grid grid-cols-[repeat(24,1fr)] min-h-16"
                   >
                     {row.map((cell, ci) => {
                       const span = cell.span ?? 1;
@@ -168,7 +168,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
                           onContextMenu={(e) => handleCellContextMenu(ri, ci, e)}
                           onClick={(e) => { e.stopPropagation(); setSel({ ri, ci }); }}
                           className={`relative rounded-xl border-2 transition-all duration-200 cursor-pointer
-                            flex flex-col justify-center px-3 py-2.5 min-w-0 overflow-hidden group
+                            flex flex-col justify-center px-2 py-1.5 min-w-0 overflow-hidden group
                             ${isSel
                               ? "border-indigo-400 shadow-lg shadow-indigo-200/40 -translate-y-0.5 z-10"
                               : "border-transparent hover:border-slate-200 hover:shadow-md hover:-translate-y-0.5"}`}
@@ -179,7 +179,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
                               : `linear-gradient(135deg, ${meta.bg} 0%, rgba(255,255,255,0.6) 100%)`,
                           }}
                         >
-                          <div className="absolute left-0 top-2 bottom-2 w-[4px] rounded-r-full" style={{ backgroundColor: meta.color, opacity: isSel ? 1 : 0.7 }} />
+                          <div className="absolute left-0 top-1 bottom-1 w-[4px] rounded-r-full" style={{ backgroundColor: meta.color, opacity: isSel ? 1 : 0.7 }} />
                           <div className="flex items-center gap-1.5 mb-1.5">
                             <span
                               className="text-[9px] font-bold px-1.5 py-0.5 rounded-md text-white shadow-sm"
@@ -192,7 +192,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
                             )}
                             <span className="text-[9px] text-slate-400 ml-auto font-mono shrink-0 bg-slate-100 px-1.5 py-0.5 rounded-md">{span}c</span>
                           </div>
-                          <div className="flex justify-center scale-[0.92] pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="flex justify-center scale-[0.85] pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity duration-200">
                             <MiniPreview cell={cell} />
                           </div>
                           {isSel && (

@@ -27,7 +27,7 @@ const UnboundPanel: FC<UnboundPanelProps> = ({
   return (
     <>
       <div
-        className="w-[210px] shrink-0 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-md"
+        className="w-[250px] shrink-0 bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-100 flex flex-col overflow-hidden shadow-md"
         onContextMenu={(e) => {
           e.preventDefault();
           setLeftCtxMenu({ x: e.clientX, y: e.clientY });
