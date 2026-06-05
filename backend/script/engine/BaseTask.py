@@ -11,6 +11,7 @@ from script.core.ColorMatcher import ColorMatcher
 from script.engine.InputSimulator import InputSimulator
 from script.engine.ScreenCapture import ScreenCapture
 from script.engine.TemplateMatcher import TemplateMatcher
+from script.engine.safe_sleep import safe_sleep
 from script.functools.Functools import during, wait_until
 from script.account.AccountManager import AccountManager
 from script.account.AccountProxy import INJECTION, get_proxy

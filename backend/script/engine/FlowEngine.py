@@ -7,6 +7,7 @@ from threading import Thread, Event, Lock
 
 from script.config.Setting import PROJECT_ROOT
 from script.engine.VariableProcessor import VariableProcessor
+from script.engine.safe_sleep import safe_sleep
 from script.window.WindowUtils import Window, find_window_by_title_and_owner_hwnd
 from script.engine.BaseTask import BaseTask
 
@@ -49,6 +50,8 @@ class FlowEngine(Thread):
         self._monitor_interval = monitors.get("interval", 1)
         self._monitor_stop_event = Event()
         self._task = BaseTask()
+        self._stop_reason: str | None = None
+        self._timeout_timer: "Timer | None" = None
         self._validate()
 
     def _load_common(self):
@@ -127,6 +130,17 @@ class FlowEngine(Thread):
 
         if errors:
             raise ValueError("工作流定义错误:\n  " + "\n  ".join(errors))
+
+    def stop(self) -> None:
+        """停止流程执行，取消超时计时器并设置暂停事件"""
+        if self._timeout_timer:
+            self._timeout_timer.cancel()
+        self._paused.set()
+
+    def _handle_timeout(self) -> None:
+        """超时回调：记录超时原因并停止流程"""
+        self._stop_reason = "timeout"
+        self.stop()
 
     def process_step(self, name):
         try:
@@ -267,7 +281,7 @@ class FlowEngine(Thread):
             if result:
                 return result
             self._run_extra(step_def, "failure_extra")
-            time.sleep(retry.get("interval", 0) / 1000)
+            safe_sleep(retry.get("interval", 0) / 1000, lambda: self._paused.is_set())
 
         return []
 
@@ -319,27 +333,40 @@ class FlowEngine(Thread):
 
     def run(self):
         t_start = time.time()
-        if not self._is_subflow:
-            logging.info(f"▶ {self.name} v{self.version}")
-        while not self._paused.is_set() and self.step_name and self.step_name != "任务结束":
-            step_def = self.process_step(self.step_name)
 
-            self._run_extra(step_def, "prefix")
-            Window.ensure_window_size(self._hwnd)
-            result = self._run_action(step_def)
-            if result:
-                self.vp.apply_set(step_def, result)
-            self._run_extra(step_def, "postfix")
+        # 启动超时计时器
+        timeout = self.work.get("monitors", {}).get("timeout", 0)
+        if timeout and timeout > 0:
+            from threading import Timer
+            self._timeout_timer = Timer(timeout, self._handle_timeout)
+            self._timeout_timer.daemon = True
+            self._timeout_timer.start()
 
-            if result:
-                self._run_extra(step_def, "success_extra")
+        try:
+            if not self._is_subflow:
+                logging.info(f"▶ {self.name} v{self.version}")
+            while not self._paused.is_set() and self.step_name and self.step_name != "任务结束":
+                step_def = self.process_step(self.step_name)
 
-            prev = self.step_name
-            self.step_name = self.process_result(result, step_def)
-            if self._single_step:
-                self.step_name = "任务结束"
-            logging.info(f"[{self.name}] {prev} → {self.step_name} | {self._format_action(step_def)} = {self._format_result(result)}")
-        if not self._is_subflow:
-            total_elapsed = (time.time() - t_start) * 1000
-            logging.info(f"◀ {self.name} v{self.version} | 完成 | {total_elapsed:.0f}ms")
-        self._monitor_stop_event.set()
+                self._run_extra(step_def, "prefix")
+                Window.ensure_window_size(self._hwnd)
+                result = self._run_action(step_def)
+                if result:
+                    self.vp.apply_set(step_def, result)
+                self._run_extra(step_def, "postfix")
+
+                if result:
+                    self._run_extra(step_def, "success_extra")
+
+                prev = self.step_name
+                self.step_name = self.process_result(result, step_def)
+                if self._single_step:
+                    self.step_name = "任务结束"
+                logging.info(f"[{self.name}] {prev} → {self.step_name} | {self._format_action(step_def)} = {self._format_result(result)}")
+            if not self._is_subflow:
+                total_elapsed = (time.time() - t_start) * 1000
+                logging.info(f"◀ {self.name} v{self.version} | 完成 | {total_elapsed:.0f}ms")
+        finally:
+            if self._timeout_timer:
+                self._timeout_timer.cancel()
+            self._monitor_stop_event.set()

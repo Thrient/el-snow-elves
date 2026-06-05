@@ -1,5 +1,7 @@
 import time
 
+from script.engine.safe_sleep import safe_sleep
+
 
 def delay(pre_delay=0, post_delay=0):
     """添加延迟"""
@@ -44,7 +46,9 @@ def during(seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda:
                 result = func(*args, **kwargs)
                 if kwargs.get("is_valid", is_valid)(result):
                     return result
-                time.sleep(float(kwargs.get('dealy', dealy)))
+                if safe_sleep(float(kwargs.get('dealy', dealy)),
+                              lambda: not kwargs.get("predicate", predicate)()):
+                    break
             return None
 
         return wrapper
@@ -71,7 +75,9 @@ def wait_until(k=1, seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicat
                         return result
                 else:
                     count = 0
-                time.sleep(float(kwargs.get('dealy', dealy)))
+                if safe_sleep(float(kwargs.get('dealy', dealy)),
+                              lambda: not kwargs.get("predicate", predicate)()):
+                    break
             return None
 
         return wrapper
