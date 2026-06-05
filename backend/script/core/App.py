@@ -109,6 +109,22 @@ class App:
         import threading
         threading.Thread(target=self._qs.execute, args=(account_name,), daemon=True).start()
 
+    def set_titlebar_theme(self, dark: bool) -> None:
+        """设置 Windows 标题栏暗色/亮色主题"""
+        hwnd = self._get_main_hwnd()
+        if hwnd is None:
+            return
+        try:
+            import ctypes
+            DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+            value = ctypes.c_int(1 if dark else 0)
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                ctypes.byref(value), ctypes.sizeof(value),
+            )
+        except Exception:
+            pass
+
     def _get_main_hwnd(self) -> int | None:
         """获取主窗口原生 HWND"""
         try:

@@ -62,6 +62,7 @@ export const useSettingsStore = create<State & Actions>()(
 
       setTheme: (t) => {
         const html = document.documentElement
+        window.pywebview?.api.emit("API:APP:SET_THEME", { theme: t })
         const updateColorScheme = (dark: boolean) => {
           html.style.colorScheme = dark ? 'dark' : 'light'
         }

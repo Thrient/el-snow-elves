@@ -33,3 +33,8 @@ def register(api: Api, app) -> None:
     api.on("API:TEMPLATE:CAPTURE", app.capture_for_template)
     api.on("API:TEMPLATE:CAPTURE:PNG", app.capture_for_template_png)
     api.on("API:TEMPLATE:SAVE", app.save_template_image)
+
+    def _handle_set_theme(payload: dict):
+        theme = payload.get("theme", "light") if isinstance(payload, dict) else "light"
+        app.set_titlebar_theme(theme == "dark")
+    api.on("API:APP:SET_THEME", _handle_set_theme)
