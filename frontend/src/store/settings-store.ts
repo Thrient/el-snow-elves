@@ -62,13 +62,17 @@ export const useSettingsStore = create<State & Actions>()(
 
       setTheme: (t) => {
         const html = document.documentElement
+        const updateColorScheme = (dark: boolean) => {
+          html.style.colorScheme = dark ? 'dark' : 'light'
+        }
         if (t === 'auto') {
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
           html.dataset.theme = prefersDark ? 'dark' : 'light'
-          // Listen for changes
+          updateColorScheme(prefersDark)
           const mq = window.matchMedia('(prefers-color-scheme: dark)')
           const handler = (e: MediaQueryListEvent) => {
             html.dataset.theme = e.matches ? 'dark' : 'light'
+            updateColorScheme(e.matches)
           }
           mq.addEventListener('change', handler)
           // Store listener ref for cleanup
@@ -78,6 +82,7 @@ export const useSettingsStore = create<State & Actions>()(
           const prev = (html as any).__themeListener
           if (prev) { prev.mq.removeEventListener('change', prev.handler) }
           html.dataset.theme = t
+          updateColorScheme(t === 'dark')
         }
         localStorage.setItem('app-theme', t)
         set({ theme: t })
