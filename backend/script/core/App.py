@@ -112,13 +112,27 @@ class App:
     def set_titlebar_theme(self, dark: bool) -> None:
         """设置 Windows 标题栏暗色/亮色主题"""
         logging.info(f"[Theme] set_titlebar_theme called, dark={dark}")
-        hwnd = self._get_main_hwnd()
-        logging.info(f"[Theme] main hwnd={hwnd}")
-        if hwnd is None:
+        import ctypes
+        from script.config.Setting import APP_TITLE, VERSION
+
+        # Try multiple ways to get the main window HWND
+        title = f"{APP_TITLE}{VERSION}"
+        user32 = ctypes.windll.user32
+
+        hwnd = self._get_main_hwnd()  # pywebview BrowserView method
+        if not hwnd:
+            hwnd = user32.FindWindowW(None, title)  # Win32 FindWindow by title
+            logging.info(f"[Theme] FindWindow by title='{title}' → hwnd={hwnd}")
+        if not hwnd:
+            hwnd = user32.FindWindowW(None, None)  # fallback: any top-level
+            logging.info(f"[Theme] FindWindow fallback → hwnd={hwnd}")
+
+        logging.info(f"[Theme] final hwnd={hwnd}")
+        if not hwnd:
             logging.warning("[Theme] 无法获取主窗口 HWND，标题栏主题设置失败")
             return
+
         try:
-            import ctypes
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
             value = ctypes.c_int(1 if dark else 0)
             result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
