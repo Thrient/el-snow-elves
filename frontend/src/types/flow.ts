@@ -8,6 +8,7 @@ export interface StepNodeData {
   description?: string;
   isCommon: boolean;
   isStart: boolean;
+  isMonitorLoop?: boolean;
   /** ReactFlow requires Record<string, unknown> — do not remove */
   [key: string]: unknown;
 }

@@ -1,7 +1,7 @@
 import { memo, type FC } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { StepNodeData } from "@/types/flow";
-import { PlayCircleOutlined } from "@ant-design/icons";
+import { PlayCircleOutlined, SyncOutlined } from "@ant-design/icons";
 
 const HANDLE_LEFT: Record<string, number> = {
   success: 0.20,
@@ -16,9 +16,16 @@ const StepNode: FC<NodeProps & { data: StepNodeData }> = ({ data, selected }) =>
 
   return (
     <div
-      className="rounded-xl border-2 px-4 pt-3 pb-1.5 min-w-[150px] max-w-[200px] shadow-sm transition-colors"
+      className="relative rounded-xl border-2 px-4 pt-3 pb-1.5 min-w-[150px] max-w-[200px] shadow-sm transition-colors"
       style={{ background: selected ? "#eef2ff" : "#fff", borderColor }}
     >
+      {/* Loop badge */}
+      {data.isMonitorLoop && (
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#722ed1] flex items-center justify-center shadow-sm">
+          <SyncOutlined className="text-[8px] text-white" />
+        </div>
+      )}
+
       <Handle type="target" position={Position.Top}
         style={{ width: 9, height: 9, background: "#8b8fa3" }} />
 

@@ -25,6 +25,7 @@ function collectTargets(step: Step): { target: string; flowType: FlowType }[] {
 export function taskToFlow(
   task: FullTask,
   savedPositions?: Record<string, { x: number; y: number }>,
+  loopSteps?: string[],
 ): {
   nodes: Node<StepNodeData>[];
   edges: Edge<StepEdgeData>[];
@@ -55,6 +56,7 @@ export function taskToFlow(
         description: step.description,
         isCommon,
         isStart,
+        isMonitorLoop: loopSteps?.includes(name),
       },
     });
   });

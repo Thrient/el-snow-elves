@@ -6,7 +6,7 @@ import {
   MarkerType, type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { SnippetsOutlined } from "@ant-design/icons";
+import { SnippetsOutlined, SyncOutlined, StopOutlined } from "@ant-design/icons";
 import StepNode from "./StepNode";
 import StepEdge from "./StepEdge";
 import type { StepNodeData, StepEdgeData } from "@/types/flow";
@@ -25,6 +25,8 @@ interface Props {
   onNodesDelete?: (ids: string[]) => void;
   clipboardHasData?: boolean;
   onPasteStep?: (x: number, y: number) => void;
+  loopSteps?: string[];
+  onToggleLoop?: (stepName: string) => void;
 }
 
 const nodeTypes = { stepNode: StepNode };
@@ -33,8 +35,9 @@ const edgeTypes = { step: StepEdge };
 const FlowEditor: FC<Props> = ({
   nodes, edges, onNodesChange, onEdgesChange, onNodeClick, onCreateStep, onNodesDelete,
   clipboardHasData, onPasteStep,
+  loopSteps = [], onToggleLoop,
 }) => {
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; type: "canvas" | "node"; nodeId?: string } | null>(null);
   const rfRef = useRef<HTMLDivElement>(null);
   const rfInstance = useRef<ReactFlowInstance<Node<StepNodeData>, Edge<StepEdgeData>>>(null);
 
@@ -73,8 +76,18 @@ const FlowEditor: FC<Props> = ({
     if ("preventDefault" in e) e.preventDefault();
     if (!rfRef.current) return;
     const rect = rfRef.current.getBoundingClientRect();
-    setMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top, type: "canvas" });
   }, []);
+
+  const handleNodeContextMenu = useCallback(
+    (e: React.MouseEvent | MouseEvent, node: Node<StepNodeData>) => {
+      if ("preventDefault" in e) e.preventDefault();
+      if (!rfRef.current) return;
+      const rect = rfRef.current.getBoundingClientRect();
+      setMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top, type: "node", nodeId: node.id });
+    },
+    [],
+  );
 
   const handleCreateStep = (isCommon: boolean) => {
     if (!menu || !rfInstance.current || !rfRef.current) return;
@@ -100,6 +113,7 @@ const FlowEditor: FC<Props> = ({
         onConnect={handleConnect}
         onNodeClick={(_, node) => onNodeClick(node.id)}
         onPaneContextMenu={handlePaneContextMenu}
+        onNodeContextMenu={(e, node) => handleNodeContextMenu(e, node as Node<StepNodeData>)}
         onInit={(instance) => { rfInstance.current = instance; }}
         nodeTypes={nodeTypes as any} edgeTypes={edgeTypes as any}
         defaultEdgeOptions={defaultEdgeOptions}
@@ -111,45 +125,87 @@ const FlowEditor: FC<Props> = ({
         <Background /><Controls />
       </ReactFlow>
 
-      {/* Canvas context menu */}
+      {/* Context menu */}
       {menu && (
         <>
           <div className="fixed inset-0 z-50" onClick={() => setMenu(null)} />
           <div className="absolute z-50 bg-white rounded-xl shadow-lg border border-[#eef0f2] py-1 min-w-[180px] overflow-hidden"
             style={{ left: menu.x, top: menu.y }}>
-            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
-              onClick={() => handleCreateStep(false)}>
-              <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center shrink-0">
-                <span className="text-[13px] text-[#1677ff]">+</span>
-              </div>
-              <div>
-                <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">普通步骤</div>
-                <div className="text-[10px] text-[#8b8fa3] leading-tight">添加一个任务步骤</div>
-              </div>
-            </button>
-            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
-              onClick={() => handleCreateStep(true)}>
-              <div className="w-7 h-7 rounded-lg bg-[#fff7e6] flex items-center justify-center shrink-0">
-                <span className="text-[13px] text-[#f59e0b]">+</span>
-              </div>
-              <div>
-                <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">公共步骤</div>
-                <div className="text-[10px] text-[#8b8fa3] leading-tight">覆盖全局公共步骤</div>
-              </div>
-            </button>
-            {clipboardHasData && (
+            {menu.type === "node" && menu.nodeId ? (
+              /* ── Node right-click menu ── */
               <>
-                <div className="border-t border-[#f0f0f0] my-1" />
+                {loopSteps.includes(menu.nodeId) ? (
+                  <button
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
+                    onClick={() => {
+                      onToggleLoop?.(menu.nodeId!);
+                      setMenu(null);
+                    }}
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-[#f5f0ff] flex items-center justify-center shrink-0">
+                      <StopOutlined className="text-[13px] text-[#722ed1]" />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">关闭循环检测</div>
+                      <div className="text-[10px] text-[#8b8fa3] leading-tight">从循环列表中移除</div>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
+                    onClick={() => {
+                      onToggleLoop?.(menu.nodeId!);
+                      setMenu(null);
+                    }}
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-[#f5f0ff] flex items-center justify-center shrink-0">
+                      <SyncOutlined className="text-[13px] text-[#722ed1]" />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">开启循环检测</div>
+                      <div className="text-[10px] text-[#8b8fa3] leading-tight">加入监控循环列表</div>
+                    </div>
+                  </button>
+                )}
+              </>
+            ) : (
+              /* ── Canvas context menu ── */
+              <>
                 <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
-                  onClick={handlePasteAt}>
-                  <div className="w-7 h-7 rounded-lg bg-[#f0fdf4] flex items-center justify-center shrink-0">
-                    <SnippetsOutlined className="text-[13px] text-[#52c41a]" />
+                  onClick={() => handleCreateStep(false)}>
+                  <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center shrink-0">
+                    <span className="text-[13px] text-[#1677ff]">+</span>
                   </div>
                   <div>
-                    <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">粘贴步骤</div>
-                    <div className="text-[10px] text-[#8b8fa3] leading-tight">将复制的步骤粘贴到此处</div>
+                    <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">普通步骤</div>
+                    <div className="text-[10px] text-[#8b8fa3] leading-tight">添加一个任务步骤</div>
                   </div>
                 </button>
+                <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
+                  onClick={() => handleCreateStep(true)}>
+                  <div className="w-7 h-7 rounded-lg bg-[#fff7e6] flex items-center justify-center shrink-0">
+                    <span className="text-[13px] text-[#f59e0b]">+</span>
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">公共步骤</div>
+                    <div className="text-[10px] text-[#8b8fa3] leading-tight">覆盖全局公共步骤</div>
+                  </div>
+                </button>
+                {clipboardHasData && (
+                  <>
+                    <div className="border-t border-[#f0f0f0] my-1" />
+                    <button className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#f5f7fa] transition-colors text-left border-0 bg-transparent"
+                      onClick={handlePasteAt}>
+                      <div className="w-7 h-7 rounded-lg bg-[#f0fdf4] flex items-center justify-center shrink-0">
+                        <SnippetsOutlined className="text-[13px] text-[#52c41a]" />
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-medium text-[#1a1a2e] leading-tight">粘贴步骤</div>
+                        <div className="text-[10px] text-[#8b8fa3] leading-tight">将复制的步骤粘贴到此处</div>
+                      </div>
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -5,7 +5,7 @@ import {
 import {
   ArrowLeftOutlined, ArrowRightOutlined, CameraOutlined, CodeOutlined, EditOutlined,
   SaveOutlined,
-  ReloadOutlined, SettingOutlined,
+  ReloadOutlined, SettingOutlined, SyncOutlined,
 } from "@ant-design/icons";
 import { useEditorStore } from "@/store/editor-store";
 import { useCharacterStore } from "@/store/character-store";
@@ -171,7 +171,8 @@ const TaskEditorPage: FC = () => {
           const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", editor.currentTask.id).catch(() => ({})) ?? {};
           setSavedPositions(positions);
           requestAnimationFrame(() => {
-            const { nodes, edges } = taskToFlow(editor.currentTask!, positions);
+            const task = editor.currentTask!;
+            const { nodes, edges } = taskToFlow(task, positions, task.monitors.loop);
             setFlowNodes(nodes); setFlowEdges(edges);
             setTimeout(() => { initRef.current = false; }, 200);
           });
@@ -201,7 +202,8 @@ const TaskEditorPage: FC = () => {
     setSavedPositions(positions);
     requestAnimationFrame(() => {
       const current = useEditorStore.getState().currentTask;
-      const { nodes, edges } = taskToFlow(current ?? task, positions);
+      const t = current ?? task;
+      const { nodes, edges } = taskToFlow(t, positions, t.monitors.loop);
       setFlowNodes(nodes); setFlowEdges(edges);
       // Unlock after ReactFlow finishes processing the initial nodes
       setTimeout(() => { initRef.current = false; }, 200);
@@ -232,6 +234,28 @@ const TaskEditorPage: FC = () => {
       message.success("已复制到剪贴板");
     } catch { message.error("复制失败"); }
   }, [drawerStep, editor.currentTask]);
+
+  const handleToggleLoop = useCallback(
+    (stepName: string) => {
+      if (!editor.currentTask) return;
+      const loop = editor.currentTask.monitors.loop ?? [];
+      const isInLoop = loop.includes(stepName);
+      const next = isInLoop
+        ? loop.filter((s) => s !== stepName)
+        : [...loop, stepName];
+      editor.updateMonitors({ ...editor.currentTask.monitors, loop: next });
+      // Update flow nodes to reflect loop state immediately
+      setFlowNodes((prev) =>
+        prev.map((n) =>
+          n.id === stepName ? { ...n, data: { ...n.data, isMonitorLoop: !isInLoop } } : n
+        )
+      );
+    },
+    [editor],
+  );
+
+  const loopSteps = editor.currentTask?.monitors.loop ?? [];
+  const loopCount = loopSteps.length;
 
   const handlePasteStep = useCallback(async (x: number, y: number) => {
     if (!editor.currentTask) return;
@@ -293,7 +317,7 @@ const TaskEditorPage: FC = () => {
     const task = useEditorStore.getState().currentTask;
     if (!task) return;
     requestAnimationFrame(() => {
-      const { nodes, edges } = taskToFlow(task, savedPositions);
+      const { nodes, edges } = taskToFlow(task, savedPositions, task.monitors.loop);
       setFlowNodes(nodes); setFlowEdges(edges);
     });
   }, [savedPositions]);
@@ -355,7 +379,7 @@ const TaskEditorPage: FC = () => {
             const task = useEditorStore.getState().currentTask;
             if (task) {
               requestAnimationFrame(() => {
-                const { nodes, edges } = taskToFlow(task);
+                const { nodes, edges } = taskToFlow(task, undefined, task.monitors.loop);
                 setFlowNodes(nodes); setFlowEdges(edges);
               });
             }
@@ -377,6 +401,7 @@ const TaskEditorPage: FC = () => {
             <span className="text-sm font-bold text-[#1a1a2e]">{editor.currentTask!.name}</span>
             <Tag color="blue" className="m-0 text-[11px]">v{editor.currentTask!.version}</Tag>
             {editor.isDirty && <Tag color="orange" className="m-0 text-[11px]">已修改</Tag>}
+            {loopCount > 0 && <Tag color="purple" className="m-0 text-[11px]"><SyncOutlined className="mr-1" />{loopCount}</Tag>}
           </div>
           <div className="w-px h-5 bg-[#e5e7eb] mx-1" />
           <div className="flex items-center gap-0.5">
@@ -414,7 +439,10 @@ const TaskEditorPage: FC = () => {
               const name = `步骤_${Date.now()}`;
               editor.addStep(name, isCommon);
               setFlowNodes([...flowNodes, { id: name, type: "stepNode", position: { x: x - 80, y: y - 20 }, data: { stepName: name, action: "", isCommon, isStart: false } }]);
-            }} />
+            }}
+            loopSteps={loopSteps}
+            onToggleLoop={handleToggleLoop}
+          />
         </div>
         <div className={`shrink-0 border-l border-[#e8eaed] bg-white flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${drawerStep ? "w-[440px]" : "w-0 border-l-0"}`}>
           {drawerStep && drawerData && (
@@ -431,7 +459,7 @@ const TaskEditorPage: FC = () => {
                   setSavedPositions((sp) => ({ ...sp, ...positions }));
                   const task = useEditorStore.getState().currentTask;
                   if (!task) return prev;
-                  const { nodes, edges } = taskToFlow(task, positions);
+                  const { nodes, edges } = taskToFlow(task, positions, task.monitors.loop);
                   setFlowEdges(edges);
                   return nodes;
                 });
@@ -481,7 +509,6 @@ const TaskEditorPage: FC = () => {
         <TaskSettingsModal
           open={settingsOpen}
           task={editor.currentTask}
-          stepNames={allStepNames}
           onClose={() => setSettingsOpen(false)}
         />
       )}
