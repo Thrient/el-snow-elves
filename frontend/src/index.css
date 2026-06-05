@@ -333,3 +333,17 @@ body {
 [data-theme] .ant-layout-content { background: var(--color-bg-page) !important; }
 [data-theme] .ant-layout-sider-trigger { background: var(--color-bg-container) !important; }
 [data-theme] .ant-menu-light { background: transparent !important; }
+
+/* ── Theme switch animation ── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  clip-path: circle(0 at var(--click-x, 50vw) var(--click-y, 50vh));
+  animation: theme-expand 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes theme-expand {
+  to { clip-path: circle(150vw at var(--click-x, 50vw) var(--click-y, 50vh)); }
+}
