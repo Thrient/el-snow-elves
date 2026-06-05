@@ -12,7 +12,7 @@ import {
 export default defineConfig({
   shortcuts: [
     // ── Page shell ──
-    ['page-container', 'flex flex-col h-full bg-white rounded-lg mx-4 mb-4 shadow-sm overflow-hidden'],
+    ['page-container', 'flex flex-col h-full bg-white rounded-lg mx-4 mb-4 shadow-sm'],
     ['page-header',   'flex items-center justify-between px-6 h-12 bg-container shrink-0 mb-4'],
     ['page-content',  'flex-1 overflow-y-auto p-5'],
 
