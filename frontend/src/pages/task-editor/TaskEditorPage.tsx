@@ -4,7 +4,7 @@ import {
 } from "antd";
 import {
   ArrowLeftOutlined, ArrowRightOutlined, CameraOutlined, CodeOutlined, EditOutlined,
-  FunctionOutlined, SaveOutlined,
+  SaveOutlined,
   ReloadOutlined, SettingOutlined,
 } from "@ant-design/icons";
 import { useEditorStore } from "@/store/editor-store";
@@ -12,7 +12,6 @@ import { useCharacterStore } from "@/store/character-store";
 import TaskList from "./components/TaskList";
 import ScreenshotCropperModal from "@/pages/task-editor/components/screenshot-cropper/ScreenshotCropperModal";
 import FlowEditor from "@/pages/task-editor/components/flow-editor/FlowEditor";
-import VariablePanel from "@/pages/task-editor/components/variable-panel/VariablePanel";
 import { useSettingsStore } from "@/store/settings-store";
 import { taskToFlow, flowToTask } from "@/utils/flow-convert";
 import type { FullTask, Step } from "@/types/task";
@@ -34,7 +33,6 @@ const TaskEditorPage: FC = () => {
   const [cropperOpen, setCropperOpen] = useState(false);
   const [flowNodes, setFlowNodes] = useState<Node<StepNodeData>[]>([]);
   const [flowEdges, setFlowEdges] = useState<Edge<StepEdgeData>[]>([]);
-  const [varVisible, setVarVisible] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [varsOpen, setVarsOpen] = useState(false);
   const [drawerStep, setDrawerStep] = useState<{ name: string; isCommon: boolean } | null>(null);
@@ -84,25 +82,6 @@ const TaskEditorPage: FC = () => {
     const owned = new Set([...taskStepNames, ...taskCommonNames]);
     return [...taskStepNames, ...taskCommonNames, ...Object.keys(globalCommonData).filter((n) => !owned.has(n))];
   }, [taskStepNames, taskCommonNames, globalCommonData]);
-
-  const setVarOptions = useMemo(() => {
-    const names = new Set<string>();
-    const taskVals = editor.currentTask?.values ?? {};
-    const collect = (steps: Record<string, Step>) => {
-      for (const step of Object.values(steps))
-        for (const v of step.set ?? []) {
-          if (!v.name) continue;
-          const bare = v.name.replace(/^\{|\}$/g, "");
-          if (bare in taskVals) continue;
-          names.add(bare);
-        }
-    };
-    if (editor.currentTask) {
-      collect(editor.currentTask.steps ?? {});
-      collect(editor.currentTask.common ?? {});
-    }
-    return Array.from(names);
-  }, [editor.currentTask]);
 
   const taskValueKeys = useMemo(() => {
     const keys = new Set(Object.keys(editor.currentTask?.values ?? {}).map(k => k.replace(/^\{|\}$/g, "")));
@@ -409,7 +388,6 @@ const TaskEditorPage: FC = () => {
           <div className="w-px h-5 bg-[#e5e7eb] mx-1" />
           <Button size="small" icon={<SettingOutlined />} onClick={() => setSettingsOpen(true)}>设置</Button>
           <Button size="small" icon={<EditOutlined />} onClick={() => setVarsOpen(true)}>变量编辑</Button>
-          <Button size="small" type={varVisible ? "primary" : "text"} icon={<FunctionOutlined />} onClick={() => setVarVisible(!varVisible)}>变量参考</Button>
         </div>
         <Space size="small">
           <Button icon={<CameraOutlined />} disabled={!characterStore.selectedHwnd} onClick={() => setCropperOpen(true)}>截图模板</Button>
@@ -478,9 +456,6 @@ const TaskEditorPage: FC = () => {
               onCopy={handleCopyCurrentStep} />
           )}
         </div>
-        <VariablePanel taskValues={editor.currentTask?.values ?? {}} configKeys={configKeys}
-          stepNames={allStepNames} setVariables={setVarOptions}
-          visible={varVisible} onToggle={() => setVarVisible(false)} />
       </div>
 
       <Modal title="变量与布局" open={varsOpen} onCancel={() => setVarsOpen(false)}
