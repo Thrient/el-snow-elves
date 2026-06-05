@@ -140,6 +140,14 @@ class App:
                 ctypes.byref(value), ctypes.sizeof(value),
             )
             logging.info(f"[Theme] DwmSetWindowAttribute hwnd={hwnd} dark={dark} result={result}")
+            # Force window frame to redraw
+            SWP_NOMOVE = 0x0002
+            SWP_NOSIZE = 0x0001
+            SWP_NOZORDER = 0x0004
+            SWP_FRAMECHANGED = 0x0020
+            user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+            logging.info(f"[Theme] SetWindowPos FRAMECHANGED done")
         except Exception as e:
             logging.warning(f"[Theme] DwmSetWindowAttribute 失败: {e}")
 
