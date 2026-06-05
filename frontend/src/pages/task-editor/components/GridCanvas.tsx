@@ -144,7 +144,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
                       <span className="text-[9px] font-medium text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-full">不足</span>
                     )}
                     <div className="flex-1" />
-                    <button className="text-slate-300 hover:text-rose-400 transition-colors duration-200 border-none outline-none bg-transparent p-0 leading-none"
+                    <button className="text-rose-300 hover:text-rose-500 hover:scale-110 transition-colors duration-200 border-none outline-none bg-transparent p-0 leading-none"
                       onClick={(e) => { e.stopPropagation(); onDeleteRow(ri); }}>
                       <DeleteOutlined className="text-xs" style={{ color: "inherit" }} />
                     </button>
@@ -198,7 +198,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
                           </div>
                           {isSel && (
                             <button
-                              className="absolute top-2 right-2 text-slate-300 hover:text-rose-400 transition-colors border-none outline-none bg-transparent p-0 leading-none"
+                              className="absolute top-2 right-2 text-rose-300 hover:text-rose-500 hover:scale-110 transition-colors border-none outline-none bg-transparent p-0 leading-none"
                               onClick={(e) => { e.stopPropagation(); onCellRemove(ri, ci); }}
                             >
                               <DeleteOutlined className="text-xs" style={{ color: "inherit" }} />

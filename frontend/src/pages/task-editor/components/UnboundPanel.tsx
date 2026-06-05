@@ -82,7 +82,7 @@ const UnboundPanel: FC<UnboundPanelProps> = ({
                     </span>
                     <code className="text-[11px] font-semibold text-slate-700 truncate">{key}</code>
                     <button
-                      className="w-5 h-5 rounded-md bg-white hover:bg-rose-100 text-slate-300 hover:text-rose-400 flex items-center justify-center text-xs ml-auto opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                      className="w-5 h-5 text-rose-300 hover:text-rose-500 hover:scale-110 bg-transparent flex items-center justify-center text-xs ml-auto opacity-0 group-hover:opacity-100 transition-all shrink-0"
                       onClick={(e) => { e.stopPropagation(); onDeleteVar(key); }}
                       title="删除变量"
                     ><DeleteOutlined className="text-[10px]" /></button>
