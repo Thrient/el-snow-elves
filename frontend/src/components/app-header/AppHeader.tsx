@@ -3,6 +3,7 @@ import ConfigHeader from "@/components/config-header/ConfigHeader.tsx";
 import { Badge, Button, Typography } from "antd";
 import { StopOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import UpdateCheckBadge from "@/components/update-check/UpdateCheckBadge";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const {Text} = Typography;
 
@@ -15,6 +16,7 @@ const AppHeader: FC = () => {
         <ConfigHeader/>
       </div>
       <div className="w-25% flex justify-end items-center gap-20px">
+        <ThemeSwitcher />
         <UpdateCheckBadge />
         <Badge
           count={0}

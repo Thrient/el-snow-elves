@@ -34,21 +34,21 @@ export default defineConfig({
 
   theme: {
     colors: {
-      primary:     '#1677ff',
-      'primary-bg':'rgba(22, 119, 255, 0.08)',
+      primary:     'var(--color-primary)',
+      'primary-bg':'var(--color-primary-bg)',
       success:     '#52c41a',
       warning:     '#fa8c16',
       danger:      '#ff4d4f',
       purple:      '#722ed1',
       cyan:        '#13c2c2',
 
-      heading:     '#1a1a2e',
-      body:        '#374151',
-      secondary:   '#6b7280',
-      muted:       '#8b8fa3',
+      heading:     'var(--color-text-heading)',
+      body:        'var(--color-text-body)',
+      secondary:   'var(--color-text-secondary)',
+      muted:       'var(--color-text-muted)',
 
-      border:      '#eef0f2',
-      container:   '#fafbfc',
+      border:      'var(--color-border)',
+      container:   'var(--color-bg-container)',
     },
 
     boxShadow: {

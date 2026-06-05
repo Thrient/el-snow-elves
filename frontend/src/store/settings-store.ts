@@ -4,15 +4,19 @@ import type { Cell } from '@/types/task'
 
 export type Layout = Cell[][]
 
+export type ThemeMode = 'auto' | 'light' | 'dark' | 'sakura' | 'ink' | 'bamboo' | 'comic' | 'sunset' | 'illust'
+
 type State = {
   values: Record<string, unknown>
   layout: Layout
   loaded: boolean
+  theme: ThemeMode
 }
 
 type Actions = {
   loadSettings: () => Promise<void>
   updateValue: (key: string, value: unknown) => void
+  setTheme: (t: ThemeMode) => void
 }
 
 export const useSettingsStore = create<State & Actions>()(
@@ -21,6 +25,7 @@ export const useSettingsStore = create<State & Actions>()(
       values: {},
       layout: [],
       loaded: false,
+      theme: (localStorage.getItem('app-theme') as ThemeMode) || 'auto',
 
       loadSettings: async () => {
         try {
@@ -54,6 +59,29 @@ export const useSettingsStore = create<State & Actions>()(
         set((state) => ({
           values: { ...state.values, [key]: value },
         })),
+
+      setTheme: (t) => {
+        const html = document.documentElement
+        if (t === 'auto') {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          html.dataset.theme = prefersDark ? 'dark' : 'light'
+          // Listen for changes
+          const mq = window.matchMedia('(prefers-color-scheme: dark)')
+          const handler = (e: MediaQueryListEvent) => {
+            html.dataset.theme = e.matches ? 'dark' : 'light'
+          }
+          mq.addEventListener('change', handler)
+          // Store listener ref for cleanup
+          ;(html as any).__themeListener = { mq, handler }
+        } else {
+          // Remove auto listener if exists
+          const prev = (html as any).__themeListener
+          if (prev) { prev.mq.removeEventListener('change', prev.handler) }
+          html.dataset.theme = t
+        }
+        localStorage.setItem('app-theme', t)
+        set({ theme: t })
+      },
     }),
     {
       name: "settings-store",
