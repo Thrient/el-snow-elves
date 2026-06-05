@@ -109,47 +109,40 @@ class App:
         import threading
         threading.Thread(target=self._qs.execute, args=(account_name,), daemon=True).start()
 
+    def _find_window_by_pid(self) -> int | None:
+        """通过进程 ID 查找可见顶层窗口 HWND"""
+        import ctypes
+        import os
+        pid = os.getpid()
+        result = []
+
+        WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.c_int)
+        def enum_callback(h, _):
+            proc_id = ctypes.c_ulong()
+            ctypes.windll.user32.GetWindowThreadProcessId(h, ctypes.byref(proc_id))
+            if proc_id.value == pid and ctypes.windll.user32.IsWindowVisible(h):
+                result.append(h)
+                return False
+            return True
+
+        ctypes.windll.user32.EnumWindows(WNDENUMPROC(enum_callback), 0)
+        return result[0] if result else None
+
     def set_titlebar_theme(self, dark: bool) -> None:
         """设置 Windows 标题栏暗色/亮色主题"""
-        logging.info(f"[Theme] set_titlebar_theme called, dark={dark}")
-        import ctypes
-        from script.config.Setting import APP_TITLE, VERSION
-
-        # Try multiple ways to get the main window HWND
-        title = f"{APP_TITLE}{VERSION}"
-        user32 = ctypes.windll.user32
-
-        hwnd = self._get_main_hwnd()  # pywebview BrowserView method
+        hwnd = self._get_main_hwnd() or self._find_window_by_pid()
         if not hwnd:
-            hwnd = user32.FindWindowW(None, title)  # Win32 FindWindow by title
-            logging.info(f"[Theme] FindWindow by title='{title}' → hwnd={hwnd}")
-        if not hwnd:
-            hwnd = user32.FindWindowW(None, None)  # fallback: any top-level
-            logging.info(f"[Theme] FindWindow fallback → hwnd={hwnd}")
-
-        logging.info(f"[Theme] final hwnd={hwnd}")
-        if not hwnd:
-            logging.warning("[Theme] 无法获取主窗口 HWND，标题栏主题设置失败")
             return
-
         try:
+            import ctypes
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
             value = ctypes.c_int(1 if dark else 0)
-            result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
                 hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
                 ctypes.byref(value), ctypes.sizeof(value),
             )
-            logging.info(f"[Theme] DwmSetWindowAttribute hwnd={hwnd} dark={dark} result={result}")
-            # Force window frame to redraw
-            SWP_NOMOVE = 0x0002
-            SWP_NOSIZE = 0x0001
-            SWP_NOZORDER = 0x0004
-            SWP_FRAMECHANGED = 0x0020
-            user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
-            logging.info(f"[Theme] SetWindowPos FRAMECHANGED done")
-        except Exception as e:
-            logging.warning(f"[Theme] DwmSetWindowAttribute 失败: {e}")
+        except Exception:
+            pass
 
     def _get_main_hwnd(self) -> int | None:
         """获取主窗口原生 HWND"""
