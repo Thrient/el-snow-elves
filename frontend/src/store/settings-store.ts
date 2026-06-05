@@ -4,7 +4,7 @@ import type { Cell } from '@/types/task'
 
 export type Layout = Cell[][]
 
-export type ThemeMode = 'auto' | 'light' | 'dark' | 'sakura' | 'ink' | 'bamboo' | 'comic' | 'sunset' | 'illust'
+export type ThemeMode = 'auto' | 'light' | 'dark'
 
 type State = {
   values: Record<string, unknown>
