@@ -151,7 +151,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
 
                   {/* cells row */}
                   <div
-                    className="relative flex items-stretch gap-2 px-2 pb-2 grid grid-cols-[repeat(24,1fr)] min-h-72"
+                    className="relative flex items-stretch gap-2 px-2 pb-2 grid grid-cols-[repeat(24,1fr)] min-h-24"
                   >
                     {row.map((cell, ci) => {
                       const span = cell.span ?? 1;
