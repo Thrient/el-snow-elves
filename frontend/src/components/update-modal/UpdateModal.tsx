@@ -19,7 +19,8 @@ export default function UpdateModal() {
       closeCheckModal();
       return;
     }
-    // Show progress modal immediately for instant feedback
+    // Close check modal, then show progress modal
+    closeCheckModal();
     setUpdating(true);
     useUpdateStore.getState().startDownload(0, 0);
 
