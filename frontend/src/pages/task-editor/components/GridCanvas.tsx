@@ -151,7 +151,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
 
                   {/* cells row */}
                   <div
-                    className="relative flex items-stretch gap-2 px-2 pb-2 grid grid-cols-[repeat(24,1fr)] min-h-16"
+                    className="relative gap-2 px-2 pb-2 grid grid-cols-[repeat(24,1fr)] min-h-16 items-stretch"
                   >
                     {row.map((cell, ci) => {
                       const span = cell.span ?? 1;
@@ -192,7 +192,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
                             )}
                             <span className="text-[9px] text-slate-400 ml-auto font-mono shrink-0 bg-slate-100 px-1.5 py-0.5 rounded-md">{span}c</span>
                           </div>
-                          <div className="flex justify-center scale-[0.85] pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="flex scale-[0.85] w-full pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity duration-200">
                             <MiniPreview cell={cell} />
                           </div>
                           {isSel && (
