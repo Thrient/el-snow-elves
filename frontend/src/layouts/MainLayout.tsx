@@ -99,16 +99,16 @@ const MainLayout: FC = () => {
           collapsed={collapsed}
           onCollapse={(value) => setCollapsed(value)}
           theme='light'
-          className='bg-container'
+          className='!bg-container'
           width={160}
         >
           <AppMenu collapsed={collapsed}/>
         </Sider>
         <Layout>
-          <Header className="bg-container">
+          <Header className="!bg-container">
             <AppHeader/>
           </Header>
-          <Content className="bg-container">
+          <Content className="!bg-container">
             <Outlet/>
           </Content>
         </Layout>

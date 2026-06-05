@@ -405,3 +405,10 @@ body {
     animation: update-modal-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+
+/* ── Ant Design theme compatibility ── */
+[data-theme] .ant-layout-header,
+[data-theme] .ant-layout-sider,
+[data-theme] .ant-layout-content { background: var(--color-bg-page) !important; }
+[data-theme] .ant-layout-sider-trigger { background: var(--color-bg-container) !important; }
+[data-theme] .ant-menu-light { background: transparent !important; }
