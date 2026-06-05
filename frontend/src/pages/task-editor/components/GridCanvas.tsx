@@ -125,14 +125,14 @@ const GridCanvas: FC<GridCanvasProps> = ({
               return (
                 <div
                   key={ri}
-                  className={`rounded-2xl border-2 transition-all duration-300 bg-white/80 backdrop-blur-sm
-                    ${canDrop && dragFromLeft ? "border-indigo-300 ring-4 ring-indigo-100/60 shadow-lg" : "border-slate-100 shadow-sm hover:shadow-md"}`}
+                  className={`rounded-2xl transition-all duration-300 bg-white shadow-sm
+                    ${canDrop && dragFromLeft ? "ring-2 ring-indigo-200 shadow-lg" : "shadow-sm hover:shadow-md"}`}
                   onDragOver={(e) => onRowDragOver(ri, e)}
                   onDrop={(e) => onDrop(ri, row.length, e)}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* row header */}
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-t-[14px] bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-t-[14px] bg-gradient-to-r from-slate-50 to-white">
                     <span className="w-6 h-6 rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500 flex items-center justify-center shadow-sm">
                       {ri + 1}
                     </span>
@@ -168,11 +168,11 @@ const GridCanvas: FC<GridCanvasProps> = ({
                           onDrop={(e) => onCellDrop(ri, ci, e)}
                           onContextMenu={(e) => handleCellContextMenu(ri, ci, e)}
                           onClick={(e) => { e.stopPropagation(); setSel({ ri, ci }); }}
-                          className={`relative rounded-xl border-2 transition-all duration-200 cursor-pointer
+                          className={`relative rounded-xl transition-all duration-200 cursor-pointer
                             flex flex-col justify-center px-2 py-1.5 min-w-0 overflow-hidden group
                             ${isSel
-                              ? "border-indigo-400 shadow-lg shadow-indigo-200/40 -translate-y-0.5 z-10"
-                              : "border-transparent hover:border-slate-200 hover:shadow-md hover:-translate-y-0.5"}`}
+                              ? "ring-2 ring-indigo-300 shadow-lg -translate-y-0.5 z-10"
+                              : "shadow-sm hover:shadow-md hover:-translate-y-0.5"}`}
                           style={{
                             gridColumn: `span ${span}`,
                             background: isSel
