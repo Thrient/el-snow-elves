@@ -35,8 +35,6 @@ def register(api: Api, app) -> None:
     api.on("API:TEMPLATE:SAVE", app.save_template_image)
 
     def _handle_set_theme(payload: dict):
-        import logging
-        logging.info(f"[Theme] IPC received: {payload}")
         theme = payload.get("theme", "light") if isinstance(payload, dict) else "light"
         app.set_titlebar_theme(theme == "dark")
     api.on("API:APP:SET_THEME", _handle_set_theme)
