@@ -4,7 +4,7 @@ import { useCharacterStore } from "@/store/character-store";
 import { useUpdateStore } from "@/store/update-store";
 import { waitForPywebview } from "@/utils/pywebview.ts";
 import { compareVersion } from "@/utils/version";
-import { Layout } from "antd";
+import { App, Layout } from "antd";
 import AppHeader from "@/components/app-header/AppHeader.tsx";
 import DisclaimerModal from "@/components/disclaimer-modal/DisclaimerModal.tsx";
 import UpdateModal from "@/components/update-modal/UpdateModal";
@@ -18,6 +18,7 @@ const {Header, Sider, Content} = Layout
 
 
 const MainLayout: FC = () => {
+  const { message } = App.useApp();
 
   const [collapsed, setCollapsed] = useState<boolean>(false)
   const checked = useRef(false)
@@ -49,7 +50,7 @@ const MainLayout: FC = () => {
               is_mandatory: latest.is_mandatory ?? false,
             })
           } else {
-            import("antd").then(m => m.message.success("已是最新版本", 3))
+            message.success("已是最新版本", 3)
           }
         }
       } catch {
