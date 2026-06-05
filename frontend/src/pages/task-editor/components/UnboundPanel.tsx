@@ -1,5 +1,6 @@
 import { useState, type FC } from "react";
 import { Modal } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 import type { VarType } from "@/types/task";
 
 interface UnboundVar {
@@ -84,7 +85,7 @@ const UnboundPanel: FC<UnboundPanelProps> = ({
                       className="w-5 h-5 rounded-md bg-white hover:bg-rose-100 text-slate-300 hover:text-rose-400 flex items-center justify-center text-xs ml-auto opacity-0 group-hover:opacity-100 transition-all shrink-0"
                       onClick={(e) => { e.stopPropagation(); onDeleteVar(key); }}
                       title="删除变量"
-                    >×</button>
+                    ><DeleteOutlined className="text-[10px]" /></button>
                   </div>
                   {valStr && (
                     <span className="text-[10px] text-slate-400 truncate pl-8 pr-1">{valStr}</span>
@@ -146,7 +147,7 @@ const UnboundPanel: FC<UnboundPanelProps> = ({
                 }
               }}
             >
-              <span className="w-7 h-7 rounded-xl bg-rose-100 text-rose-400 flex items-center justify-center text-sm shrink-0 shadow-sm">×</span>
+              <span className="w-7 h-7 rounded-lg bg-rose-100 text-rose-400 flex items-center justify-center shrink-0"><DeleteOutlined className="text-xs" /></span>
               <div className="flex flex-col gap-0.5">
                 <span className="font-medium leading-tight">删除全部未布局变量</span>
                 <span className="text-[10px] text-slate-400 leading-tight">清空所有未使用的变量</span>
