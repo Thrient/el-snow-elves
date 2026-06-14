@@ -1,4 +1,5 @@
 import { Cron } from "croner";
+import { message } from "antd";
 import type { PlanBase } from "@/types/plan";
 import type { ExecuteItem } from "@/store/character-store";
 import { callApi } from "@/utils/pywebview";
@@ -47,6 +48,7 @@ export class CronEngine {
 
   private async executeRefill(params: Record<string, unknown>) {
     const store = getCharStore();
+    const taskStore = getTaskStore();
     const source = params.source as string;
 
     if (source === "config") {
@@ -56,10 +58,20 @@ export class CronEngine {
         const config = await callApi<{ queue?: ExecuteItem[] }>("API:SCRIPT:LOAD:CONFIG", configName);
         if (config?.queue && Array.isArray(config.queue)) {
           store.clearExecute(this.hwnd);
+          const missingTasks: string[] = [];
           for (const item of config.queue) {
+            const tn = (item as any).taskName || item.name;
+            const taskMeta = taskStore.taskList.find((t: any) => t.name === tn);
+            if (!taskMeta) {
+              missingTasks.push(tn);
+              continue;
+            }
             store.pushExecute(this.hwnd, {
               id: item.id, name: item.name, version: item.version, values: item.values ?? {},
             });
+          }
+          if (missingTasks.length > 0) {
+            message.warning(`定时重填：${missingTasks.length} 个任务已不存在（${missingTasks.join("、")}），已跳过`);
           }
         }
       } catch { /* */ }
@@ -72,16 +84,36 @@ export class CronEngine {
   }
 
   private executePush(params: Record<string, unknown>) {
-    const taskId = params.taskId as string;
-    if (!taskId) return;
-    const task = getTaskStore().taskList.find((t) => t.id === taskId);
-    if (!task) return;
+    const taskName = params.taskName as string;
+    if (!taskName) return;
+    const task = getTaskStore().taskList.find((t: any) => t.name === taskName);
+    if (!task) {
+      message.error(`计划执行失败：任务「${taskName}」不存在，可能已被删除`);
+      return;
+    }
+    const version = (params.version as string) || undefined;
+    // 如果锁定了版本，检查版本是否存在
+    if (version) {
+      const taskMeta = task as any;
+      if (taskMeta.versions && Array.isArray(taskMeta.versions) && !taskMeta.versions.includes(version)) {
+        message.warning(`计划「${taskName}」锁定版本 v${version} 已不存在，已切换为最新版本`);
+        getCharStore().unshiftExecute(this.hwnd, {
+          id: "",
+          name: taskName,
+          taskName: taskName,
+          version: null,
+          values: (params.values ?? {}) as Record<string, unknown>,
+        } as any);
+        return;
+      }
+    }
     getCharStore().unshiftExecute(this.hwnd, {
-      id: task.id,
-      name: task.name,
-      version: task.version,
+      id: "",
+      name: taskName,
+      taskName: taskName,
+      version: version ?? null,
       values: (params.values ?? {}) as Record<string, unknown>,
-    });
+    } as any);
   }
 }
 

@@ -3,6 +3,7 @@ import { Tag, Empty } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { useCharacterStore } from "@/store/character-store";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal";
+import VersionTag from "@/components/version-tag/VersionTag";
 import type { Task } from "@/types/task";
 
 const DOT_COLORS = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"];
@@ -10,6 +11,7 @@ const DOT_COLORS = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"];
 const QueuePanel: FC = () => {
   const characterStore = useCharacterStore();
   const selected = characterStore.characters.find((c) => c.hwnd === characterStore.selectedHwnd);
+  const taskList = characterStore.taskList;
   const [dragUid, setDragUid] = useState<number | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [configTask, setConfigTask] = useState<Task | null>(null);
@@ -37,8 +39,21 @@ const QueuePanel: FC = () => {
   const openConfig = (uid: number) => {
     const item = selected.executeList.find((i) => i._uid === uid);
     if (!item) return;
-    const original = useCharacterStore.getState().taskList.find((t) => t.id === item.id);
-    if (original) { setConfigUid(uid); setConfigTask({ ...original, values: { ...item.values } }); setConfigOpen(true); }
+    const taskStore = useCharacterStore.getState();
+    const taskName = (item as any).taskName || item.name;
+    const original = taskStore.taskList.find((t: any) => t.name === taskName);
+    if (original) {
+      setConfigUid(uid);
+      setConfigTask({
+        ...original,
+        id: "",
+        name: original.name,
+        version: (item as any).version ?? original.latest,
+        values: { ...item.values },
+        valueTypes: (item as any).valueTypes,
+      } as any);
+      setConfigOpen(true);
+    }
   };
   const closeConfig = () => { setConfigOpen(false); setConfigTask(null); setConfigUid(null); };
   const handleSave = (values: Record<string, unknown>) => {
@@ -67,6 +82,17 @@ const QueuePanel: FC = () => {
             <div className="flex flex-col gap-2">
               {selected.executeList.map((item, idx) => {
                 const accent = DOT_COLORS[idx % DOT_COLORS.length];
+                const taskName = (item as any).taskName || item.name;
+                const pinnedVersion = (item as any).version ?? null;
+                // 查找对应任务获取可用版本列表
+                const taskMeta = taskList.find((t: any) => t.name === taskName);
+                const versions = taskMeta?.versions ?? [];
+                const latest = taskMeta?.latest ?? "?";
+                // 如果锁定了一个不存在的版本，标记为 stale
+                const isStale = pinnedVersion !== null && versions.length > 0 && !versions.includes(pinnedVersion);
+                // 如果任务本身不存在
+                const taskMissing = !taskMeta;
+
                 return (
                   <div key={item._uid} draggable
                     onDragStart={handleDragStart(item._uid)} onDragEnd={handleDragEnd}
@@ -75,18 +101,32 @@ const QueuePanel: FC = () => {
                     className="queue-item queue-item-enter group"
                     style={{
                       animationDelay: `${idx * 40}ms`,
-                      borderLeft: `2px solid ${accent}`,
+                      borderLeft: `2px solid ${taskMissing ? "#ff4d4f" : isStale ? "#fa8c16" : accent}`,
                       opacity: dragUid === item._uid ? 0.3 : 1,
+                      ...(taskMissing ? { borderColor: "#ffccc7", background: "#fff2f0" } : {}),
+                      ...(isStale && !taskMissing ? { borderColor: "#ffe58f", background: "#fffbe6" } : {}),
                     }}
                   >
                     <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="text-[12px] font-medium text-heading truncate">
-                          {item.name}
+                          {taskName}
                         </span>
-                        <Tag style={{ fontSize: 9, lineHeight: 1, border: "none", borderRadius: 4, padding: "1px 6px", margin: 0, color: "#9ca3af", background: "#f3f4f6", fontFamily: "ui-monospace,Consolas,monospace" }}>
-                          v{item.version}
-                        </Tag>
+                        {taskMissing ? (
+                          <Tag style={{ fontSize: 9, lineHeight: 1, border: "none", borderRadius: 4, padding: "1px 6px", margin: 0, color: "#ff4d4f", background: "#fff2f0", fontFamily: "ui-monospace,Consolas,monospace" }}>
+                            ⚠️ 任务不存在
+                          </Tag>
+                        ) : (
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <VersionTag
+                              versions={versions}
+                              latest={latest}
+                              selectedVersion={pinnedVersion}
+                              stale={isStale}
+                              onChange={(v) => characterStore.updateExecuteVersion(selected.hwnd, item._uid, v)}
+                            />
+                          </div>
+                        )}
                       </div>
                       <span className="flex items-center justify-center w-6 h-6 cursor-pointer opacity-0 group-hover:opacity-100 transition-all shrink-0"
                         style={{ borderRadius: 6, color: "#d1d5db" }}

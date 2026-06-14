@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type FC } from "react";
 import {
-  Button, message, Modal, Space, Tag, Tooltip,
+  Button, Input, message, Modal, Space, Tag, Tooltip,
 } from "antd";
 import {
   ArrowLeftOutlined, ArrowRightOutlined, CameraOutlined, CodeOutlined, EditOutlined,
@@ -34,6 +34,9 @@ const TaskEditorPage: FC = () => {
   const [flowNodes, setFlowNodes] = useState<Node<StepNodeData>[]>([]);
   const [flowEdges, setFlowEdges] = useState<Edge<StepEdgeData>[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const [saveAsNewOpen, setSaveAsNewOpen] = useState(false);
+  const [newVersionInput, setNewVersionInput] = useState("");
   const [varsOpen, setVarsOpen] = useState(false);
   const [drawerStep, setDrawerStep] = useState<{ name: string; isCommon: boolean } | null>(null);
   const [canUndo, setCanUndo] = useState(false);
@@ -49,7 +52,7 @@ const TaskEditorPage: FC = () => {
       if (!raw) return;
       const fulls: FullTask[] = [];
       for (const t of raw) {
-        const full = await window.pywebview?.api.emit("API:TASK:LOAD:FULL", t.id);
+        const full = await window.pywebview?.api.emit("API:TASK:LOAD:FULL", t.name, t.latest);
         if (full) fulls.push(full);
       }
       setTaskList(fulls);
@@ -124,12 +127,26 @@ const TaskEditorPage: FC = () => {
   const allStepsData = { ...globalCommonData, ...editor.currentTask?.steps, ...editor.currentTask?.common };
 
   /** Extract {参数名:默认值} from each step via recursive transitive scan
-   *  (prefix/postfix/failure_extra/success_extra + next/success/failure chains) */
+   *  (prefix/postfix/failure_extra/success_extra + next/success/failure chains)
+   *  Includes both task-local and global common steps. */
   const stepParamsMap = (() => {
     const m: Record<string, Record<string, unknown>> = {};
     const taskStepNames = [...Object.keys(editor.currentTask?.steps ?? {}), ...Object.keys(editor.currentTask?.common ?? {})];
     for (const name of taskStepNames) {
       const params = extractAllParams(name, allStepsData);
+      if (Object.keys(params).length > 0) {
+        m[name] = params;
+      } else if (globalCommonData[name]) {
+        // Task step shadows a global step with rich params — use global definition
+        const globalParams = extractAllParams(name, { ...globalCommonData, [name]: globalCommonData[name] });
+        if (Object.keys(globalParams).length > 0) m[name] = globalParams;
+      }
+    }
+    // Also include global common steps not shadowed by task
+    for (const name of Object.keys(globalCommonData)) {
+      if (m[name]) continue;
+      // Use allStepsData so sub-step lookups find task-local steps too
+      const params = extractAllParams(name, { ...allStepsData, [name]: globalCommonData[name] });
       if (Object.keys(params).length > 0) m[name] = params;
     }
     return m;
@@ -168,7 +185,7 @@ const TaskEditorPage: FC = () => {
         onOk: async () => {
           if (!editor.currentTask) return;
           initRef.current = true;
-          const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", editor.currentTask.id).catch(() => ({})) ?? {};
+          const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", editor.currentTask.name, editor.currentTask.version).catch(() => ({})) ?? {};
           setSavedPositions(positions);
           requestAnimationFrame(() => {
             const task = editor.currentTask!;
@@ -195,10 +212,12 @@ const TaskEditorPage: FC = () => {
   }, [editor.isDirty]);
 
   // handlers
-  const openTask = async (task: FullTask) => {
+  const openTask = async (name: string, version: string) => {
     initRef.current = true;
-    await editor.loadTask(task.id);
-    const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", task.id).catch(() => ({})) ?? {};
+    await editor.loadTask(name, version);
+    const task = useEditorStore.getState().currentTask;
+    if (!task) return;
+    const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", task.name, task.version).catch(() => ({})) ?? {};
     setSavedPositions(positions);
     requestAnimationFrame(() => {
       const current = useEditorStore.getState().currentTask;
@@ -294,13 +313,40 @@ const TaskEditorPage: FC = () => {
       const positions: Record<string, { x: number; y: number }> = {};
       for (const n of flowNodes) positions[n.id] = n.position;
       setSavedPositions(positions);
-      window.pywebview?.api.emit("API:TASK:SAVE:POSITIONS", editor.currentTask.id, positions).catch(() => {});
+      window.pywebview?.api.emit("API:TASK:SAVE:POSITIONS", editor.currentTask.name, editor.currentTask.version, positions).catch(() => {});
     }
     loadTaskList();
     message.success("保存成功");
   };
   const handleSaveRef = useRef(handleSave);
   handleSaveRef.current = handleSave;
+
+  const handleSaveAsNew = async () => {
+    if (!editor.currentTask || !newVersionInput.trim()) {
+      message.error("版本号不能为空");
+      return;
+    }
+    try {
+      await editor.saveAsNewVersion(newVersionInput.trim());
+      message.success("已保存为新版本 v" + newVersionInput.trim());
+      setSaveAsNewOpen(false);
+      setNewVersionInput("");
+      loadTaskList();
+      // 同步 flow
+      const task = useEditorStore.getState().currentTask;
+      if (task) {
+        const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", task.name, task.version).catch(() => ({})) ?? {};
+        setSavedPositions(positions);
+        requestAnimationFrame(() => {
+          const { nodes, edges } = taskToFlow(task, positions, task.monitors.loop);
+          setFlowNodes(nodes);
+          setFlowEdges(edges);
+        });
+      }
+    } catch (e: unknown) {
+      message.error(e instanceof Error ? e.message : "保存失败");
+    }
+  };
 
   const drawerStepRef = useRef(drawerStep);
   drawerStepRef.current = drawerStep;
@@ -369,12 +415,12 @@ const TaskEditorPage: FC = () => {
   if (!isEditing) {
     return (
       <TaskList
-        taskList={taskList}
+        taskList={taskList as any}
         onOpenTask={openTask}
-        onCreateTask={async (name, version, author, description) => {
+        onCreateTask={async (name, version, description) => {
           if (!name.trim() || !version.trim()) { message.error("名称和版本不能为空"); return; }
           try {
-            await editor.createTask(name.trim(), version.trim(), author.trim(), description);
+            await editor.createTask(name.trim(), version.trim(), description);
             message.success("任务创建成功"); loadTaskList();
             const task = useEditorStore.getState().currentTask;
             if (task) {
@@ -416,6 +462,10 @@ const TaskEditorPage: FC = () => {
         </div>
         <Space size="small">
           <Button icon={<CameraOutlined />} disabled={!characterStore.selectedHwnd} onClick={() => setCropperOpen(true)}>截图模板</Button>
+          <Button icon={<SaveOutlined />} onClick={() => {
+            setNewVersionInput(editor.currentTask?.version ?? "");
+            setSaveAsNewOpen(true);
+          }}>保存为新版本</Button>
           <Button type="primary" icon={<SaveOutlined />} disabled={!editor.isDirty} onClick={handleSave}>
             保存 <span className="text-[10px] opacity-60 ml-0.5">Ctrl+S</span></Button>
           <Tooltip title="从磁盘重新加载数据"><Button icon={<ReloadOutlined />} onClick={handleRefresh} /></Tooltip>
@@ -509,13 +559,36 @@ const TaskEditorPage: FC = () => {
         <TaskSettingsModal
           open={settingsOpen}
           task={editor.currentTask}
-          onClose={() => setSettingsOpen(false)}
+          onClose={closeSettings}
         />
       )}
       {characterStore.selectedHwnd && (
         <ScreenshotCropperModal open={cropperOpen} hwnd={characterStore.selectedHwnd}
           taskName={editor.currentTask?.name} version={editor.currentTask?.version}
           onClose={() => setCropperOpen(false)} onSaved={() => {}} />)}
+      <Modal
+        title="保存为新版本"
+        open={saveAsNewOpen}
+        onOk={handleSaveAsNew}
+        onCancel={() => setSaveAsNewOpen(false)}
+        okText="保存"
+        cancelText="取消"
+      >
+        <div className="pt-3">
+          <div className="flex items-center gap-3">
+            <span className="text-sm w-14 shrink-0">新版本 *</span>
+            <Input
+              placeholder="如 2.0.0"
+              value={newVersionInput}
+              onChange={(e) => setNewVersionInput(e.target.value)}
+              onPressEnter={handleSaveAsNew}
+            />
+          </div>
+          <p className="text-xs text-muted mt-2 ml-[4.5rem]">
+            当前版本: v{editor.currentTask?.version}
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 };

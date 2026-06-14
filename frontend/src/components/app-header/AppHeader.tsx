@@ -16,8 +16,8 @@ const AppHeader: FC = () => {
         <ConfigHeader/>
       </div>
       <div className="w-25% flex justify-end items-center gap-20px">
-        <ThemeSwitcher />
         <UpdateCheckBadge />
+        <ThemeSwitcher />
         <Badge
           count={0}
           className="min-w-71px"

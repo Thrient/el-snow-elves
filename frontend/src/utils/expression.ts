@@ -118,6 +118,10 @@ export function extractAllParams(
       if (k === "args") continue;
       if (typeof v === "string") scanStr(v);
       else if (Array.isArray(v)) v.forEach(item => { if (typeof item === "string") scanStr(item); });
+      else if (v !== undefined) {
+        // Capture raw non-string params (number, boolean, null) as overridable args
+        if (!(k in result)) result[k] = v;
+      }
     }
   }
 

@@ -18,58 +18,94 @@ def get_task_config_by_id(task_id):
 
 
 def load_task_list():
+    """返回按 name 合并的任务列表，每个 name 一条，含 versions 列表和 latest 快照。"""
     config_dir = os.path.join(PROJECT_ROOT, "resources", "config")
-    tasks = []
+    by_name = {}
 
     for task_folder in os.listdir(config_dir):
         task_path = os.path.join(config_dir, task_folder)
         if not os.path.isdir(task_path):
             continue
 
-        found = False
+        name = task_folder
+        versions = []
+        latest_config = None
+        latest_version = (0, 0, 0)
+
         for version_folder in os.listdir(task_path):
             version_path = os.path.join(task_path, version_folder)
             if not os.path.isdir(version_path):
                 continue
-
-            json_path = os.path.join(version_path, f"{task_folder}.json")
+            json_path = os.path.join(version_path, f"{name}.json")
             if not os.path.isfile(json_path):
                 continue
 
-            with open(json_path, 'r', encoding='utf-8') as f:
+            with open(json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            if data.get("name") != task_folder:
+            if data.get("name") != name:
                 continue
 
-            task_id = hashlib.sha256(f"{data.get('name')}_{data.get('version')}".encode('utf-8')).hexdigest()
-            data['id'] = task_id
+            version_str = data.get("version", version_folder)
+            versions.append(version_str)
+
+            task_id = hashlib.sha256(f"{name}_{version_str}".encode("utf-8")).hexdigest()
+            data["id"] = task_id
             data["_config_path"] = json_path
             TASK_CONFIG_CACHE[task_id] = dict(data)
 
-            found = True
-            for key in ("monitors", "common", "steps", "start"):
-                data.pop(key, None)
+            try:
+                v_tuple = tuple(int(x) for x in version_str.split("."))
+            except ValueError:
+                v_tuple = (0, 0, 0)
+            if v_tuple > latest_version:
+                latest_version = v_tuple
+                latest_config = data
 
-        if found:
-            tasks.append(data)
-    return tasks
+        if not versions:
+            continue
+
+        versions.sort(key=lambda v: [int(x) for x in v.split(".")], reverse=True)
+
+        merged = {
+            "name": name,
+            "versions": versions,
+            "latest": versions[0],
+            "description": latest_config.get("description", "") if latest_config else "",
+            "steps": latest_config.get("steps", {}) if latest_config else {},
+            "start": latest_config.get("start", "") if latest_config else "",
+            "layout": latest_config.get("layout", []) if latest_config else [],
+            "values": latest_config.get("values", {}) if latest_config else {},
+        }
+        by_name[name] = merged
+
+    return list(by_name.values())
 
 
-def get_full_task_config(task_id):
-    return TASK_CONFIG_CACHE.get(task_id)
+def get_full_task_config(name_or_id, version=None):
+    if version is not None:
+        task_id, config = resolve_task_version(name_or_id, version)
+        return config if task_id else None
+    # Try cache by ID first (backward compat), then resolve by name -> latest version
+    cached = TASK_CONFIG_CACHE.get(name_or_id)
+    if cached:
+        return cached
+    task_id, config = resolve_task_version(name_or_id, None)
+    return config if task_id else None
 
 
-def save_full_task_config(task_id, data):
+def save_full_task_config(name_or_id, data, version=None):
+    if version is not None:
+        task_id = hashlib.sha256(f"{name_or_id}_{version}".encode("utf-8")).hexdigest()
+    else:
+        task_id = name_or_id
+
     config = TASK_CONFIG_CACHE.get(task_id)
     if not config:
         raise ValueError(f"任务不存在: {task_id}")
     name = config.get("name", "")
-    version = config.get("version", "")
-    if not name or not version:
-        raise ValueError("任务缺少 name 或 version")
-
-    filepath = os.path.join(PROJECT_ROOT, "resources", "config", name, version, f"{name}.json")
+    ver = config.get("version", "")
+    filepath = os.path.join(PROJECT_ROOT, "resources", "config", name, ver, f"{name}.json")
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"任务文件不存在: {filepath}")
 
@@ -77,15 +113,15 @@ def save_full_task_config(task_id, data):
     merged.pop("id", None)
     merged.pop("_config_path", None)
 
-    with open(filepath, 'w', encoding='utf-8') as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         json.dump(merged, f, ensure_ascii=False, indent=2)
 
-    merged['id'] = task_id
+    merged["id"] = task_id
     merged["_config_path"] = filepath
     TASK_CONFIG_CACHE[task_id] = merged
 
 
-def create_task(name, version, author="", description=""):
+def create_task(name, version, description=""):
     task_dir = os.path.join(PROJECT_ROOT, "resources", "config", name, version)
     if os.path.exists(task_dir):
         raise FileExistsError(f"任务目录已存在: {task_dir}")
@@ -95,7 +131,7 @@ def create_task(name, version, author="", description=""):
 
     task_id = hashlib.sha256(f"{name}_{version}".encode('utf-8')).hexdigest()
     task_json = {
-        "name": name, "version": version, "author": author,
+        "name": name, "version": version,
         "description": description,
         "start": "", "steps": {}, "common": {},
         "monitors": {"loop": [], "interval": 1},
@@ -111,14 +147,20 @@ def create_task(name, version, author="", description=""):
     return task_id
 
 
-def build_task_zip(task_id):
+def build_task_zip(name, version=None):
+    if version:
+        task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
+    else:
+        task_id, _ = resolve_task_version(name, None)
+    if not task_id:
+        return {"error": f"任务不存在: {name}"}
+
     config = get_task_config_by_id(task_id)
     if not config:
         return {"error": f"任务不存在: {task_id}"}
 
     name = config.get("name", "")
     version = config.get("version", "")
-    author = config.get("author", "")
     if not name or not version:
         return {"error": "任务缺少 name 或 version"}
 
@@ -143,7 +185,7 @@ def build_task_zip(task_id):
 
     import re as _re
     safe = lambda s: _re.sub(r'[\/\\:*?"<>|]', '_', s or "unknown")
-    return buf, f"{safe(name)}_{safe(version)}_{safe(author)}.zip"
+    return buf, f"{safe(name)}_{safe(version)}.zip"
 
 
 def import_task(zip_base64):
@@ -183,13 +225,10 @@ def _import_single(zip_base64):
 
         name = (task_data.get("name") or "").strip()
         version = (task_data.get("version") or "").strip()
-        author = (task_data.get("author") or "").strip()
         if not name:
             return {"error": "任务配置缺少 name 字段"}
         if not version:
             return {"error": "任务配置缺少 version 字段"}
-        if not author:
-            return {"error": "任务配置缺少 author 字段"}
 
         dest_dir = os.path.join(PROJECT_ROOT, "resources", "config", name, version)
         if os.path.exists(dest_dir):
@@ -217,7 +256,7 @@ def _import_single(zip_base64):
         task_data["_config_path"] = target_json
         TASK_CONFIG_CACHE[task_id] = task_data
 
-        return {"name": name, "version": version, "author": author}
+        return {"name": name, "version": version}
 
     except zipfile.BadZipFile:
         return {"error": "文件不是有效的 ZIP 压缩包"}
@@ -229,18 +268,116 @@ def _import_single(zip_base64):
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def delete_task(task_id):
+def delete_task(name, version=None):
+    if version:
+        version_dir = os.path.join(PROJECT_ROOT, "resources", "config", name, version)
+        task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
+        if os.path.isdir(version_dir):
+            shutil.rmtree(version_dir, ignore_errors=True)
+        TASK_CONFIG_CACHE.pop(task_id, None)
+        logging.info(f"[Task] 已删除: {name} v{version}")
+        return {"success": True, "name": name, "version": version}
+    else:
+        task_dir = os.path.join(PROJECT_ROOT, "resources", "config", name)
+        if os.path.isdir(task_dir):
+            shutil.rmtree(task_dir, ignore_errors=True)
+        stale = [k for k, v in TASK_CONFIG_CACHE.items() if v.get("name") == name]
+        for k in stale:
+            TASK_CONFIG_CACHE.pop(k, None)
+        logging.info(f"[Task] 已删除整个任务: {name}")
+        return {"success": True, "name": name}
+
+
+def save_as_new_version(name_or_id, new_version, old_version=None):
+    """将当前任务保存为新版本（复制整个版本目录 + 更新 version 字段）"""
+    if old_version is not None:
+        task_id = hashlib.sha256(f"{name_or_id}_{old_version}".encode("utf-8")).hexdigest()
+    else:
+        task_id = name_or_id
+
     config = TASK_CONFIG_CACHE.get(task_id)
     if not config:
         return {"error": f"任务不存在: {task_id}"}
+
     name = config.get("name", "")
-    version = config.get("version", "")
-    task_dir = os.path.dirname(config.get("_config_path", ""))
-    if task_dir and os.path.isdir(task_dir):
-        shutil.rmtree(task_dir, ignore_errors=True)
-    TASK_CONFIG_CACHE.pop(task_id, None)
-    logging.info(f"[Task] 已删除: {name} v{version}")
-    return {"success": True, "name": name, "version": version}
+    old_version = config.get("version", "")
+    if not name or not old_version:
+        return {"error": "任务缺少 name 或 version"}
+
+    new_version = (new_version or "").strip()
+    if not new_version:
+        return {"error": "新版本号不能为空"}
+    if new_version == old_version:
+        return {"error": f"新版本号与当前版本相同: {new_version}"}
+
+    src_dir = os.path.dirname(config.get("_config_path", ""))
+    if not src_dir or not os.path.isdir(src_dir):
+        return {"error": "任务目录不存在"}
+
+    dest_dir = os.path.join(PROJECT_ROOT, "resources", "config", name, new_version)
+    if os.path.exists(dest_dir):
+        return {"error": f"版本 {new_version} 已存在"}
+
+    # 复制整个版本目录
+    shutil.copytree(src_dir, dest_dir)
+
+    # 更新新版本 JSON 中的 version 字段
+    new_json_path = os.path.join(dest_dir, f"{name}.json")
+    with open(new_json_path, "r", encoding="utf-8") as f:
+        new_data = json.load(f)
+    new_data["version"] = new_version
+
+    with open(new_json_path, "w", encoding="utf-8") as f:
+        json.dump(new_data, f, ensure_ascii=False, indent=2)
+
+    # 注册到缓存
+    new_task_id = hashlib.sha256(f"{name}_{new_version}".encode("utf-8")).hexdigest()
+    new_data["id"] = new_task_id
+    new_data["_config_path"] = new_json_path
+    TASK_CONFIG_CACHE[new_task_id] = new_data
+
+    logging.info(f"[Task] 保存为新版本: {name} v{old_version} -> v{new_version}")
+    return {"success": True, "taskId": new_task_id, "name": name, "version": new_version}
+
+
+def resolve_task_version(name, version=None):
+    """解析任务版本。version=None 时取最高版本。返回 (task_id, config) 或 (None, error)。"""
+    task_dir = os.path.join(PROJECT_ROOT, "resources", "config", name)
+    if not os.path.isdir(task_dir):
+        return None, {"error": f"任务不存在: {name}"}
+
+    if version:
+        version_dir = os.path.join(task_dir, version)
+        json_path = os.path.join(version_dir, f"{name}.json")
+        if not os.path.isfile(json_path):
+            return None, {"error": f"版本 {version} 不存在"}
+        task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
+        cached = TASK_CONFIG_CACHE.get(task_id)
+        if cached:
+            return task_id, cached
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        data["id"] = task_id
+        data["_config_path"] = json_path
+        TASK_CONFIG_CACHE[task_id] = data
+        return task_id, data
+
+    # version=None: 取最高版本
+    versions = []
+    for v_dir in os.listdir(task_dir):
+        v_path = os.path.join(task_dir, v_dir)
+        if not os.path.isdir(v_path):
+            continue
+        json_path = os.path.join(v_path, f"{name}.json")
+        if os.path.isfile(json_path):
+            versions.append(v_dir)
+
+    if not versions:
+        return None, {"error": f"任务 {name} 没有可用版本"}
+
+    versions.sort(key=lambda v: [int(x) for x in v.split(".")], reverse=True)
+    latest = versions[0]
+    return resolve_task_version(name, latest)
 
 
 def list_steps_for_task(task_id):

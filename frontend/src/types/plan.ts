@@ -45,7 +45,8 @@ export const PLAN_TEMPLATES: PlanTemplate[] = [
     defaultCron: "*/30 * * * *",
     actionType: "push_task",
     paramSchema: {
-      taskId: { type: "string", label: "任务", required: true },
+      taskName: { type: "string", label: "任务名称", required: true },
+      version: { type: "string", label: "版本锁定 (空=跟随最新)", required: false },
     },
   },
 ];

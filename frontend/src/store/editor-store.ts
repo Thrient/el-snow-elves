@@ -11,14 +11,14 @@ type EditorState = {
   loading: boolean;
   viewMode: ViewMode;
 
-  loadTask: (taskId: string) => Promise<void>;
+  loadTask: (name: string, version: string) => Promise<void>;
   saveTask: () => Promise<void>;
   createTask: (
     name: string,
     version: string,
-    author: string,
     description: string
   ) => Promise<string>;
+  saveAsNewVersion: (newVersion: string) => Promise<void>;
   recoverDraft: () => FullTask | null;
   discardDraft: () => void;
   setDirty: (dirty: boolean) => void;
@@ -41,12 +41,13 @@ export const useEditorStore = create<EditorState>()(
       loading: false,
       viewMode: "json",
 
-      loadTask: async (taskId) => {
+      loadTask: async (name, version) => {
         set({ loading: true, isDirty: false });
         try {
           const task = await window.pywebview?.api.emit(
             "API:TASK:LOAD:FULL",
-            taskId
+            name,
+            version
           );
           set({ currentTask: task ?? null, isDirty: false, loading: false });
           useEditorStore.temporal.getState().clear();
@@ -66,17 +67,33 @@ export const useEditorStore = create<EditorState>()(
         set({ isDirty: false });
       },
 
-      createTask: async (name, version, author, description) => {
+      createTask: async (name, version, description) => {
         const taskId = await window.pywebview?.api.emit(
           "API:TASK:CREATE",
           name,
           version,
-          author,
           description
         );
-        await get().loadTask(taskId);
+        await get().loadTask(name, version);
         set({ isDirty: true });
         return taskId;
+      },
+
+      saveAsNewVersion: async (newVersion) => {
+        const { currentTask } = get();
+        if (!currentTask) return;
+        if (get().isDirty) {
+          await get().saveTask();
+        }
+        const result = await window.pywebview?.api.emit(
+          "API:TASK:SAVE:AS:NEW",
+          currentTask.id,
+          newVersion,
+        );
+        if (result?.taskId) {
+          await get().loadTask(currentTask.name, newVersion);
+          set({ isDirty: false });
+        }
       },
 
       recoverDraft: () => {

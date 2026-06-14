@@ -132,8 +132,9 @@ const PlansPage: FC = () => {
         }
         if (record.action.type === "push_task") {
           const taskList = useCharacterStore.getState().taskList;
-          const task = taskList.find((t) => t.id === params.taskId);
-          const label = task ? `${task.name} v${task.version}` : (params.taskId as string);
+          const taskName = params.taskName as string;
+          const task = taskList.find((t: any) => t.name === taskName);
+          const label = task ? `${task.name} v${params.version || "最新"}` : (taskName || "—");
           return <span className="text-xs text-secondary">推送: {label}</span>;
         }
         return <span className="text-xs text-[#ccc]">—</span>;

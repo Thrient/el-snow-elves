@@ -78,6 +78,7 @@ export interface TaskBase {
   id: string;
   name: string;
   version: string;
+  versions?: string[];
   values: Record<string, unknown>;
   valueTypes?: Record<string, VarType>;
   debugStart?: string;
@@ -86,7 +87,7 @@ export interface TaskBase {
 
 export interface Task extends TaskBase {
   description: string;
-  author: string;
+  versions: string[];
   layout: Cell[][];
 }
 

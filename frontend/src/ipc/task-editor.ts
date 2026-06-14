@@ -10,23 +10,29 @@ export async function saveFullTask(id: string, task: FullTask): Promise<void> {
 }
 
 export async function createTask(
-  name: string, version: string, author: string, description: string,
+  name: string, version: string, description: string,
 ): Promise<string> {
-  return callApi<string>("API:TASK:CREATE", name, version, author, description);
+  return callApi<string>("API:TASK:CREATE", name, version, description);
 }
 
 export async function deleteTask(id: string): Promise<void> {
   return callApi("API:TASK:DELETE", id);
 }
 
-export async function loadPositions(taskId: string): Promise<Record<string, { x: number; y: number }>> {
-  return callApi("API:TASK:LOAD:POSITIONS", taskId) ?? {};
+export async function saveAsNewVersion(
+  id: string, newVersion: string,
+): Promise<{ taskId: string; name: string; version: string }> {
+  return callApi("API:TASK:SAVE:AS:NEW", id, newVersion);
+}
+
+export async function loadPositions(name: string, version: string): Promise<Record<string, { x: number; y: number }>> {
+  return callApi("API:TASK:LOAD:POSITIONS", name, version) ?? {};
 }
 
 export async function savePositions(
-  taskId: string, positions: Record<string, { x: number; y: number }>,
+  name: string, version: string, positions: Record<string, { x: number; y: number }>,
 ): Promise<void> {
-  return callApi("API:TASK:SAVE:POSITIONS", taskId, positions);
+  return callApi("API:TASK:SAVE:POSITIONS", name, version, positions);
 }
 
 export async function clearCommonCache(): Promise<void> {

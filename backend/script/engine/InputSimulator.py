@@ -7,6 +7,7 @@ import win32gui
 
 from script.config.Setting import DELAY
 from script.functools.Functools import delay, repeat
+from script.engine.safe_sleep import safe_sleep
 
 
 class InputSimulator:
@@ -25,8 +26,10 @@ class InputSimulator:
 
     @staticmethod
     def key_click(*args, **kwargs):
-        """按下并抬起键盘按键"""
+        """按下并抬起键盘按键。press > 0 时变为长按"""
         hwnd = kwargs.get("hwnd")
+        predicate = kwargs.get("predicate", lambda: True)
+        press = float(kwargs.get("press", 0) or 0)
 
         @repeat()
         @delay(post_delay=DELAY)
@@ -42,15 +45,19 @@ class InputSimulator:
                 vk_code = key
             scan_code = win32api.MapVirtualKey(vk_code, 0)
             win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk_code, (scan_code << 16) | 1)
+            safe_sleep(press, lambda: not predicate())
             win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk_code, (scan_code << 16) | 0xC0000001)
-            logging.info(f"按键: {key} | hwnd={hwnd}")
+            label = f"长按按键: {key} 持续 {press}s" if press > 0 else f"按键: {key}"
+            logging.info(f"{label} | hwnd={hwnd}")
 
         return _inner(**kwargs)
 
     @staticmethod
     def mouse_click(*args, **kwargs):
-        """鼠标点击"""
+        """鼠标点击。press > 0 时变为长按"""
         hwnd = kwargs.get("hwnd")
+        predicate = kwargs.get("predicate", lambda: True)
+        press = float(kwargs.get("press", 0) or 0)
 
         @repeat()
         @delay(post_delay=DELAY)
@@ -61,9 +68,11 @@ class InputSimulator:
             lParam = (y << 16) | x
 
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+            safe_sleep(press, lambda: not predicate())
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
 
-            logging.info(f"点击坐标: {pos}")
+            label = f"长按坐标: ({x}, {y}) 持续 {press}s" if press > 0 else f"点击坐标: {pos}"
+            logging.info(f"{label} | hwnd={hwnd}")
 
         return _inner(**kwargs)
 

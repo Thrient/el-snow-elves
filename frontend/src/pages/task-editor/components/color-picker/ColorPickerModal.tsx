@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, type FC } from "react";
 import { Button, Modal, message, Spin } from "antd";
+import { BgColorsOutlined } from "@ant-design/icons";
+import CaptureZoom, { useCaptureZoom } from "../CaptureZoom";
 
 interface CaptureResult { base64: string; width: number; height: number; }
 
@@ -10,11 +12,21 @@ interface Props {
   onPick: (r: number, g: number, b: number) => void;
 }
 
+function getPixel(img: HTMLImageElement, canvas: HTMLCanvasElement | null, sx: number, sy: number) {
+  if (!canvas) return null;
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0);
+  const [r, g, b] = ctx.getImageData(Math.round(sx), Math.round(sy), 1, 1).data;
+  return { r, g, b };
+}
+
 const ColorPickerModal: FC<Props> = ({ open, hwnd, onClose, onPick }) => {
   const [loading, setLoading] = useState(false);
   const [capture, setCapture] = useState<CaptureResult | null>(null);
   const [picked, setPicked] = useState<{ x: number; y: number; r: number; g: number; b: number } | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -28,32 +40,6 @@ const ColorPickerModal: FC<Props> = ({ open, hwnd, onClose, onPick }) => {
       .finally(() => setLoading(false));
   }, [open, hwnd]);
 
-  const getPixel = (img: HTMLImageElement, sx: number, sy: number, scaleX: number, scaleY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const px = Math.round(sx * scaleX);
-    const py = Math.round(sy * scaleY);
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.drawImage(img, 0, 0);
-    const [r, g, b] = ctx.getImageData(px, py, 1, 1).data;
-    return { r, g, b };
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLImageElement>) => {
-    const img = imgRef.current;
-    if (!img || !capture) return;
-    const rect = img.getBoundingClientRect();
-    const scaleX = capture.width / rect.width;
-    const scaleY = capture.height / rect.height;
-    const x = Math.round((e.clientX - rect.left) * scaleX);
-    const y = Math.round((e.clientY - rect.top) * scaleY);
-    const pix = getPixel(img, x, y, 1, 1);
-    if (pix) setPicked({ x, y, ...pix });
-  };
-
   const handleConfirm = () => {
     if (picked) { onPick(picked.r, picked.g, picked.b); onClose(); }
   };
@@ -61,16 +47,14 @@ const ColorPickerModal: FC<Props> = ({ open, hwnd, onClose, onPick }) => {
   const swatch = picked ? `rgb(${picked.r},${picked.g},${picked.b})` : "transparent";
 
   return (
-    <Modal title="取色" open={open} onCancel={onClose}
+    <Modal title="取色" open={open} onCancel={onClose} centered width={780}
       footer={
         <div className="flex justify-between">
           <div className="flex items-center gap-2">
             {picked ? (
               <>
                 <span className="inline-block w-5 h-5 rounded border border-[#d0d5dd]" style={{ background: swatch }} />
-                <span className="text-[11px] text-secondary font-mono">
-                  [{picked.r}, {picked.g}, {picked.b}]
-                </span>
+                <span className="text-[11px] text-secondary font-mono">[{picked.r}, {picked.g}, {picked.b}]</span>
                 <span className="text-[10px] text-[#9ca3af]">@{picked.x},{picked.y}</span>
               </>
             ) : (
@@ -82,42 +66,64 @@ const ColorPickerModal: FC<Props> = ({ open, hwnd, onClose, onPick }) => {
             <Button type="primary" disabled={!picked} onClick={handleConfirm}>确认</Button>
           </div>
         </div>
-      }
-      width={Math.min((capture?.width ?? 800) + 48, 860)}>
+      }>
       <Spin spinning={loading}>
-        <div className="flex items-center justify-center min-h-[200px] bg-[#f0f2f5] rounded-lg overflow-hidden relative select-none">
-          {capture ? (
-            <div className="relative inline-block">
-              <img
-                ref={imgRef}
-                src={capture.base64}
-                className="max-w-full max-h-[65vh] block cursor-crosshair"
-                onClick={handleClick}
-                draggable={false}
-              />
-              {picked && (
-                <div
-                  className="absolute pointer-events-none"
-                  style={{
-                    left: `${(picked.x / capture.width) * 100}%`,
-                    top: `${(picked.y / capture.height) * 100}%`,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                >
-                  <svg width="28" height="28" viewBox="-14 -14 28 28">
-                    <circle cx="0" cy="0" r="6" fill={swatch} stroke="#fff" strokeWidth="2" />
-                    <circle cx="0" cy="0" r="8" fill="none" stroke="#ff4d4f" strokeWidth="2" />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ) : !loading ? (
-            <span className="text-[#9ca3af] text-sm">无法加载截图</span>
-          ) : null}
-        </div>
         <canvas ref={canvasRef} hidden />
+        {capture ? (
+          <CaptureZoom capture={capture} tools={[{ key: "color", label: "取色", shortcut: "C", icon: <BgColorsOutlined /> }]}>
+            <ColorPickerOverlay
+              canvasRef={canvasRef}
+              picked={picked}
+              capture={capture}
+              onPick={(p) => setPicked(p)}
+            />
+          </CaptureZoom>
+        ) : !loading ? (
+          <div className="flex items-center justify-center h-[200px] text-[#9ca3af] text-sm">
+            无法加载截图
+          </div>
+        ) : null}
       </Spin>
     </Modal>
+  );
+};
+
+const ColorPickerOverlay: FC<{
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  picked: { x: number; y: number; r: number; g: number; b: number } | null;
+  capture: CaptureResult;
+  onPick: (p: { x: number; y: number; r: number; g: number; b: number }) => void;
+}> = ({ canvasRef, picked, capture, onPick }) => {
+  const { imgRef, toImgCoords, tool } = useCaptureZoom();
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (tool !== "color") return;
+    const img = imgRef.current;
+    if (!img) return;
+    const coords = toImgCoords(e.clientX, e.clientY);
+    if (!coords) return;
+    const pix = getPixel(img, canvasRef.current, coords.x, coords.y);
+    if (pix) onPick({ x: coords.x, y: coords.y, ...pix });
+  };
+
+  return (
+    <div className="absolute inset-0 cursor-crosshair" onClick={handleClick}>
+      {picked && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: `${(picked.x / capture.width) * 100}%`,
+            top: `${(picked.y / capture.height) * 100}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <svg width="28" height="28" viewBox="-14 -14 28 28">
+            <circle cx="0" cy="0" r="6" fill={`rgb(${picked.r},${picked.g},${picked.b})`} stroke="#fff" strokeWidth="2" />
+            <circle cx="0" cy="0" r="8" fill="none" stroke="#ff4d4f" strokeWidth="2" />
+          </svg>
+        </div>
+      )}
+    </div>
   );
 };
 

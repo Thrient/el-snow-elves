@@ -14,6 +14,14 @@ const StepNode: FC<NodeProps & { data: StepNodeData }> = ({ data, selected }) =>
   const label = typeof stepName === "string" ? stepName : "";
   const borderColor = isCommon ? "#f59e0b" : selected ? "#1677ff" : "#d0d5dd";
 
+  // Human-readable label for expression-based actions
+  const actionLabel = (() => {
+    if (!action) return null;
+    if (action === "{True}") return "✓ 直接通过";
+    if (action.startsWith("{")) return action;
+    return action;
+  })();
+
   return (
     <div
       className="relative rounded-xl border-2 px-4 pt-3 pb-1.5 min-w-[150px] max-w-[200px] shadow-sm transition-colors"
@@ -40,7 +48,7 @@ const StepNode: FC<NodeProps & { data: StepNodeData }> = ({ data, selected }) =>
         {action ? (
           <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium
             ${isCommon ? "bg-[#fff7e6] text-[#f59e0b]" : "bg-[#eef2ff] text-[#1677ff]"}`}>
-            {action}
+            {actionLabel}
           </span>
         ) : (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#f0f2f5] text-[#c0c4cc] font-medium">未配置</span>

@@ -75,6 +75,10 @@ const TaskSettingsModal: FC<Props> = ({ open, task, onClose }) => {
               size="middle"
               placeholder="选择第一个执行的步骤…"
               allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+              }
               value={task.start || undefined}
               options={startOpts.map((k) => ({ value: k, label: k }))}
               onChange={(v) => updateStart(v ?? "")}

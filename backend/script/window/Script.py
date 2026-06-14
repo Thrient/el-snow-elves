@@ -4,7 +4,7 @@ from threading import Thread, Event
 
 from script.api.JsApi import js
 from script.engine.FlowEngine import FlowEngine
-from script.task_editor.TaskLibrary import get_task_config_by_id
+from script.task_editor.TaskLibrary import resolve_task_version
 
 
 class Script(Thread):
@@ -52,7 +52,12 @@ class Script(Thread):
                 break
             task = self._wait_for_task()
             if task is not None:
-                work = get_task_config_by_id(task["id"])
+                task_name = task.get("taskName") or task.get("name")
+                task_version = task.get("version") or None
+                tid, work = resolve_task_version(task_name, task_version)
+                if work is None:
+                    logging.error(f"任务解析失败: name={task_name} version={task_version}")
+                    continue
                 work["values"] = task.get("values", work.get("values", {}))
                 work["valueTypes"] = task.get("valueTypes", work.get("valueTypes", {}))
                 debug_start = task.get("debugStart")

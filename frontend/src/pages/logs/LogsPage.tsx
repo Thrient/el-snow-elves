@@ -52,14 +52,28 @@ const LogsPage: FC = () => {
     fetchLogs(1, data.page_size, level, search);
   }, [level, search]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Observe the container to set table body scroll height.
+  // Use a ResizeObserver on the stable page-container (no overflow scrollbars)
+  // and compute the table body height from its content-box.
   useEffect(() => {
-    const el = containerRef.current;
+    const el = containerRef.current?.parentElement; // page-container, not page-content
     if (!el) return;
-    const observer = new ResizeObserver(() => {
-      setScrollY(el.clientHeight - 110);
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
+    const measure = () => {
+      if (!containerRef.current) return;
+      // page-content content height = its clientHeight - padding(40px for p-5)
+      // Table header + pagination ≈ 80px; 10px extra buffer
+      const available = containerRef.current.clientHeight - 40 /* p-5 */ - 80 /* table chrome */ - 10 /* buffer */;
+      if (available > 100) {
+        setScrollY(prev => {
+          if (Math.abs(prev - available) > 10) return available;
+          return prev;
+        });
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el); // observe page-container, not page-content
+    return () => ro.disconnect();
   }, []);
 
   const handleTableChange = (pagination: TablePaginationConfig) => {
@@ -136,7 +150,7 @@ const LogsPage: FC = () => {
         </Space>
       </div>
 
-      <div ref={containerRef} className="page-content thin-scrollbar">
+      <div ref={containerRef} className="page-content thin-scrollbar !overflow-hidden">
         <Table
           columns={columns}
           dataSource={data.logs}

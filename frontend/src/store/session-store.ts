@@ -1,8 +1,7 @@
 import { create } from 'zustand'
-import type { TaskBase } from "@/types/task.ts";
 import type { PlanBase } from "@/types/plan.ts";
 
-type QueueEntry = TaskBase & { _uid: number }
+type QueueEntry = { taskName: string; version: string | null; values: Record<string, unknown>; valueTypes?: Record<string, "text" | "number" | "bool" | "list">; _uid: number }
 export type PlanEntry = PlanBase & { _uid: number }
 
 let _nextTaskUid = 0
@@ -11,11 +10,12 @@ let _nextPlanUid = 0
 type State = {
   queue: QueueEntry[]
   plans: PlanEntry[]
-  appendTask: (task: TaskBase) => void
+  appendTask: (task: Record<string, unknown>) => void
   removeTask: (uid: number) => void
   reorderQueue: (orderedUids: number[]) => void
   clearTaskList: () => void
   updateTaskValues: (uid: number, values: Record<string, unknown>) => void
+  updateTaskVersion: (uid: number, version: string | null) => void
   addPlan: (plan: PlanBase) => void
   removePlan: (uid: number) => void
   updatePlan: (uid: number, plan: PlanBase) => void
@@ -30,7 +30,13 @@ export const useSessionStore = create<State>((set) => ({
   appendTask: (task) => {
     const uid = _nextTaskUid++
     set((state) => ({
-      queue: [...state.queue, { id: task.id, name: task.name, version: task.version, values: { ...task.values }, valueTypes: task.valueTypes ? { ...task.valueTypes } : undefined, _uid: uid }]
+      queue: [...state.queue, {
+        taskName: (task as any).taskName ?? task.name ?? "",
+        version: (task as any).version ?? null,
+        values: { ...((task.values ?? {}) as Record<string, unknown>) },
+        valueTypes: task.valueTypes ? { ...(task.valueTypes as Record<string, "text" | "number" | "bool" | "list">) } : undefined,
+        _uid: uid,
+      }]
     }))
   },
   removeTask: (uid: number) =>
@@ -58,6 +64,12 @@ export const useSessionStore = create<State>((set) => ({
     set((state) => ({
       queue: state.queue.map((t) =>
         t._uid === uid ? { ...t, values } : t
+      )
+    })),
+  updateTaskVersion: (uid: number, version: string | null) =>
+    set((state) => ({
+      queue: state.queue.map((t) =>
+        t._uid === uid ? { ...t, version } : t
       )
     })),
 
@@ -88,9 +100,8 @@ export const useSessionStore = create<State>((set) => ({
         if (key === "queue") {
           const raw = Array.isArray(payload.queue) ? payload.queue : (Array.isArray((payload as any).taskList) ? (payload as any).taskList : [])
           next.queue = raw.map((t: Record<string, unknown>) => ({
-            id: t.id as string,
-            name: t.name as string,
-            version: t.version as string,
+            taskName: (t.taskName ?? t.name ?? "") as string,
+            version: (t.version ?? null) as string | null,
             values: (t.values ?? {}) as Record<string, unknown>,
             valueTypes: t.valueTypes as Record<string, "text" | "number" | "bool" | "list"> | undefined,
             _uid: _nextTaskUid++,

@@ -1,9 +1,10 @@
 export interface TaskListItem {
-  id: string;
   name: string;
-  version: string;
-  author: string;
+  versions: string[];
+  latest: string;
   description: string;
   steps: Record<string, unknown>;
   start: string;
+  layout?: Record<string, unknown>[][];
+  values?: Record<string, unknown>;
 }

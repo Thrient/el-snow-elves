@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { useSettingsStore } from '@/store/settings-store'
-import type { TaskBase, Task } from '@/types/task'
+import type { TaskBase, TaskListItem } from '@/types/task'
 import type { PlanBase } from '@/types/plan'
 import { getCronEngine, removeCronEngine } from '@/engine/CronEngine'
 
@@ -24,7 +24,7 @@ type Character = {
 type State = {
   characters: Character[]
   selectedHwnd: string | null
-  taskList: Task[]
+  taskList: TaskListItem[]
   taskLoading: boolean
   add: (data: Omit<Character, 'executeList' | 'plans'> & { executeList: ExecuteItem[]; plans?: PlanBase[] }) => void
   remove: (hwnd: string) => void
@@ -36,11 +36,12 @@ type State = {
   removeExecute: (hwnd: string, uid: number) => void
   clearExecute: (hwnd: string) => void
   updateExecuteValues: (hwnd: string, uid: number, values: Record<string, unknown>) => void
+  updateExecuteVersion: (hwnd: string, uid: number, version: string | null) => void
   reorderExecute: (hwnd: string, orderedUids: number[]) => void
   setPlans: (hwnd: string, plans: PlanBase[]) => void
   syncPlansToAllWindows: (plans: PlanBase[]) => void
   loadTasks: () => Promise<void>
-  updateTaskValues: (id: string, values: Record<string, unknown>) => void
+  updateTaskValues: (name: string, values: Record<string, unknown>) => void
 }
 
 export const useCharacterStore = create<State>((set, get) => ({
@@ -86,7 +87,7 @@ export const useCharacterStore = create<State>((set, get) => ({
       set((state) => ({
         characters: state.characters.map((character) =>
           character.hwnd === hwnd
-            ? { ...character, currentTask: item.name, executeList: character.executeList.slice(1) }
+            ? { ...character, currentTask: (item as any).taskName ?? item.name, executeList: character.executeList.slice(1) }
             : character
         ),
       }))
@@ -109,7 +110,7 @@ export const useCharacterStore = create<State>((set, get) => ({
     }));
   },
   setSelectedHwnd: (hwnd: string | null) => set({ selectedHwnd: hwnd }),
-  pushExecute: (hwnd: string, item: ExecuteItem) =>
+  pushExecute: (hwnd: string, item: ExecuteItem & { taskName?: string; version?: string | null; debugStart?: string; debugSingle?: boolean }) =>
     set((state) => ({
       characters: state.characters.map((character) =>
         character.hwnd === hwnd
@@ -117,20 +118,40 @@ export const useCharacterStore = create<State>((set, get) => ({
               ...character,
               executeList: [
                 ...character.executeList,
-                { ...item, _uid: _executeUidCounter++ },
+                {
+                  id: item.id,
+                  name: item.name,
+                  taskName: (item as any).taskName ?? item.name,
+                  version: (item as any).version ?? null,
+                  values: item.values ?? {},
+                  valueTypes: item.valueTypes,
+                  debugStart: (item as any).debugStart,
+                  debugSingle: (item as any).debugSingle ?? false,
+                  _uid: _executeUidCounter++,
+                },
               ],
             }
           : character
       ),
     })),
-  unshiftExecute: (hwnd: string, item: ExecuteItem) =>
+  unshiftExecute: (hwnd: string, item: ExecuteItem & { taskName?: string; version?: string | null; debugStart?: string; debugSingle?: boolean }) =>
     set((state) => ({
       characters: state.characters.map((character) =>
         character.hwnd === hwnd
           ? {
               ...character,
               executeList: [
-                { ...item, _uid: _executeUidCounter++ },
+                {
+                  id: item.id,
+                  name: item.name,
+                  taskName: (item as any).taskName ?? item.name,
+                  version: (item as any).version ?? null,
+                  values: item.values ?? {},
+                  valueTypes: item.valueTypes,
+                  debugStart: (item as any).debugStart,
+                  debugSingle: (item as any).debugSingle ?? false,
+                  _uid: _executeUidCounter++,
+                },
                 ...character.executeList,
               ],
             }
@@ -164,6 +185,19 @@ export const useCharacterStore = create<State>((set, get) => ({
               ...character,
               executeList: character.executeList.map((item) =>
                 item._uid === uid ? { ...item, values } : item
+              ),
+            }
+          : character
+      ),
+    })),
+  updateExecuteVersion: (hwnd: string, uid: number, version: string | null) =>
+    set((state) => ({
+      characters: state.characters.map((character) =>
+        character.hwnd === hwnd
+          ? {
+              ...character,
+              executeList: character.executeList.map((item) =>
+                item._uid === uid ? { ...item, version: version as any } : item
               ),
             }
           : character
@@ -206,13 +240,13 @@ export const useCharacterStore = create<State>((set, get) => ({
   loadTasks: async () => {
     try {
       const result = await window.pywebview?.api.emit("API:SCRIPT:LOAD:LIST");
-      set({ taskList: (result ?? []) as Task[], taskLoading: false });
+      set({ taskList: (result ?? []) as TaskListItem[], taskLoading: false });
     } catch { set({ taskLoading: false }); }
   },
-  updateTaskValues: (id, values) =>
+  updateTaskValues: (name, values) =>
     set((state) => ({
       taskList: state.taskList.map((t) =>
-        t.id === id ? { ...t, values } : t
+        t.name === name ? { ...t, values } : t
       ),
     })),
 }))

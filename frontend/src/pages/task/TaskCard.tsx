@@ -1,24 +1,27 @@
 import { type FC } from "react";
 import { Button, Checkbox, Tag, Tooltip, Space } from "antd";
 import { PlusOutlined, EditOutlined, ExportOutlined, DeleteOutlined } from "@ant-design/icons";
-import type { Task } from "@/types/task";
+import type { TaskListItem } from "@/types/task";
+import VersionTag from "@/components/version-tag/VersionTag";
 
 const TAG_COLORS = ["#1677ff", "#13c2c2", "#2f54eb", "#722ed1", "#fa8c16", "#52c41a"];
 
 interface Props {
-  task: Task;
+  task: TaskListItem;
   index: number;
   selected: boolean;
-  onToggle: (id: string) => void;
-  onAppend: () => void;
+  selectedVersion: string | null;
+  onToggle: (name: string) => void;
+  onVersionChange: (name: string, version: string | null) => void;
+  onAppend: (name: string, version: string | null) => void;
   onConfig: () => void;
   onExport: () => void;
   onDelete: () => void;
 }
 
-function renderPills(task: Task) {
-  const layoutKeys = new Set((task.layout ?? []).flatMap((row) => row.map((c) => c.store).filter(Boolean)));
-  const entries = Object.entries(task.values).filter(([k]) => layoutKeys.has(k));
+function renderPills(task: TaskListItem) {
+  const layoutKeys = new Set((task.layout ?? []).flatMap((row: any) => row.map((c: any) => c.store).filter(Boolean)));
+  const entries = Object.entries(task.values ?? {}).filter(([k]) => layoutKeys.has(k));
   if (entries.length === 0) {
     return <span className="text-[11px] text-[#ccc] italic">暂无配置项</span>;
   }
@@ -42,7 +45,7 @@ function renderPills(task: Task) {
   );
 }
 
-const TaskCard: FC<Props> = ({ task, index, selected, onToggle, onAppend, onConfig, onExport, onDelete }) => {
+const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle, onVersionChange, onAppend, onConfig, onExport, onDelete }) => {
   const accent = TAG_COLORS[index % TAG_COLORS.length];
 
   return (
@@ -62,18 +65,17 @@ const TaskCard: FC<Props> = ({ task, index, selected, onToggle, onAppend, onConf
       }}
     >
       <div className="flex items-center justify-between mb-2">
-        <Checkbox checked={selected} onChange={() => onToggle(task.id)} className="scale-90 origin-left" />
-        <Tag className="m-0 text-[10px] bg-[#f0f2f5] text-muted border-none rounded font-mono px-1.5 leading-5">
-          v{task.version}
-        </Tag>
+        <Checkbox checked={selected} onChange={() => onToggle(task.name)} className="scale-90 origin-left" />
+        <VersionTag
+          versions={task.versions}
+          latest={task.latest}
+          selectedVersion={selectedVersion}
+          onChange={(v) => onVersionChange(task.name, v)}
+        />
       </div>
 
       <div className="text-[15px] font-semibold text-heading mb-1 leading-tight tracking-tight">
         {task.name}
-      </div>
-
-      <div className="text-[11px] text-muted mb-2.5">
-        {task.author || "未知作者"}
       </div>
 
       <div className="mb-3 min-h-[22px]">
@@ -82,7 +84,7 @@ const TaskCard: FC<Props> = ({ task, index, selected, onToggle, onAppend, onConf
 
       <div className="flex items-center gap-1 pt-2.5 border-t border-[#f5f5f7]">
         <Tooltip title="添加到执行队列">
-          <Button type="primary" size="small" icon={<PlusOutlined />} className="text-[12px]" onClick={onAppend}>
+          <Button type="primary" size="small" icon={<PlusOutlined />} className="text-[12px]" onClick={() => onAppend(task.name, selectedVersion)}>
             添加
           </Button>
         </Tooltip>

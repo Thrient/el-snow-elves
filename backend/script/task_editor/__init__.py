@@ -7,6 +7,7 @@ def register(api: Api, app) -> None:
     from script.task_editor.TaskLibrary import (
         get_full_task_config, save_full_task_config,
         create_task, delete_task, list_steps_for_task,
+        save_as_new_version, resolve_task_version,
     )
     from script.task_editor.TemplateAssets import (
         list_actions, list_template_images, list_global_common_steps,
@@ -18,6 +19,7 @@ def register(api: Api, app) -> None:
     api.on("API:TASK:SAVE:FULL", save_full_task_config)
     api.on("API:TASK:CREATE", create_task)
     api.on("API:TASK:DELETE", delete_task)
+    api.on("API:TASK:SAVE:AS:NEW", save_as_new_version)
     api.on("API:AUTOCOMPLETE:ACTIONS", list_actions)
     api.on("API:AUTOCOMPLETE:TEMPLATES", list_template_images)
     api.on("API:AUTOCOMPLETE:STEPS", list_steps_for_task)

@@ -141,6 +141,14 @@ class App:
                 hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
                 ctypes.byref(value), ctypes.sizeof(value),
             )
+            # 强制重绘标题栏，消除延迟
+            SWP_NOSIZE = 0x0001
+            SWP_NOMOVE = 0x0002
+            SWP_NOZORDER = 0x0004
+            SWP_NOACTIVATE = 0x0010
+            SWP_FRAMECHANGED = 0x0020
+            flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED
+            ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, flags)
         except Exception:
             pass
 
@@ -191,6 +199,11 @@ class App:
         hwnd = self._get_main_hwnd()
         if hwnd:
             Window.save_window_rect(hwnd, "main")
+        # 解锁所有已绑定的窗口
+        for hwnd_key in list(self._script_instances.keys()):
+            Window.enable_window(hwnd_key)
+            logging.info(f"[Lock] 退出时解锁窗口: hwnd={hwnd_key}")
+        self._lock_states.clear()
         try:
             self.window.events.closing -= self._on_window_closing
         except Exception:
@@ -342,9 +355,9 @@ class App:
             Window.enable_window(hwnd)
         logging.info(f"解绑窗口: hwnd={hwnd}")
 
-    def export_task(self, task_id):
+    def export_task(self, name, version=None):
         """导出单个任务为 zip"""
-        built = build_task_zip(task_id)
+        built = build_task_zip(name, version)
         if isinstance(built, dict):
             return built
         buf, default_name = built
@@ -368,8 +381,8 @@ class App:
             logging.error(f"导出写入失败: {e}")
 
     @staticmethod
-    def export_tasks_batch(task_ids):
-        """批量导出：每个任务独立 zip，弹出文件夹选择器保存"""
+    def export_tasks_batch(tasks):
+        """批量导出：tasks 为 [{name, version?}] 列表，弹出文件夹选择器保存"""
         import re as _re
         import tkinter.filedialog as _fd
         import tkinter as _tk
@@ -378,11 +391,19 @@ class App:
         if not folder:
             return {"cancelled": True}
 
-        safe = lambda s: _re.sub(r'[\/\\:*?"<>|]', '_', s or "unknown")
         saved = []
         errors = []
-        for tid in task_ids:
-            built = build_task_zip(tid)
+        for item in tasks:
+            if isinstance(item, dict):
+                n = item.get("name", "")
+                v = item.get("version")
+            elif isinstance(item, str):
+                n = item
+                v = None
+            else:
+                errors.append({"error": f"无效的任务引用: {item}"})
+                continue
+            built = build_task_zip(n, v)
             if isinstance(built, dict):
                 errors.append(built)
                 continue

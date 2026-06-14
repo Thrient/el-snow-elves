@@ -38,17 +38,33 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
   const [configFiles, setConfigFiles] = useState<string[]>([]);
   const taskList = useCharacterStore((s) => s.taskList);
   const watchedSource = Form.useWatch("source", form);
-  const watchedTaskId = Form.useWatch("taskId", form);
+  const watchedTaskName: string = Form.useWatch("taskName", form) ?? "";
+  const watchedVersion: string = Form.useWatch("version", form) ?? "";
+  const selectedVersions = useMemo(() => {
+    if (!watchedTaskName) return [];
+    return taskList
+      .filter((t: any) => t.name === watchedTaskName)
+      .map((t: any) => t.version);
+  }, [watchedTaskName, taskList]);
   const [taskLayout, setTaskLayout] = useState<FullTask["layout"] | null>(null);
   const [taskValues, setTaskValues] = useState<Record<string, unknown>>({});
   const taskLabelWidths = useGroupLabelWidths(taskLayout ?? []);
   useEffect(() => {
-    if (!watchedTaskId) {
+    if (!watchedTaskName) {
       setTaskLayout(null);
       setTaskValues({});
       return;
     }
-    callApi<FullTask>("API:TASK:LOAD:FULL", watchedTaskId).then((full) => {
+    // find task by name
+    const match = taskList.find((t: any) =>
+      t.name === watchedTaskName
+    );
+    if (!match) {
+      setTaskLayout(null);
+      setTaskValues({});
+      return;
+    }
+    callApi<FullTask>("API:TASK:LOAD:FULL", match.name, watchedVersion || undefined).then((full) => {
       if (full) {
         setTaskLayout(full.layout ?? null);
         // 编辑模式优先使用已保存的值
@@ -59,7 +75,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
         setTaskValues({});
       }
     });
-  }, [watchedTaskId, plan]);
+  }, [watchedTaskName, watchedVersion, plan]);
 
   useEffect(() => {
     if (!open) return;
@@ -142,9 +158,9 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
     onClose();
   };
 
-  const taskOptions = taskList.map((t) => ({
-    value: t.id,
-    label: `${t.name} v${t.version}`,
+  const taskOptions = taskList.map((t: any) => ({
+    value: t.name,
+    label: t.name,
   }));
 
   return (
@@ -263,7 +279,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
             <>
               <Form.Item
                 label="要推送的任务"
-                name="taskId"
+                name="taskName"
                 rules={[{ required: true, message: "请选择任务" }]}
               >
                 <Select
@@ -273,6 +289,13 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
                   filterOption={(input, option) =>
                     (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
                   }
+                />
+              </Form.Item>
+              <Form.Item label="锁定版本" name="version">
+                <Select
+                  placeholder="跟随最新"
+                  allowClear
+                  options={selectedVersions.map((v: string) => ({ value: v, label: "v" + v }))}
                 />
               </Form.Item>
               {taskLayout && (

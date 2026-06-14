@@ -5,7 +5,7 @@ import {
   SearchOutlined, AppstoreAddOutlined,
 } from "@ant-design/icons";
 import { Button, message, Modal, Space, Tooltip, Input, Checkbox, Spin } from "antd";
-import type { Task } from "@/types/task.ts";
+import type { Task, TaskListItem } from "@/types/task.ts";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx";
 import TaskCard from "@/pages/task/TaskCard";
 import { useSessionStore } from "@/store/session-store.ts";
@@ -26,6 +26,7 @@ const TaskPage: FC = () => {
   const [importing, setImporting] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedVersions, setSelectedVersions] = useState<Record<string, string | null>>({});
 
   const filtered = useMemo(() => {
     if (!search.trim()) return taskList;
@@ -39,7 +40,7 @@ const TaskPage: FC = () => {
     );
   };
 
-  const filteredIds = useMemo(() => filtered.map((t) => t.id), [filtered]);
+  const filteredIds = useMemo(() => filtered.map((t) => t.name), [filtered]);
   const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedRowKeys.includes(id));
   const someSelected = filteredIds.some((id) => selectedRowKeys.includes(id));
 
@@ -53,9 +54,9 @@ const TaskPage: FC = () => {
 
   // ── Export ──
 
-  const handleExportSingle = async (task: Task) => {
+  const handleExportSingle = async (task: Task | TaskListItem) => {
     try {
-      const result = await window.pywebview?.api.emit("API:TASK:EXPORT", task.id);
+      const result = await window.pywebview?.api.emit("API:TASK:EXPORT", task.name);
       if (!result) return;
       if (result.error) { message.error(result.error); return; }
       if (result.cancelled) return;
@@ -64,10 +65,10 @@ const TaskPage: FC = () => {
   };
 
   const handleExportBatch = async () => {
-    const ids = selectedRowKeys.length > 0 ? selectedRowKeys : taskList.map((t) => t.id);
-    if (ids.length === 0) { message.warning("没有可导出的任务"); return; }
+    const names = selectedRowKeys.length > 0 ? selectedRowKeys : taskList.map((t) => t.name);
+    if (names.length === 0) { message.warning("没有可导出的任务"); return; }
     try {
-      const result = await window.pywebview?.api.emit("API:TASK:EXPORT:BATCH", ids);
+      const result = await window.pywebview?.api.emit("API:TASK:EXPORT:BATCH", names);
       if (!result) return;
       if (result.cancelled) return;
       if (result.saved?.length) { message.success(`已导出 ${result.saved.length} 个任务`); }
@@ -111,13 +112,13 @@ const TaskPage: FC = () => {
 
   // ── Delete ──
 
-  const handleDeleteSingle = (task: Task) => {
+  const handleDeleteSingle = (task: Task | TaskListItem) => {
     Modal.confirm({
       title: `删除「${task.name}」？`,
       content: "此操作不可恢复，任务目录和所有模板图片将被永久删除。",
       okText: "删除", okType: "danger", cancelText: "取消",
       onOk: async () => {
-        await window.pywebview?.api.emit("API:TASK:DELETE", task.id);
+        await window.pywebview?.api.emit("API:TASK:DELETE", task.name);
         useCharacterStore.getState().loadTasks();
         message.success("任务已删除");
       },
@@ -131,8 +132,8 @@ const TaskPage: FC = () => {
       content: "此操作不可恢复，任务目录和所有模板图片将被永久删除。",
       okText: "删除", okType: "danger", cancelText: "取消",
       onOk: async () => {
-        for (const id of selectedRowKeys) {
-          await window.pywebview?.api.emit("API:TASK:DELETE", id);
+        for (const name of selectedRowKeys) {
+          await window.pywebview?.api.emit("API:TASK:DELETE", name);
         }
         setSelectedRowKeys([]);
         useCharacterStore.getState().loadTasks();
@@ -143,8 +144,8 @@ const TaskPage: FC = () => {
 
   // ── Config ──
 
-  const openConfig = (task: Task) => {
-    setConfigTask(task);
+  const openConfig = (task: Task | TaskListItem) => {
+    setConfigTask(task as Task);
     setConfigOpen(true);
   };
 
@@ -155,7 +156,7 @@ const TaskPage: FC = () => {
 
   const handleConfigSave = (values: Record<string, unknown>) => {
     if (configTask) {
-      updateTaskValues(configTask.id, values);
+      updateTaskValues(configTask.name, values);
     }
     closeConfig();
   };
@@ -231,12 +232,14 @@ const TaskPage: FC = () => {
           <div className="grid grid-cols-2 gap-3">
             {filtered.map((task, i) => (
               <TaskCard
-                key={task.id}
+                key={task.name}
                 task={task}
                 index={i}
-                selected={selectedRowKeys.includes(task.id)}
+                selected={selectedRowKeys.includes(task.name)}
+                selectedVersion={selectedVersions[task.name] ?? null}
                 onToggle={toggleSelect}
-                onAppend={() => appendTask({ id: task.id, name: task.name, version: task.version, values: { ...task.values } })}
+                onVersionChange={(_name, version) => setSelectedVersions((prev) => ({ ...prev, [task.name]: version }))}
+                onAppend={() => appendTask({ name: task.name, version: selectedVersions[task.name] ?? null, values: task.values ?? {} })}
                 onConfig={() => openConfig(task)}
                 onExport={() => handleExportSingle(task)}
                 onDelete={() => handleDeleteSingle(task)}
@@ -260,7 +263,7 @@ const TaskPage: FC = () => {
       </div>
 
       <TaskConfigModal
-        key={configTask?.id ?? "none"}
+        key={configTask?.name ?? "none"}
         open={configOpen}
         task={configTask}
         onClose={closeConfig}

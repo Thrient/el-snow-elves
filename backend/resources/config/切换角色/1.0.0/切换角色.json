@@ -1,8 +1,7 @@
 {
   "name": "切换角色",
-  "description": "切换角色设置角色信息",
+  "description": "test",
   "version": "1.0.0",
-  "author": "Thrient",
   "start": "切换角色",
   "values": {
     "切换角色": "默认角色"
@@ -68,9 +67,22 @@
       },
       "prefix": [
         {
-          "step": "打开属性",
+          "step": "打开背包",
           "args": {
+            "threshold": 0.75,
+            "seconds": null,
             "key": "{CONFIG.背包}"
+          }
+        },
+        {
+          "step": "点击模板",
+          "args": {
+            "模板": "按钮物品属性",
+            "点击模式": "random",
+            "阈值": "0.85",
+            "方法": "ccoeff",
+            "X": "0",
+            "Y": "0"
           }
         }
       ]
@@ -145,17 +157,6 @@
       "postfix": [],
       "next": "点击登录"
     },
-    "打开属性": {
-      "action": "touch",
-      "params": {
-        "args": [
-          "按钮物品属性"
-        ]
-      },
-      "prefix": [
-        "打开背包"
-      ]
-    },
     "按钮设置切换角色": {
       "action": "touch",
       "params": {
@@ -188,13 +189,14 @@
         ],
         "seconds": 30
       },
-      "postfix": [
-        "激活窗口",
+      "postfix": [],
+      "retry": {
+        "times": 3,
+        "interval": 1000
+      },
+      "failure_extra": [
         {
-          "step": "等待时间",
-          "args": {
-            "等待时间": "10"
-          }
+          "step": "激活窗口"
         }
       ]
     }

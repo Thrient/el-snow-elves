@@ -9,6 +9,7 @@ import type { Task } from "@/types/task.ts"
 import { PLAN_TEMPLATES } from "@/types/plan.ts"
 import type { PlanBase } from "@/types/plan.ts"
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx"
+import VersionTag from "@/components/version-tag/VersionTag"
 import PlanModal from "@/pages/plans/PlanModal.tsx"
 
 const PANEL_WIDTH = 260
@@ -37,6 +38,8 @@ const dotColors = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"]
 const FloatingPanel: FC = () => {
   const queue = useSessionStore((s) => s.queue)
   const plans = useSessionStore((s) => s.plans)
+  const updateTaskVersion = useSessionStore((s) => s.updateTaskVersion)
+  const taskList = useCharacterStore((s) => s.taskList)
   const [expanded, setExpanded] = useState(false)
   const [position, setPosition] = useState({ x: 16, y: 120 })
   const posRef = useRef(position)
@@ -98,7 +101,13 @@ const FloatingPanel: FC = () => {
           if (charStore.selectedHwnd) {
             if (swiping.type === "queue") {
               const task = useSessionStore.getState().queue.find((t) => t._uid === swiping.uid)
-              if (task) charStore.pushExecute(charStore.selectedHwnd, { id: task.id, name: task.name, version: task.version, values: task.values })
+              if (task) charStore.pushExecute(charStore.selectedHwnd, {
+                id: "",
+                name: task.taskName || "",
+                taskName: task.taskName || "",
+                version: task.version ?? null,
+                values: task.values ?? {},
+              } as any)
             } else {
               charStore.syncPlansToAllWindows(useSessionStore.getState().plans)
             }
@@ -237,9 +246,9 @@ const FloatingPanel: FC = () => {
     const item = itemQueue.find((t) => t._uid === uid)
     if (!item) return
     const taskStore = useCharacterStore.getState()
-    const original = taskStore.taskList.find((t) => t.id === item.id)
+    const original = taskStore.taskList.find((t: any) => t.name === ((item as any).taskName || (item as any).name))
     if (original) {
-      setConfigTask({ ...original, values: item.values })
+      setConfigTask({ ...original, version: (item as any).version ?? (original as any).latest, values: item.values } as any)
       setConfigUid(uid)
       setConfigOpen(true)
     }
@@ -393,13 +402,24 @@ const FloatingPanel: FC = () => {
                               {isDragOver && (
                                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#1677ff] rounded-full z-10" />
                               )}
+                              {(() => {
+                                const tn = item.taskName || (item as any).name;
+                                const meta = taskList.find((t: any) => t.name === tn);
+                                const versions = meta?.versions ?? [];
+                                const latest = meta?.latest ?? "?";
+                                const pinned = item.version ?? null;
+                                const stale = pinned !== null && versions.length > 0 && !versions.includes(pinned);
+                                const taskMissing = !meta;
+                                const cardBg = taskMissing ? "rgba(255,77,79,0.06)" : stale && !taskMissing ? "rgba(250,140,22,0.06)" : cardColors[index % cardColors.length];
+                                const cardBorder = taskMissing ? "rgba(255,77,79,0.2)" : stale && !taskMissing ? "rgba(250,140,22,0.2)" : cardBorderColors[index % cardBorderColors.length];
+                                return (
                               <div
                                 className="rounded-xl px-4 py-3 cursor-pointer select-none relative"
                                 style={{
                                   transition: swiping?.uid === item._uid && swiping?.type === "queue" ? "none" : "transform 180ms ease, box-shadow 180ms ease",
                                   transform: swiping?.uid === item._uid && swiping?.type === "queue" ? `translateX(${swipeX}px)` : undefined,
-                                  backgroundColor: cardColors[index % cardColors.length],
-                                  border: `1px solid ${cardBorderColors[index % cardBorderColors.length]}`,
+                                  backgroundColor: cardBg,
+                                  border: `1px solid ${cardBorder}`,
                                   opacity: dragUid === item._uid ? 0.4 : 1,
                                 }}
                                 onClick={() => {
@@ -418,10 +438,21 @@ const FloatingPanel: FC = () => {
                                   >
                                     <HolderOutlined className="text-[11px]" />
                                   </span>
-                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotColors[index % dotColors.length] }} />
-                                  <span className="text-[12px] font-medium text-heading truncate leading-normal">{item.name}</span>
+                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: taskMissing ? "#ff4d4f" : stale ? "#fa8c16" : dotColors[index % dotColors.length] }} />
+                                  <span className="text-[12px] font-medium truncate leading-normal" style={{ color: taskMissing ? "#ff4d4f" : undefined }}>{tn}</span>
+                                  <span onClick={(e) => e.stopPropagation()}>
+                                    <VersionTag
+                                      versions={versions}
+                                      latest={latest}
+                                      selectedVersion={pinned}
+                                      stale={stale}
+                                      onChange={(v) => updateTaskVersion(item._uid, v)}
+                                    />
+                                  </span>
                                 </div>
                               </div>
+                                );
+                              })()}
                             </div>
                           )
                         })}

@@ -274,12 +274,16 @@ class FlowEngine(Thread):
 
     def _run_action(self, step_def):
         retry = step_def.get("retry", {})
-        for attempt in range(max(1, retry.get("times", 1))):
+        total = max(1, retry.get("times", 1))
+        for attempt in range(total):
             if self._paused.is_set():
                 return []
             result = self.action(self._hwnd, step_def)
             if result:
                 return result
+            if attempt < total - 1:
+                logging.info(f"[重试] {self._format_action(step_def)} 失败，"
+                           f"{retry.get('interval', 0)}ms 后重试 ({attempt + 1}/{total - 1})")
             self._run_extra(step_def, "failure_extra")
             safe_sleep(retry.get("interval", 0) / 1000, lambda: self._paused.is_set())
 

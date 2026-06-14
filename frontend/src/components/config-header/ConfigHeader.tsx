@@ -4,6 +4,7 @@ import { AutoComplete, Button, message, Modal, Select, Space, Spin } from "antd"
 import { DeleteOutlined, FileOutlined, DownloadOutlined, SaveOutlined } from "@ant-design/icons";
 import { useSessionStore } from "@/store/session-store.ts";
 import { useSysStore } from "@/store/sys-store.ts";
+import { useCharacterStore } from "@/store/character-store.ts";
 import { callApi, waitForPywebview } from "@/utils/pywebview.ts";
 
 const ConfigHeader: FC = () => {
@@ -44,6 +45,17 @@ const ConfigHeader: FC = () => {
       const result = await callApi<Record<string, unknown>>("API:SCRIPT:LOAD:CONFIG", name)
       if (result) {
         userStore.loadConfig(result)
+        // 校验队列中的任务是否仍然存在
+        const taskList = useCharacterStore.getState().taskList
+        const queue = useSessionStore.getState().queue
+        const missing = queue.filter((entry: any) => {
+          const tn = entry.taskName || entry.name
+          return tn && !taskList.find((t: any) => t.name === tn)
+        })
+        if (missing.length > 0) {
+          const names = [...new Set(missing.map((e: any) => e.taskName || e.name))]
+          message.warning(`配置中有 ${names.length} 个任务已不存在：${names.join("、")}`)
+        }
       }
     } catch { /* empty */ } finally {
       setLoadingConfig(false)

@@ -128,30 +128,83 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const [compound, setCompound] = useState<{ expr: string; connector: string | null }[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
-  // Parse initial value
+  const [rawFallback, setRawFallback] = useState<string | null>(null);
+
+  // When the popover opens, try to restore existing value
   useEffect(() => {
-    if (!value || !open) return;
+    if (!open) return;
+
+    // Reset to default state first
+    setSearch("");
+    setTypeFilter("all");
+    setSelectedVar(null);
+    setSelectedOp(null);
+    setOpArg("");
+    setCompound([]);
+    setSubmitted(false);
+    setRawFallback(null);
+
+    // Then attempt to restore the existing value
+    if (!value) {
+      setStep("var");
+      return;
+    }
+
     if (value === "{True}") {
       setStep("confirm");
       setSelectedVar({ syntax: "True", label: "直接通过", category: "system" });
       setSelectedOp({ key: "true", title: "直接通过", desc: "", expr: "{True}" });
       return;
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset on open
-  useEffect(() => {
-    if (open) {
-      setStep("var");
-      setSearch("");
-      setTypeFilter("all");
-      setSelectedVar(null);
-      setSelectedOp(null);
-      setOpArg("");
-      setCompound([]);
-      setSubmitted(false);
+    // Normalize: strip whitespace so "{var == 'val'}" matches "{var==?}" patterns
+    const normalized = value.replace(/\s+/g, "");
+
+    // Try to match pure variable reference: {bare}
+    for (const v of variables) {
+      const bare = v.syntax.replace(/^\{|\}$/g, "");
+      if (normalized === `{${bare}}`) {
+        setSelectedVar(v);
+        setSelectedOp(OPS_BY_TYPE.string[0]); // "取值"
+        setStep("confirm");
+        return;
+      }
     }
-  }, [open]);
+
+    // Try to match op patterns: {bare op arg} like {score>5}
+    for (const v of variables) {
+      const bare = v.syntax.replace(/^\{|\}$/g, "");
+      for (const typeOps of Object.values(OPS_BY_TYPE)) {
+        for (const op of typeOps) {
+          const fullPattern = op.expr.replace("var", bare);
+          const escaped = fullPattern.replace(/[.*+^${}()|[\]\\]/g, "\\$&");
+          const regex = new RegExp(`^${escaped.replace(/\\\?/g, "(.+)")}$`);
+          const m = normalized.match(regex);
+          if (m) {
+            setSelectedVar(v);
+            setSelectedOp(op);
+            let argVal: string = m[1] ?? "";
+            // Strip quotes that buildSingle() adds for text-type args
+            if (op.arg?.type === "text" && (argVal.startsWith("'") || argVal.startsWith('"'))) {
+              const q = argVal[0];
+              if (argVal.endsWith(q) && argVal.length >= 2) argVal = argVal.slice(1, -1);
+            }
+            if (op.arg) {
+              setOpArg(argVal);
+              setStep("arg");
+            } else {
+              setStep("confirm");
+            }
+            return;
+          }
+        }
+      }
+    }
+
+    // Couldn't parse — still show the raw value in confirm step so user can see it
+    setRawFallback(value);
+    setStep("confirm");
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   // ── Computed ──
@@ -206,7 +259,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   // ── Expression building ──
   const buildSingle = (): string => {
     if (selectedVar?.syntax === "True") return "{True}";
-    if (!selectedVar || !selectedOp) return "{…}";
+    if (!selectedVar || !selectedOp) return rawFallback ?? "{…}";
     const bare = selectedVar.syntax.replace(/^\{|\}$/g, "");
     let expr = selectedOp.expr.replace("var", bare);
     if (selectedOp.arg && opArg) {

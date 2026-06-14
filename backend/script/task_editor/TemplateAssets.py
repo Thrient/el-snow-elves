@@ -3,7 +3,7 @@ import logging
 import os
 
 from script.config.Setting import PROJECT_ROOT
-from script.task_editor.TaskLibrary import TASK_CONFIG_CACHE
+from script.task_editor.TaskLibrary import TASK_CONFIG_CACHE, resolve_task_version
 
 
 def list_actions():
@@ -55,9 +55,9 @@ def list_global_common_steps():
         return {}
 
 
-def load_positions(task_id):
+def load_positions(name, version=None):
     try:
-        config = TASK_CONFIG_CACHE.get(task_id)
+        task_id, config = resolve_task_version(name, version)
         if not config:
             return {}
         task_dir = os.path.dirname(config.get("_config_path", ""))
@@ -69,13 +69,13 @@ def load_positions(task_id):
         with open(pos_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        logging.warning(f"加载节点位置失败 (task_id={task_id}): {e}")
+        logging.warning(f"加载节点位置失败 (name={name}, version={version}): {e}")
         return {}
 
 
-def save_positions(task_id, positions):
+def save_positions(name, version, positions):
     try:
-        config = TASK_CONFIG_CACHE.get(task_id)
+        task_id, config = resolve_task_version(name, version)
         if not config:
             return False
         task_dir = os.path.dirname(config.get("_config_path", ""))

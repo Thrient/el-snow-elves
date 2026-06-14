@@ -85,6 +85,7 @@ html {
 body {
     zoom: var(--zoom);
     width: 1335px;
+    height: 100%;
     margin: 0;
     overflow: hidden;
 }
@@ -92,12 +93,22 @@ body {
 #root {
     width: 100%;
     height: calc(100vh / var(--zoom));
+    overflow: hidden;
     margin: 0;
     text-align: center;
     border-inline: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+}
+
+/* Flex gives ant-app a definite computed height (unlike grid-stretch).
+   flex: 1 + min-height: 0 ensures ant-app fills #root and allows children to shrink. */
+.ant-app {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ---- Utilities ---- */
@@ -115,7 +126,7 @@ body {
 .page-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 48px);
+    height: 100%;
     background: var(--color-bg-page);
     border-radius: var(--radius-lg);
     margin: 0 16px 16px 16px;
@@ -328,10 +339,9 @@ body {
 
 
 /* ── Ant Design theme compatibility ── */
-[data-theme] .ant-layout-content { background: var(--color-bg-page) !important; overflow: hidden; }
 [data-theme] .ant-layout-header,
 [data-theme] .ant-layout-sider { background: var(--color-bg-page) !important; }
-[data-theme] .ant-layout-sider-trigger { background: var(--color-bg-container) !important; }
+[data-theme] .ant-layout-content { background: var(--color-bg-page) !important; overflow: hidden; }
 [data-theme] .ant-layout-sider-trigger { background: var(--color-bg-container) !important; }
 [data-theme] .ant-menu-light { background: transparent !important; }
 
