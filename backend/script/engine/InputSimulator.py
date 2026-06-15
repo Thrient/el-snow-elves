@@ -53,6 +53,52 @@ class InputSimulator:
         return _inner(**kwargs)
 
     @staticmethod
+    def key_down(*args, **kwargs):
+        """按下按键（不抬起），配合 key_up 实现长按穿插"""
+        hwnd = kwargs.get("hwnd")
+
+        @repeat()
+        @delay(post_delay=DELAY)
+        def _inner(**inner_kwargs):
+            key = inner_kwargs.get("key", "")
+            if isinstance(key, str):
+                key_upper = key.upper()
+                if key_upper in InputSimulator.VK_CODE:
+                    vk_code = InputSimulator.VK_CODE[key_upper]
+                else:
+                    vk_code = ord(key_upper)
+            else:
+                vk_code = key
+            scan_code = win32api.MapVirtualKey(vk_code, 0)
+            win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk_code, (scan_code << 16) | 1)
+            logging.info(f"按下按键: {key} | hwnd={hwnd}")
+
+        return _inner(**kwargs)
+
+    @staticmethod
+    def key_up(*args, **kwargs):
+        """抬起按键，配合 key_down 使用"""
+        hwnd = kwargs.get("hwnd")
+
+        @repeat()
+        @delay(post_delay=DELAY)
+        def _inner(**inner_kwargs):
+            key = inner_kwargs.get("key", "")
+            if isinstance(key, str):
+                key_upper = key.upper()
+                if key_upper in InputSimulator.VK_CODE:
+                    vk_code = InputSimulator.VK_CODE[key_upper]
+                else:
+                    vk_code = ord(key_upper)
+            else:
+                vk_code = key
+            scan_code = win32api.MapVirtualKey(vk_code, 0)
+            win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk_code, (scan_code << 16) | 0xC0000001)
+            logging.info(f"抬起按键: {key} | hwnd={hwnd}")
+
+        return _inner(**kwargs)
+
+    @staticmethod
     def mouse_click(*args, **kwargs):
         """鼠标点击。press > 0 时变为长按"""
         hwnd = kwargs.get("hwnd")

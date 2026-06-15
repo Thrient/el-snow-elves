@@ -16,6 +16,7 @@ from script.functools.Functools import during, wait_until
 from script.account.AccountManager import AccountManager
 from script.account.AccountProxy import INJECTION, get_proxy
 from script.account.HostsManager import HostsManager
+from script.engine.CombatEngine import CombatEngine
 
 
 class BaseTask:
@@ -23,12 +24,25 @@ class BaseTask:
         self._matcher = TemplateMatcher()
         self._input = InputSimulator()
         self._color = ColorMatcher()
+        self._combat = CombatEngine()
+
+    def cleanup(self):
+        """主流程结束时清理后台资源"""
+        self._combat.stop()
 
     def batch_template_match(self, *args, **kwargs):
         return self._matcher.batch_match(*args, **kwargs)
 
     def key_click(self, *args, **kwargs):
         self._input.key_click(*args, **kwargs)
+        return True
+
+    def key_down(self, *args, **kwargs):
+        self._input.key_down(*args, **kwargs)
+        return True
+
+    def key_up(self, *args, **kwargs):
+        self._input.key_up(*args, **kwargs)
         return True
 
     def mouse_click(self, *args, **kwargs):
@@ -191,5 +205,13 @@ class BaseTask:
 
     def input(self, *args, **kwargs):
         self._input.input(*args, **kwargs)
+        return True
+
+    def monitor_start(self, *args, **kwargs):
+        self._combat.start(*args, **kwargs)
+        return True
+
+    def monitor_stop(self, *args, **kwargs):
+        self._combat.stop()
         return True
 

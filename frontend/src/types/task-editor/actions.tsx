@@ -35,6 +35,8 @@ export const ACTION_OPTS: ActionOpt[] = [
   { value: "mouse_drag",    label: "mouse_drag",    desc: "拖拽鼠标",        icon: <ColumnWidthOutlined />,     color: "#f43f5e", group: "输入操作" },
   { value: "set_character",  label: "set_character",  desc: "捕获角色头像",    icon: <UserOutlined />,           color: "#8b5cf6", group: "角色账号" },
   { value: "switch_account", label: "switch_account", desc: "切换游戏账号",    icon: <SwapOutlined />,           color: "#1677ff", group: "角色账号" },
+  { value: "monitor_start",  label: "monitor_start",  desc: "开始自动战斗",    icon: <CaretRightOutlined />,     color: "#52c41a", group: "战斗系统" },
+  { value: "monitor_stop",   label: "monitor_stop",   desc: "停止自动战斗",    icon: <PauseOutlined />,          color: "#ff4d4f", group: "战斗系统" },
   { value: "{True}",         label: "{True}",         desc: "表达式",      icon: <BranchesOutlined />,       color: "#d4513b", group: "流程控制" },
 ];
 
@@ -75,6 +77,7 @@ export const PARAM_META: Record<string, ParamMeta> = {
   account_name: { label: "账号名称", color: "#1677ff", icon: <UserOutlined />,          desc: "已录制的账号名，用于登录时注入凭证。通常用变量 {account_name} 在任务配置中设定" },
   hwnd:         { label: "目标窗口", color: "#6366f1", icon: <DesktopOutlined />,      desc: "操作的目标窗口句柄。默认 {hwnd} 为当前窗口，可填固定句柄或变量", range: "如 0x12345 或 {my_hwnd}" },
   text:         { label: "输入文本", color: "#14b8a6", icon: <EditOutlined />,          desc: "模拟键盘逐字输入到窗口。支持 {变量} 表达式", range: "如 Hello World 或 {my_text}" },
+  combo:        { label: "连招配置", color: "#52c41a", icon: <CaretRightOutlined />,   desc: "在全局设置中定义的连招名称。如 连招:常规连招", range: "连招数据键名" },
 };
 
 // ── Action param config ──
@@ -94,6 +97,8 @@ export const ACTION_PARAMS: Record<string, string[]> = {
   mouse_drag:     ["start_pos", "end_pos", "x", "y", "end_x", "end_y", "duration", "count", "pre_delay", "post_delay", "hwnd"],
   set_character:  ["hwnd"],
   switch_account: ["account_name"],
+  monitor_start:  ["combo"],
+  monitor_stop:   [],
   "{True}":       [],
 };
 
@@ -111,6 +116,7 @@ export const REQUIRED_PARAMS: Record<string, string[]> = {
   wait_color: ["color"],
   wait_color_disappear: ["color"],
   switch_account: ["account_name"],
+  monitor_start: ["combo"],
 };
 
 export const ACTIONS_WITH_TEMPLATES = new Set(["touch", "exits", "wait", "wait_disappear"]);

@@ -26,7 +26,10 @@
     "好友": "H",
     "背包": "B",
     "地图": "M",
-    "设置": "ESC"
+    "设置": "ESC",
+    "连招_常规连招": [
+      {"s": "{CONFIG.普攻}", "m": "click", "p": 0, "d": 800}
+    ]
   },
   "layout": [
     [
@@ -209,6 +212,19 @@
         "text": "设置",
         "model": "el-key-input",
         "store": "设置"
+      }
+    ],
+    [
+      {
+        "model": "el-text",
+        "text": "连招设置"
+      }
+    ],
+    [
+      {
+        "span": 24,
+        "model": "el-combo-editor",
+        "store": "连招_常规连招"
       }
     ]
   ]

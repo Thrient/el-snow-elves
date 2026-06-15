@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 import type { Cell } from "@/types/task";
 import AutocompleteInput from "@/pages/task-editor/components/autocomplete-input/AutocompleteInput";
 import KeyInput from "./components/KeyInput";
+import ComboEditor from "./components/ComboEditor";
 
 interface Props {
   cell: Cell
@@ -364,6 +365,17 @@ const SettingsField: FC<Props> = ({ cell, value, onChange, labelWidth }) => {
             placeholder={cell.placeholder ?? "选择或输入子流程名"}
             disabled={cell.disabled}
             allowClear={cell.allowClear}
+          />
+        </div>
+      );
+
+    case "el-combo-editor":
+      return (
+        <div className="flex flex-col gap-1 w-full">
+          {label && <span className="text-sm font-bold text-heading">{cell.text}</span>}
+          <ComboEditor
+            value={value as never}
+            onChange={(v) => onChange(v)}
           />
         </div>
       );

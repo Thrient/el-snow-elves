@@ -137,6 +137,11 @@ class FlowEngine(Thread):
             self._timeout_timer.cancel()
         self._paused.set()
 
+    def cleanup(self) -> None:
+        """流程结束后清理后台资源（monitor、战斗等）"""
+        self._monitor_stop_event.set()
+        self._task.cleanup()
+
     def _handle_timeout(self) -> None:
         """超时回调：记录超时原因并停止流程"""
         self._stop_reason = "timeout"
@@ -168,11 +173,15 @@ class FlowEngine(Thread):
             vp=self.vp,
             is_subflow=True,
         )
+        sub_engine._task = self._task  # 共享 BaseTask，确保 monitor_start/stop 操作同一 CombatEngine
         sub_engine.run()
 
     def _resolve_params(self, params):
         if isinstance(params, str):
-            return self.vp.process_value(params, result=None)
+            result = self.vp.process_value(params, result=None)
+            if isinstance(result, (dict, list)):
+                return self._resolve_params(result)
+            return result
         elif isinstance(params, dict):
             return {k: self._resolve_params(v) for k, v in params.items()}
         elif isinstance(params, list):
@@ -260,6 +269,8 @@ class FlowEngine(Thread):
         logging.info(f"监控线程已启动: {self.name} | interval={self._monitor_interval}s")
         Thread(target=self._monitor_thread, daemon=True).start()
 
+    # ── 执行引擎 ──
+
     def _run_extra(self, step_def, key):
         """执行附加子流程，支持 when 条件"""
         for name, args, when in self._expand_subflow_list(step_def.get(key, [])):
@@ -282,8 +293,7 @@ class FlowEngine(Thread):
             if result:
                 return result
             if attempt < total - 1:
-                logging.info(f"[重试] {self._format_action(step_def)} 失败，"
-                           f"{retry.get('interval', 0)}ms 后重试 ({attempt + 1}/{total - 1})")
+                logging.info(f"[重试] {self._format_action(step_def)} 失败，"f"{retry.get('interval', 0)}ms 后重试 ({attempt + 1}/{total - 1})")
             self._run_extra(step_def, "failure_extra")
             safe_sleep(retry.get("interval", 0) / 1000, lambda: self._paused.is_set())
 
@@ -366,11 +376,11 @@ class FlowEngine(Thread):
                 self.step_name = self.process_result(result, step_def)
                 if self._single_step:
                     self.step_name = "任务结束"
-                logging.info(f"[{self.name}] {prev} → {self.step_name} | {self._format_action(step_def)} = {self._format_result(result)}")
+                vp_dump = " ".join(f"{k}={v}" for k, v in self.vp.variables.items())
+                logging.info(f"[{self.name}] {prev} → {self.step_name} | {self._format_action(step_def)} = {self._format_result(result)} | vp: {vp_dump}")
             if not self._is_subflow:
                 total_elapsed = (time.time() - t_start) * 1000
                 logging.info(f"◀ {self.name} v{self.version} | 完成 | {total_elapsed:.0f}ms")
         finally:
             if self._timeout_timer:
                 self._timeout_timer.cancel()
-            self._monitor_stop_event.set()

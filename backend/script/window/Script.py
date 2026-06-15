@@ -75,6 +75,7 @@ class Script(Thread):
                     engine.loop()
                 engine.start()
                 engine.join()
+                engine.cleanup()
                 # 如果是 skip_current 触发的暂停，自动恢复继续下一个任务
                 if self._paused.is_set() and not self._stopped.is_set():
                     self._paused.clear()

@@ -17,7 +17,8 @@ export type CellModel =
   | 'el-autocomplete-template'
   | 'el-autocomplete-step'
   | 'el-autocomplete-variable'
-  | 'el-autocomplete-subflow';
+  | 'el-autocomplete-subflow'
+  | 'el-combo-editor';
 
 export interface CellOption {
   label: string;
