@@ -4,7 +4,7 @@ import {
   BorderOutlined, CodeSandboxOutlined, PushpinOutlined, FieldNumberOutlined,
   ColumnWidthOutlined, ColumnHeightOutlined, PauseOutlined, CaretRightOutlined,
   BulbOutlined, UserOutlined, DesktopOutlined, EditOutlined, PictureOutlined,
-  SearchOutlined, ClockCircleOutlined, EyeInvisibleOutlined, BgColorsOutlined,
+  SearchOutlined, ClockCircleOutlined, EyeOutlined, EyeInvisibleOutlined, BgColorsOutlined,
   SwapOutlined, BranchesOutlined,
 } from "@ant-design/icons";
 import type { VarType, SubflowRef } from "./index";
@@ -37,6 +37,7 @@ export const ACTION_OPTS: ActionOpt[] = [
   { value: "switch_account", label: "switch_account", desc: "切换游戏账号",    icon: <SwapOutlined />,           color: "#1677ff", group: "角色账号" },
   { value: "monitor_start",  label: "monitor_start",  desc: "开始自动战斗",    icon: <CaretRightOutlined />,     color: "#52c41a", group: "战斗系统" },
   { value: "monitor_stop",   label: "monitor_stop",   desc: "停止自动战斗",    icon: <PauseOutlined />,          color: "#ff4d4f", group: "战斗系统" },
+  { value: "ai_vision",     label: "ai_vision",     desc: "AI视觉分析",      icon: <EyeOutlined />,           color: "#722ed1", group: "AI" },
   { value: "{True}",         label: "{True}",         desc: "表达式",      icon: <BranchesOutlined />,       color: "#d4513b", group: "流程控制" },
 ];
 
@@ -78,6 +79,7 @@ export const PARAM_META: Record<string, ParamMeta> = {
   hwnd:         { label: "目标窗口", color: "#6366f1", icon: <DesktopOutlined />,      desc: "操作的目标窗口句柄。默认 {hwnd} 为当前窗口，可填固定句柄或变量", range: "如 0x12345 或 {my_hwnd}" },
   text:         { label: "输入文本", color: "#14b8a6", icon: <EditOutlined />,          desc: "模拟键盘逐字输入到窗口。支持 {变量} 表达式", range: "如 Hello World 或 {my_text}" },
   combo:        { label: "连招配置", color: "#52c41a", icon: <CaretRightOutlined />,   desc: "在全局设置中定义的连招名称。如 连招:常规连招", range: "连招数据键名" },
+  prompt:       { label: "分析提示", color: "#722ed1", icon: <EditOutlined />,          desc: "告诉 AI 如何分析截图", range: "如 '提取图中文字'" },
 };
 
 // ── Action param config ──
@@ -99,6 +101,7 @@ export const ACTION_PARAMS: Record<string, string[]> = {
   switch_account: ["account_name"],
   monitor_start:  ["combo"],
   monitor_stop:   [],
+  ai_vision:      ["box", "prompt", "hwnd"],
   "{True}":       [],
 };
 
@@ -117,6 +120,7 @@ export const REQUIRED_PARAMS: Record<string, string[]> = {
   wait_color_disappear: ["color"],
   switch_account: ["account_name"],
   monitor_start: ["combo"],
+  ai_vision:     ["prompt"],
 };
 
 export const ACTIONS_WITH_TEMPLATES = new Set(["touch", "exits", "wait", "wait_disappear"]);

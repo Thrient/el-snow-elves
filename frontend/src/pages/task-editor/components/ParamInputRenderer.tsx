@@ -200,6 +200,29 @@ const ParamInputRenderer: React.FC<ParamInputRendererProps> = ({
         }} />
     );
   }
+  if (key === "prompt") {
+    return (
+      <div className="flex flex-col gap-1 w-full">
+        <Input.TextArea
+          size="small"
+          className="font-mono text-[12px]"
+          rows={4}
+          value={(value as string) ?? ""}
+          onChange={(e) => onUpdate("params", { ...params, prompt: e.target.value })}
+          placeholder="告诉 AI 如何分析这张截图，要求返回 JSON 格式"
+        />
+        <VarOpBuilder
+          context="params"
+          valueTypes={ctx.valueTypes}
+          variables={[...varItems(ctx, "system"), ...varItems(ctx, "config"), ...varItems(ctx, "task")]}
+          onInsert={(expr) => {
+            const prev = (value as string) ?? "";
+            onUpdate("params", { ...params, prompt: prev + expr });
+          }}
+        />
+      </div>
+    );
+  }
   const raw = typeof value === "string" ? value : JSON.stringify(value ?? "");
   return (
     <div className="flex items-center gap-1">

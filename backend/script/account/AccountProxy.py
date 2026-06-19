@@ -74,6 +74,9 @@ def _create_handler(proxy: "AccountProxy", router: "ProxyRouter"):
             if ct == "bilibili":
                 from script.account.handler.BilibiliReplayHandler import BilibiliReplayHandler
                 return BilibiliReplayHandler(proxy, router)
+            if ct == "360_assistant":
+                from script.account.handler.Qihu360ReplayHandler import Qihu360ReplayHandler
+                return Qihu360ReplayHandler(proxy, router)
 
             logging.warning(f"[Proxy] 未支持的渠道回放类型: {ct}")
             return None

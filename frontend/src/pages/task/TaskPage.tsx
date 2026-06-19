@@ -112,15 +112,18 @@ const TaskPage: FC = () => {
 
   // ── Delete ──
 
-  const handleDeleteSingle = (task: Task | TaskListItem) => {
+  const handleDeleteSingle = (task: Task | TaskListItem, version?: string | null) => {
+    const isVersionDelete = version != null;
     Modal.confirm({
-      title: `删除「${task.name}」？`,
-      content: "此操作不可恢复，任务目录和所有模板图片将被永久删除。",
+      title: isVersionDelete ? `删除「${task.name}」v${version}？` : `删除「${task.name}」全部版本？`,
+      content: isVersionDelete
+        ? `仅删除版本 ${version}，此操作不可恢复。`
+        : "此操作不可恢复，任务的所有版本和模板图片将被永久删除。",
       okText: "删除", okType: "danger", cancelText: "取消",
       onOk: async () => {
-        await window.pywebview?.api.emit("API:TASK:DELETE", task.name);
+        await window.pywebview?.api.emit("API:TASK:DELETE", task.name, version ?? null);
         useCharacterStore.getState().loadTasks();
-        message.success("任务已删除");
+        message.success(isVersionDelete ? `版本 ${version} 已删除` : "任务已删除");
       },
     });
   };
@@ -242,7 +245,7 @@ const TaskPage: FC = () => {
                 onAppend={() => appendTask({ name: task.name, version: selectedVersions[task.name] ?? null, values: task.values ?? {} })}
                 onConfig={() => openConfig(task)}
                 onExport={() => handleExportSingle(task)}
-                onDelete={() => handleDeleteSingle(task)}
+                onDelete={() => handleDeleteSingle(task, selectedVersions[task.name] ?? null)}
               />
             ))}
           </div>

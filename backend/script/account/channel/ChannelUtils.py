@@ -211,6 +211,7 @@ CHANNEL_ICONS: dict[str, str] = {
     "vivo": "https://www.vivo.com/favicon.ico",
     "bilibili": "https://www.bilibili.com/favicon.ico",
     "nearme_vivo": "https://www.vivo.com/favicon.ico",
+    "qihu360": "https://www.360.cn/favicon.ico",
 }
 
 

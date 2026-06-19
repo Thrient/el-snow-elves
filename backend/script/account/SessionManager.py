@@ -67,7 +67,7 @@ class SessionManager:
                     logging.warning(f"[Session] 渠道登录失败: {name} ({channel})")
 
             threading.Thread(target=_run, daemon=True).start()
-            labels = {"vivo": "Vivo", "bilibili": "B站", "huawei": "华为"}
+            labels = {"vivo": "Vivo", "bilibili": "B站", "huawei": "华为", "qihu360": "360"}
             return {"status": "recording", "message": f"请在弹出窗口中登录{labels.get(channel, channel)}账号"}
         except Exception as e:
             logging.error(f"[Session] 启动渠道录制失败: {e}")
@@ -150,6 +150,9 @@ def _record_channel(channel: str) -> dict | None:
         return record()
     if channel == "bilibili":
         from script.account.channel.BilibiliChannel import record
+        return record()
+    if channel == "qihu360":
+        from script.account.channel.Qihu360Channel import record
         return record()
     logging.warning(f"[Session] 未支持的渠道录制: {channel}")
     return None

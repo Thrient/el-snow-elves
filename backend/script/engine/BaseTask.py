@@ -1,5 +1,4 @@
 import base64
-import logging
 import random
 import subprocess
 
@@ -29,6 +28,27 @@ class BaseTask:
     def cleanup(self):
         """主流程结束时清理后台资源"""
         self._combat.stop()
+
+    def ai_vision(self, *args, **kwargs):
+        """截图 → Hub AI Vision → 返回识别文本。kwargs: box(可选), prompt(必填)"""
+        from script.infrastructure.AiClient import AiClient
+
+        hwnd = kwargs.get("hwnd")
+        box = kwargs.get("box")
+        prompt = kwargs.get("prompt", "")
+
+        _, gray = ScreenCapture.capture_gray(hwnd)
+        img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+        if box and isinstance(box, (list, tuple)) and len(box) == 4:
+            x1, y1, x2, y2 = [int(v) for v in box]
+            img = img[y1:y2, x1:x2]
+
+        _, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        b64 = base64.b64encode(buf).decode()
+        data_uri = f"data:image/jpeg;base64,{b64}"
+
+        return AiClient.vision(data_uri, prompt)
 
     def batch_template_match(self, *args, **kwargs):
         return self._matcher.batch_match(*args, **kwargs)
@@ -78,22 +98,20 @@ class BaseTask:
             mode = kwargs.get("click_mode", "random")
             results = self.batch_template_match(*args, **inner_kwargs)
 
-            if mode == "first":
-                self.click_first(results=results, **kwargs)
-            elif mode == "last":
-                self.click_last(results=results, **kwargs)
-            elif mode == "random":
-                self.click_random(results=results, **kwargs)
-            elif mode == "all":
-                self.click_all(results=results, **kwargs)
-            elif mode == "all_reverse":
-                self.click_all_reverse(results=results, **kwargs)
-            else:
-                self.click_random(results=results, **kwargs)
-
+            getattr(self, self._dispatch_click(mode))(results=results, **kwargs)
             return results
 
         return _inner(**kwargs)
+
+    @staticmethod
+    def _dispatch_click(mode):
+        return {
+            "first": "click_first",
+            "last": "click_last",
+            "random": "click_random",
+            "all": "click_all",
+            "all_reverse": "click_all_reverse",
+        }.get(mode, "click_random")
 
     def click_first(self, **kwargs):
         results = kwargs.pop("results")
@@ -176,18 +194,7 @@ class BaseTask:
         def _inner(**inner_kwargs):
             results = self._color.match_color(**inner_kwargs)
             mode = kwargs.get("click_mode", "random")
-            if mode == "first":
-                self.click_first(results=results, **kwargs)
-            elif mode == "last":
-                self.click_last(results=results, **kwargs)
-            elif mode == "random":
-                self.click_random(results=results, **kwargs)
-            elif mode == "all":
-                self.click_all(results=results, **kwargs)
-            elif mode == "all_reverse":
-                self.click_all_reverse(results=results, **kwargs)
-            else:
-                self.click_random(results=results, **kwargs)
+            getattr(self, self._dispatch_click(mode))(results=results, **kwargs)
             return results
         return _inner(**kwargs)
 

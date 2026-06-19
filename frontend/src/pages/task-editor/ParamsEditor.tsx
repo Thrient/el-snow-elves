@@ -102,7 +102,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
           return <div key={key}>{renderInput(key)}</div>;
         }
         const accentColor = meta?.color ?? "#9ca3af";
-        if (key === "pos" || key === "start_pos" || key === "end_pos" || key === "box" || key === "color" || key === "key" || key === "hwnd" || key === "text") {
+        if (key === "pos" || key === "start_pos" || key === "end_pos" || key === "box" || key === "color" || key === "key" || key === "hwnd" || key === "text" || key === "prompt") {
           return (
             <div key={key} className="group rounded-xl border border-dashed bg-container transition-colors"
               style={{ borderColor: `${accentColor}4d`, background: `linear-gradient(135deg, ${accentColor}0a, #fff)` }}>
