@@ -6,7 +6,7 @@ type ValueType = "string" | "number" | "boolean" | "list" | "empty";
 
 /** VarType → ValueType 映射 */
 const VTYPE_MAP: Record<VarType, ValueType> = {
-  text: "string", number: "number", switch: "boolean", list: "list",
+  text: "string", number: "number", switch: "boolean", list: "list", object: "string",
 };
 
 /** 检测值的运行时类型（无显式类型时回退） */

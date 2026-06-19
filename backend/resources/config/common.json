@@ -1,4 +1,13 @@
 {
+  "通知提醒": {
+    "action": "notify",
+    "params": {
+      "title": "{标题:}",
+      "description": "{内容:}",
+      "type": "{类型:info}",
+      "duration": "{时长:5000}"
+    }
+  },
   "等待时间": {
     "action": "wait",
     "params": {
@@ -18,7 +27,8 @@
       "pos": [
         "{x:1335}",
         "{y:750}"
-      ]
+      ],
+      "press": "{press:0}"
     }
   },
   "拖拽鼠标": {

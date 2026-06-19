@@ -73,7 +73,7 @@ export interface Cell {
   autocompleteContext?: AutocompleteContext;
 }
 
-export type VarType = "text" | "number" | "switch" | "list";
+export type VarType = "text" | "number" | "switch" | "list" | "object";
 
 export interface TaskBase {
   id: string;

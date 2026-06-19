@@ -32,8 +32,6 @@ class AiClient:
             body = resp.json()
             if body.get("code") == 0:
                 reply = body.get("data", {}).get("reply", {})
-                m = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", reply, re.DOTALL)
-                reply = m.group(1).strip() if m else reply.strip()
                 _log.info(f"ai_vision: {reply}")
                 return reply
             _log.error(f"ai_vision: {body.get('message')}")

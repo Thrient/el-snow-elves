@@ -35,9 +35,9 @@ interface Props {
 
 // ── Type helpers ──
 
-const TYPE_LABELS: Record<string, string> = { list: "列表", number: "数字", string: "字符串", boolean: "布尔" };
-const TYPE_COLORS: Record<string, string> = { list: "#c62828", number: "#1565c0", string: "#6a1b9a", boolean: "#2e7d32" };
-const TYPE_BG: Record<string, string> = { list: "#fce4ec", number: "#e3f2fd", string: "#f3e5f5", boolean: "#e8f5e9" };
+const TYPE_LABELS: Record<string, string> = { list: "列表", number: "数字", string: "字符串", boolean: "布尔", object: "对象" };
+const TYPE_COLORS: Record<string, string> = { list: "#c62828", number: "#1565c0", string: "#6a1b9a", boolean: "#2e7d32", object: "#e65100" };
+const TYPE_BG: Record<string, string> = { list: "#fce4ec", number: "#e3f2fd", string: "#f3e5f5", boolean: "#e8f5e9", object: "#fff3e0" };
 
 function extractBareName(syntax: string): string {
   return syntax.replace(/^\{|\}$/g, "").replace(/[+\-*/!><=?.\[\]() ]/g, "").trim();
@@ -51,6 +51,7 @@ function detectType(v: VarItem, valueTypes?: Record<string, import("@/types/task
     if (vt === "list") return "list";
     if (vt === "number") return "number";
     if (vt === "switch") return "boolean";
+    if (vt === "object") return "object";
     return "string";
   }
   // 2. 系统变量 — 名称推断
@@ -104,13 +105,16 @@ const OPS_BY_TYPE: Record<string, OpDef[]> = {
     { key: "eq",     title: "相等判断",   desc: "比较是否等于",                             expr: "{var==?}",  arg: { label: "值", type: "text" } },
     { key: "neq",    title: "不等判断",   desc: "比较是否不等于",                           expr: "{var!=?}",  arg: { label: "值", type: "text" } },
   ],
+  object: [
+    { key: "value",  title: "取值",       desc: "直接取整个对象",                           expr: "{var}" },
+  ],
 };
 
 // ── Builder steps ──
-type BuildStep = "var" | "op" | "arg" | "confirm";
+type BuildStep = "var" | "prop" | "op" | "arg" | "confirm";
 
 const STEP_LABELS: Record<BuildStep, string> = {
-  var: "选变量", op: "定操作", arg: "填参数", confirm: "确认",
+  var: "选变量", prop: "取属性", op: "定操作", arg: "填参数", confirm: "确认",
 };
 
 const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, context, value, modes, inline, valueTypes }) => {
@@ -127,7 +131,9 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const [opArg, setOpArg] = useState("");
   const [compound, setCompound] = useState<{ expr: string; connector: string | null }[]>([]);
   const [submitted, setSubmitted] = useState(false);
-
+  /** 属性访问链：选 CONFIG 后填 `普攻` → resolvedBare = "CONFIG.普攻" */
+  const [resolvedBare, setResolvedBare] = useState("");
+  const [propName, setPropName] = useState("");
   const [rawFallback, setRawFallback] = useState<string | null>(null);
 
   // When the popover opens, try to restore existing value
@@ -142,6 +148,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     setOpArg("");
     setCompound([]);
     setSubmitted(false);
+    setResolvedBare("");
+    setPropName("");
     setRawFallback(null);
 
     // Then attempt to restore the existing value
@@ -225,32 +233,43 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const opsBySection = useMemo(() => {
     if (!selectedVar) return [];
     if (selectedVar.syntax === "True") return [];
+    // 已链入属性（如 CONFIG.普攻）→ 运行时类型未知，展示所有基础操作
+    const chained = resolvedBare && resolvedBare !== stripBraces(selectedVar.syntax);
+    if (chained) {
+      return [
+        { type: "string", label: TYPE_LABELS.string, recommended: true, ops: OPS_BY_TYPE.string },
+        { type: "number", label: TYPE_LABELS.number, recommended: false, ops: OPS_BY_TYPE.number },
+        { type: "boolean", label: TYPE_LABELS.boolean, recommended: false, ops: OPS_BY_TYPE.boolean },
+      ];
+    }
     const bestType = detectType(selectedVar, valueTypes);
     const sections: { type: string; label: string; recommended: boolean; ops: OpDef[] }[] = [];
-    // 推荐的操作排最前面
     const bestOps = OPS_BY_TYPE[bestType] || OPS_BY_TYPE.string;
     sections.push({ type: bestType, label: TYPE_LABELS[bestType] || bestType, recommended: true, ops: bestOps });
-    // 其他类型的操作排在后面
     for (const t of Object.keys(OPS_BY_TYPE)) {
       if (t === bestType) continue;
       sections.push({ type: t, label: TYPE_LABELS[t] || t, recommended: false, ops: OPS_BY_TYPE[t] });
     }
     return sections;
-  }, [selectedVar]);
+  }, [selectedVar, resolvedBare]);
 
   const needsArgStep = selectedOp?.arg != null;
 
   const stepDefs = useMemo(() => {
-    const defs: BuildStep[] = ["var", "op"];
+    const isObj = selectedVar && detectType(selectedVar, valueTypes) === "object";
+    const defs: BuildStep[] = ["var"];
+    if (isObj) defs.push("prop");
+    defs.push("op");
     if (selectedOp && needsArgStep) defs.push("arg");
     defs.push("confirm");
     return defs;
-  }, [selectedOp, needsArgStep]);
+  }, [selectedVar, selectedOp, needsArgStep, valueTypes]);
 
   const stepIndex = stepDefs.indexOf(step);
 
   const canProceed = (): boolean => {
     if (step === "var") return showTrue ? true : !!selectedVar;
+    if (step === "prop") return true; // 可跳过，直接进 op
     if (step === "op") return !!selectedOp;
     if (step === "arg") return opArg.trim() !== "";
     return true;
@@ -260,7 +279,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const buildSingle = (): string => {
     if (selectedVar?.syntax === "True") return "{True}";
     if (!selectedVar || !selectedOp) return rawFallback ?? "{…}";
-    const bare = selectedVar.syntax.replace(/^\{|\}$/g, "");
+    const bare = resolvedBare || selectedVar.syntax.replace(/^\{|\}$/g, "");
     let expr = selectedOp.expr.replace("var", bare);
     if (selectedOp.arg && opArg) {
       const arg = opArg.replace(/^\{|\}$/g, "");
@@ -282,6 +301,14 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   // ── Navigation ──
   const goNext = () => {
     if (!canProceed()) return;
+    // prop 步 → 记录属性名，链到 op 步
+    if (step === "prop") {
+      if (propName.trim()) {
+        setResolvedBare(resolvedBare + "." + propName.trim());
+      }
+      setStep("op");
+      return;
+    }
     const idx = stepDefs.indexOf(step);
     if (idx < stepDefs.length - 1) {
       setStep(stepDefs[idx + 1]);
@@ -290,11 +317,17 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
 
   const goBack = () => {
     const idx = stepDefs.indexOf(step);
-    if (idx > 0) {
-      const prev = stepDefs[idx - 1];
-      if (prev === "var") { setSelectedOp(null); setOpArg(""); }
-      setStep(prev);
+    if (idx <= 0) return;
+    const prev = stepDefs[idx - 1];
+    if (prev === "prop") {
+      // 从 op 回退到 prop → 清属性继续改
+      setResolvedBare(stripBraces(selectedVar?.syntax ?? ""));
+      setSelectedOp(null);
     }
+    if (prev === "var") {
+      setSelectedOp(null); setOpArg(""); setResolvedBare(""); setPropName("");
+    }
+    setStep(prev);
   };
 
   const commitAndContinue = (connector: "&&" | "||") => {
@@ -303,6 +336,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     setSelectedVar(null);
     setSelectedOp(null);
     setOpArg("");
+    setResolvedBare("");
+    setPropName("");
     setSearch("");
     setTypeFilter("all");
   };
@@ -318,7 +353,13 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     setSelectedVar(v);
     setSelectedOp(null);
     setOpArg("");
-    setStep("op");
+    setResolvedBare(stripBraces(v.syntax));
+    // 对象类型变量 → 先取属性再选操作
+    if (detectType(v, valueTypes) === "object") {
+      setStep("prop");
+    } else {
+      setStep("op");
+    }
   };
 
   const selectOp = (op: OpDef) => {
@@ -331,8 +372,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     }
   };
 
-  // ── Render helpers ──
-  const stripBraces = (s: string) => s.replace(/^\{|\}$/g, "");
+  // ── Helpers (declared early — used by selectVar above) ──
+  function stripBraces(s: string) { return s.replace(/^\{|\}$/g, ""); }
 
   // ── Popover content ──
   const content = (
@@ -419,7 +460,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
             />
 
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-              {["all", "list", "number", "string", "boolean"].map(k => (
+              {["all", "list", "number", "string", "boolean", "object"].map(k => (
                 <button
                   key={k}
                   onClick={() => setTypeFilter(k)}
@@ -462,7 +503,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                       onMouseEnter={e => { e.currentTarget.style.background = "#fefcfa"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
                     >
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{type === "list" ? "📋" : type === "number" ? "🔢" : type === "boolean" ? "🔘" : "📝"}</span>
+                      <span style={{ fontSize: 16, flexShrink: 0 }}>{type === "list" ? "📋" : type === "number" ? "🔢" : type === "boolean" ? "🔘" : type === "object" ? "📦" : "📝"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: "#3d3630", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bare}</div>
                         {v.label && v.label !== bare && (
@@ -479,6 +520,43 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                 })
               )}
             </div>
+          </div>
+        )}
+
+        {/* Step: Pick Property (object type only) */}
+        {step === "prop" && selectedVar && (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
+            padding: "20px 0",
+          }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 5, alignSelf: "center",
+              padding: "4px 12px", fontSize: 11, fontWeight: 500,
+              background: "rgba(212,81,59,0.06)", border: "1px solid rgba(212,81,59,0.15)",
+              borderRadius: 20,
+            }}>
+              <span style={{ color: "#d4513b", fontWeight: 600 }}>{stripBraces(selectedVar.syntax)}</span>
+              <span style={{ color: "#8b857e" }}>· 对象</span>
+            </div>
+            <div style={{
+              background: "#fff", border: "2px solid #d4513b",
+              borderRadius: 14, padding: "24px 28px",
+              display: "flex", flexDirection: "column",
+              alignItems: "center", gap: 12,
+              boxShadow: "0 0 0 3px rgba(212,81,59,0.08)",
+            }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: "#3d3630" }}>
+                取属性 .key
+              </label>
+              <Input
+                value={propName}
+                onChange={e => setPropName(e.target.value)}
+                style={{ width: 200 }}
+                placeholder="字段名，如 普攻"
+                onPressEnter={() => { if (canProceed()) goNext(); }}
+              />
+            </div>
+            <div style={{ fontSize: 11, color: "#b8afa6" }}>留空直接确认 = 取整个对象</div>
           </div>
         )}
 
@@ -556,7 +634,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                 borderRadius: 20, cursor: "pointer",
               }}
             >
-              <span style={{ color: "#d4513b", fontWeight: 600 }}>{stripBraces(selectedVar.syntax)}</span>
+              <span style={{ color: "#d4513b", fontWeight: 600 }}>{resolvedBare || stripBraces(selectedVar.syntax)}</span>
               <span style={{ color: "#8b857e" }}>· {selectedOp.title}</span>
               <span style={{ color: "#b8afa6", fontSize: 10 }}>↩</span>
             </div>
@@ -580,6 +658,7 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                 }
                 style={{ width: 200 }}
                 placeholder="数字或 {变量}"
+                onKeyDown={e => { if (e.key === "Enter" && canProceed()) goNext(); }}
               />
             </div>
 

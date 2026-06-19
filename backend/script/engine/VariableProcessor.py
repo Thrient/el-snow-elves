@@ -126,7 +126,7 @@ class SafeExpressionEvaluator:
                 return any(values)
             raise TypeError("不支持的布尔运算符: {}".format(type(node.op).__name__))
 
-        # 新增：下标访问（列表、元组、字符串、字典）
+        # 新增：下标访问（列表、元组、字符串、字典，含 JSON 字符串自动解析）
         if isinstance(node, ast.Subscript):
             obj = self._eval_node(node.value)
             idx = self._eval_node(node.slice)
@@ -136,14 +136,27 @@ class SafeExpressionEvaluator:
                 return obj[idx]
             elif isinstance(obj, dict):
                 return obj[idx]
-            else:
-                raise TypeError(f"不支持下标访问的类型: {type(obj)}")
+            elif isinstance(obj, str):
+                try:
+                    parsed = json.loads(obj)
+                    if isinstance(parsed, (dict, list)):
+                        return parsed[idx]
+                except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+                    pass
+            raise TypeError(f"不支持下标访问的类型: {type(obj)}")
 
-        # 新增：属性访问（仅支持字典的键访问，如 dict.key）
+        # 新增：属性访问（支持 dict 和可解析为 dict 的 JSON 字符串）
         if isinstance(node, ast.Attribute):
             obj = self._eval_node(node.value)
             if isinstance(obj, dict):
                 return obj[node.attr]
+            if isinstance(obj, str):
+                try:
+                    parsed = json.loads(obj)
+                    if isinstance(parsed, dict):
+                        return parsed[node.attr]
+                except (json.JSONDecodeError, KeyError):
+                    pass
             raise TypeError(f"不支持属性访问，对象类型: {type(obj)}")
 
         # 新增：函数调用（仅允许 len()、split() 和 choice()）
@@ -354,7 +367,9 @@ _VTYPE_COERCE = {
     "text": lambda v: str(v) if not isinstance(v, str) else v,
     "number": lambda v: float(v) if '.' in str(v) else int(v),
     "bool": lambda v: v if isinstance(v, bool) else str(v).lower() in ("true", "1", "yes"),
+    "switch": lambda v: v if isinstance(v, bool) else str(v).lower() in ("true", "1", "yes"),
     "list": lambda v: json.loads(v) if isinstance(v, str) and v.strip().startswith('[') else (list(v) if isinstance(v, (list, tuple)) else [v]),
+    "object": lambda v: json.loads(v) if isinstance(v, str) and v.strip().startswith('{') else (v if isinstance(v, dict) else {}),
 }
 
 

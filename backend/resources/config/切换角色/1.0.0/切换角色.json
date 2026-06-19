@@ -233,5 +233,7 @@
       ]
     }
   },
-  "valueTypes": {}
+  "valueTypes": {
+    "切换角色": "text"
+  }
 }
