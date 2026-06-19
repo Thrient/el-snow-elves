@@ -10,7 +10,6 @@ from script.core.ColorMatcher import ColorMatcher
 from script.engine.InputSimulator import InputSimulator
 from script.engine.ScreenCapture import ScreenCapture
 from script.engine.TemplateMatcher import TemplateMatcher
-from script.engine.safe_sleep import safe_sleep
 from script.functools.Functools import during, wait_until
 from script.account.AccountManager import AccountManager
 from script.account.AccountProxy import INJECTION, get_proxy
@@ -29,7 +28,8 @@ class BaseTask:
         """主流程结束时清理后台资源"""
         self._combat.stop()
 
-    def ai_vision(self, *args, **kwargs):
+    @staticmethod
+    def ai_vision(*args, **kwargs):
         """截图 → Hub AI Vision → 返回识别文本。kwargs: box(可选), prompt(必填)"""
         from script.infrastructure.AiClient import AiClient
 
@@ -37,16 +37,17 @@ class BaseTask:
         box = kwargs.get("box")
         prompt = kwargs.get("prompt", "")
 
-        _, gray = ScreenCapture.capture_gray(hwnd)
-        img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        # 保留彩色原图，不做灰度转换
+        img, _ = ScreenCapture.capture_gray(hwnd)
 
         if box and isinstance(box, (list, tuple)) and len(box) == 4:
             x1, y1, x2, y2 = [int(v) for v in box]
             img = img[y1:y2, x1:x2]
 
-        _, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        # PNG 无损编码，保留色彩和细节
+        _, buf = cv2.imencode(".png", img, [cv2.IMWRITE_PNG_COMPRESSION, 3])
         b64 = base64.b64encode(buf).decode()
-        data_uri = f"data:image/jpeg;base64,{b64}"
+        data_uri = f"data:image/png;base64,{b64}"
 
         return AiClient.vision(data_uri, prompt)
 
