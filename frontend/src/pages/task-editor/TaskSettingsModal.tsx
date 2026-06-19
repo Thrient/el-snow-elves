@@ -82,6 +82,7 @@ const TaskSettingsModal: FC<Props> = ({ open, task, onClose }) => {
               value={task.start || undefined}
               options={startOpts.map((k) => ({ value: k, label: k }))}
               onChange={(v) => updateStart(v ?? "")}
+              virtual={false}
             />
           </Row>
 
