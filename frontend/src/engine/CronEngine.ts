@@ -1,5 +1,5 @@
 import { Cron } from "croner";
-import { message } from "antd";
+import { eventBus } from '@/utils/event-bus';
 import type { PlanBase } from "@/types/plan";
 import type { ExecuteItem } from "@/store/character-store";
 import { callApi } from "@/utils/pywebview";
@@ -71,7 +71,12 @@ export class CronEngine {
             });
           }
           if (missingTasks.length > 0) {
-            message.warning(`定时重填：${missingTasks.length} 个任务已不存在（${missingTasks.join("、")}），已跳过`);
+            eventBus.emit('notification', {
+              title: '定时任务',
+              description: `定时重填：${missingTasks.length} 个任务已不存在（${missingTasks.join("、")}），已跳过`,
+              type: 'warning',
+              duration: 5000,
+            })
           }
         }
       } catch { /* */ }
@@ -88,7 +93,12 @@ export class CronEngine {
     if (!taskName) return;
     const task = getTaskStore().taskList.find((t: any) => t.name === taskName);
     if (!task) {
-      message.error(`计划执行失败：任务「${taskName}」不存在，可能已被删除`);
+      eventBus.emit('notification', {
+        title: '计划执行失败',
+        description: `任务「${taskName}」不存在，可能已被删除`,
+        type: 'error',
+        duration: 5000,
+      })
       return;
     }
     const version = (params.version as string) || undefined;
@@ -96,7 +106,12 @@ export class CronEngine {
     if (version) {
       const taskMeta = task as any;
       if (taskMeta.versions && Array.isArray(taskMeta.versions) && !taskMeta.versions.includes(version)) {
-        message.warning(`计划「${taskName}」锁定版本 v${version} 已不存在，已切换为最新版本`);
+        eventBus.emit('notification', {
+          title: '版本变更',
+          description: `计划「${taskName}」锁定版本 v${version} 已不存在，已切换为最新版本`,
+          type: 'warning',
+          duration: 5000,
+        })
         getCharStore().unshiftExecute(this.hwnd, {
           id: "",
           name: taskName,

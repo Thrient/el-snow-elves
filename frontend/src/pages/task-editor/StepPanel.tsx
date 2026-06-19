@@ -3,7 +3,7 @@ import { Button, Input, InputNumber, Select, Tooltip } from "antd";
 import { CloseOutlined, CopyOutlined, DeleteOutlined, LeftOutlined, ReloadOutlined, ApartmentOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
 import type { EditorCtx } from "@/types/task-editor/actions";
-import { ACTION_OPTS, ACTION_PARAMS, REQUIRED_PARAMS } from "@/types/task-editor/actions";
+import { ACTION_OPTS, ACTION_PARAMS, REQUIRED_PARAMS, PARAM_DEFAULTS } from "@/types/task-editor/actions";
 import FlowEditor from "./FlowEditor";
 import ParamsEditor from "./ParamsEditor";
 import SubListEditor from "./SubListEditor";
@@ -101,7 +101,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                   if (k === "args" || allowed.includes(k)) clean[k] = oldParams[k];
                 }
                 for (const k of (REQUIRED_PARAMS[newAction] ?? [])) {
-                  if (!(k in clean)) clean[k] = k === "args" ? [] : "";
+                  if (!(k in clean)) clean[k] = k === "args" ? [] : (PARAM_DEFAULTS[k] ?? "");
                 }
                 const updated = { ...step, action: newAction, params: clean };
                 useEditorStore.getState().updateStep(stepName, updated, isCommon);

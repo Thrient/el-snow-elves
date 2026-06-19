@@ -5,7 +5,7 @@ import {
   ColumnWidthOutlined, ColumnHeightOutlined, PauseOutlined, CaretRightOutlined,
   BulbOutlined, UserOutlined, DesktopOutlined, EditOutlined, PictureOutlined,
   SearchOutlined, ClockCircleOutlined, EyeOutlined, EyeInvisibleOutlined, BgColorsOutlined,
-  SwapOutlined, BranchesOutlined,
+  SwapOutlined, BranchesOutlined, BellOutlined,
 } from "@ant-design/icons";
 import type { VarType, SubflowRef } from "./index";
 
@@ -37,6 +37,7 @@ export const ACTION_OPTS: ActionOpt[] = [
   { value: "switch_account", label: "switch_account", desc: "切换游戏账号",    icon: <SwapOutlined />,           color: "#1677ff", group: "角色账号" },
   { value: "monitor_start",  label: "monitor_start",  desc: "开始自动战斗",    icon: <CaretRightOutlined />,     color: "#52c41a", group: "战斗系统" },
   { value: "monitor_stop",   label: "monitor_stop",   desc: "停止自动战斗",    icon: <PauseOutlined />,          color: "#ff4d4f", group: "战斗系统" },
+  { value: "notify",        label: "notify",        desc: "发送通知提示",    icon: <BellOutlined />,          color: "#fa8c16", group: "流程控制" },
   { value: "ai_vision",     label: "ai_vision",     desc: "AI视觉分析",      icon: <EyeOutlined />,           color: "#722ed1", group: "AI" },
   { value: "{True}",         label: "{True}",         desc: "表达式",      icon: <BranchesOutlined />,       color: "#d4513b", group: "流程控制" },
 ];
@@ -56,7 +57,7 @@ export const PARAM_META: Record<string, ParamMeta> = {
   threshold:  { label: "匹配阈值",  color: "#ef4444", icon: <AimOutlined />,          desc: "匹配置信度，低于此值视为未匹配。越高越严格，越低越宽松",         range: "0 ~ 1，默认 0.85" },
   color:      { label: "目标颜色",  color: "#06b6d4", icon: <BgColorsOutlined />,      desc: "要匹配的目标颜色 [R, G, B]，如 [255, 0, 0] 红色",                    range: "[0~255, 0~255, 0~255]" },
   tolerance:  { label: "颜色容差",  color: "#0891b2", icon: <FieldNumberOutlined />,  desc: "RGB 欧氏距离的容差阈值。0=精确匹配，值越大越宽松",                     range: "0~255，默认 10" },
-  seconds:    { label: "超时时间",  color: "#f59e0b", icon: <FieldTimeOutlined />,    desc: "最长等待秒数，到达时间仍未匹配则判定失败。null 表示一直等待",     range: "默认 1.8s" },
+  seconds:    { label: "超时时间",  color: "#f59e0b", icon: <FieldTimeOutlined />,    desc: "最长等待时间，到达时间仍未匹配则判定失败。null 表示一直等待",     range: "默认 1800 ms" },
   k:          { label: "确认帧数",  color: "#8b5cf6", icon: <ScanOutlined />,         desc: "需连续多少帧都未匹配才确认消失。值越大越可靠但越慢",               range: "默认 1" },
   click_mode: { label: "点击方式",  color: "#06b6d4", icon: <DeploymentUnitOutlined />, desc: "匹配到多个目标时的选择策略",                                       range: "random / first / last / all / all_reverse" },
   box:        { label: "匹配区域",  color: "#ec4899", icon: <BorderOutlined />,       desc: "限制搜索范围 [x1, y1, x2, y2]。缩小区域可大幅提速并减少误匹配",    range: "默认 [0, 0, 1335, 750]" },
@@ -69,8 +70,8 @@ export const PARAM_META: Record<string, ParamMeta> = {
   y:          { label: "Y 偏移",    color: "#10b981", icon: <ColumnHeightOutlined />, desc: "点击位置在匹配坐标上的 Y 轴像素偏移",                                range: "默认 0" },
   end_x:      { label: "终点 X 偏移", color: "#e11d48", icon: <ColumnWidthOutlined />,  desc: "拖拽终点在匹配坐标上的 X 轴像素偏移",                                range: "默认 0" },
   end_y:      { label: "终点 Y 偏移", color: "#be123c", icon: <ColumnHeightOutlined />, desc: "拖拽终点在匹配坐标上的 Y 轴像素偏移",                                range: "默认 0" },
-  duration:   { label: "拖拽耗时",  color: "#f97316", icon: <FieldTimeOutlined />,     desc: "拖拽从起点到终点持续的时间（秒），值越大拖拽越慢越平滑",                    range: "默认 0.5 秒" },
-  press:       { label: "按下时长", color: "#f97316", icon: <FieldTimeOutlined />,   desc: "按下后保持的持续时间（秒）。0=普通点击，>0=长按",                       range: "默认 0" },
+  duration:   { label: "时长(ms)",  color: "#f97316", icon: <FieldTimeOutlined />,     desc: "持续时间。拖拽=耗时，通知=显示时长，0=不自动关闭",                    range: "拖拽 500ms / 通知 5000ms" },
+  press:       { label: "按下时长", color: "#f97316", icon: <FieldTimeOutlined />,   desc: "按下后保持的持续时间。0=普通点击，>0=长按",                       range: "默认 0 ms" },
   pre_delay:  { label: "操作前延迟",color: "#f97316", icon: <PauseOutlined />,         desc: "执行操作前等待的时间，确保界面稳定后再操作",                         range: "默认 1500 ms" },
   post_delay: { label: "操作后延迟",color: "#84cc16", icon: <CaretRightOutlined />,    desc: "执行操作后等待的时间，确保界面响应完成后再继续",                     range: "默认 1500 ms" },
   preprocess: { label: "图像预处理",color: "#8b5cf6", icon: <BulbOutlined />,          desc: "对截图的额外图像处理，提高特定场景下的匹配准确率。二值化、反转、自适应等独立开关组合" },
@@ -80,6 +81,9 @@ export const PARAM_META: Record<string, ParamMeta> = {
   text:         { label: "输入文本", color: "#14b8a6", icon: <EditOutlined />,          desc: "模拟键盘逐字输入到窗口。支持 {变量} 表达式", range: "如 Hello World 或 {my_text}" },
   combo:        { label: "连招配置", color: "#52c41a", icon: <CaretRightOutlined />,   desc: "在全局设置中定义的连招名称。如 连招:常规连招", range: "连招数据键名" },
   prompt:       { label: "分析提示", color: "#722ed1", icon: <EditOutlined />,          desc: "告诉 AI 如何分析截图", range: "如 '提取图中文字'" },
+  title:        { label: "通知标题", color: "#fa8c16", icon: <BellOutlined />,           desc: "通知弹窗的标题文字，支持 {变量}" },
+  description:  { label: "通知内容", color: "#fa8c16", icon: <EditOutlined />,           desc: "通知弹窗的正文内容，支持 {变量}" },
+  type:         { label: "通知类型", color: "#fa8c16", icon: <BellOutlined />,           desc: "通知样式：success 绿 / info 蓝 / warning 黄 / error 红", range: "默认 info" },
 };
 
 // ── Action param config ──
@@ -102,6 +106,7 @@ export const ACTION_PARAMS: Record<string, string[]> = {
   monitor_start:  ["combo"],
   monitor_stop:   [],
   ai_vision:      ["box", "prompt", "hwnd"],
+  notify:         ["title", "description", "type", "duration"],
   "{True}":       [],
 };
 
@@ -121,6 +126,26 @@ export const REQUIRED_PARAMS: Record<string, string[]> = {
   switch_account: ["account_name"],
   monitor_start: ["combo"],
   ai_vision:     ["prompt"],
+  notify:        ["title"],
+};
+
+export const PARAM_DEFAULTS: Record<string, unknown> = {
+  threshold: 0.85,
+  tolerance: 10,
+  seconds: 1800,
+  k: 1,
+  click_mode: "random",
+  count: 1,
+  x: 0,
+  y: 0,
+  end_x: 0,
+  end_y: 0,
+  duration: 500,
+  press: 0,
+  pre_delay: 1500,
+  post_delay: 1500,
+  method: "ccoeff",
+  type: "info",
 };
 
 export const ACTIONS_WITH_TEMPLATES = new Set(["touch", "exits", "wait", "wait_disappear"]);

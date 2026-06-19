@@ -156,10 +156,10 @@ const ParamInputRenderer: React.FC<ParamInputRendererProps> = ({
   if (key === "seconds") {
     return (
       <InputNumber size="small" className="font-mono text-[12px] w-80px"
-        min={0} step={0.1}
+        min={0} step={100}
         value={typeof value === "number" ? value : null}
         onChange={(v) => onUpdate("params", { ...params, seconds: v === 0 ? null : v })}
-        placeholder="1.8" />
+        placeholder="1800" />
     );
   }
   if (key === "color") {
@@ -221,6 +221,51 @@ const ParamInputRenderer: React.FC<ParamInputRendererProps> = ({
           }}
         />
       </div>
+    );
+  }
+  if (key === "description") {
+    return (
+      <div className="flex flex-col gap-1 w-full">
+        <Input.TextArea
+          size="small"
+          className="font-mono text-[12px]"
+          rows={3}
+          value={(value as string) ?? ""}
+          onChange={(e) => onUpdate("params", { ...params, description: e.target.value })}
+          placeholder="通知正文内容，支持 {变量}"
+        />
+        <VarOpBuilder
+          context="params"
+          valueTypes={ctx.valueTypes}
+          variables={[...varItems(ctx, "system"), ...varItems(ctx, "config"), ...varItems(ctx, "task")]}
+          onInsert={(expr) => {
+            const prev = (value as string) ?? "";
+            onUpdate("params", { ...params, description: prev + expr });
+          }}
+        />
+      </div>
+    );
+  }
+  if (key === "type") {
+    return (
+      <Select size="small" className="w-120px"
+        value={(value as string) || "info"}
+        options={[
+          { value: "info", label: "info — 信息" },
+          { value: "success", label: "success — 成功" },
+          { value: "warning", label: "warning — 警告" },
+          { value: "error", label: "error — 错误" },
+        ]}
+        onChange={(v) => onUpdate("params", { ...params, type: v })} />
+    );
+  }
+  if (key === "duration") {
+    return (
+      <InputNumber size="small" className="font-mono text-[12px] w-80px"
+        min={0} step={100}
+        value={typeof value === "number" ? value : null}
+        onChange={(v) => onUpdate("params", { ...params, duration: v ?? 500 })}
+        placeholder="500" />
     );
   }
   const raw = typeof value === "string" ? value : JSON.stringify(value ?? "");

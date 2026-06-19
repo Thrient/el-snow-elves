@@ -11,6 +11,7 @@ import UpdateModal from "@/components/update-modal/UpdateModal";
 import UpdateProgress from "@/components/update-modal/UpdateProgress";
 import FloatingPanel from "@/components/floating-panel/FloatingPanel.tsx";
 import AppMenu from "@/components/app-menu/AppMenu.tsx";
+import AppNotification from '@/components/app-notification/AppNotification';
 import { Outlet } from 'react-router-dom'
 
 
@@ -89,6 +90,7 @@ const MainLayout: FC = () => {
 
   return (
     <>
+      <AppNotification />
       <FloatingPanel />
       <DisclaimerModal />
       <UpdateModal />

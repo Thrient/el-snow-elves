@@ -44,5 +44,18 @@ class JsApi:
     def update_finish_download(self):
         self.window.evaluate_js("window.useUpdateStore.getState().finishDownload()")
 
+    def push_notification(self, title: str, description: str,
+                          type: str = "info", duration: int = 5000):
+        """推送通知到前端 mitt 事件总线"""
+        import json
+        data = json.dumps({
+            "title": title,
+            "description": description,
+            "type": type,
+            "duration": duration,
+        }, ensure_ascii=False)
+        code = f"window.__eventBus.emit('notification', {data})"
+        self.window.evaluate_js(code)
+
 
 js = JsApi()

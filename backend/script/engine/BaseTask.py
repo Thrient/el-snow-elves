@@ -222,3 +222,22 @@ class BaseTask:
         self._combat.stop()
         return True
 
+    @staticmethod
+    def notify(*args, **kwargs):
+        """发送通知到前端。params: title, description, type, duration"""
+        title = kwargs.get("title", "")
+        description = kwargs.get("description", "")
+        type_ = kwargs.get("type", "info")
+        duration = kwargs.get("duration", 5000)
+
+        if not title and not description:
+            return False
+
+        js.push_notification(
+            title=str(title),
+            description=str(description),
+            type=str(type_),
+            duration=int(duration),
+        )
+        return True
+

@@ -31,8 +31,8 @@ def repeat(count=1):
     return decorator
 
 
-def during(seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda: True):
-    """持续运行"""
+def during(seconds=1800, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda: True):
+    """持续运行（seconds 参数单位 ms）"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -41,7 +41,7 @@ def during(seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda:
                 secs = seconds
             if secs is None:
                 return func(*args, **kwargs)
-            end_time = time.time() + float(secs)
+            end_time = time.time() + float(secs) / 1000
             while time.time() < end_time and kwargs.get("predicate", predicate)():
                 result = func(*args, **kwargs)
                 if kwargs.get("is_valid", is_valid)(result):
@@ -56,7 +56,7 @@ def during(seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda:
     return decorator
 
 
-def wait_until(k=1, seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda: True):
+def wait_until(k=1, seconds=1000, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda: True):
     def decorator(func):
         def wrapper(*args, **kwargs):
             secs = kwargs.get('seconds')
@@ -65,7 +65,7 @@ def wait_until(k=1, seconds=1.0, dealy=0.5, is_valid=lambda x: bool(x), predicat
             if secs is None:
                 return func(*args, **kwargs)
             count = 0
-            end_time = time.time() + float(secs)
+            end_time = time.time() + float(secs) / 1000
             while time.time() < end_time and kwargs.get("predicate", predicate)():
                 result = func(*args, **kwargs)
 

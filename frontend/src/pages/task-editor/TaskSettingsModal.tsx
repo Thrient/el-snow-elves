@@ -95,10 +95,10 @@ const TaskSettingsModal: FC<Props> = ({ open, task, onClose }) => {
               size="middle"
               placeholder="不限制"
               min={0}
-              max={86400}
-              step={1}
+              max={86400000}
+              step={1000}
               value={task.monitors.timeout || undefined}
-              addonAfter={<span className="text-[11px] text-muted">秒</span>}
+              addonAfter={<span className="text-[11px] text-muted">毫秒</span>}
               onChange={(v) => updateMonitors({ ...task.monitors, timeout: v ?? undefined })}
             />
           </Row>
@@ -111,13 +111,13 @@ const TaskSettingsModal: FC<Props> = ({ open, task, onClose }) => {
             <InputNumber
               className="w-full"
               size="middle"
-              placeholder="1"
-              min={0.1}
-              max={60}
-              step={0.5}
-              value={task.monitors.interval ?? 1}
-              addonAfter={<span className="text-[11px] text-muted">秒</span>}
-              onChange={(v) => updateMonitors({ ...task.monitors, interval: v ?? 1 })}
+              placeholder="1000"
+              min={100}
+              max={60000}
+              step={500}
+              value={task.monitors.interval ?? 1000}
+              addonAfter={<span className="text-[11px] text-muted">毫秒</span>}
+              onChange={(v) => updateMonitors({ ...task.monitors, interval: v ?? 1000 })}
             />
           </Row>
 

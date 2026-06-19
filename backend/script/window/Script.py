@@ -40,7 +40,8 @@ class Script(Thread):
         while not self._paused.is_set() and not self._stopped.is_set():
             task = js.get_execute_task(self._hwnd)
             if task is not None:
-                logging.info(f"获取到待执行任务: {task['name']} v{task.get('version', '?')}")
+                ver = task.get('version')
+                logging.info(f"获取到待执行任务: {task['name']} v{ver}" if ver else f"获取到待执行任务: {task['name']} (最新)")
                 return task
             time.sleep(1)
         return None

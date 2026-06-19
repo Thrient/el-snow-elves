@@ -104,7 +104,7 @@ class QuickStart:
 
         logging.info("[QuickStart] 开始导航到登录界面...")
 
-        _wait("按钮首页朕知道了", seconds=120)
+        _wait("按钮首页朕知道了", seconds=120000)
 
         inp.mouse_click(hwnd=hwnd, pos=[610, 630])
 

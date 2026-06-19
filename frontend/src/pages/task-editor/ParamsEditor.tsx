@@ -3,7 +3,7 @@ import { Select, Tooltip } from "antd";
 import { PictureOutlined } from "@ant-design/icons";
 import type { Step } from "@/types/task";
 import type { EditorCtx } from "@/types/task-editor/actions";
-import { ACTIONS_WITH_TEMPLATES, ACTION_PARAMS, PARAM_META, REQUIRED_PARAMS } from "@/types/task-editor/actions";
+import { ACTIONS_WITH_TEMPLATES, ACTION_PARAMS, PARAM_META, REQUIRED_PARAMS, PARAM_DEFAULTS } from "@/types/task-editor/actions";
 import BoxPickerModal from "@/pages/task-editor/components/box-picker/BoxPickerModal";
 import CoordPickerModal from "@/pages/task-editor/components/coord-picker/CoordPickerModal";
 import ColorPickerModal from "@/pages/task-editor/components/color-picker/ColorPickerModal";
@@ -35,7 +35,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     const missing = required.filter(k => params[k] === undefined);
     if (missing.length > 0) {
       const p = { ...params };
-      for (const k of missing) p[k] = k === "args" ? [] : "";
+      for (const k of missing) p[k] = k === "args" ? [] : (PARAM_DEFAULTS[k] ?? "");
       onUpdate("params", p);
     }
   }, [step.action]);
@@ -162,7 +162,7 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
             const accent = meta?.color ?? "#9ca3af";
             return (
               <Tooltip key={k} title={meta?.desc}>
-                <button onClick={() => onUpdate("params", { ...params, [k]: "" })}
+                <button onClick={() => onUpdate("params", { ...params, [k]: PARAM_DEFAULTS[k] ?? "" })}
                   className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg border border-dashed border-[#dde0e6] text-secondary bg-container hover:text-[#1677ff] hover:border-[#1677ff] hover:shadow-sm transition-all cursor-pointer border-0 bg-transparent"
                   style={{ border: `1px dashed ${accent}40`, background: `${accent}06` } as React.CSSProperties}>
                   <span className="flex items-center justify-center w-4 h-4 rounded shrink-0 text-[10px]" style={{ background: `${accent}18`, color: accent }}>

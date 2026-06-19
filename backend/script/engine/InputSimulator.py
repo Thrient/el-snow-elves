@@ -45,9 +45,9 @@ class InputSimulator:
                 vk_code = key
             scan_code = win32api.MapVirtualKey(vk_code, 0)
             win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk_code, (scan_code << 16) | 1)
-            safe_sleep(press, lambda: not predicate())
+            safe_sleep(press / 1000, lambda: not predicate())
             win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk_code, (scan_code << 16) | 0xC0000001)
-            label = f"长按按键: {key} 持续 {press}s" if press > 0 else f"按键: {key}"
+            label = f"长按按键: {key} 持续 {press}ms" if press > 0 else f"按键: {key}"
             logging.info(f"{label} | hwnd={hwnd}")
 
         return _inner(**kwargs)
@@ -114,10 +114,10 @@ class InputSimulator:
             lParam = (y << 16) | x
 
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
-            safe_sleep(press, lambda: not predicate())
+            safe_sleep(press / 1000, lambda: not predicate())
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
 
-            label = f"长按坐标: ({x}, {y}) 持续 {press}s" if press > 0 else f"点击坐标: {pos}"
+            label = f"长按坐标: ({x}, {y}) 持续 {press}ms" if press > 0 else f"点击坐标: {pos}"
             logging.info(f"{label} | hwnd={hwnd}")
 
         return _inner(**kwargs)
@@ -132,7 +132,7 @@ class InputSimulator:
         def _inner(**inner_kwargs):
             start_pos = inner_kwargs.get("start_pos", (1335, 750))
             end_pos = inner_kwargs.get("end_pos", (1335 + 100, 750))
-            duration = inner_kwargs.get("duration", 0.5)
+            duration = inner_kwargs.get("duration", 500)
 
             start_x = start_pos[0] + inner_kwargs.get("x", 0)
             start_y = start_pos[1] + inner_kwargs.get("y", 0)
@@ -142,14 +142,14 @@ class InputSimulator:
             lParam = (start_y << 16) | start_x
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
 
-            steps = max(2, int(duration * 60))
+            steps = max(2, int(duration / 1000 * 60))
             for i in range(1, steps + 1):
                 t = i / steps
                 x = int(start_x + (end_x - start_x) * t)
                 y = int(start_y + (end_y - start_y) * t)
                 lParam = (y << 16) | x
                 win32gui.PostMessage(hwnd, win32con.WM_MOUSEMOVE, win32con.MK_LBUTTON, lParam)
-                time.sleep(duration / steps)
+                time.sleep(duration / 1000 / steps)
 
             lParam = (end_y << 16) | end_x
             win32gui.PostMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)

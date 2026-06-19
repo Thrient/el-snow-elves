@@ -35,7 +35,7 @@
         "args": [
           "按钮首页踏入江湖"
         ],
-        "seconds": 30,
+        "seconds": 30000,
         "pre_delay": 8000
       },
       "postfix": [
@@ -76,7 +76,7 @@
   },
   "monitors": {
     "loop": [],
-    "interval": 1
+    "interval": 1000
   },
   "values": {
     "账号名称": "拾忆"

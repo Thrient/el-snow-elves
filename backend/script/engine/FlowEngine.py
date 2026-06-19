@@ -47,7 +47,7 @@ class FlowEngine(Thread):
 
         monitors = self.work.get("monitors", {})
         self._monitor_loop = monitors.get("loop", [])
-        self._monitor_interval = monitors.get("interval", 1)
+        self._monitor_interval = monitors.get("interval", 1000)
         self._monitor_stop_event = Event()
         self._task = BaseTask()
         self._stop_reason: str | None = None
@@ -263,10 +263,10 @@ class FlowEngine(Thread):
                 Window.ensure_window_size(self._hwnd)
                 self.run_subflow(step_name)
             # 等待间隔，期间可被停止事件打断
-            self._monitor_stop_event.wait(timeout=self._monitor_interval)
+            self._monitor_stop_event.wait(timeout=self._monitor_interval / 1000)
 
     def loop(self):
-        logging.info(f"监控线程已启动: {self.name} | interval={self._monitor_interval}s")
+        logging.info(f"监控线程已启动: {self.name} | interval={self._monitor_interval}ms")
         Thread(target=self._monitor_thread, daemon=True).start()
 
     # ── 执行引擎 ──
@@ -352,7 +352,7 @@ class FlowEngine(Thread):
         timeout = self.work.get("monitors", {}).get("timeout", 0)
         if timeout and timeout > 0:
             from threading import Timer
-            self._timeout_timer = Timer(timeout, self._handle_timeout)
+            self._timeout_timer = Timer(timeout / 1000, self._handle_timeout)
             self._timeout_timer.daemon = True
             self._timeout_timer.start()
 

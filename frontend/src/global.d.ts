@@ -10,6 +10,7 @@ declare global {
         emit(name: string, ...args: unknown[]);
       }
     }
+    __eventBus: import('@/utils/event-bus').eventBus
   }
 }
 

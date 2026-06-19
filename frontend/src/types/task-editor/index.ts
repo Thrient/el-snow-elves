@@ -122,7 +122,7 @@ export interface Step {
 export interface MonitorConfig {
   loop?: string[];
   interval?: number;
-  timeout?: number;   // 最大执行时间（秒），0 或 undefined = 不限制
+  timeout?: number;   // 最大执行时间（ms），0 或 undefined = 不限制
 }
 
 export interface FullTask extends Task {

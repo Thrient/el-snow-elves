@@ -38,7 +38,7 @@ class CombatEngine:
                     continue
 
                 mode = step.get("m", "click")
-                press_s = float(step.get("p", 0.1) or 0)
+                press_ms = float(step.get("p", 100) or 0)
                 delay_ms = float(step.get("d", 800) or 0)
 
                 if mode == "down":
@@ -46,7 +46,7 @@ class CombatEngine:
                 elif mode == "up":
                     self._input.key_up(key=key, hwnd=hwnd, predicate=predicate, post_delay=delay_ms)
                 else:
-                    self._input.key_click(key=key, press=press_s, hwnd=hwnd, predicate=predicate, post_delay=delay_ms)
+                    self._input.key_click(key=key, press=press_ms, hwnd=hwnd, predicate=predicate, post_delay=delay_ms)
 
         self._stop_event.set()
         logging.info("⚔ 自动战斗已停止")
