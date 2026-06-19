@@ -31,7 +31,7 @@ CHANNEL_TYPE = "360_assistant"
 _AUTH_URL = (
     "https://openapi.360.cn/oauth2/authorize?"
     f"client_id={APPKEY}&"
-    "response_type=token&"
+    "response_type=code&"
     "redirect_uri=oob&"
     "scope=basic&"
     "display=desktop&"
@@ -70,8 +70,8 @@ def _add_navigation_handler(window, login_container: dict) -> bool:
         return False
 
 
-def _exchange_code(code: str) -> str:
-    """用 code 换 access_token"""
+def _exchange_code(code: str) -> dict:
+    """用 code 换 access_token + refresh_token + expires_in"""
     for attempt in range(3):
         params_list = [
             {"grant_type": "authorization_code", "code": code, "client_id": APPKEY,
@@ -88,12 +88,17 @@ def _exchange_code(code: str) -> str:
             data = r.json()
             at = data.get("access_token", "")
             if at:
-                logging.info(f"[Qihu360Channel] access_token 获取成功 (attempt {attempt+1})")
-                return at
+                rt = data.get("refresh_token", "")
+                ei = data.get("expires_in", 0)
+                logging.info(
+                    f"[Qihu360Channel] access_token 获取成功 (attempt {attempt+1}), "
+                    f"expires_in={ei}, has_refresh_token={bool(rt)}"
+                )
+                return {"access_token": at, "refresh_token": rt, "expires_in": int(ei) if ei else 0}
             logging.debug(f"[Qihu360Channel] token attempt {attempt+1}: {data.get('error', 'unknown')}")
         except Exception as e:
             logging.warning(f"[Qihu360Channel] token attempt {attempt+1} 异常: {e}")
-    return ""
+    return {}
 
 
 def _get_user_id(access_token: str) -> str:
@@ -110,12 +115,44 @@ def _get_user_id(access_token: str) -> str:
     return ""
 
 
+def _refresh_access_token(refresh_token: str) -> str | None:
+    """用 refresh_token 刷新 access_token（360 OAuth2 刷新端点）"""
+    if not refresh_token:
+        return None
+    try:
+        r = requests.post(
+            _TOKEN_URL,
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+                "client_id": APPKEY,
+                "client_secret": APPKEY,
+                "scope": "basic",
+            },
+            timeout=15,
+        )
+        data = r.json()
+        at = data.get("access_token", "")
+        if at:
+            logging.info(
+                f"[Qihu360Channel] access_token 刷新成功, "
+                f"expires_in={data.get('expires_in', 'N/A')}"
+            )
+            return at
+        logging.error(f"[Qihu360Channel] token 刷新失败: {data}")
+    except Exception as e:
+        logging.error(f"[Qihu360Channel] token 刷新异常: {e}")
+    return None
+
+
 class Qihu360Login:
     """360 OAuth 登录 — webview（独立临时缓存目录，隔离 cookie）"""
 
     def __init__(self):
         self._window: webview.Window | None = None
         self._access_token: str = ""
+        self._refresh_token: str = ""
+        self._expires_in: int = 0
         self._user_id: str = ""
         self._done = threading.Event()
         self._temp_dir: str = ""
@@ -187,7 +224,11 @@ class Qihu360Login:
                 time.sleep(0.5)
 
             if code and not self._access_token:
-                self._access_token = _exchange_code(code)
+                exchange_result = _exchange_code(code)
+                if exchange_result:
+                    self._access_token = exchange_result.get("access_token", "")
+                    self._refresh_token = exchange_result.get("refresh_token", "")
+                    self._expires_in = exchange_result.get("expires_in", 0)
             if self._access_token:
                 self._user_id = self._access_token[:10]
                 logging.info(f"[Qihu360Channel] access_token, user_id={self._user_id}")
@@ -202,9 +243,11 @@ class Qihu360Login:
         self._cleanup_temp_dir()
 
         if self._user_id and self._access_token:
-            return {"user_id": self._user_id, "access_token": self._access_token}
+            return {"user_id": self._user_id, "access_token": self._access_token,
+                    "refresh_token": self._refresh_token, "expires_in": self._expires_in}
         if self._access_token:
-            return {"user_id": "", "access_token": self._access_token}
+            return {"user_id": "", "access_token": self._access_token,
+                    "refresh_token": self._refresh_token, "expires_in": self._expires_in}
         return None
 
     def _cleanup_temp_dir(self):
@@ -236,6 +279,8 @@ def record() -> dict | None:
     return {
         "channel_type": CHANNEL_TYPE,
         "access_token": result.get("access_token", ""),
+        "refresh_token": result.get("refresh_token", ""),
+        "expires_in": result.get("expires_in", 0),
         "user_id": result.get("user_id", ""),
         "appid": APPID,
         "appkey": APPKEY,
@@ -290,6 +335,19 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
     uni_data = post_signed_data(sauth_body, short_game_id)
     unisdk_json_b64 = uni_data.get("unisdk_login_json", "")
     if not unisdk_json_b64:
+        # access_token 可能已过期（有效期仅1小时），尝试用 refresh_token 刷新
+        refresh_token = str(channel_auth.get("refresh_token", ""))
+        if refresh_token:
+            logging.info("[Qihu360Channel] uni_sauth 失败，尝试刷新 access_token...")
+            new_at = _refresh_access_token(refresh_token)
+            if new_at:
+                channel_auth["access_token"] = new_at
+                sauth_body["sessionid"] = new_at
+                uni_data = post_signed_data(sauth_body, short_game_id)
+                unisdk_json_b64 = uni_data.get("unisdk_login_json", "")
+                if unisdk_json_b64:
+                    logging.info("[Qihu360Channel] 刷新后 uni_sauth 成功")
+    if not unisdk_json_b64:
         logging.error(f"[Qihu360Channel] uni_sauth 失败: {uni_data}")
         return None
     unisdk_login = _json.loads(_b64.b64decode(unisdk_json_b64).decode())
@@ -319,7 +377,7 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
 
     return {
         "user_id": str(real_sdkuid),
-        "token": _b64.b64encode(access_token.encode()).decode(),
+        "token": _b64.b64encode(str(channel_auth.get("access_token", "")).encode()).decode(),
         "login_channel": CHANNEL_TYPE, "app_channel": CHANNEL_TYPE, "pay_channel": CHANNEL_TYPE,
         "udid": udid, "sdk_version": "2.3.4_794", "jf_game_id": short_game_id,
         "extra_data": "", "extra_unisdk_data": _json.dumps(extra_res),
