@@ -19,7 +19,7 @@ def _imread_unicode(path: str):
 from airtest.aircv.template_matching import TemplateMatching
 from airtest.aircv.keypoint_matching_contrib import SIFTMatching
 
-from script.config.Setting import BOX, THRESHOLD, PROJECT_ROOT, PREPROCESS_KEYS
+from script.config.Setting import BOX, THRESHOLD, PROJECT_ROOT, APP_DATA, PREPROCESS_KEYS
 from script.engine.ScreenCapture import ScreenCapture
 
 logging.getLogger("airtest").setLevel(logging.WARNING)
@@ -44,8 +44,16 @@ class TemplateMatcher:
 
     @staticmethod
     def get_template_path(category, image):
+        # 1. 任务自有模板（内置源）
         path = os.path.join(PROJECT_ROOT, "resources", "config", category, "images", f"{image}.bmp")
-        return path if os.path.exists(path) else os.path.join(PROJECT_ROOT, "resources", "images", f"{image}.bmp")
+        if os.path.exists(path):
+            return path
+        # 2. 任务自有模板（用户源）
+        user_path = os.path.join(APP_DATA, "tasks", category, "images", f"{image}.bmp")
+        if os.path.exists(user_path):
+            return user_path
+        # 3. 全局公共模板
+        return os.path.join(PROJECT_ROOT, "resources", "images", f"{image}.bmp")
 
     @staticmethod
     def match_single(img, image, category, box, threshold=THRESHOLD, preprocess=None, method="ccoeff"):
@@ -189,9 +197,14 @@ class TemplateMatcher:
             raise ValueError(f"无效的裁剪区域: {crop_region}")
 
         cropped = img[y1:y2, x1:x2]
-        target_dir = os.path.join(PROJECT_ROOT, "resources", "config", task_name, version, "images") \
-            if scope == "task" and task_name and version \
-            else os.path.join(PROJECT_ROOT, "resources", "images")
+        if scope == "task" and task_name and version:
+            # 任务在用户目录 → 保存到用户源；否则保存到内置源
+            if os.path.exists(os.path.join(APP_DATA, "tasks", task_name, version)):
+                target_dir = os.path.join(APP_DATA, "tasks", task_name, version, "images")
+            else:
+                target_dir = os.path.join(PROJECT_ROOT, "resources", "config", task_name, version, "images")
+        else:
+            target_dir = os.path.join(PROJECT_ROOT, "resources", "images")
         os.makedirs(target_dir, exist_ok=True)
         filepath = os.path.join(target_dir, f"{filename}.bmp")
         ret, buf = cv2.imencode(".bmp", cropped)

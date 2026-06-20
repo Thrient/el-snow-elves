@@ -8,6 +8,7 @@ import BoxPickerModal from "@/pages/task-editor/components/box-picker/BoxPickerM
 import CoordPickerModal from "@/pages/task-editor/components/coord-picker/CoordPickerModal";
 import ColorPickerModal from "@/pages/task-editor/components/color-picker/ColorPickerModal";
 import ParamInputRenderer from "./components/ParamInputRenderer";
+import VarOpBuilder from "./components/var-op-builder/VarOpBuilder";
 
 interface ParamsEditorProps {
   step: Step;
@@ -29,6 +30,12 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
     return aReq - bReq;
   });
   const showArgs = step.action ? ACTIONS_WITH_TEMPLATES.has(step.action) : false;
+  const isVarMode = args.length === 1 && /^\{.+\}$/.test(args[0]);
+
+  const varItems = (category: "system" | "config" | "task") => {
+    const arr = category === "system" ? ctx.builtinVars : category === "config" ? ctx.configVars : ctx.taskValueVars;
+    return arr.map(v => ({ syntax: v.value, label: v.label, category }));
+  };
   const allowed = step.action ? (ACTION_PARAMS[step.action] ?? []) : [];
 
   useEffect(() => {
@@ -88,10 +95,24 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
             <span className="text-[10px] text-muted ml-auto">输入图片名后回车添加</span>
           </div>
           <div className="px-3.5 pb-3">
-            <Select mode="tags" className="w-full" size="small" placeholder="输入图片名回车添加，如 按钮登录"
-              value={args} options={templateOptions}
-              filterOption={(input, option) => (option?.label as string ?? "").toLowerCase().includes(input.toLowerCase())}
-              onChange={(v) => onUpdate("params", { ...params, args: v })} />
+            <div className="flex items-center gap-1">
+              <Select mode="tags" className="flex-1" size="small"
+                allowClear
+                placeholder="输入图片名回车添加，如 按钮登录"
+                value={args}
+                options={templateOptions}
+                filterOption={(input, option) => (option?.label as string ?? "").toLowerCase().includes(input.toLowerCase())}
+                onChange={(v) => {
+                  if (isVarMode && (v as string[]).length > args.length) return;
+                  onUpdate("params", { ...params, args: v });
+                }} />
+              <VarOpBuilder
+                key={`${ctx.taskName}-${ctx.version}-${ctx.refreshKey}`}
+                context="params"
+                valueTypes={ctx.valueTypes}
+                variables={[...varItems("system"), ...varItems("config"), ...varItems("task")]}
+                onInsert={(expr) => onUpdate("params", { ...params, args: [expr] })} />
+            </div>
           </div>
         </div>
       )}

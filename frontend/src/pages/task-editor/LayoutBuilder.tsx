@@ -191,7 +191,7 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
     ).filter((row) => row.length > 0));
   }, []);
 
-  const handleCreateVar = useCallback((name: string, value: string, type: VarType) => {
+  const handleCreateVar = useCallback((name: string, value: unknown, type: VarType) => {
     setValues((prev) => ({ ...prev, [name]: value }));
     setValueTypes((prev) => ({ ...prev, [name]: type }));
     setCreateVarOpen(false);

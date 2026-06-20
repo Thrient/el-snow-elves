@@ -22,15 +22,16 @@ def load_plans():
         return []
 
     # 迁移旧计划格式: taskId -> taskName + version
-    from script.task_editor.TaskLibrary import TASK_CONFIG_CACHE, load_task_list as _ltl
-    _ltl()
+    from script.task import get_repo
+    repo = get_repo()
+    repo.list_all()
     for plan in data:
         action = plan.get("action", {})
         if action.get("type") == "push_task":
             params = action.get("params", {})
             old_id = params.get("taskId")
             if old_id and not params.get("taskName"):
-                cached = TASK_CONFIG_CACHE.get(old_id)
+                cached = repo._cache.get(old_id)
                 if cached:
                     params["taskName"] = cached.get("name", "")
                     params["version"] = cached.get("version", None)

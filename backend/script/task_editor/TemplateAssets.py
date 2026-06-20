@@ -3,7 +3,7 @@ import logging
 import os
 
 from script.config.Setting import PROJECT_ROOT
-from script.task_editor.TaskLibrary import TASK_CONFIG_CACHE, resolve_task_version
+from script.task import get_repo
 
 
 def list_actions():
@@ -31,9 +31,14 @@ def list_template_images(task_name=None, version=None):
     if os.path.isdir(global_dir):
         images.update(f[:-4] for f in os.listdir(global_dir) if f.endswith('.bmp'))
     if task_name and version:
-        task_img_dir = os.path.join(PROJECT_ROOT, "resources", "config", task_name, version, "images")
-        if os.path.isdir(task_img_dir):
-            images.update(f[:-4] for f in os.listdir(task_img_dir) if f.endswith('.bmp'))
+        repo = get_repo()
+        tid, config = repo.resolve(task_name, version)
+        if config:
+            task_dir = os.path.dirname(config.get("_config_path", ""))
+            if task_dir:
+                task_img_dir = os.path.join(task_dir, "images")
+                if os.path.isdir(task_img_dir):
+                    images.update(f[:-4] for f in os.listdir(task_img_dir) if f.endswith('.bmp'))
     return sorted(images)
 
 
@@ -57,7 +62,8 @@ def list_global_common_steps():
 
 def load_positions(name, version=None):
     try:
-        task_id, config = resolve_task_version(name, version)
+        repo = get_repo()
+        task_id, config = repo.resolve(name, version)
         if not config:
             return {}
         task_dir = os.path.dirname(config.get("_config_path", ""))
@@ -75,7 +81,8 @@ def load_positions(name, version=None):
 
 def save_positions(name, version, positions):
     try:
-        task_id, config = resolve_task_version(name, version)
+        repo = get_repo()
+        task_id, config = repo.resolve(name, version)
         if not config:
             return False
         task_dir = os.path.dirname(config.get("_config_path", ""))

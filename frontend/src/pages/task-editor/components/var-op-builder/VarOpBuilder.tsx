@@ -74,6 +74,8 @@ const OPS_BY_TYPE: Record<string, OpDef[]> = {
     { key: "len",    title: "求长度",     desc: "返回元素个数 len(var)",                      expr: "{len(var)}" },
     { key: "first",  title: "取第一个",   desc: "等价于 [0]",                                expr: "{var[0]}" },
     { key: "last",   title: "取最后一个", desc: "取列表末尾项",                              expr: "{var[last]}" },
+    { key: "spread", title: "展开列表",   desc: "展开列表为多个独立元素 {...var}",             expr: "{...var}" },
+    { key: "join",  title: "合并连接",   desc: "用分隔符连接列表元素 join(var,sep)",        expr: "{join(var,?)}", arg: { label: "分隔符", type: "text" } },
   ],
   number: [
     { key: "value",  title: "取值",       desc: "直接取数字值",                             expr: "{var}" },

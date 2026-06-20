@@ -4,6 +4,7 @@ import {
 } from "react";
 import { Button, Input, InputNumber } from "antd";
 import type { Cell, CellOption, VarType } from "@/types/task";
+import { coerceValue, formatValue } from "@/utils/type-compat";
 import { MODEL_META } from "@/types/task-editor/field-config";
 import { MODEL_FIELDS, OPTION_MODELS } from "@/types/task-editor/field-config";
 import FieldRenderer from "./components/FieldRenderer";
@@ -38,7 +39,7 @@ export interface ControlEditorModalProps {
 }
 
 const ControlEditorModal: FC<ControlEditorModalProps> = ({
-  open, cell, ri, ci, values,
+  open, cell, ri, ci, values, valueTypes,
   onClose, onUpdateCell, onRemoveCell, onChangeControl, onChangeValue,
 }) => {
   const [visible, setVisible] = useState(false);
@@ -195,10 +196,11 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
               <div>
                 <FieldLabel>默认值</FieldLabel>
                 <Input size="small" className="!rounded-xl !text-xs"
-                  value={store ? (typeof values[store] === "string" ? values[store] as string : JSON.stringify(values[store])) : ""}
+                  value={store ? formatValue(values[store]) : ""}
                   onChange={(e) => {
                     if (!store) return;
-                    onChangeValue(store, e.target.value);
+                    const type = valueTypes[store] ?? "text";
+                    onChangeValue(store, coerceValue(e.target.value, type));
                   }} />
               </div>
               <div className="flex items-end pb-0.5">

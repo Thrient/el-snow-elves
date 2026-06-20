@@ -2,11 +2,12 @@ import { useState, useCallback, type FC } from "react";
 import { Input, Modal, message } from "antd";
 import type { VarType } from "@/types/task";
 import { VAR_TYPE_OPTS } from "@/types/variable/system-vars";
+import { coerceValue } from "@/utils/type-compat";
 
 export interface CreateVarModalProps {
   open: boolean;
   existingKeys: Set<string>;
-  onOk: (name: string, value: string, type: VarType) => void;
+  onOk: (name: string, value: unknown, type: VarType) => void;
   onCancel: () => void;
 }
 
@@ -25,7 +26,7 @@ const CreateVarModal: FC<CreateVarModalProps> = ({ open, existingKeys, onOk, onC
       return;
     }
     const key = newVarName.trim();
-    onOk(key, newVarValue, newVarType);
+    onOk(key, coerceValue(newVarValue, newVarType), newVarType);
     setNewVarName("");
     setNewVarValue("");
     setNewVarType("text");

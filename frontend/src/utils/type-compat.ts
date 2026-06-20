@@ -43,3 +43,41 @@ export function compatibleModels(val: unknown, explicit?: VarType): CellModel[] 
   if (t === "empty") return ALL_COMPONENT_MODELS;
   return COMPATIBLE[t];
 }
+
+/**
+ * 将字符串输入值转换为目标 VarType。
+ * 列表用 JSON.parse，数字用 Number()，布尔用字符串比较，
+ * 转换失败时回退到原始字符串。
+ */
+export function coerceValue(raw: string, type: VarType): unknown {
+  if (raw === "" || raw === "null") {
+    return type === "list" ? [] : type === "number" ? null : "";
+  }
+  switch (type) {
+    case "list":
+      try {
+        const v = JSON.parse(raw);
+        return Array.isArray(v) ? v : [raw];
+      } catch {
+        // 非 JSON 格式：按单元素列表处理（如用户输入 `按钮课业困难`）
+        return [raw];
+      }
+    case "number": {
+      const n = Number(raw);
+      return isNaN(n) ? raw : n;
+    }
+    case "switch":
+      return raw === "true" || raw === "1";
+    default:
+      return raw;
+  }
+}
+
+/**
+ * 将值转换为适合在 Input 中显示的字符串。
+ */
+export function formatValue(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
+}

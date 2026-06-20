@@ -159,7 +159,7 @@ class SafeExpressionEvaluator:
                     pass
             raise TypeError(f"不支持属性访问，对象类型: {type(obj)}")
 
-        # 新增：函数调用（仅允许 len()、split() 和 choice()）
+        # 新增：函数调用（仅允许 len()、split()、join() 和 choice()）
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and not node.keywords:
                 args = [self._eval_node(a) for a in node.args]
@@ -167,10 +167,12 @@ class SafeExpressionEvaluator:
                     return len(args[0])
                 if node.func.id == 'split' and len(args) == 2:
                     return str(args[0]).split(str(args[1]))
+                if node.func.id == 'join' and len(args) == 2:
+                    return str(args[1]).join(str(x) for x in args[0])
                 if node.func.id == 'choice' and len(args) == 1:
                     import random
                     return random.choice(list(args[0]))
-            raise TypeError("仅支持 len()、split() 和 choice() 函数调用")
+            raise TypeError("仅支持 len()、split()、join() 和 choice() 函数调用")
 
         raise TypeError("不支持的 AST 节点类型: {}".format(type(node).__name__))
 
@@ -217,6 +219,20 @@ class AutoIncrementDecrement(Evaluable):
         if not isinstance(current, (int, float)):
             raise TypeError("变量 {} 不是数值类型，无法自增/自减".format(self.var_name))
         return current + self.delta
+
+
+class SpreadValue(Evaluable):
+    """{...var} — 返回列表变量原始值，不参与表达式求值"""
+    def __init__(self, var_name):
+        self.var_name = var_name
+
+    def evaluate(self, result, variables, computed=None):
+        if self.var_name not in variables:
+            raise NameError("未定义变量: {}".format(self.var_name))
+        value = variables[self.var_name]
+        if not isinstance(value, list):
+            raise TypeError("展开语法 {{...}} 仅支持列表类型，{} 是 {}".format(self.var_name, type(value).__name__))
+        return list(value)
 
 
 # ---------- 值解析器接口 ----------
@@ -361,6 +377,19 @@ class JsonParser(ValueParser):
             return None
 
 
+class SpreadVarParser(ValueParser):
+    """处理 {...var} — 展开列表变量为多个元素"""
+    _PATTERN = re.compile(r'^\{\.\.\.(.+)}$', re.DOTALL)
+
+    def parse(self, raw_value):
+        if not isinstance(raw_value, str):
+            return None
+        match = self._PATTERN.match(raw_value.strip())
+        if not match:
+            return None
+        return SpreadValue(match.group(1).strip())
+
+
 # ---------- 类型转换 ----------
 
 _VTYPE_COERCE = {
@@ -410,6 +439,7 @@ class VariableProcessor:
         self._parsers.append(AutoIncrementDecrementParser())
         self._parsers.append(DefaultValueParser())
         self._parsers.append(InlineTemplateParser())
+        self._parsers.append(SpreadVarParser())       # {...var}
         self._parsers.append(BraceExpressionParser())
         self._parsers.append(ExpressionParser())
         self._parsers.append(JsonParser())

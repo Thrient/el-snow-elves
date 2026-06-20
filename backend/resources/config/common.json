@@ -57,12 +57,11 @@
       "args": "{split(模板, ',')}",
       "click_mode": "{点击模式:random}",
       "threshold": "{阈值:0.85}",
-      "method": "{方法:ccoeff}",
       "x": "{X:0}",
       "y": "{Y:0}"
     }
   },
-  "打开地图": {
+  "唤出地图": {
     "action": "exits",
     "params": {
       "args": [
@@ -80,7 +79,7 @@
     ],
     "next": "任务结束"
   },
-  "打开队伍": {
+  "唤出队伍": {
     "action": "exits",
     "params": {
       "args": [
@@ -98,7 +97,7 @@
     ],
     "next": "任务结束"
   },
-  "打开好友": {
+  "唤出好友": {
     "action": "exits",
     "params": {
       "args": [
@@ -116,7 +115,7 @@
     ],
     "next": "任务结束"
   },
-  "打开背包": {
+  "唤出背包": {
     "action": "exits",
     "params": {
       "args": [
@@ -134,7 +133,7 @@
     ],
     "next": "任务结束"
   },
-  "打开设置": {
+  "唤出设置": {
     "action": "exits",
     "params": {
       "args": [
@@ -147,6 +146,24 @@
         "step": "点击按键",
         "args": {
           "key": "{CONFIG.设置}"
+        }
+      }
+    ],
+    "next": "任务结束"
+  },
+  "唤出帮派": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面设置"
+      ]
+    },
+    "failure_extra": [
+      "检测主界面",
+      {
+        "step": "点击按键",
+        "args": {
+          "key": "{CONFIG.帮派}"
         }
       }
     ],
@@ -391,6 +408,30 @@
     "params": {
       "args": [
         "按钮活动帮派"
+      ]
+    },
+    "prefix": [
+      "打开活动"
+    ],
+    "next": "任务结束"
+  },
+  "打开纷争": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮活动纷争"
+      ]
+    },
+    "prefix": [
+      "打开活动"
+    ],
+    "next": "任务结束"
+  },
+  "打开行当": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮活动行当"
       ]
     },
     "prefix": [

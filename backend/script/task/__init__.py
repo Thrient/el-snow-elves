@@ -1,6 +1,17 @@
 """任务管理领域 — IPC 注册"""
 from script.api.Api import Api
 
+_repo = None
+
+
+def get_repo():
+    """返回模块级单例 TaskRepository。"""
+    global _repo
+    if _repo is None:
+        from script.task.TaskRepository import TaskRepository
+        _repo = TaskRepository()
+    return _repo
+
 
 def register(api: Api, app) -> None:
     """注册 task 领域所有 IPC 事件处理器。"""

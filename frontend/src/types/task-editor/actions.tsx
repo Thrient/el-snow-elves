@@ -90,8 +90,8 @@ export const PARAM_META: Record<string, ParamMeta> = {
 
 export const ACTION_PARAMS: Record<string, string[]> = {
   touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "count", "press", "pre_delay", "post_delay", "seconds", "k", "preprocess", "method", "hwnd"],
-  exits:          ["threshold", "box", "seconds", "preprocess", "method", "hwnd"],
-  wait:           ["threshold", "box", "seconds", "preprocess", "method", "hwnd"],
+  exits:          ["threshold", "box", "preprocess", "method", "hwnd"],
+  wait:           ["threshold", "box", "seconds", "k", "preprocess", "method", "hwnd"],
   wait_disappear: ["threshold", "box", "seconds", "k", "preprocess", "method", "hwnd"],
   exits_color:    ["color", "tolerance", "box", "hwnd"],
   touch_color:    ["color", "tolerance", "box", "pos", "click_mode", "count", "press", "pre_delay", "post_delay", "hwnd"],

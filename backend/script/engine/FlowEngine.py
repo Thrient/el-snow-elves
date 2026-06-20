@@ -185,7 +185,14 @@ class FlowEngine(Thread):
         elif isinstance(params, dict):
             return {k: self._resolve_params(v) for k, v in params.items()}
         elif isinstance(params, list):
-            return [self._resolve_params(item) for item in params]
+            result = []
+            for item in params:
+                resolved = self._resolve_params(item)
+                if isinstance(resolved, list) and not isinstance(item, (list, dict)):
+                    result.extend(resolved)
+                else:
+                    result.append(resolved)
+            return result
         return params
 
     def to_action(self, action_type, params, **extra_kwargs):

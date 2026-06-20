@@ -157,7 +157,7 @@ const ParamInputRenderer: React.FC<ParamInputRendererProps> = ({
     return (
       <InputNumber size="small" className="font-mono text-[12px] w-80px"
         min={0} step={100}
-        value={typeof value === "number" ? value : null}
+        value={typeof value === "number" ? value : 0}
         onChange={(v) => onUpdate("params", { ...params, seconds: v === 0 ? null : v })}
         placeholder="1800" />
     );

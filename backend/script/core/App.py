@@ -13,7 +13,7 @@ from script.core.QuickStart import QuickStart
 from script.engine.ScreenCapture import ScreenCapture
 from script.window.Script import Script
 
-from script.task_editor.TaskLibrary import build_task_zip
+from script.task import get_repo
 
 
 from script.account.AccountManager import AccountManager
@@ -357,7 +357,7 @@ class App:
 
     def export_task(self, name, version=None):
         """导出单个任务为 zip"""
-        built = build_task_zip(name, version)
+        built = get_repo().build_zip(name, version)
         if isinstance(built, dict):
             return built
         buf, default_name = built
@@ -403,7 +403,7 @@ class App:
             else:
                 errors.append({"error": f"无效的任务引用: {item}"})
                 continue
-            built = build_task_zip(n, v)
+            built = get_repo().build_zip(n, v)
             if isinstance(built, dict):
                 errors.append(built)
                 continue

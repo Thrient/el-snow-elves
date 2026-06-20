@@ -67,7 +67,7 @@
       },
       "prefix": [
         {
-          "step": "打开背包",
+          "step": "唤出背包",
           "args": {
             "threshold": 0.75,
             "seconds": null,
@@ -165,7 +165,7 @@
         ]
       },
       "prefix": [
-        "打开设置"
+        "唤出设置"
       ],
       "postfix": [
         {

@@ -4,7 +4,7 @@ from threading import Thread, Event
 
 from script.api.JsApi import js
 from script.engine.FlowEngine import FlowEngine
-from script.task_editor.TaskLibrary import resolve_task_version
+from script.task import get_repo
 
 
 class Script(Thread):
@@ -55,7 +55,8 @@ class Script(Thread):
             if task is not None:
                 task_name = task.get("taskName") or task.get("name")
                 task_version = task.get("version") or None
-                tid, work = resolve_task_version(task_name, task_version)
+                repo = get_repo()
+                tid, work = repo.resolve(task_name, task_version)
                 if work is None:
                     logging.error(f"任务解析失败: name={task_name} version={task_version}")
                     continue
