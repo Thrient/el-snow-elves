@@ -60,8 +60,23 @@ class Script(Thread):
                 if work is None:
                     logging.error(f"任务解析失败: name={task_name} version={task_version}")
                     continue
-                work["values"] = {**work.get("values", {}), **task.get("values", {})}
-                work["valueTypes"] = task.get("valueTypes", work.get("valueTypes", {}))
+                # 提取布局变量名集合（用户手动输入的变量）
+                layout_keys: set[str] = set()
+                for row in work.get("layout", []):
+                    for cell in row:
+                        store = cell.get("store")
+                        if store:
+                            layout_keys.add(store)
+
+                # values：布局变量保留用户输入值，非布局变量用 repo 最新默认值
+                queued_values = task.get("values", {})
+                merged_values = dict(work.get("values", {}))
+                for key in layout_keys:
+                    if key in queued_values:
+                        merged_values[key] = queued_values[key]
+                work["values"] = merged_values
+
+                # valueTypes：全部走 repo 最新定义
                 debug_start = task.get("debugStart")
                 debug_single = task.get("debugSingle", False)
                 logging.info(f"开始执行任务: {task['name']} v{task.get('version', '?')} | hwnd={self._hwnd}" +
