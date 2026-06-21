@@ -30,6 +30,8 @@ export interface GridCanvasProps {
   onCellDrop: (toRi: number, toCi: number, e: ReactDragEvent) => void;
   onCellDragStart: (ri: number, ci: number, e: ReactDragEvent) => void;
   onRowDragOver: (ri: number, e: ReactDragEvent) => void;
+  onRowDragStart: (ri: number, e: ReactDragEvent) => void;
+  onRowDrop: (toRi: number, e: ReactDragEvent) => void;
   onDrop: (ri: number, ci: number, e: ReactDragEvent) => void;
   onCellUpdate: (ri: number, ci: number, patch: Partial<Cell>) => void;
   onCellRemove: (ri: number, ci: number) => void;
@@ -45,7 +47,7 @@ const GridCanvas: FC<GridCanvasProps> = ({
   layout, sel, setSel, dragFromLeft,
   values, valueTypes,
   onAddRow, onDeleteRow,
-  onCellDrop, onCellDragStart, onRowDragOver, onDrop,
+  onCellDrop, onCellDragStart, onRowDragOver, onRowDragStart, onRowDrop, onDrop,
   onCellUpdate, onCellRemove, onChangeControl, onChangeValue,
   onCancel, onConfirm,
 }) => {
@@ -127,13 +129,18 @@ const GridCanvas: FC<GridCanvasProps> = ({
                   key={ri}
                   className={`rounded-2xl transition-all duration-300 bg-container shadow-sm
                     ${canDrop && dragFromLeft ? "ring-2 ring-indigo-200 shadow-lg" : "shadow-sm hover:shadow-md"}`}
-                  onDragOver={(e) => onRowDragOver(ri, e)}
-                  onDrop={(e) => onDrop(ri, row.length, e)}
+                  onDragOver={(e) => { e.preventDefault(); onRowDragOver(ri, e); }}
+                  onDrop={(e) => { onRowDrop(ri, e); onDrop(ri, row.length, e); }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* row header */}
                   <div className="flex items-center gap-2 px-3 py-2 rounded-t-[14px] bg-gradient-to-r from-slate-50 to-white">
-                    <span className="w-6 h-6 rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500 flex items-center justify-center shadow-sm">
+                    <span
+                      draggable
+                      onDragStart={(e) => onRowDragStart(ri, e)}
+                      className="w-6 h-6 rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500 flex items-center justify-center shadow-sm cursor-grab active:cursor-grabbing hover:bg-slate-200 hover:text-slate-700 transition-colors select-none"
+                      title="拖动排序"
+                    >
                       {ri + 1}
                     </span>
                     <span className={`text-[10px] font-mono font-semibold ${totalSpan === 24 ? "text-emerald-500" : totalSpan > 24 ? "text-rose-400" : "text-slate-400"}`}>

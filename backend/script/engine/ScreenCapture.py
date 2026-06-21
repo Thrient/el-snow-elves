@@ -139,6 +139,29 @@ class ScreenCapture:
 
         result = gray
 
+        # CLAHE（对比度受限自适应直方图均衡）
+        if config.get("clahe", False):
+            clip = float(config.get("clahe_clip", 2.0))
+            clahe_obj = cv2.createCLAHE(clipLimit=clip, tileGridSize=(8, 8))
+            result = clahe_obj.apply(result)
+
+        # Canny 边缘检测
+        if config.get("canny", False):
+            low = int(config.get("canny_low", 50))
+            high = int(config.get("canny_high", 150))
+            result = cv2.Canny(result, low, high)
+
+        # 膨胀 / 腐蚀
+        morph = None
+        if config.get("dilate", False):
+            morph = "dilate"
+        elif config.get("erode", False):
+            morph = "erode"
+        if morph:
+            ksize = int(config.get("morph_size", 3))
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (ksize, ksize))
+            result = cv2.dilate(result, kernel) if morph == "dilate" else cv2.erode(result, kernel)
+
         # 自适应阈值（与二值化互斥，优先）
         if config.get("adaptive", False):
             block = int(config.get("adaptive_block", 11))

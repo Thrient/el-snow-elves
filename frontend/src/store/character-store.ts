@@ -32,6 +32,7 @@ type State = {
   popExecute: (hwnd: string) => ExecuteItem | undefined
   setSelectedHwnd: (hwnd: string | null) => void
   pushExecute: (hwnd: string, item: ExecuteItem) => void
+  pushExecuteBatch: (hwnd: string, items: ExecuteItem[]) => void
   unshiftExecute: (hwnd: string, item: ExecuteItem) => void
   removeExecute: (hwnd: string, uid: number) => void
   clearExecute: (hwnd: string) => void
@@ -129,6 +130,30 @@ export const useCharacterStore = create<State>((set, get) => ({
                   debugSingle: (item as any).debugSingle ?? false,
                   _uid: _executeUidCounter++,
                 },
+              ],
+            }
+          : character
+      ),
+    })),
+  pushExecuteBatch: (hwnd: string, items: ExecuteItem[]) =>
+    set((state) => ({
+      characters: state.characters.map((character) =>
+        character.hwnd === hwnd
+          ? {
+              ...character,
+              executeList: [
+                ...character.executeList,
+                ...items.map((item) => ({
+                  id: item.id,
+                  name: item.name,
+                  taskName: (item as any).taskName ?? item.name,
+                  version: (item as any).version ?? null,
+                  values: item.values ?? {},
+                  valueTypes: item.valueTypes,
+                  debugStart: (item as any).debugStart,
+                  debugSingle: (item as any).debugSingle ?? false,
+                  _uid: _executeUidCounter++,
+                })),
               ],
             }
           : character

@@ -113,6 +113,16 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
     setSel({ ri: toRi, ci: toCi });
   }, []);
 
+  const moveRow = useCallback((fromRi: number, toRi: number) => {
+    setLayout((prev) => {
+      const next = cloneLayout(prev);
+      const [row] = next.splice(fromRi, 1);
+      next.splice(toRi, 0, row);
+      return next;
+    });
+    if (sel?.ri === fromRi) setSel({ ri: toRi, ci: sel.ci });
+  }, [sel]);
+
   const addRow = useCallback(() => {
     setLayout((prev) => [...cloneLayout(prev), []]);
   }, []);
@@ -162,6 +172,20 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
     e.dataTransfer.setData("application/layout-move", JSON.stringify({ ri, ci }));
     e.dataTransfer.effectAllowed = "move";
   }, []);
+
+  const handleRowDragStart = useCallback((ri: number, e: ReactDragEvent) => {
+    e.dataTransfer.setData("application/layout-row-move", String(ri));
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleRowDrop = useCallback((toRi: number, e: ReactDragEvent) => {
+    e.preventDefault();
+    const raw = e.dataTransfer.getData("application/layout-row-move");
+    if (!raw) return;
+    const fromRi = parseInt(raw, 10);
+    if (fromRi === toRi) return;
+    moveRow(fromRi, toRi);
+  }, [moveRow]);
 
   const handleCellDrop = useCallback((toRi: number, toCi: number, e: ReactDragEvent) => {
     e.preventDefault();
@@ -246,6 +270,8 @@ const LayoutBuilder: FC<LayoutBuilderProps> = ({ initialLayout = [], initialValu
         onCellDrop={handleCellDrop}
         onCellDragStart={handleCellDragStart}
         onRowDragOver={handleDragOverRow}
+        onRowDragStart={handleRowDragStart}
+        onRowDrop={handleRowDrop}
         onDrop={handleDrop}
         onCellUpdate={updateCell}
         onCellRemove={removeCell}

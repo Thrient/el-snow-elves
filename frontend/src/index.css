@@ -275,6 +275,15 @@ body {
 .ant-table-body::-webkit-scrollbar-thumb:hover,
 .thin-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
+/* ── Floating panel subtle scrollbar ── */
+.floating-scrollbar::-webkit-scrollbar { width: 4px; }
+.floating-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.floating-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.12);
+    border-radius: 2px;
+}
+.floating-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); }
+
 /* ── Window management cards ── */
 .window-card {
     background: var(--color-bg-page);

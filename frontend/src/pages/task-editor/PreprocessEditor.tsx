@@ -9,6 +9,14 @@ export interface PreprocessConfig {
   adaptive?: boolean;
   adaptive_block?: number;
   adaptive_c?: number;
+  canny?: boolean;
+  canny_low?: number;
+  canny_high?: number;
+  dilate?: boolean;
+  erode?: boolean;
+  morph_size?: number;
+  clahe?: boolean;
+  clahe_clip?: number;
 }
 
 interface Props {

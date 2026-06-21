@@ -257,7 +257,7 @@ class ResultPlaceholderParser(ValueParser):
 
 
 class AutoIncrementDecrementParser(ValueParser):
-    _PATTERN = re.compile(r'^\{(\w+)}\+\+$|^\{(\w+)}--$')
+    _PATTERN = re.compile(r'^\{([^{]+)\+\+}$|^\{([^{]+)--}$')
 
     def parse(self, raw_value):
         if not isinstance(raw_value, str):
@@ -460,11 +460,11 @@ class VariableProcessor:
                     raise ValueError("求值失败: {} -> {}".format(raw_value, e)) from e
         return raw_value
 
-    def apply_set(self, op, result):
-        if 'set' not in op:
+    def apply_set(self, items, result):
+        if not items:
             return
         with self._lock:
-            for item in op['set']:
+            for item in items:
                 name = item['name']
                 raw_value = item['value']
                 final_value = self.process_value(raw_value, result)

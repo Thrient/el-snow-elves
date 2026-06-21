@@ -238,8 +238,25 @@ const CellEditorPanel: FC<CellEditorProps> = ({ cell, ri, ci, onUpdate, onUpdate
               </Button>
             </div>
             <div className="flex flex-col gap-1">
-              {(cell.options ?? []).map((opt, oi) => (
-                <div key={oi} className="flex items-center gap-1">
+              {(cell.options ?? []).map((opt, oi) => {
+                const moveOpt = (from: number, to: number) => {
+                  const opts = [...(cell.options ?? [])];
+                  const [item] = opts.splice(from, 1);
+                  opts.splice(to, 0, item);
+                  onSetOpts(ri, ci, opts);
+                };
+                return (
+                <div key={oi} className="flex items-center gap-1"
+                  draggable
+                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", String(oi)); }}
+                  onDragOver={(e) => { e.preventDefault(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const from = Number(e.dataTransfer.getData("text/plain"));
+                    if (from !== oi) moveOpt(from, oi);
+                  }}
+                >
+                  <span className="text-[10px] text-[#c4bbb2] cursor-grab select-none shrink-0">⠿</span>
                   <Input size="small" placeholder="标签" className="flex-1 text-[11px]"
                     value={opt.label}
                     onChange={(e) => {
@@ -258,7 +275,8 @@ const CellEditorPanel: FC<CellEditorProps> = ({ cell, ri, ci, onUpdate, onUpdate
                     ×
                   </Button>
                 </div>
-              ))}
+                );
+              })}
               {(cell.options ?? []).length === 0 && (
                 <div className="text-[10px] text-[#9ca3af]">暂无选项</div>
               )}

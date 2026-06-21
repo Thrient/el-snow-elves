@@ -178,24 +178,19 @@ const TaskEditorPage: FC = () => {
   useEffect(() => {
     if (!restorePromptedRef.current && editor.currentTask) {
       restorePromptedRef.current = true;
-      Modal.confirm({
-        title: "检测到未保存的草稿",
-        content: `任务「${editor.currentTask.name}」有未保存的修改，是否恢复？`,
-        okText: "恢复", cancelText: "放弃",
-        onOk: async () => {
-          if (!editor.currentTask) return;
-          initRef.current = true;
-          const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", editor.currentTask.name, editor.currentTask.version).catch(() => ({})) ?? {};
-          setSavedPositions(positions);
-          requestAnimationFrame(() => {
-            const task = editor.currentTask!;
-            const { nodes, edges } = taskToFlow(task, positions, task.monitors.loop);
-            setFlowNodes(nodes); setFlowEdges(edges);
-            setTimeout(() => { initRef.current = false; }, 200);
-          });
-        },
-        onCancel: () => editor.discardDraft(),
-      });
+      // 自动恢复未保存的草稿
+      (async () => {
+        if (!editor.currentTask) return;
+        initRef.current = true;
+        const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", editor.currentTask.name, editor.currentTask.version).catch(() => ({})) ?? {};
+        setSavedPositions(positions);
+        requestAnimationFrame(() => {
+          const task = editor.currentTask!;
+          const { nodes, edges } = taskToFlow(task, positions, task.monitors.loop);
+          setFlowNodes(nodes); setFlowEdges(edges);
+          setTimeout(() => { initRef.current = false; }, 200);
+        });
+      })();
     }
     loadTaskList();
     window.pywebview?.api.emit("API:AUTOCOMPLETE:COMMON:STEPS")

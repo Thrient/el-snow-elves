@@ -32,7 +32,7 @@ export const condPart = (c: Cond) => {
 export const buildExpr = (conds: Cond[]): string => {
   const valid = conds.filter((c) => c.var);
   if (valid.length === 0) return "";
-  return `{${valid.map((c, i) => (i > 0 ? ` ${c.logic} ` : "") + condPart(c)).join("")}}`;
+  return `{${valid.map((c, i) => (i > 0 ? ` ${c.logic === '&&' ? 'and' : 'or'} ` : "") + condPart(c)).join("")}}`;
 };
 
 /** Parse expression string back to Cond[] */
@@ -42,17 +42,18 @@ export const parseExpr = (expr: string): Cond[] => {
   if (inner.startsWith("{") && inner.endsWith("}") && inner.indexOf("{", 1) === -1) {
     inner = inner.slice(1, -1);
   }
-  const parts = inner.split(/\s*(&&|\|\|)\s*/);
+  const parts = inner.split(/\s*(&&|\|\||\band\b|\bor\b)\s*/);
   const result: Cond[] = [];
   for (let i = 0; i < parts.length; i++) {
     const seg = parts[i].trim();
-    if (seg === "&&" || seg === "||") continue;
+    if (seg === "&&" || seg === "||" || seg === "and" || seg === "or") continue;
     let s = seg;
     if (s.startsWith("{")) s = s.slice(1);
     if (s.endsWith("}")) s = s.slice(0, -1);
     const m = s.match(/^(.+?)\s*(==|!=|>=|<=|>|<)\s*(['"])?([^'"]*?)\3?$/);
     if (m) {
-      const logic = i > 1 && parts[i - 1]?.trim() === "||" ? "||" : "&&";
+      const prev = parts[i - 1]?.trim();
+      const logic = prev === "||" || prev === "or" ? "||" : "&&";
       result.push({ var: `{${m[1].trim()}}`, op: m[2], val: m[4] ?? m[3] ?? "", logic });
     }
   }
@@ -83,6 +84,7 @@ export function extractAllParams(
   stepName: string,
   allStepsData: Record<string, StepDef | undefined>,
   visited: Set<string> = new Set(),
+  skipOwnParams = false,
 ): Record<string, unknown> {
   if (!stepName || stepName === "任务结束" || visited.has(stepName)) return {};
   visited.add(stepName);
@@ -106,21 +108,23 @@ export function extractAllParams(
   };
 
   // 1. From own params — both args array and named params values
-  const ownArgs = stepData.params?.args;
-  if (Array.isArray(ownArgs)) {
-    for (const arg of ownArgs) scanStr(String(arg));
-  } else if (typeof ownArgs === "string") {
-    scanStr(ownArgs);
-  }
-  // Also scan all non-args params values
-  if (stepData.params) {
-    for (const [k, v] of Object.entries(stepData.params)) {
-      if (k === "args") continue;
-      if (typeof v === "string") scanStr(v);
-      else if (Array.isArray(v)) v.forEach(item => { if (typeof item === "string") scanStr(item); });
-      else if (v !== undefined) {
-        // Capture raw non-string params (number, boolean, null) as overridable args
-        if (!(k in result)) result[k] = v;
+  if (!skipOwnParams) {
+    const ownArgs = stepData.params?.args;
+    if (Array.isArray(ownArgs)) {
+      for (const arg of ownArgs) scanStr(String(arg));
+    } else if (typeof ownArgs === "string") {
+      scanStr(ownArgs);
+    }
+    // Also scan all non-args params values
+    if (stepData.params) {
+      for (const [k, v] of Object.entries(stepData.params)) {
+        if (k === "args") continue;
+        if (typeof v === "string") scanStr(v);
+        else if (Array.isArray(v)) v.forEach(item => { if (typeof item === "string") scanStr(item); });
+        else if (v !== undefined) {
+          // Capture raw non-string params (number, boolean, null) as overridable args
+          if (!(k in result)) result[k] = v;
+        }
       }
     }
   }
@@ -131,16 +135,25 @@ export function extractAllParams(
     if (!items) continue;
     for (const item of items) {
       const itemName = typeof item === "string" ? item : item?.step;
-      // 2a. Extract from call-site args — both keys AND template refs in values
+      const isListArgs = typeof item === "object" && Array.isArray(item.args);
+      // 2a. Extract from call-site args
       if (typeof item === "object" && item.args) {
-        for (const [k, v] of Object.entries(item.args)) {
-          if (!(k in result)) result[k] = v;
-          if (typeof v === "string") scanStr(v);
+        if (isListArgs) {
+          // list args: scan items for template refs (no named keys)
+          for (const v of item.args as unknown as unknown[]) {
+            if (typeof v === "string") scanStr(v);
+          }
+        } else {
+          // dict args: scan keys and values
+          for (const [k, v] of Object.entries(item.args as Record<string, unknown>)) {
+            if (!(k in result)) result[k] = v;
+            if (typeof v === "string") scanStr(v);
+          }
         }
       }
-      // 2b. Recurse into the called step's own params + its sub-chains
+      // 2b. Recurse into the called step; skip own params when args is a list
       if (itemName) {
-        const inner = extractAllParams(itemName, allStepsData, visited);
+        const inner = extractAllParams(itemName, allStepsData, visited, isListArgs);
         for (const [k, v] of Object.entries(inner)) {
           if (!(k in result)) result[k] = v;
         }

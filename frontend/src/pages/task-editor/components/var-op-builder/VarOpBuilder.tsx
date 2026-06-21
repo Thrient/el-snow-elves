@@ -100,10 +100,11 @@ const OPS_BY_TYPE: Record<string, OpDef[]> = {
     { key: "len",    title: "求长度",     desc: "返回字符数 len(var)",                       expr: "{len(var)}" },
     { key: "contains",title:"判断包含",   desc: "检查是否包含指定文本",                      expr: "{var⊃?}",  arg: { label: "关键词", type: "text" } },
     { key: "slice",  title: "截取子串",   desc: "截取 [start, end)",                        expr: "{var[?:?]}",arg: { label: "范围", type: "text" } },
+    { key: "split",  title: "分割字符串", desc: "用分隔符分割为列表 split(var,sep)",         expr: "{split(var,?)}",arg: { label: "分隔符", type: "text" } },
   ],
   boolean: [
     { key: "value",  title: "取值",       desc: "直接取布尔值",                             expr: "{var}" },
-    { key: "not",    title: "取反 !",     desc: "true ↔ false 翻转",                        expr: "{!var}" },
+    { key: "not",    title: "取反 not",   desc: "true ↔ false 翻转",                        expr: "{not var}" },
     { key: "eq",     title: "相等判断",   desc: "比较是否等于",                             expr: "{var==?}",  arg: { label: "值", type: "text" } },
     { key: "neq",    title: "不等判断",   desc: "比较是否不等于",                           expr: "{var!=?}",  arg: { label: "值", type: "text" } },
   ],
@@ -232,6 +233,15 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
     return list;
   }, [variables, typeFilter, search]);
 
+  const customBare = useMemo(() => {
+    const raw = search.trim();
+    if (!raw) return null;
+    const bare = raw.replace(/^\{|\}$/g, "");
+    if (!bare || /[{}\s]/.test(bare)) return null;
+    const exists = variables.some((v) => v.syntax.replace(/^\{|\}$/g, "") === bare);
+    return exists ? null : bare;
+  }, [search, variables]);
+
   const opsBySection = useMemo(() => {
     if (!selectedVar) return [];
     if (selectedVar.syntax === "True") return [];
@@ -297,7 +307,19 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
   const buildCompound = (): string => {
     const current = buildSingle();
     if (!isWhen || compound.length === 0) return current;
-    return compound.map(c => c.expr + (c.connector ? " " + c.connector + " " : "")).join("") + current;
+
+    const strip = (s: string) => {
+      const t = s.trim();
+      return (t.startsWith('{') && t.endsWith('}')) ? t.slice(1, -1) : t;
+    };
+
+    let inner = '';
+    for (let i = 0; i < compound.length; i++) {
+      inner += strip(compound[i].expr);
+      if (compound[i].connector) inner += compound[i].connector === '&&' ? ' and ' : ' or ';
+    }
+    inner += strip(current);
+    return `{${inner}}`;
   };
 
   // ── Navigation ──
@@ -484,9 +506,33 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
               border: "1px solid #e8e3dc", borderRadius: 10,
               background: "#faf8f5",
             }}>
-              {filteredVars.length === 0 ? (
+              {filteredVars.length === 0 && !customBare ? (
                 <div style={{ textAlign: "center", padding: 24, fontSize: 12, color: "#b8afa6" }}>无匹配变量</div>
               ) : (
+                <>
+                {customBare && (
+                  <div
+                    onClick={() => selectVar({ syntax: `{${customBare}}`, label: `自定义: ${customBare}`, category: "task" })}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      borderBottom: "1px solid #fce4ec",
+                      background: "#fef3ef",
+                      transition: "background 0.12s",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#fde8e3"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#fef3ef"; }}
+                  >
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#d4513b" }}>{customBare}</div>
+                      <div style={{ fontSize: 10, color: "#b8afa6" }}>新建自定义变量</div>
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#fce4ec", color: "#d4513b" }}>自定义</span>
+                  </div>
+                )}
+                {filteredVars.length > 0 && (
                 filteredVars.map(v => {
                   const type = detectType(v, valueTypes);
                   const bare = stripBraces(v.syntax);
@@ -520,6 +566,8 @@ const VarOpBuilder: FC<Props> = ({ variables, onInsert, children, placeholder, c
                     </div>
                   );
                 })
+              )}
+                </>
               )}
             </div>
           </div>

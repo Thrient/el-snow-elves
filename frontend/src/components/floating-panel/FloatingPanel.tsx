@@ -1,6 +1,6 @@
 import { type FC, type MouseEvent } from "react"
 import { useEffect, useRef, useState } from "react"
-import { Badge, Switch, Tabs } from "antd"
+import { Badge, Button, Modal, Switch, Tabs } from "antd"
 import { ArrowDownOutlined, UnorderedListOutlined, InboxOutlined, ClockCircleOutlined, HolderOutlined } from "@ant-design/icons"
 import { useSessionStore } from "@/store/session-store.ts"
 import { useCharacterStore } from "@/store/character-store.ts"
@@ -40,6 +40,8 @@ const FloatingPanel: FC = () => {
   const plans = useSessionStore((s) => s.plans)
   const updateTaskVersion = useSessionStore((s) => s.updateTaskVersion)
   const taskList = useCharacterStore((s) => s.taskList)
+  const selectedHwnd = useCharacterStore((s) => s.selectedHwnd)
+  const characters = useCharacterStore((s) => s.characters)
   const [expanded, setExpanded] = useState(false)
   const [position, setPosition] = useState({ x: 16, y: 120 })
   const posRef = useRef(position)
@@ -55,6 +57,7 @@ const FloatingPanel: FC = () => {
   const [planModalUid, setPlanModalUid] = useState<number | null>(null);
   const [planModalData, setPlanModalData] = useState<PlanBase | null>(null);
 
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
   const [configTask, setConfigTask] = useState<Task | null>(null)
   const [configUid, setConfigUid] = useState<number | null>(null)
@@ -267,6 +270,23 @@ const FloatingPanel: FC = () => {
     closeConfig()
   }
 
+  const handleBatchAdd = () => {
+    const charStore = useCharacterStore.getState()
+    const sessionStore = useSessionStore.getState()
+    const hwnd = charStore.selectedHwnd
+    if (!hwnd || sessionStore.queue.length === 0) return
+    const items = sessionStore.queue.map((t) => ({
+      id: "",
+      name: t.taskName,
+      taskName: t.taskName,
+      version: t.version || '',
+      values: t.values,
+      valueTypes: t.valueTypes,
+    }))
+    charStore.pushExecuteBatch(hwnd, items as any)
+    setBatchConfirmOpen(false)
+  }
+
   const swipeIndicator = (x: number) => {
     if (x > 40) return { bg: "rgba(255,77,79,0.08)", text: "删除", color: "#ff4d4f" }
     if (x < -40) return { bg: "rgba(22,119,255,0.08)", text: "添加到窗口", color: "#1677ff" }
@@ -369,96 +389,119 @@ const FloatingPanel: FC = () => {
                   </span>
                 ),
                 children: (
-                  <div className="max-h-[45vh] overflow-y-auto overflow-x-hidden px-3 pb-3">
-                    {queue.length === 0 ? (
-                      <div className="py-10 text-center">
-                        <div className="text-[#e0e0e0] text-xl mb-2"><InboxOutlined /></div>
-                        <p className="text-[12px] text-[#bbb] m-0">暂无任务</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        {queue.map((item, index) => {
-                          const indicator = swiping?.uid === item._uid && swiping?.type === "queue" ? swipeIndicator(swipeX) : null
-                          const isDragOver = dragOverUid === item._uid
-                          return (
-                            <div key={item._uid} className="relative overflow-hidden rounded-xl"
-                              onDragOver={handleDragOver(item._uid)}
-                              onDragLeave={() => setDragOverUid(null)}
-                              onDrop={handleDrop(item._uid)}
-                            >
-                              {indicator && (
-                                <div
-                                  className="absolute inset-0 rounded-xl flex items-center px-4 text-[11px] font-semibold transition-opacity duration-100"
-                                  style={{
-                                    backgroundColor: indicator.bg,
-                                    color: indicator.color,
-                                    justifyContent: swipeX > 0 ? "flex-start" : "flex-end",
-                                  }}
-                                >
-                                  {indicator.text}
-                                </div>
-                              )}
-                              {/* drag-over indicator */}
-                              {isDragOver && (
-                                <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#1677ff] rounded-full z-10" />
-                              )}
-                              {(() => {
-                                const tn = item.taskName || (item as any).name;
-                                const meta = taskList.find((t: any) => t.name === tn);
-                                const versions = meta?.versions ?? [];
-                                const latest = meta?.latest ?? "?";
-                                const pinned = item.version ?? null;
-                                const stale = pinned !== null && versions.length > 0 && !versions.includes(pinned);
-                                const taskMissing = !meta;
-                                const cardBg = taskMissing ? "rgba(255,77,79,0.06)" : stale && !taskMissing ? "rgba(250,140,22,0.06)" : cardColors[index % cardColors.length];
-                                const cardBorder = taskMissing ? "rgba(255,77,79,0.2)" : stale && !taskMissing ? "rgba(250,140,22,0.2)" : cardBorderColors[index % cardBorderColors.length];
-                                return (
-                              <div
-                                className="rounded-xl px-4 py-3 cursor-pointer select-none relative"
-                                style={{
-                                  transition: swiping?.uid === item._uid && swiping?.type === "queue" ? "none" : "transform 180ms ease, box-shadow 180ms ease",
-                                  transform: swiping?.uid === item._uid && swiping?.type === "queue" ? `translateX(${swipeX}px)` : undefined,
-                                  backgroundColor: cardBg,
-                                  border: `1px solid ${cardBorder}`,
-                                  opacity: dragUid === item._uid ? 0.4 : 1,
-                                }}
-                                onClick={() => {
-                                  if (swiped.current) { swiped.current = false; return }
-                                  openConfig(item._uid)
-                                }}
-                                onMouseDown={(e) => handleCardMouseDown({ uid: item._uid, type: "queue" }, e)}
+                  <>
+                    <div className="max-h-[45vh] overflow-y-auto overflow-x-hidden px-3 pb-3 floating-scrollbar">
+                      {queue.length === 0 ? (
+                        <div className="py-10 text-center">
+                          <div className="text-[#e0e0e0] text-xl mb-2"><InboxOutlined /></div>
+                          <p className="text-[12px] text-[#bbb] m-0">暂无任务</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          {queue.map((item, index) => {
+                            const indicator = swiping?.uid === item._uid && swiping?.type === "queue" ? swipeIndicator(swipeX) : null
+                            const isDragOver = dragOverUid === item._uid
+                            return (
+                              <div key={item._uid} className="relative overflow-hidden rounded-xl"
+                                onDragOver={handleDragOver(item._uid)}
+                                onDragLeave={() => setDragOverUid(null)}
+                                onDrop={handleDrop(item._uid)}
                               >
-                                <div className="flex items-center gap-3">
-                                  <span
-                                    className="flex-shrink-0 cursor-grab active:cursor-grabbing text-[#bbb] hover:text-[#1677ff] transition-colors"
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                    draggable
-                                    onDragStart={handleDragStart(item._uid)}
-                                    onDragEnd={handleDragEnd}
+                                {indicator && (
+                                  <div
+                                    className="absolute inset-0 rounded-xl flex items-center px-4 text-[11px] font-semibold transition-opacity duration-100"
+                                    style={{
+                                      backgroundColor: indicator.bg,
+                                      color: indicator.color,
+                                      justifyContent: swipeX > 0 ? "flex-start" : "flex-end",
+                                    }}
                                   >
-                                    <HolderOutlined className="text-[11px]" />
-                                  </span>
-                                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: taskMissing ? "#ff4d4f" : stale ? "#fa8c16" : dotColors[index % dotColors.length] }} />
-                                  <span className="text-[12px] font-medium truncate leading-normal" style={{ color: taskMissing ? "#ff4d4f" : undefined }}>{tn}</span>
-                                  <span onClick={(e) => e.stopPropagation()}>
-                                    <VersionTag
-                                      versions={versions}
-                                      latest={latest}
-                                      selectedVersion={pinned}
-                                      stale={stale}
-                                      onChange={(v) => updateTaskVersion(item._uid, v)}
-                                    />
-                                  </span>
+                                    {indicator.text}
+                                  </div>
+                                )}
+                                {/* drag-over indicator */}
+                                {isDragOver && (
+                                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#1677ff] rounded-full z-10" />
+                                )}
+                                {(() => {
+                                  const tn = item.taskName || (item as any).name;
+                                  const meta = taskList.find((t: any) => t.name === tn);
+                                  const versions = meta?.versions ?? [];
+                                  const latest = meta?.latest ?? "?";
+                                  const pinned = item.version ?? null;
+                                  const stale = pinned !== null && versions.length > 0 && !versions.includes(pinned);
+                                  const taskMissing = !meta;
+                                  const cardBg = taskMissing ? "rgba(255,77,79,0.06)" : stale && !taskMissing ? "rgba(250,140,22,0.06)" : cardColors[index % cardColors.length];
+                                  const cardBorder = taskMissing ? "rgba(255,77,79,0.2)" : stale && !taskMissing ? "rgba(250,140,22,0.2)" : cardBorderColors[index % cardBorderColors.length];
+                                  return (
+                                <div
+                                  className="rounded-xl px-4 py-3 cursor-pointer select-none relative"
+                                  style={{
+                                    transition: swiping?.uid === item._uid && swiping?.type === "queue" ? "none" : "transform 180ms ease, box-shadow 180ms ease",
+                                    transform: swiping?.uid === item._uid && swiping?.type === "queue" ? `translateX(${swipeX}px)` : undefined,
+                                    backgroundColor: cardBg,
+                                    border: `1px solid ${cardBorder}`,
+                                    opacity: dragUid === item._uid ? 0.4 : 1,
+                                  }}
+                                  onClick={() => {
+                                    if (swiped.current) { swiped.current = false; return }
+                                    openConfig(item._uid)
+                                  }}
+                                  onMouseDown={(e) => handleCardMouseDown({ uid: item._uid, type: "queue" }, e)}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <span
+                                      className="flex-shrink-0 cursor-grab active:cursor-grabbing text-[#bbb] hover:text-[#1677ff] transition-colors"
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                      draggable
+                                      onDragStart={handleDragStart(item._uid)}
+                                      onDragEnd={handleDragEnd}
+                                    >
+                                      <HolderOutlined className="text-[11px]" />
+                                    </span>
+                                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: taskMissing ? "#ff4d4f" : stale ? "#fa8c16" : dotColors[index % dotColors.length] }} />
+                                    <span className="text-[12px] font-medium truncate leading-normal" style={{ color: taskMissing ? "#ff4d4f" : undefined }}>{tn}</span>
+                                    <span onClick={(e) => e.stopPropagation()}>
+                                      <VersionTag
+                                        versions={versions}
+                                        latest={latest}
+                                        selectedVersion={pinned}
+                                        stale={stale}
+                                        onChange={(v) => updateTaskVersion(item._uid, v)}
+                                      />
+                                    </span>
+                                  </div>
                                 </div>
+                                  );
+                                })()}
                               </div>
-                                );
-                              })()}
-                            </div>
-                          )
-                        })}
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    {/* Batch add all queue tasks to current window — fixed at bottom */}
+                    {queue.length > 0 && (
+                      <div style={{ borderTop: '1px dashed rgba(0,0,0,0.08)', padding: '8px 12px' }}>
+                        <Button
+                          block
+                          type="primary"
+                          size="small"
+                          disabled={!selectedHwnd}
+                          title={!selectedHwnd ? '请先在窗口页面选择一个绑定的窗口' : undefined}
+                          onClick={() => setBatchConfirmOpen(true)}
+                          style={{ borderRadius: 8, fontWeight: 600, fontSize: 12 }}
+                        >
+                          全部添加到当前窗口
+                        </Button>
+                        {selectedHwnd && (
+                          <div style={{ fontSize: 10, color: '#bbb', textAlign: 'center', marginTop: 4 }}>
+                            目标窗口：{characters.find(c => c.hwnd === selectedHwnd)?.character || selectedHwnd}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                  </>
                 ),
               },
               {
@@ -473,7 +516,7 @@ const FloatingPanel: FC = () => {
                   </span>
                 ),
                 children: (
-                  <div className="max-h-[45vh] overflow-y-auto overflow-x-hidden px-3 pb-3">
+                  <div className="max-h-[45vh] overflow-y-auto overflow-x-hidden px-3 pb-3 floating-scrollbar">
                     {plans.length === 0 ? (
                       <div className="py-10 text-center">
                         <div className="text-[#e0e0e0] text-xl mb-2"><ClockCircleOutlined /></div>
@@ -574,6 +617,21 @@ const FloatingPanel: FC = () => {
           setPlanModalUid(null);
         }}
       />
+
+      <Modal
+        title="批量添加任务"
+        open={batchConfirmOpen}
+        onOk={handleBatchAdd}
+        onCancel={() => setBatchConfirmOpen(false)}
+        okText="确认添加"
+        cancelText="取消"
+        centered
+      >
+        <p style={{ margin: 0 }}>
+          将全部 <strong>{queue.length}</strong> 个待执行任务添加到
+          <strong> {characters.find(c => c.hwnd === selectedHwnd)?.character || selectedHwnd}</strong>？
+        </p>
+      </Modal>
     </>
   )
 }

@@ -267,9 +267,25 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
                     暂无选项，点击上方按钮添加
                   </div>
                 )}
-                {(cell.options ?? []).map((opt: CellOption, oi: number) => (
-                  <div key={oi} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl group">
-                    <span className="text-[10px] text-slate-400 font-mono font-semibold shrink-0 w-5 text-right">{oi + 1}</span>
+                {(cell.options ?? []).map((opt: CellOption, oi: number) => {
+                  const moveOpt = (from: number, to: number) => {
+                    const opts = [...(cell.options ?? [])];
+                    const [item] = opts.splice(from, 1);
+                    opts.splice(to, 0, item);
+                    onUpdateCell(ri, ci, { options: opts });
+                  };
+                  return (
+                  <div key={oi} className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-xl group"
+                    draggable
+                    onDragStart={(e) => { e.dataTransfer.setData("text/plain", String(oi)); }}
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const from = Number(e.dataTransfer.getData("text/plain"));
+                      if (from !== oi) moveOpt(from, oi);
+                    }}
+                  >
+                    <span className="text-[12px] text-slate-300 cursor-grab select-none shrink-0 hover:text-slate-500">⠿</span>
                     <Input size="small" placeholder="标签" className="flex-1 !text-xs !rounded-xl"
                       value={opt.label}
                       onChange={(e) => {
@@ -295,7 +311,8 @@ const ControlEditorModal: FC<ControlEditorModalProps> = ({
                       </svg>
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}

@@ -31,11 +31,11 @@ CHANNEL_TYPE = "360_assistant"
 _AUTH_URL = (
     "https://openapi.360.cn/oauth2/authorize?"
     f"client_id={APPKEY}&"
-    "response_type=code&"
+    "response_type=token&"
     "redirect_uri=oob&"
     "scope=basic&"
     "display=desktop&"
-    "force_login=1&"
+    "force_login=0&"
     "oauth_version=1.0"
 )
 
@@ -59,7 +59,7 @@ def _add_navigation_handler(window, login_container: dict) -> bool:
         def handler(sender, args: CoreWebView2NavigationStartingEventArgs):
             uri = args.Uri or ""
             if "code=" in uri or "access_token=" in uri:
-                logging.info(f"[Qihu360Channel] OAuth 重定向: {uri[:200]}")
+                logging.debug(f"[Qihu360Channel] OAuth 重定向: {uri[:200]}")
                 login_container["redirect"] = uri
 
         wv2.NavigationStarting += EventHandler[CoreWebView2NavigationStartingEventArgs](handler)
@@ -72,32 +72,33 @@ def _add_navigation_handler(window, login_container: dict) -> bool:
 
 def _exchange_code(code: str) -> dict:
     """用 code 换 access_token + refresh_token + expires_in"""
-    for attempt in range(3):
-        params_list = [
-            {"grant_type": "authorization_code", "code": code, "client_id": APPKEY,
-             "client_secret": APPKEY, "redirect_uri": "oob"},
-            {"grant_type": "authorization_code", "code": code, "client_id": APPKEY,
-             "redirect_uri": "oob"},
-            {"grant_type": "authorization_code", "code": code, "client_id": APPKEY,
-             "client_secret": APPID, "redirect_uri": "oob"},
-        ]
-        if attempt >= len(params_list):
-            break
+    for i, use_basic_auth in enumerate([True, False]):
         try:
-            r = requests.get(_TOKEN_URL, params=params_list[attempt], timeout=15)
+            data_payload = {"grant_type": "authorization_code", "code": code,
+                          "redirect_uri": "https://openapi.360.cn/page/oauth2_succeed",
+                          "scope": "basic"}
+            kw = {"data": data_payload, "timeout": 15}
+            if use_basic_auth:
+                kw["auth"] = (APPKEY, APPKEY)
+                data_payload["client_id"] = APPKEY
+            else:
+                data_payload["client_id"] = APPKEY
+                data_payload["client_secret"] = APPKEY
+            r = requests.post(_TOKEN_URL, **kw)
             data = r.json()
+            auth_mode = "BasicAuth" if use_basic_auth else "body"
+            logging.debug(f"[Qihu360Channel] token 响应 ({auth_mode}): status={r.status_code}, keys={list(data.keys())}, error={data.get('error', 'N/A')}")
             at = data.get("access_token", "")
             if at:
                 rt = data.get("refresh_token", "")
                 ei = data.get("expires_in", 0)
                 logging.info(
-                    f"[Qihu360Channel] access_token 获取成功 (attempt {attempt+1}), "
+                    f"[Qihu360Channel] access_token 获取成功 ({auth_mode}), "
                     f"expires_in={ei}, has_refresh_token={bool(rt)}"
                 )
                 return {"access_token": at, "refresh_token": rt, "expires_in": int(ei) if ei else 0}
-            logging.debug(f"[Qihu360Channel] token attempt {attempt+1}: {data.get('error', 'unknown')}")
         except Exception as e:
-            logging.warning(f"[Qihu360Channel] token attempt {attempt+1} 异常: {e}")
+            logging.warning(f"[Qihu360Channel] token 异常: {e}")
     return {}
 
 
@@ -146,9 +147,9 @@ def _refresh_access_token(refresh_token: str) -> str | None:
 
 
 class Qihu360Login:
-    """360 OAuth 登录 — webview（独立临时缓存目录，隔离 cookie）"""
+    """360 OAuth 登录 — webview（持久化 cookie 缓存，支持静默刷新）"""
 
-    def __init__(self):
+    def __init__(self, cache_dir: str = ""):
         self._window: webview.Window | None = None
         self._access_token: str = ""
         self._refresh_token: str = ""
@@ -157,19 +158,23 @@ class Qihu360Login:
         self._done = threading.Event()
         self._temp_dir: str = ""
         self._original_cache_dir: str = ""
+        self._cache_dir: str = cache_dir  # 持久化缓存目录
 
-    def login(self) -> dict | None:
+    def login(self, silent: bool = False) -> dict | None:
+        """silent=True 时隐藏窗口，依赖持久化 cookie 自动登录"""
         self._done.clear()
         login_container: dict = {}
 
-        # 独立临时缓存目录 — 每次登录隔离 cookie（参考 VivoChannel）
-        self._temp_dir = _os.path.normpath(
-            _os.path.join(APP_DATA, "qihu360_sessions", _uuid.uuid4().hex[:8])
-        )
+        if self._cache_dir:
+            self._temp_dir = self._cache_dir
+        else:
+            self._temp_dir = _os.path.normpath(
+                _os.path.join(APP_DATA, "qihu360_sessions", _uuid.uuid4().hex[:8])
+            )
         _os.makedirs(self._temp_dir, exist_ok=True)
         self._original_cache_dir = _wf.cache_dir
         _wf.cache_dir = self._temp_dir
-        logging.debug(f"[Qihu360Channel] 临时缓存目录: {self._temp_dir}")
+        logging.debug(f"[Qihu360Channel] 缓存目录: {self._temp_dir}, silent={silent}")
 
         try:
             icon_bytes = requests.get("https://www.360.cn/favicon.ico", timeout=5).content
@@ -180,10 +185,11 @@ class Qihu360Login:
             self._window = webview.create_window(
                 "360 账号登录",
                 _AUTH_URL,
-                width=480,
-                height=720,
+                width=1 if silent else 480,
+                height=1 if silent else 720,
+                hidden=silent,
             )
-            if icon_bytes:
+            if not silent and icon_bytes:
                 from script.account.channel.ChannelUtils import _apply_icon_bytes
                 _apply_icon_bytes(self._window, icon_bytes)
         finally:
@@ -193,8 +199,7 @@ class Qihu360Login:
             time.sleep(2)
             _add_navigation_handler(self._window, login_container)
 
-            code = None
-            for _ in range(480):
+            for _ in range(240 if silent else 480):
                 if self._done.is_set():
                     return
 
@@ -203,12 +208,20 @@ class Qihu360Login:
                     if "code=" in redirect:
                         parsed = urlparse(redirect)
                         code = parse_qs(parsed.query).get("code", [""])[0]
+                        if code:
+                            exchange_result = _exchange_code(code)
+                            if exchange_result:
+                                self._access_token = exchange_result.get("access_token", "")
+                                self._refresh_token = exchange_result.get("refresh_token", "")
+                                self._expires_in = exchange_result.get("expires_in", 0)
                     elif "#" in redirect and "access_token=" in redirect.split("#")[1]:
                         self._access_token = parse_qs(redirect.split("#")[1]).get("access_token", [""])[0]
-                    if code or self._access_token:
+                        ei_str = parse_qs(redirect.split("#")[1]).get("expires_in", ["0"])[0]
+                        self._expires_in = int(ei_str) if ei_str else 0
+                    if self._access_token:
                         break
 
-                # JS 提取 oob 页面上的授权码
+                # JS 提取页面上的 token（适用于 oob / 页面展示场景）
                 try:
                     raw = self._window.evaluate_js(
                         "(function(){var b=document.body?document.body.innerText:'';"
@@ -216,31 +229,32 @@ class Qihu360Login:
                     )
                     if raw and raw != "null":
                         code = str(raw).strip()
-                        logging.info(f"[Qihu360Channel] JS 提取到 code: {code[:8]}...")
-                        break
+                        exchange_result = _exchange_code(code)
+                        if exchange_result:
+                            self._access_token = exchange_result.get("access_token", "")
+                            self._refresh_token = exchange_result.get("refresh_token", "")
+                            self._expires_in = exchange_result.get("expires_in", 0)
+                            logging.info(f"[Qihu360Channel] JS 提取 code 并交换成功: {code[:8]}...")
+                            break
                 except Exception:
                     pass
 
                 time.sleep(0.5)
 
-            if code and not self._access_token:
-                exchange_result = _exchange_code(code)
-                if exchange_result:
-                    self._access_token = exchange_result.get("access_token", "")
-                    self._refresh_token = exchange_result.get("refresh_token", "")
-                    self._expires_in = exchange_result.get("expires_in", 0)
             if self._access_token:
                 self._user_id = self._access_token[:10]
-                logging.info(f"[Qihu360Channel] access_token, user_id={self._user_id}")
+                logging.debug(f"[Qihu360Channel] access_token, user_id={self._user_id}")
 
             if not self._done.is_set():
                 self._done.set()
             _close_window_safe(self._window)
 
         threading.Thread(target=_run, daemon=True).start()
-        self._done.wait(timeout=260)
+        self._done.wait(timeout=120 if silent else 260)
 
-        self._cleanup_temp_dir()
+        # 录制模式保留缓存目录（持久化 cookie），refresh 模式也保留
+        if not self._cache_dir:
+            self._cleanup_temp_dir()
 
         if self._user_id and self._access_token:
             return {"user_id": self._user_id, "access_token": self._access_token,
@@ -272,7 +286,10 @@ def _close_window_safe(window):
 
 
 def record() -> dict | None:
-    login = Qihu360Login()
+    cache_dir = _os.path.normpath(
+        _os.path.join(APP_DATA, "qihu360_sessions", f"persist_{_uuid.uuid4().hex[:8]}")
+    )
+    login = Qihu360Login(cache_dir=cache_dir)
     result = login.login()
     if not result:
         return None
@@ -284,7 +301,26 @@ def record() -> dict | None:
         "user_id": result.get("user_id", ""),
         "appid": APPID,
         "appkey": APPKEY,
+        "cache_dir": cache_dir,
     }
+
+
+def refresh_token_silent(channel_auth: dict) -> dict | None:
+    """静默刷新：用持久化 cookie 重新授权，无需用户操作。
+    返回更新后的 channel_auth 或 None。"""
+    cache_dir = channel_auth.get("cache_dir", "")
+    if not cache_dir or not _os.path.isdir(cache_dir):
+        logging.warning("[Qihu360Channel] 无持久化缓存目录，无法静默刷新")
+        return None
+    login = Qihu360Login(cache_dir=cache_dir)
+    result = login.login(silent=True)
+    if result and result.get("access_token"):
+        channel_auth["access_token"] = result["access_token"]
+        channel_auth["refresh_token"] = result.get("refresh_token", "")
+        channel_auth["expires_in"] = result.get("expires_in", 0)
+        logging.info("[Qihu360Channel] 静默刷新成功")
+        return channel_auth
+    return None
 
 
 def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
@@ -335,10 +371,10 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
     uni_data = post_signed_data(sauth_body, short_game_id)
     unisdk_json_b64 = uni_data.get("unisdk_login_json", "")
     if not unisdk_json_b64:
-        # access_token 可能已过期（有效期仅1小时），尝试用 refresh_token 刷新
+        # Step 1: 用 refresh_token 刷新 access_token
         refresh_token = str(channel_auth.get("refresh_token", ""))
         if refresh_token:
-            logging.info("[Qihu360Channel] uni_sauth 失败，尝试刷新 access_token...")
+            logging.info("[Qihu360Channel] uni_sauth 失败，尝试 refresh_token...")
             new_at = _refresh_access_token(refresh_token)
             if new_at:
                 channel_auth["access_token"] = new_at
@@ -346,7 +382,17 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
                 uni_data = post_signed_data(sauth_body, short_game_id)
                 unisdk_json_b64 = uni_data.get("unisdk_login_json", "")
                 if unisdk_json_b64:
-                    logging.info("[Qihu360Channel] 刷新后 uni_sauth 成功")
+                    logging.info("[Qihu360Channel] refresh_token 刷新成功")
+        # Step 2: refresh_token 也失败，尝试 cookie 静默刷新
+        if not unisdk_json_b64:
+            logging.info("[Qihu360Channel] 尝试 cookie 静默刷新...")
+            refreshed = refresh_token_silent(channel_auth)
+            if refreshed:
+                sauth_body["sessionid"] = refreshed["access_token"]
+                uni_data = post_signed_data(sauth_body, short_game_id)
+                unisdk_json_b64 = uni_data.get("unisdk_login_json", "")
+                if unisdk_json_b64:
+                    logging.info("[Qihu360Channel] cookie 静默刷新成功")
     if not unisdk_json_b64:
         logging.error(f"[Qihu360Channel] uni_sauth 失败: {uni_data}")
         return None

@@ -74,6 +74,7 @@ export const PARAM_META: Record<string, ParamMeta> = {
   press:       { label: "按下时长", color: "#f97316", icon: <FieldTimeOutlined />,   desc: "按下后保持的持续时间。0=普通点击，>0=长按",                       range: "默认 0 ms" },
   pre_delay:  { label: "操作前延迟",color: "#f97316", icon: <PauseOutlined />,         desc: "执行操作前等待的时间，确保界面稳定后再操作",                         range: "默认 1500 ms" },
   post_delay: { label: "操作后延迟",color: "#84cc16", icon: <CaretRightOutlined />,    desc: "执行操作后等待的时间，确保界面响应完成后再继续",                     range: "默认 1500 ms" },
+  dealy:     { label: "重试间隔",  color: "#f59e0b", icon: <FieldTimeOutlined />,    desc: "匹配失败后重试的间隔，避免高频轮询消耗性能",                         range: "默认 500 ms" },
   preprocess: { label: "图像预处理",color: "#8b5cf6", icon: <BulbOutlined />,          desc: "对截图的额外图像处理，提高特定场景下的匹配准确率。二值化、反转、自适应等独立开关组合" },
   method:     { label: "匹配算法",  color: "#db2777", icon: <ScanOutlined />,         desc: "模板匹配算法。ccoeff=相关系数（默认，不抗旋转缩放），sift=特征点（抗旋转缩放透视）", range: "ccoeff / sift" },
   account_name: { label: "账号名称", color: "#1677ff", icon: <UserOutlined />,          desc: "已录制的账号名，用于登录时注入凭证。通常用变量 {account_name} 在任务配置中设定" },
@@ -91,8 +92,8 @@ export const PARAM_META: Record<string, ParamMeta> = {
 export const ACTION_PARAMS: Record<string, string[]> = {
   touch:          ["threshold", "click_mode", "box", "pos", "x", "y", "count", "press", "pre_delay", "post_delay", "seconds", "k", "preprocess", "method", "hwnd"],
   exits:          ["threshold", "box", "preprocess", "method", "hwnd"],
-  wait:           ["threshold", "box", "seconds", "k", "preprocess", "method", "hwnd"],
-  wait_disappear: ["threshold", "box", "seconds", "k", "preprocess", "method", "hwnd"],
+  wait:           ["threshold", "box", "seconds", "dealy", "k", "preprocess", "method", "hwnd"],
+  wait_disappear: ["threshold", "box", "seconds", "dealy", "k", "preprocess", "method", "hwnd"],
   exits_color:    ["color", "tolerance", "box", "hwnd"],
   touch_color:    ["color", "tolerance", "box", "pos", "click_mode", "count", "press", "pre_delay", "post_delay", "hwnd"],
   wait_color:     ["color", "tolerance", "box", "seconds", "k", "hwnd"],
@@ -144,6 +145,7 @@ export const PARAM_DEFAULTS: Record<string, unknown> = {
   press: 0,
   pre_delay: 1500,
   post_delay: 1500,
+  dealy: 500,
   method: "ccoeff",
   type: "info",
 };

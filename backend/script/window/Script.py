@@ -60,7 +60,7 @@ class Script(Thread):
                 if work is None:
                     logging.error(f"任务解析失败: name={task_name} version={task_version}")
                     continue
-                work["values"] = task.get("values", work.get("values", {}))
+                work["values"] = {**work.get("values", {}), **task.get("values", {})}
                 work["valueTypes"] = task.get("valueTypes", work.get("valueTypes", {}))
                 debug_start = task.get("debugStart")
                 debug_single = task.get("debugSingle", False)

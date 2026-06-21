@@ -243,6 +243,7 @@ class AccountProxy:
         self.port = port or PROXY_PORT
         self.mode = mode
         self.token_info = token_info
+        self.account_name: str = ""
         self._thread = None
         self._master = None
         self._addon = None

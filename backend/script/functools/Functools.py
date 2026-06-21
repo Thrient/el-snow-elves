@@ -31,8 +31,8 @@ def repeat(count=1):
     return decorator
 
 
-def during(seconds=1800, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda: True):
-    """持续运行（seconds 参数单位 ms）。seconds=null 时仅执行一次。"""
+def during(seconds=1800, dealy=500, is_valid=lambda x: bool(x), predicate=lambda: True):
+    """持续运行（seconds/dealy 参数单位 ms）。seconds=null 时仅执行一次。"""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -43,7 +43,7 @@ def during(seconds=1800, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda
                 result = func(*args, **kwargs)
                 if kwargs.get("is_valid", is_valid)(result):
                     return result
-                if safe_sleep(float(kwargs.get('dealy', dealy)), lambda: not kwargs.get("predicate", predicate)()):
+                if safe_sleep(float(kwargs.get('dealy', dealy)) / 1000, lambda: not kwargs.get("predicate", predicate)()):
                     break
             return None
 
@@ -52,7 +52,7 @@ def during(seconds=1800, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda
     return decorator
 
 
-def wait_until(k=1, seconds=1000, dealy=0.5, is_valid=lambda x: bool(x), predicate=lambda: True):
+def wait_until(k=1, seconds=1000, dealy=500, is_valid=lambda x: bool(x), predicate=lambda: True):
     def decorator(func):
         def wrapper(*args, **kwargs):
             if kwargs.get('seconds', seconds) is None:
@@ -68,7 +68,7 @@ def wait_until(k=1, seconds=1000, dealy=0.5, is_valid=lambda x: bool(x), predica
                         return result
                 else:
                     count = 0
-                if safe_sleep(float(kwargs.get('dealy', dealy)),
+                if safe_sleep(float(kwargs.get('dealy', dealy)) / 1000,
                               lambda: not kwargs.get("predicate", predicate)()):
                     break
             return None

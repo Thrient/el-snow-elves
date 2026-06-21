@@ -45,13 +45,13 @@ const SubListEditor: FC<SubListEditorProps> = ({ list, ctx, isKeyValue, color, o
           <div className="flex items-center gap-2 px-3.5 py-2">
             <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-semibold shrink-0"
               style={{ background: `${color}18`, color }}>{i + 1}</span>
-            <AutoComplete size="small" variant="borderless" placeholder="变量名" className="flex-1 font-mono text-[12px]" value={item.name}
+            <AutoComplete size="small" variant="borderless" placeholder="变量名" className="flex-1 min-w-0 font-mono text-[12px]" value={item.name}
               popupMatchSelectWidth={false}
               options={ctx.taskValueVars.map(v => ({ value: v.value.replace(/^\{|\}$/g, ""), label: v.label.replace(/^\{|\}$/g, "") }))}
               filterOption={(iv, opt) => opt?.label?.toLowerCase().includes(iv.toLowerCase()) ?? false}
               onChange={(v) => { const u = [...arr]; u[i] = { ...u[i], name: (v ?? "").replace(/^\{|\}$/g, "") }; onChange(u); }} />
             <span className="font-mono text-[10px] text-muted shrink-0">=</span>
-            <AutoComplete className="flex-1" size="small" variant="borderless" placeholder="值" value={item.value as string}
+            <AutoComplete className="flex-1 min-w-0" size="small" variant="borderless" placeholder="值" value={item.value as string}
               popupMatchSelectWidth={false}
               options={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars, ...ctx.taskSteps, ...ctx.taskCommonSteps, ...ctx.globalCommonSteps]}
               filterOption={(iv, opt) => opt?.label?.toLowerCase().includes(iv.toLowerCase()) ?? false}

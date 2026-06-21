@@ -116,6 +116,8 @@ class SessionManager:
         if channel_auth and not token_info:
             try:
                 self._start_session(INJECTION, account_name, token_info={"source": "channel", "channel_auth": channel_auth})
+                self._proxy.account_name = account_name
+                self._proxy.account_name = account_name
                 self._proxy.channel_fake = True
                 return {"status": "replaying", "message": f"正在回放「{account_name}」，请在游戏中触发登录"}
             except Exception as e:

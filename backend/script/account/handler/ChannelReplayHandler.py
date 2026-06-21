@@ -130,6 +130,7 @@ class ChannelReplayHandler(BaseHandler):
                 if r.status_code == 200:
                     self.proxy.channel_done = True
                     logging.info("[Proxy] channel confirm_login: OK")
+                    _persist_channel_auth(self.proxy, ca)
                 else:
                     logging.error("[Proxy] channel confirm_login FAIL")
 
@@ -142,3 +143,16 @@ class ChannelReplayHandler(BaseHandler):
     def _build_confirm_data(self, channel_auth: dict, short_game_id: str) -> dict | None:
         """子类实现：构建 confirm_login POST body（不含 uuid / game_id）"""
         ...
+
+
+def _persist_channel_auth(proxy, channel_auth: dict):
+    """将可能被刷新的 channel_auth 持久化回账号文件"""
+    name = getattr(proxy, "account_name", "")
+    if not name or not channel_auth:
+        return
+    try:
+        from script.account.AccountManager import AccountManager
+        AccountManager.save_account({"name": name, "channel_auth": dict(channel_auth)})
+        logging.debug(f"[Proxy] channel_auth 已持久化: {name}")
+    except Exception as e:
+        logging.warning(f"[Proxy] 持久化 channel_auth 失败: {e}")

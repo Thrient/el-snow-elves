@@ -54,14 +54,6 @@ export function coerceValue(raw: string, type: VarType): unknown {
     return type === "list" ? [] : type === "number" ? null : "";
   }
   switch (type) {
-    case "list":
-      try {
-        const v = JSON.parse(raw);
-        return Array.isArray(v) ? v : [raw];
-      } catch {
-        // 非 JSON 格式：按单元素列表处理（如用户输入 `按钮课业困难`）
-        return [raw];
-      }
     case "number": {
       const n = Number(raw);
       return isNaN(n) ? raw : n;

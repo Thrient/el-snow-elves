@@ -24,7 +24,7 @@ const ALL_OPS: OpBtn[] = [
 interface VarItem {
   syntax: string;
   label: string;
-  category: "config" | "task" | "system" | "step";
+  category: "config" | "task" | "system" | "step" | "custom";
 }
 
 interface Props {
@@ -36,6 +36,7 @@ interface Props {
 }
 
 const CAT_LABELS: Record<string, string> = {
+  custom: "自定义",
   config: "全局设置",
   task: "任务变量",
   system: "系统",
@@ -43,6 +44,7 @@ const CAT_LABELS: Record<string, string> = {
 };
 
 const CAT_COLORS: Record<string, string> = {
+  custom: "#d4513b",
   system: "#8b5cf6",
   config: "#3b82f6",
   task: "#10b981",
@@ -81,15 +83,27 @@ const VariablePicker: FC<Props> = ({ variables, onInsert, children, placeholder,
     );
   }, [variables, search]);
 
+  const customBare = useMemo(() => {
+    const raw = search.trim();
+    if (!raw) return null;
+    const bare = raw.replace(/^\{|\}$/g, "");
+    if (!bare) return null;
+    const exists = variables.some((v) => v.syntax.replace(/^\{|\}$/g, "") === bare);
+    return exists ? null : bare;
+  }, [search, variables]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, VarItem[]>();
+    if (customBare) {
+      map.set("custom", [{ syntax: `{${customBare}}`, label: `自定义: ${customBare}`, category: "custom" as const }]);
+    }
     for (const item of filtered) {
       const list = map.get(item.category) ?? [];
       list.push(item);
       map.set(item.category, list);
     }
     return map;
-  }, [filtered]);
+  }, [filtered, customBare]);
 
   const handlePick = (bareName: string, op: VarOp) => {
     const opDef = ALL_OPS.find((o) => o.key === op);
