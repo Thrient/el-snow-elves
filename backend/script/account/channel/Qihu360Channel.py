@@ -31,7 +31,7 @@ CHANNEL_TYPE = "360_assistant"
 _AUTH_URL = (
     "https://openapi.360.cn/oauth2/authorize?"
     f"client_id={APPKEY}&"
-    "response_type=token&"
+    "response_type=code&"
     "redirect_uri=oob&"
     "scope=basic&"
     "display=desktop&"
@@ -404,7 +404,7 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
         real_sdkuid = user_id or "3184868108"
     logging.info(f"[Qihu360Channel] uni_sauth OK, sdkuid={real_sdkuid}")
 
-    # 构建 extra_unisdk_data（对齐 idv-login 格式）
+    # 构建 extra_unisdk_data
     extra_fields = {"realname": _json.dumps({"realname_type": 0, "age": 22})}
     extra_res = {"SAUTH_STR": "", "SAUTH_JSON": "", **extra_fields}
 
