@@ -15,6 +15,7 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> 
   huawei:          { label: "华为", color: "#fa8c16", bg: "rgba(250,140,22,0.08)" },
   qihu360:         { label: "360",  color: "#52c41a", bg: "rgba(82,196,26,0.08)" },
   "360_assistant": { label: "360",  color: "#52c41a", bg: "rgba(82,196,26,0.08)" },
+  oppo:            { label: "OPPO", color: "#1aad19", bg: "rgba(26,173,25,0.08)" },
 };
 
 function getTypeInfo(t?: string) {
@@ -81,7 +82,7 @@ const AccountsPage: FC = () => {
   // ---- 录制 ----
   const [recordModalOpen, setRecordModalOpen] = useState(false);
   const [recordName, setRecordName] = useState("");
-  const [recordMode, setRecordMode] = useState<"qr" | "vivo" | "bilibili" | "huawei" | "qihu360">("qr");
+  const [recordMode, setRecordMode] = useState<"qr" | "vivo" | "bilibili" | "huawei" | "qihu360" | "oppo">("qr");
   const [recording, setRecording] = useState(false);
   const [recordStatus, setRecordStatus] = useState<string>("");
 
@@ -90,9 +91,9 @@ const AccountsPage: FC = () => {
     setRecording(true);
     setRecordStatus("启动代理中...");
     try {
-      if (recordMode === "vivo" || recordMode === "bilibili" || recordMode === "huawei" || recordMode === "qihu360") {
+      if (recordMode === "vivo" || recordMode === "bilibili" || recordMode === "huawei" || recordMode === "qihu360" || recordMode === "oppo") {
         await window.pywebview?.api.emit("API:ACCOUNT:RECORD:START:CHANNEL", recordName.trim(), recordMode);
-        const labels: Record<string, string> = { vivo: "Vivo", bilibili: "B站", huawei: "华为", qihu360: "360" };
+        const labels: Record<string, string> = { vivo: "Vivo", bilibili: "B站", huawei: "华为", qihu360: "360", oppo: "OPPO" };
         setRecordStatus(`请在弹出窗口中登录${labels[recordMode]}账号，然后在游戏中点击扫码登录`);
       } else {
         await window.pywebview?.api.emit("API:ACCOUNT:RECORD:START", recordName.trim());
@@ -426,6 +427,7 @@ const AccountsPage: FC = () => {
                 <Radio.Button value="bilibili">B站</Radio.Button>
                 <Radio.Button value="huawei">华为</Radio.Button>
                 <Radio.Button value="qihu360">360</Radio.Button>
+                <Radio.Button value="oppo">OPPO</Radio.Button>
               </Radio.Group>
             </div>
           )}
@@ -438,7 +440,7 @@ const AccountsPage: FC = () => {
           <div className="text-[12px] text-[#b0b5c0] leading-relaxed">
             {recordMode === "qr"
               ? "官服扫码：在游戏中手动登录，代理自动捕获登录凭证。"
-              : `渠道服录制：在弹出的窗口中登录${{ vivo: "Vivo", bilibili: "B站", huawei: "华为", qihu360: "360" }[recordMode]}账号，然后在游戏中点击扫码登录。`}
+              : `渠道服录制：在弹出的窗口中登录${{ vivo: "Vivo", bilibili: "B站", huawei: "华为", qihu360: "360", oppo: "OPPO" }[recordMode]}账号，然后在游戏中点击扫码登录。`}
           </div>
         </div>
       </Modal>
