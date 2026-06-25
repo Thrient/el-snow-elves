@@ -1,11 +1,4 @@
-"""OPPO Open Account — encrypted API client.
-
-Merged from idv-login/src/channelHandler/oppoOpenAccount/:
-  crypto.py (AES-CTR, RSA, SecurityKey)
-  sign.py   (MD5-based request signing)
-  envinfo.py (environment info builders)
-  client.py (OppoSecureSession, OppoOpenAccountClient)
-  models.py (AuthorizeRequest, RefreshRequest — inlined)
+"""OPPO Open Account — encrypted API client (AES+RSA, MD5 signing, authorize/refresh)"""
 
 Exports: SecurityKey, OppoSecureSession, OppoOpenAccountClient, sign_request
 """
@@ -248,7 +241,7 @@ def sign_request(obj: Any, exclude_field: Optional[str] = None) -> str:
 # SECTION 3: envinfo — environment info builders
 # ============================================================================
 
-# Hardcoded device defaults (matching consts.py + idv-login OppoDeviceProfile defaults)
+# Device defaults for envParam construction
 _DEVICE_DEFAULTS = {
     "sys_os_version": "V10.0.11.0",
     "rom_build_display": "V417IR release-keys",

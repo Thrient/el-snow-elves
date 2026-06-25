@@ -3,6 +3,7 @@ import { useSettingsStore } from '@/store/settings-store'
 import type { TaskBase, TaskListItem } from '@/types/task'
 import type { PlanBase } from '@/types/plan'
 import { getCronEngine, removeCronEngine } from '@/engine/CronEngine'
+import { mergeValues } from '@/utils/mergeValues'
 
 export type ExecuteItem = TaskBase
 
@@ -85,15 +86,18 @@ export const useCharacterStore = create<State>((set, get) => ({
     const character = get().characters.find((c) => c.hwnd === hwnd)
     const item = character?.executeList[0]
     if (item) {
+      const taskName = (item as any).taskName || item.name;
       set((state) => ({
         characters: state.characters.map((character) =>
           character.hwnd === hwnd
-            ? { ...character, currentTask: (item as any).taskName ?? item.name, executeList: character.executeList.slice(1) }
+            ? { ...character, currentTask: taskName, executeList: character.executeList.slice(1) }
             : character
         ),
       }))
-      const settingsValues = useSettingsStore.getState().values ?? {}
-      return { ...item, values: { ...item.values, CONFIG: settingsValues } }
+      const taskMeta = get().taskList.find((t: any) => t.name === taskName);
+      const repoDefaults = (taskMeta as any)?.values ?? {};
+      const settingsValues = useSettingsStore.getState().values ?? {};
+      return { ...item, values: mergeValues(repoDefaults, item.values ?? {}, settingsValues) };
     }
     // 队列已空，清除当前任务名
     set((state) => ({

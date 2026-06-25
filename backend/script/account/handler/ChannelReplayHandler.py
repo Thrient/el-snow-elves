@@ -41,8 +41,13 @@ class ChannelReplayHandler(BaseHandler):
         try:
             body = json.loads(flow.response.content)
             user = body.get("user", {})
-            logging.debug(f"[Proxy] 渠道 exchange_token code={body.get('code')} user_id={user.get('id', 'N/A')} login_channel={user.get('login_channel', 'N/A')} keys={list(user.keys())}")
-            if user:
+            if not user and body.get("id"):
+                user = body  # 扁平结构兼容
+            if body.get("code") is None:
+                body["code"] = 0
+                flow.response.content = json.dumps(body, ensure_ascii=False).encode()
+            logging.debug(f"[Proxy] 渠道 exchange_token code={body.get('code')} user_id={user.get('id', body.get('id', ''))} login_channel={user.get('login_channel', 'N/A')}")
+            if user.get("id"):
                 self.proxy.completed = True
                 HostsManager.restore()
                 logging.info("[Proxy] 渠道回放完成，已还原hosts")

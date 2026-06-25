@@ -117,6 +117,8 @@ export interface Step {
   extends?: string;
   retry?: StepRetry;
   set?: { name: string; value: unknown }[];
+  success_set?: { name: string; value: unknown }[];
+  failure_set?: { name: string; value: unknown }[];
 }
 
 export interface MonitorConfig {

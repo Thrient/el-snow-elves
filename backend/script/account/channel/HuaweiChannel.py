@@ -17,7 +17,7 @@ clr.AddReference("System.Windows.Forms")
 clr.AddReference("Microsoft.Web.WebView2.WinForms")
 
 
-# 一梦江湖华为服 OAuth 参数（来自 idv-login cloudRes game_id=h42）
+# 一梦江湖华为服 OAuth 参数
 HMS_CLIENT_ID = "100112247"
 HMS_SCOPE = "openid"
 HMS_TOKEN_URL = "https://oauth-login.cloud.huawei.com/oauth2/v3/token"
@@ -259,7 +259,7 @@ class HuaweiLogin:
 def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
     """渠道回放：构建 confirm_login 所需的 body 数据（不含 uuid/game_id）
 
-    对齐 idv-login huaChannelHandler.get_uniSdk_data + _build_extra_unisdk_data
+    构建 SAUTH + extra_unisdk_data 用于 confirm_login。
     """
     import json as _json
     from script.account.channel.ChannelUtils import build_sauth, post_signed_data, FAKE_DEVICE

@@ -15,7 +15,7 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> 
   huawei:          { label: "华为", color: "#fa8c16", bg: "rgba(250,140,22,0.08)" },
   qihu360:         { label: "360",  color: "#52c41a", bg: "rgba(82,196,26,0.08)" },
   "360_assistant": { label: "360",  color: "#52c41a", bg: "rgba(82,196,26,0.08)" },
-  oppo:            { label: "OPPO", color: "#1aad19", bg: "rgba(26,173,25,0.08)" },
+  oppo:            { label: "OPPO", color: "#089981", bg: "rgba(8,153,129,0.08)" },
 };
 
 function getTypeInfo(t?: string) {

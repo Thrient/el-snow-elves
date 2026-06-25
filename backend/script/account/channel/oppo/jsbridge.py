@@ -6,7 +6,6 @@ OPPO_CONSOLE_PREFIX = "__OPPO_NATIVE_INVOKE__::"
 
 
 def _js_string_literal(s: str) -> str:
-    """生成 JS 字符串字面量（双引号）"""
     return json.dumps(s, ensure_ascii=False)
 
 
@@ -24,15 +23,15 @@ def build_mock_native_js() -> str:
 
   const PKG_ACCOUNT_SDK = "com.oplus.account.open.sdk";
   const PKG_HOST = {_js_string_literal(PKG_HOST)};
-  const DEVICE_ID = {_js_string_literal(GUID)};
+  const DEVICE_ID = "";
   const GUID = {_js_string_literal(GUID)};
-  const APP_VERSION = 0;
-  const APP_VERSION_STR = "0";
+  const APP_VERSION = 2012701;
+  const APP_VERSION_STR = "2012701";
   const SSOID = "";
   const TOKEN = "";
-  const BIZK = "";
-  const APP_ID = "";
-  const PKG_NAME_SIGN = "";
+  const BIZK = "3cd48b0c781835478b0a1783a9eff0c9";
+  const APP_ID = "31288517";
+  const PKG_NAME_SIGN = "00e7ec6745698936072925f64fc2a3e8";
   const DEVICE_MODEL = "MI";
   const DEVICE_ROM_BUILD = "V417IR";
   const DEVICE_TIME_ZONE = "Asia/Shanghai";
@@ -136,12 +135,16 @@ def build_mock_native_js() -> str:
     invoke: function(method, param, callbackid) {{
       _emit(method, param, callbackid);
 
-      // 存储登录结果供 Python 轮询
       if (method === 'accountExternalSdk.setToken' || method === 'vip.onFinish') {{
-        try {{ window.__oppo_login_resp = typeof param === 'string' ? JSON.parse(param) : param; }} catch(e) {{}}
+        try {{
+          var p = typeof param === 'string' ? JSON.parse(param) : param;
+          window.__oppo_login_resp = (p && p.loginResp) ? p.loginResp : p;
+        }} catch(e) {{}}
       }}
 
       if (method === 'account.CallMethodExecutor') {{
+        window.__oppo_last_call_executor = param;
+        window.__oppo_last_cme_callbackid = callbackid;
         return true;
       }}
 

@@ -1,8 +1,4 @@
-"""Bilibili 渠道服登录 — pywebview 浏览器 + XHR 拦截 + NavigationStarting 兜底
-
-签名算法对齐 idv-login: sorted_values_joined + appKey → MD5
-登录页 URL 不加 sign（和 idv-login 一致），API 调用才签名。
-"""
+"""Bilibili 渠道服登录 — pywebview 浏览器 + XHR 拦截 + NavigationStarting 兜底"""
 
 import hashlib
 import json
@@ -19,7 +15,7 @@ clr.AddReference("System.Windows.Forms")
 clr.AddReference("Microsoft.Web.WebView2.WinForms")
 
 
-# 默认参数（第五人格 B站服，来自 idv-login cloudRes game_id=h42）
+# 默认参数（第五人格 B站服）
 DEFAULT_GAME_ID = "301"
 DEFAULT_APP_KEY = "h9Ejat5tFh81cq8"
 
@@ -28,7 +24,7 @@ DEFAULT_APP_KEY = "h9Ejat5tFh81cq8"
 
 def compute_sign(params: dict, app_key: str = DEFAULT_APP_KEY) -> str:
     """Bilibili Game SDK 签名：按 key 排序 → 拼接 value → 追加 appKey → MD5。
-    对齐 idv-login bilibiliChannel.py compute_sign()。
+    Bilibili SDK compute_sign()。
     """
     sorted_items = sorted(params.items())
     plaintext = "".join(
@@ -38,7 +34,7 @@ def compute_sign(params: dict, app_key: str = DEFAULT_APP_KEY) -> str:
     return hashlib.md5(plaintext.encode("utf-8")).hexdigest()
 
 
-# ── 登录页 URL（不加 sign，对齐 idv-login）──────────────────
+# ── 登录页 URL（不加 sign）──────────────────
 
 _LOGIN_URL = (
     "https://sdk.biligame.com/login/"
@@ -46,7 +42,7 @@ _LOGIN_URL = (
 )
 
 
-# ── XHR 拦截脚本（参考 idv-login bilibiliChannel.py _build_intercept_js）──
+# ── XHR 拦截脚本 ──
 
 _INTERCEPT_JS = r"""
 (function() {
@@ -165,7 +161,7 @@ def _get_cookies_safe(window) -> dict[str, str]:
 
 def _validate_access_key(access_key: str, uid: str) -> bool:
     """调用 auto.login 验证 access_key 是否仍然有效。
-    签名算法对齐 idv-login: 只传 3 个核心参数 + compute_sign。
+    签名算法：只传 3 个核心参数 + compute_sign。
     """
     try:
         params = {
@@ -203,7 +199,7 @@ class BilibiliLogin:
 
     @property
     def login_url(self) -> str:
-        # 对齐 idv-login: 登录页不加 sign
+        # 登录页不加 sign
         return (
             "https://sdk.biligame.com/login/"
             f"?cef=true&gameId={self.game_id}&appKey={self.app_key}&is_gov_ver=1"

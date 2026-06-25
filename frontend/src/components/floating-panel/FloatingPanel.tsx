@@ -8,6 +8,7 @@ import { useResponsiveStore } from "@/store/responsive-store.ts"
 import type { Task } from "@/types/task.ts"
 import { PLAN_TEMPLATES } from "@/types/plan.ts"
 import type { PlanBase } from "@/types/plan.ts"
+import { mergeValues } from "@/utils/mergeValues"
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx"
 import VersionTag from "@/components/version-tag/VersionTag"
 import PlanModal from "@/pages/plans/PlanModal.tsx"
@@ -251,7 +252,7 @@ const FloatingPanel: FC = () => {
     const taskStore = useCharacterStore.getState()
     const original = taskStore.taskList.find((t: any) => t.name === ((item as any).taskName || (item as any).name))
     if (original) {
-      setConfigTask({ ...original, version: (item as any).version ?? (original as any).latest, values: item.values } as any)
+      setConfigTask({ ...original, version: (item as any).version ?? (original as any).latest, values: mergeValues((original as any).values ?? {}, item.values ?? {}) } as any)
       setConfigUid(uid)
       setConfigOpen(true)
     }
@@ -279,7 +280,7 @@ const FloatingPanel: FC = () => {
       id: "",
       name: t.taskName,
       taskName: t.taskName,
-      version: t.version || '',
+      version: t.version || null,
       values: t.values,
       valueTypes: t.valueTypes,
     }))
@@ -496,7 +497,7 @@ const FloatingPanel: FC = () => {
                         </Button>
                         {selectedHwnd && (
                           <div style={{ fontSize: 10, color: '#bbb', textAlign: 'center', marginTop: 4 }}>
-                            目标窗口：{characters.find(c => c.hwnd === selectedHwnd)?.character || selectedHwnd}
+                            目标窗口：{characters.find(c => c.hwnd === selectedHwnd)?.hwnd || selectedHwnd}
                           </div>
                         )}
                       </div>
@@ -629,7 +630,7 @@ const FloatingPanel: FC = () => {
       >
         <p style={{ margin: 0 }}>
           将全部 <strong>{queue.length}</strong> 个待执行任务添加到
-          <strong> {characters.find(c => c.hwnd === selectedHwnd)?.character || selectedHwnd}</strong>？
+          <strong> {characters.find(c => c.hwnd === selectedHwnd)?.hwnd || selectedHwnd}</strong>？
         </p>
       </Modal>
     </>

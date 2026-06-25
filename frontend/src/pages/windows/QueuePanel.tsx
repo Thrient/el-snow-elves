@@ -5,6 +5,7 @@ import { useCharacterStore } from "@/store/character-store";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal";
 import VersionTag from "@/components/version-tag/VersionTag";
 import type { Task } from "@/types/task";
+import { mergeValues } from "@/utils/mergeValues";
 
 const DOT_COLORS = ["#1677ff", "#52c41a", "#fa8c16", "#722ed1", "#13c2c2"];
 
@@ -49,7 +50,7 @@ const QueuePanel: FC = () => {
         id: "",
         name: original.name,
         version: (item as any).version ?? original.latest,
-        values: { ...item.values },
+        values: mergeValues((original as any).values ?? {}, (item as any).values ?? {}),
         valueTypes: (item as any).valueTypes,
       } as any);
       setConfigOpen(true);

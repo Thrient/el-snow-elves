@@ -411,7 +411,7 @@ def build_replay_data(channel_auth: dict, short_game_id: str) -> dict | None:
         sdk_version="4.7.2.0",
         custom_data={"realname": _json.dumps({"realname_type": 0, "age": 22})},
     )
-    # Vivo 需要自定义 JSON 编码（/ → \/），对齐 idv-login 的签名
+    # Vivo 需要自定义 JSON 编码（/ → \/）
     uni_data = post_signed_data(sauth_body, short_game_id, need_custom_encode=True)
     unisdk_json_b64 = uni_data.get("unisdk_login_json", "")
     if not unisdk_json_b64:

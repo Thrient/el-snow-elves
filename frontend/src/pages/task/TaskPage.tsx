@@ -113,17 +113,15 @@ const TaskPage: FC = () => {
   // ── Delete ──
 
   const handleDeleteSingle = (task: Task | TaskListItem, version?: string | null) => {
-    const isVersionDelete = version != null;
+    const target = version ?? (task as TaskListItem).latest;
     Modal.confirm({
-      title: isVersionDelete ? `删除「${task.name}」v${version}？` : `删除「${task.name}」全部版本？`,
-      content: isVersionDelete
-        ? `仅删除版本 ${version}，此操作不可恢复。`
-        : "此操作不可恢复，任务的所有版本和模板图片将被永久删除。",
+      title: `删除「${task.name}」v${target}？`,
+      content: `仅删除版本 ${target}，此操作不可恢复。`,
       okText: "删除", okType: "danger", cancelText: "取消",
       onOk: async () => {
-        await window.pywebview?.api.emit("API:TASK:DELETE", task.name, version ?? null);
+        await window.pywebview?.api.emit("API:TASK:DELETE", task.name, target);
         useCharacterStore.getState().loadTasks();
-        message.success(isVersionDelete ? `版本 ${version} 已删除` : "任务已删除");
+        message.success(`版本 ${target} 已删除`);
       },
     });
   };

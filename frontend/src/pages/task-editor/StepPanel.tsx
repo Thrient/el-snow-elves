@@ -24,7 +24,7 @@ interface Props {
 
 // ---- Card registry ----
 
-type CardKey = "flow" | "params" | "prefix" | "postfix" | "failure_extra" | "success_extra" | "set" | "retry" | "extends";
+type CardKey = "flow" | "params" | "prefix" | "postfix" | "failure_extra" | "success_extra" | "set" | "success_set" | "failure_set" | "retry" | "extends";
 
 const CARDS: { key: CardKey; label: string; color: string; light: string; desc: string; summary(s: Step): string }[] = [
   { key: "flow",   label: "流程跳转", color: "#16a34a", light: "#dcfce7", desc: "成功 / 失败 / 无条件",
@@ -41,6 +41,10 @@ const CARDS: { key: CardKey; label: string; color: string; light: string; desc: 
     summary: s => s.success_extra?.length ? `${s.success_extra.length} 个` : "" },
   { key: "set",    label: "set 变量", color: "#9333ea", light: "#e9d5ff", desc: "设置运行时变量",
     summary: s => s.set?.length ? `${s.set.length} 个` : "" },
+  { key: "success_set", label: "成功 set", color: "#16a34a", light: "#dcfce7", desc: "成功时设置变量",
+    summary: s => s.success_set?.length ? `${s.success_set.length} 个` : "" },
+  { key: "failure_set", label: "失败 set", color: "#dc2626", light: "#fecaca", desc: "失败时设置变量",
+    summary: s => s.failure_set?.length ? `${s.failure_set.length} 个` : "" },
   { key: "retry",  label: "失败重试", color: "#dc2626", light: "#fecaca", desc: "失败后自动重试",
     summary: s => s.retry?.times ? `${s.retry.times}次 · ${s.retry.interval ?? 0}ms` : "" },
   { key: "extends",label: "继承模板", color: "#8b5cf6", light: "#ddd6fe", desc: "复用已有步骤配置",
@@ -224,10 +228,10 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                     color={CARDS.find(c => c.key === expanded)!.color}
                     onChange={(v) => onUpdate(expanded, v)} />
                 )}
-                {expanded === "set" && (
-                  <SubListEditor list={step.set ?? []} ctx={ctx} isKeyValue
-                    color={CARDS.find(c => c.key === "set")!.color}
-                    onChange={(v) => onUpdate("set", v)} />
+                {(expanded === "set" || expanded === "success_set" || expanded === "failure_set") && (
+                  <SubListEditor list={(step as any)[expanded] ?? []} ctx={ctx} isKeyValue
+                    color={CARDS.find(c => c.key === expanded)!.color}
+                    onChange={(v) => onUpdate(expanded, v)} />
                 )}
                 {expanded === "retry" && (
                   <div className="rounded-xl border border-dashed bg-container"
