@@ -311,8 +311,9 @@ class FlowEngine(Thread):
                 self.vp.apply_set(step_def.get("success_set", []), result)
                 return result
 
-            # 本次尝试失败 — 只更新追踪变量，不触发子流程
+            # 本次尝试失败 — 更新追踪变量 + 恢复状态，为下次重试准备
             self.vp.apply_set(step_def.get("failure_set", []), [])
+            self._run_extra(step_def, "failure_extra")
 
             if attempt < total - 1:
                 logging.info(
@@ -324,8 +325,7 @@ class FlowEngine(Thread):
                     lambda: self._paused.is_set()
                 )
 
-        # 全部重试耗尽 — 仅执行一次兜底子流程
-        self._run_extra(step_def, "failure_extra")
+        # 全部重试耗尽
         return []
 
     @staticmethod
