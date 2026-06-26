@@ -261,11 +261,11 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                       </div>
                       {step.retry?.times ? (
                         <div className="text-[10px] text-muted leading-relaxed">
-                          失败后将自动重试 {step.retry.times} 次，每次间隔 {step.retry.interval ?? 0}ms
+                          失败后整步重新执行（含前置/后置），最多 {step.retry.times} 次，间隔 {step.retry.interval ?? 0}ms
                         </div>
                       ) : (
                         <div className="text-[10px] text-[#c0c4cc] leading-relaxed">
-                          设为 0 表示不重试，失败后直接终止
+                          设为 0 表示不重试，失败后直接跳转失败路径
                         </div>
                       )}
                     </div>
