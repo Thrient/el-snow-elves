@@ -291,21 +291,41 @@ class FlowEngine(Thread):
             args = self._resolve_params(args)
             self.run_subflow(name, args)
 
-    def _run_action(self, step_def):
+    def _run_step_with_retry(self, step_def):
         retry = step_def.get("retry", {})
         total = max(1, retry.get("times", 1))
+
         for attempt in range(total):
             if self._paused.is_set():
                 return []
-            result = self.action(self._hwnd, step_def)
-            if result:
-                return result
-            if attempt < total - 1:
-                logging.info(f"[重试] {self._format_action(step_def)} 失败，"f"{retry.get('interval', 0)}ms 后重试 ({attempt + 1}/{total - 1})")
-            self._run_extra(step_def, "failure_extra")
-            self.vp.apply_set(step_def.get('failure_set', []), result)
-            safe_sleep(retry.get("interval", 0) / 1000, lambda: self._paused.is_set())
 
+            # ── 完整步骤作为一次尝试 ──
+            self._run_extra(step_def, "prefix")
+            Window.ensure_window_size(self._hwnd)
+            result = self.action(self._hwnd, step_def)
+            self._run_extra(step_def, "postfix")
+            # ──────────────────────────
+
+            if result:
+                self._run_extra(step_def, "success_extra")
+                self.vp.apply_set(step_def.get("success_set", []), result)
+                return result
+
+            # 本次尝试失败 — 只更新追踪变量，不触发子流程
+            self.vp.apply_set(step_def.get("failure_set", []), [])
+
+            if attempt < total - 1:
+                logging.info(
+                    f"[重试] {self._format_action(step_def)} 失败，"
+                    f"{retry.get('interval', 0)}ms 后重试 ({attempt + 1}/{total - 1})"
+                )
+                safe_sleep(
+                    retry.get("interval", 0) / 1000,
+                    lambda: self._paused.is_set()
+                )
+
+        # 全部重试耗尽 — 仅执行一次兜底子流程
+        self._run_extra(step_def, "failure_extra")
         return []
 
     @staticmethod
@@ -371,14 +391,7 @@ class FlowEngine(Thread):
             while not self._paused.is_set() and self.step_name and self.step_name != "任务结束":
                 step_def = self.process_step(self.step_name)
 
-                self._run_extra(step_def, "prefix")
-                Window.ensure_window_size(self._hwnd)
-                result = self._run_action(step_def)
-                self._run_extra(step_def, "postfix")
-
-                if result:
-                    self._run_extra(step_def, "success_extra")
-                    self.vp.apply_set(step_def.get('success_set', []), result)
+                result = self._run_step_with_retry(step_def)
                 self.vp.apply_set(step_def.get('set', []), result)
 
                 prev = self.step_name
