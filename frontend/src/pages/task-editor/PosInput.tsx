@@ -3,12 +3,6 @@ import { AutoComplete, Button, InputNumber, Tooltip } from "antd";
 import { AimOutlined } from "@ant-design/icons";
 import VarOpBuilder from "./components/var-op-builder/VarOpBuilder";
 
-const toStr = (v: unknown): string => {
-  if (typeof v === "string") return v;
-  if (typeof v === "number") return String(v);
-  return "0";
-};
-
 const isExpr = (v: unknown): boolean => typeof v === "string" && v.includes("{");
 
 interface Props {
@@ -69,7 +63,7 @@ const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "
         context="params"
         valueTypes={valueTypes}
         variables={[...varItems("system"), ...varItems("config"), ...varItems("task")]}
-        onInsert={(expr) => setPos(toStr(arr[0]) + expr, arr[1])}
+        onInsert={(expr) => setPos(expr, arr[1])}
       />
       <span className="text-[10px] text-[#9ca3af] shrink-0">Y</span>
       {renderOne(arr[1], (v) => setPos(arr[0], v))}
@@ -77,7 +71,7 @@ const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "
         context="params"
         valueTypes={valueTypes}
         variables={[...varItems("system"), ...varItems("config"), ...varItems("task")]}
-        onInsert={(expr) => setPos(arr[0], toStr(arr[1]) + expr)}
+        onInsert={(expr) => setPos(arr[0], expr)}
       />
       <Tooltip title={hwnd ? "从截图中选取坐标" : "请先在主界面选择窗口"}>
         <Button type="text" size="small" disabled={!hwnd}
