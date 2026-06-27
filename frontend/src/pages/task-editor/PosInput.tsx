@@ -1,22 +1,29 @@
 import { type FC } from "react";
-import { AutoComplete, Button, Input, InputNumber, Tooltip } from "antd";
+import { AutoComplete, Button, Tooltip } from "antd";
 import { AimOutlined } from "@ant-design/icons";
+import VarOpBuilder from "./components/var-op-builder/VarOpBuilder";
 
-const parsePosItem = (v: unknown): string => {
-  if (typeof v === "number") return String(v);
+const toStr = (v: unknown): string => {
   if (typeof v === "string") return v;
+  if (typeof v === "number") return String(v);
   return "0";
 };
 
 const parsePos = (v: unknown): [string, string] => {
   try {
-    if (Array.isArray(v) && v.length === 2) return [parsePosItem(v[0]), parsePosItem(v[1])];
+    if (Array.isArray(v) && v.length === 2) return [toStr(v[0]), toStr(v[1])];
     if (typeof v === "string") {
       const arr = JSON.parse(v);
-      if (Array.isArray(arr) && arr.length === 2) return [parsePosItem(arr[0]), parsePosItem(arr[1])];
+      if (Array.isArray(arr) && arr.length === 2) return [toStr(arr[0]), toStr(arr[1])];
     }
   } catch { /* */ }
   return ["0", "0"];
+};
+
+const tryCoerce = (v: string): unknown => {
+  if (v === "") return 0;
+  const n = Number(v);
+  return !isNaN(n) ? n : v;
 };
 
 interface Props {
@@ -26,57 +33,65 @@ interface Props {
   onCoordOpen: () => void;
   paramKey?: string;
   varOptions?: { value: string; label: string }[];
+  valueTypes?: Record<string, string>;
 }
 
-const isTemplate = (v: unknown): boolean => typeof v === "string" && v.includes("{");
-
-const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "pos", varOptions = [] }) => {
-  const raw = parsePos(params[paramKey]);
+const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "pos", varOptions = [], valueTypes = {} }) => {
   const posVal = params[paramKey];
   const arr = Array.isArray(posVal) && posVal.length === 2 ? posVal : [0, 0];
-  const xTemplate = isTemplate(arr[0]);
-  const yTemplate = isTemplate(arr[1]);
+  const [xStr, yStr] = parsePos(posVal);
 
   const setPos = (nx: unknown, ny: unknown) => onUpdate("params", { ...params, [paramKey]: [nx, ny] });
 
-  const renderInput = (label: string, val: unknown, isExpr: boolean, onChange: (v: unknown) => void) => {
-    const strVal = typeof val === "string" ? val : String(val ?? "0");
-    const numVal = typeof val === "number" ? val : Number(val);
-
-    // If value is a template string, always show text input
-    if (isExpr || typeof val === "string") {
-      return (
-        <AutoComplete
-          size="small"
-          className="flex-1 font-mono text-[12px]"
-          value={strVal}
-          onChange={(v) => {
-            const n = Number(v);
-            onChange(v !== "" && !isNaN(n) ? n : (v || 0));
-          }}
-          options={varOptions}
-          placeholder="坐标或{变量}"
-          filterOption={(input, option) =>
-            option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
-          }
-        />
-      );
-    }
-
-    return (
-      <InputNumber size="small" variant="borderless" className="flex-1"
-        min={0}
-        value={isNaN(numVal) ? 0 : numVal}
-        onChange={(v) => onChange(v ?? 0)} />
-    );
+  const varItems = (category: "system" | "config" | "task") => {
+    // We use the raw varOptions with labels — extract syntax from them
+    return varOptions.filter(o => {
+      if (category === "system") return o.value === "{result}" || o.value === "{hwnd}" || o.value === "{ChildHwnd}";
+      if (category === "config") return o.value.startsWith("{CONFIG.");
+      return !o.value.startsWith("{CONFIG.") && o.value !== "{result}" && o.value !== "{hwnd}" && o.value !== "{ChildHwnd}";
+    }).map(v => ({ syntax: v.value, label: v.label, category }));
   };
 
   return (
     <div className="flex-1 flex items-center gap-1.5">
       <span className="text-[10px] text-[#9ca3af] shrink-0">X</span>
-      {renderInput("X", arr[0], xTemplate, (v) => setPos(v, arr[1]))}
+      <AutoComplete
+        size="small"
+        className="flex-1 font-mono text-[12px]"
+        value={xStr}
+        onChange={(v) => setPos(tryCoerce(v), arr[1])}
+        options={varOptions}
+        placeholder="x 坐标"
+        openOnFocus
+        filterOption={(input, option) =>
+          option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+        }
+      />
+      <VarOpBuilder
+        context="params"
+        valueTypes={valueTypes}
+        variables={[...varItems("system"), ...varItems("config"), ...varItems("task")]}
+        onInsert={(expr) => setPos(toStr(arr[0]) + expr, arr[1])}
+      />
       <span className="text-[10px] text-[#9ca3af] shrink-0">Y</span>
-      {renderInput("Y", arr[1], yTemplate, (v) => setPos(arr[0], v))}
+      <AutoComplete
+        size="small"
+        className="flex-1 font-mono text-[12px]"
+        value={yStr}
+        onChange={(v) => setPos(arr[0], tryCoerce(v))}
+        options={varOptions}
+        placeholder="y 坐标"
+        openOnFocus
+        filterOption={(input, option) =>
+          option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
+        }
+      />
+      <VarOpBuilder
+        context="params"
+        valueTypes={valueTypes}
+        variables={[...varItems("system"), ...varItems("config"), ...varItems("task")]}
+        onInsert={(expr) => setPos(arr[0], toStr(arr[1]) + expr)}
+      />
       <Tooltip title={hwnd ? "从截图中选取坐标" : "请先在主界面选择窗口"}>
         <Button type="text" size="small" disabled={!hwnd}
           className="!text-[#9ca3af] hover:!text-[#3b82f6] shrink-0"
