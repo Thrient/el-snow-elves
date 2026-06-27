@@ -45,7 +45,8 @@ const ParamInputRenderer: React.FC<ParamInputRendererProps> = ({
     return <BoxInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onBoxOpen={() => setBoxOpen(true)} />;
   }
   if (key === "pos" || key === "start_pos" || key === "end_pos") {
-    return <PosInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onCoordOpen={() => setCoordKey(key)} paramKey={key} />;
+    return <PosInput params={params} onUpdate={onUpdate} hwnd={ctx.hwnd} onCoordOpen={() => setCoordKey(key)} paramKey={key}
+      varOptions={[...ctx.builtinVars, ...ctx.configVars, ...ctx.taskValueVars]} />;
   }
   if (key === "hwnd") {
     return (
