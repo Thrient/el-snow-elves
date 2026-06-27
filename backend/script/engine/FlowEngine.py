@@ -32,6 +32,7 @@ class FlowEngine(Thread):
         self.work = kwargs.get("work")
         self.name = self.work.get("name")
         self.version = self.work.get("version")
+        self.author = self.work.get("author", "匿名作者")
         self._steps = self.work.get("steps", {})
         self._common = self._load_common()
         self._all_steps = {**self._common, **self._steps}
@@ -165,6 +166,11 @@ class FlowEngine(Thread):
         return step
 
     def run_subflow(self, subflow_start_name, args={}):
+        # Save old values before bulk_update, restore in finally
+        _MISSING = object()
+        old_values = {}
+        for key in args:
+            old_values[key] = self.vp.variables.get(key, _MISSING)
         self.vp.bulk_update(args)
         sub_engine = FlowEngine(
             start=subflow_start_name,
@@ -175,7 +181,18 @@ class FlowEngine(Thread):
             is_subflow=True,
         )
         sub_engine._task = self._task  # 共享 BaseTask，确保 monitor_start/stop 操作同一 CombatEngine
-        sub_engine.run()
+        try:
+            sub_engine.run()
+        finally:
+            for key, old_value in old_values.items():
+                current = self.vp.variables.get(key, _MISSING)
+                if current is args[key]:
+                    # Subflow did not modify this key via set, restore old value
+                    if old_value is _MISSING:
+                        self.vp.variables.pop(key, None)
+                    else:
+                        self.vp.variables[key] = old_value
+                # else: subflow modified it via set, keep the current value
 
     def _resolve_params(self, params):
         if isinstance(params, str):
@@ -222,7 +239,7 @@ class FlowEngine(Thread):
                 return False
         else:
             params = self._resolve_params(step.get("params", {}))
-            wrapper = self.to_action(step.get("action"), params, hwnd=hwnd, name=self.name, version=self.version, predicate=lambda: not self._paused.is_set())
+            wrapper = self.to_action(step.get("action"), params, hwnd=hwnd, name=self.name, version=self.version, author=self.author, predicate=lambda: not self._paused.is_set())
             return wrapper.execute()
 
     @staticmethod
