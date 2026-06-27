@@ -317,18 +317,16 @@ class FlowEngine(Thread):
             if self._paused.is_set():
                 return []
 
-            # ── 完整步骤作为一次尝试 ──
+            # ── 单次尝试：preset → prefix → action ──
             self.vp.apply_set(step_def.get("preset", []), [])
             self._run_extra(step_def, "prefix")
             Window.ensure_window_size(self._hwnd)
             result = self.action(self._hwnd, step_def)
-            self._run_extra(step_def, "postfix")
-            # ──────────────────────────
 
             if result:
                 self._run_extra(step_def, "success_extra")
                 self.vp.apply_set(step_def.get("success_set", []), result)
-                return result
+                break
 
             # 本次尝试失败 — 更新追踪变量 + 恢复状态，为下次重试准备
             self.vp.apply_set(step_def.get("failure_set", []), [])
@@ -345,7 +343,12 @@ class FlowEngine(Thread):
                 )
 
         # 全部重试耗尽
-        return []
+        if not result:
+            return []
+
+        # postfix 只执行一次，在 action 最终成功之后
+        self._run_extra(step_def, "postfix")
+        return result
 
     @staticmethod
     def _format_action(step_def):
