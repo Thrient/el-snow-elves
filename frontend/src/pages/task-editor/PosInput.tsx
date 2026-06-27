@@ -12,7 +12,7 @@ interface Props {
   onCoordOpen: () => void;
   paramKey?: string;
   varOptions?: { value: string; label: string }[];
-  valueTypes?: Record<string, string>;
+  valueTypes?: Record<string, import("@/types/task").VarType>;
 }
 
 const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "pos", varOptions = [], valueTypes = {} }) => {
@@ -41,7 +41,6 @@ const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "
           }}
           options={varOptions}
           placeholder="{变量}"
-          openOnFocus
           filterOption={(input, option) =>
             option?.label?.toLowerCase().includes(input.toLowerCase()) ?? false
           }

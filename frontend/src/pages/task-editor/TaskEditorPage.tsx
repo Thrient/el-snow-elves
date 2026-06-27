@@ -88,11 +88,11 @@ const TaskEditorPage: FC = () => {
 
   const taskValueKeys = useMemo(() => {
     const keys = new Set(Object.keys(editor.currentTask?.values ?? {}).map(k => k.replace(/^\{|\}$/g, "")));
-    // also include variable names extracted from steps' set fields — they write to the same variables dict
+    // also include variable names extracted from steps' postset fields — they write to the same variables dict
     for (const step of Object.values(editor.currentTask?.steps ?? {}))
-      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name.replace(/^\{|\}$/g, ""));
+      for (const v of (step as Step).postset ?? []) if (v.name) keys.add(v.name.replace(/^\{|\}$/g, ""));
     for (const step of Object.values(editor.currentTask?.common ?? {}))
-      for (const v of (step as Step).set ?? []) if (v.name) keys.add(v.name.replace(/^\{|\}$/g, ""));
+      for (const v of (step as Step).postset ?? []) if (v.name) keys.add(v.name.replace(/^\{|\}$/g, ""));
     return Array.from(keys);
   }, [editor.currentTask?.values, editor.currentTask?.steps, editor.currentTask?.common]);
 
@@ -560,6 +560,7 @@ const TaskEditorPage: FC = () => {
       {characterStore.selectedHwnd && (
         <ScreenshotCropperModal open={cropperOpen} hwnd={characterStore.selectedHwnd}
           taskName={editor.currentTask?.name} version={editor.currentTask?.version}
+          author={(editor.currentTask as any)?.author}
           onClose={() => setCropperOpen(false)} onSaved={() => {}} />)}
       <Modal
         title="保存为新版本"
