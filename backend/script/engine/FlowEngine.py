@@ -96,7 +96,7 @@ class FlowEngine(Thread):
             errors.append("'steps' 必须为字典")
 
         allowed_keys = {"action", "params", "prefix", "postfix", "success", "failure", "next",
-                        "set", "preset", "success_set", "failure_set", "retry", "extends", "failure_extra", "success_extra"}
+                        "postset", "set", "preset", "success_set", "failure_set", "retry", "extends", "failure_extra", "success_extra"}
         valid_names = {*self._all_steps, "任务结束"}
 
         for name, step in self._all_steps.items():
@@ -108,7 +108,7 @@ class FlowEngine(Thread):
 
             for key, expected in [("prefix", list), ("postfix", list),
                                   ("failure_extra", list), ("success_extra", list),
-                                  ("set", list), ("preset", list),
+                                  ("postset", list), ("set", list), ("preset", list),
                                   ("success_set", list), ("failure_set", list),
                                   ("params", dict), ("retry", dict)]:
                 val = step.get(key)
@@ -164,6 +164,10 @@ class FlowEngine(Thread):
                 raise KeyError(f"继承的步骤 '{base_name}' 未定义") from None
             merged_params = {**base.get("params", {}), **step.get("params", {})}
             step = {**base, **step, "params": merged_params}
+
+        # 兼容旧名 set → postset
+        if "set" in step and "postset" not in step:
+            step["postset"] = step.pop("set")
         return step
 
     def run_subflow(self, subflow_start_name, args={}):
@@ -414,7 +418,7 @@ class FlowEngine(Thread):
                 step_def = self.process_step(self.step_name)
 
                 result = self._run_step_with_retry(step_def)
-                self.vp.apply_set(step_def.get('set', []), result)
+                self.vp.apply_set(step_def.get('postset', []), result)
 
                 prev = self.step_name
                 self.step_name = self.process_result(result, step_def)

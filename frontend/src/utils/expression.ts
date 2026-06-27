@@ -69,7 +69,7 @@ interface StepDef {
   failure_extra?: (string | { step: string; args?: Record<string, unknown>; when?: string })[];
   success_extra?: (string | { step: string; args?: Record<string, unknown>; when?: string })[];
   preset?: { name: string; value: unknown }[];
-  set?: { name: string; value: unknown }[];
+  postset?: { name: string; value: unknown }[];
   success_set?: { name: string; value: unknown }[];
   failure_set?: { name: string; value: unknown }[];
   next?: string;
@@ -133,8 +133,8 @@ export function extractAllParams(
     }
   }
 
-  // 1b. From preset/set/success_set/failure_set values
-  for (const key of ["preset", "set", "success_set", "failure_set"] as const) {
+  // 1b. From preset/postset/success_set/failure_set values (set for compat)
+  for (const key of ["preset", "postset", "set", "success_set", "failure_set"] as const) {
     const items = (stepData as Record<string, unknown>)[key] as { name: string; value: unknown }[] | undefined;
     if (!items) continue;
     for (const item of items) {

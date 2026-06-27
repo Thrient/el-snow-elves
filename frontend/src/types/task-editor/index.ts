@@ -118,7 +118,7 @@ export interface Step {
   extends?: string;
   retry?: StepRetry;
   preset?: { name: string; value: unknown }[];
-  set?: { name: string; value: unknown }[];
+  postset?: { name: string; value: unknown }[];
   success_set?: { name: string; value: unknown }[];
   failure_set?: { name: string; value: unknown }[];
 }
