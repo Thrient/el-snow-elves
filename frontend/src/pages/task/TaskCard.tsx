@@ -75,6 +75,11 @@ const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle,
       </div>
 
       <div className="text-[15px] font-semibold text-heading mb-1 leading-tight tracking-tight">
+        {(task as any).author && (task as any).author !== "匿名作者" && (
+          <span className="text-[#1677ff]/70 font-medium mr-1 select-none">
+            @{(task as any).author}
+          </span>
+        )}
         {task.name}
       </div>
 
@@ -82,7 +87,7 @@ const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle,
         {renderPills(task)}
       </div>
 
-      <div className="flex items-center gap-1 pt-2.5 border-t border-[#f5f5f7]">
+      <div className="flex items-center gap-1 pt-2.5 border-t border-[#f5f5f7] mt-auto">
         <Tooltip title="添加到执行队列">
           <Button type="primary" size="small" icon={<PlusOutlined />} className="text-[12px]" onClick={() => onAppend(task.name, selectedVersion)}>
             添加

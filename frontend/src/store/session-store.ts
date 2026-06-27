@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { PlanBase } from "@/types/plan.ts";
 
-type QueueEntry = { taskName: string; version: string | null; values: Record<string, unknown>; valueTypes?: Record<string, "text" | "number" | "bool" | "list">; _uid: number }
+type QueueEntry = { taskName: string; version: string | null; author?: string; values: Record<string, unknown>; valueTypes?: Record<string, "text" | "number" | "bool" | "list">; _uid: number }
 export type PlanEntry = PlanBase & { _uid: number }
 
 let _nextTaskUid = 0
@@ -16,6 +16,7 @@ type State = {
   clearTaskList: () => void
   updateTaskValues: (uid: number, values: Record<string, unknown>) => void
   updateTaskVersion: (uid: number, version: string | null) => void
+  updateTaskAuthor: (uid: number, author: string, version: string | null, values: Record<string, unknown>) => void
   addPlan: (plan: PlanBase) => void
   removePlan: (uid: number) => void
   updatePlan: (uid: number, plan: PlanBase) => void
@@ -33,6 +34,7 @@ export const useSessionStore = create<State>((set) => ({
       queue: [...state.queue, {
         taskName: (task as any).taskName ?? task.name ?? "",
         version: (task as any).version ?? null,
+        author: (task as any).author ?? "匿名作者",
         values: { ...((task.values ?? {}) as Record<string, unknown>) },
         valueTypes: task.valueTypes ? { ...(task.valueTypes as Record<string, "text" | "number" | "bool" | "list">) } : undefined,
         _uid: uid,
@@ -72,6 +74,12 @@ export const useSessionStore = create<State>((set) => ({
         t._uid === uid ? { ...t, version } : t
       )
     })),
+  updateTaskAuthor: (uid, author, version, values) =>
+    set((state) => ({
+      queue: state.queue.map((t) =>
+        t._uid === uid ? { ...t, author, version, values } : t
+      ),
+    })),
 
   addPlan: (plan) => {
     const uid = _nextPlanUid++
@@ -102,6 +110,7 @@ export const useSessionStore = create<State>((set) => ({
           next.queue = raw.map((t: Record<string, unknown>) => ({
             taskName: (t.taskName ?? t.name ?? "") as string,
             version: (t.version ?? null) as string | null,
+            author: (t.author ?? "匿名作者") as string,
             values: (t.values ?? {}) as Record<string, unknown>,
             valueTypes: t.valueTypes as Record<string, "text" | "number" | "bool" | "list"> | undefined,
             _uid: _nextTaskUid++,

@@ -39,6 +39,7 @@ type State = {
   clearExecute: (hwnd: string) => void
   updateExecuteValues: (hwnd: string, uid: number, values: Record<string, unknown>) => void
   updateExecuteVersion: (hwnd: string, uid: number, version: string | null) => void
+  updateExecuteAuthor: (hwnd: string, uid: number, author: string, version: string, values: Record<string, unknown>) => void
   reorderExecute: (hwnd: string, orderedUids: number[]) => void
   setPlans: (hwnd: string, plans: PlanBase[]) => void
   syncPlansToAllWindows: (plans: PlanBase[]) => void
@@ -67,6 +68,7 @@ export const useCharacterStore = create<State>((set, get) => ({
           plans,
           executeList: executeList.map((item) => ({
             ...item,
+            author: item.author ?? "匿名作者",
             _uid: _executeUidCounter++,
           })),
         },
@@ -128,6 +130,7 @@ export const useCharacterStore = create<State>((set, get) => ({
                   name: item.name,
                   taskName: (item as any).taskName ?? item.name,
                   version: (item as any).version ?? null,
+                  author: (item as any).author ?? "匿名作者",
                   values: item.values ?? {},
                   valueTypes: item.valueTypes,
                   debugStart: (item as any).debugStart,
@@ -152,6 +155,7 @@ export const useCharacterStore = create<State>((set, get) => ({
                   name: item.name,
                   taskName: (item as any).taskName ?? item.name,
                   version: (item as any).version ?? null,
+                  author: (item as any).author ?? "匿名作者",
                   values: item.values ?? {},
                   valueTypes: item.valueTypes,
                   debugStart: (item as any).debugStart,
@@ -175,6 +179,7 @@ export const useCharacterStore = create<State>((set, get) => ({
                   name: item.name,
                   taskName: (item as any).taskName ?? item.name,
                   version: (item as any).version ?? null,
+                  author: (item as any).author ?? "匿名作者",
                   values: item.values ?? {},
                   valueTypes: item.valueTypes,
                   debugStart: (item as any).debugStart,
@@ -230,6 +235,22 @@ export const useCharacterStore = create<State>((set, get) => ({
               ),
             }
           : character
+      ),
+    })),
+  updateExecuteAuthor: (hwnd, uid, author, version, values) =>
+    set((state) => ({
+      characters: state.characters.map((c) =>
+        c.hwnd !== hwnd ? c : {
+          ...c,
+          executeList: c.executeList.map((item) =>
+            item._uid !== uid ? item : {
+              ...item,
+              author,
+              version,
+              values,
+            }
+          ),
+        }
       ),
     })),
   setPlans: (hwnd: string, plans: PlanBase[]) => {

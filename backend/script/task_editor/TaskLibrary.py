@@ -34,9 +34,9 @@ def load_task_list():
     return get_repo().list_all()
 
 
-def get_full_task_config(name_or_id, version=None):
-    """[deprecated] 请使用 get_repo().get_full_config(name_or_id, version)"""
-    return get_repo().get_full_config(name_or_id, version)
+def get_full_task_config(name_or_id, version=None, author="匿名作者"):
+    """[deprecated] 请使用 get_repo().get_full_config(name_or_id, version, author)"""
+    return get_repo().get_full_config(name_or_id, version, author)
 
 
 def save_full_task_config(name_or_id, data, version=None):
@@ -44,37 +44,37 @@ def save_full_task_config(name_or_id, data, version=None):
     get_repo().save(name_or_id, data, version)
 
 
-def create_task(name, version, description=""):
-    """[deprecated] 请使用 get_repo().create(name, version, description)"""
-    return get_repo().create(name, version, description)
+def create_task(name, version, description="", author="匿名作者"):
+    """[deprecated] 请使用 get_repo().create(name, version, author, description)"""
+    return get_repo().create(name, version, author, description)
 
 
-def build_task_zip(name, version=None):
-    """[deprecated] 请使用 get_repo().build_zip(name, version)"""
-    return get_repo().build_zip(name, version)
+def build_task_zip(name, version=None, author="匿名作者"):
+    """[deprecated] 请使用 get_repo().build_zip(name, version, author)"""
+    return get_repo().build_zip(name, version, author)
 
 
-def import_task(zip_base64):
-    """[deprecated] 请使用 get_repo().import_task(zip_base64)"""
-    return get_repo().import_task(zip_base64)
+def import_task(items):
+    """[deprecated] 请使用 get_repo().import_task(items)"""
+    return get_repo().import_task(items)
 
 
-def delete_task(name, version=None):
-    """[deprecated] 请使用 get_repo().delete(name, version)"""
-    return get_repo().delete(name, version)
+def delete_task(name, version=None, author="匿名作者"):
+    """[deprecated] 请使用 get_repo().delete(name, version, author)"""
+    return get_repo().delete(name, version, author)
 
 
-def save_as_new_version(name_or_id, new_version, old_version=None):
-    """[deprecated] 请使用 get_repo().save_as_new_version(name_or_id, new_version, old_version)"""
-    return get_repo().save_as_new_version(name_or_id, new_version, old_version)
+def save_as_new_version(name_or_id, new_version, old_version=None, author="匿名作者"):
+    """[deprecated] 请使用 get_repo().save_as_new_version(name_or_id, new_version, old_version, author)"""
+    return get_repo().save_as_new_version(name_or_id, new_version, old_version, author)
 
 
-def resolve_task_version(name, version=None):
-    """[deprecated] 请使用 get_repo().resolve(name, version)
+def resolve_task_version(name, version=None, author="匿名作者"):
+    """[deprecated] 请使用 get_repo().resolve(name, version, author)
     注意：旧接口返回 (task_id, config) 或 (None, error_dict)；
     新接口返回 (task_id, config) 或 (None, None)。包装层保持旧语义。
     """
-    task_id, config = get_repo().resolve(name, version)
+    task_id, config = get_repo().resolve(name, version, author)
     if task_id is None:
         return None, {"error": f"任务不存在: {name}"}
     return task_id, config

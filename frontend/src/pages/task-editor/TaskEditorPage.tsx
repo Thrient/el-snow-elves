@@ -474,6 +474,7 @@ const TaskEditorPage: FC = () => {
             onEdgesChange={(es) => { setFlowEdges(es); if (!initRef.current) editor.setDirty(true); }}
             onNodesDelete={(ids) => {
               ids.forEach((id) => {
+                if (id === editor.currentTask?.start) return;
                 const isCommon = id in (editor.currentTask?.common ?? {});
                 editor.removeStep(id, isCommon);
               });
@@ -491,7 +492,7 @@ const TaskEditorPage: FC = () => {
         </div>
         <div className={`shrink-0 border-l border-[#e8eaed] bg-container flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${drawerStep ? "w-[440px]" : "w-0 border-l-0"}`}>
           {drawerStep && drawerData && (
-            <StepPanel stepName={drawerStep.name} step={drawerData} isCommon={drawerStep.isCommon} ctx={ctx}
+            <StepPanel stepName={drawerStep.name} step={drawerData} isCommon={drawerStep.isCommon} isStart={drawerStep.name === editor.currentTask?.start} ctx={ctx}
               onClose={() => setDrawerStep(null)}
               onRename={(nn) => {
                 const oldName = drawerStep.name;

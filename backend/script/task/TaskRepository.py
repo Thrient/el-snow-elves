@@ -273,8 +273,10 @@ class TaskRepository:
 
     def resolve(self, name: str, version: str | None = None, author: str = "匿名作者") -> tuple[str | None, dict | None]:
         """按优先级遍历源，返回 (task_id, config)。version=None 取最高版本。"""
+        logging.debug(f"[resolve] 入参: name={name} version={version} author={author}")
         for source in self._sources:
             task_dir = source.root / name
+            logging.debug(f"[resolve] 检查源: {source.name} root={source.root} task_dir={task_dir} exists={task_dir.is_dir()}")
             if not task_dir.is_dir():
                 continue
 
@@ -286,6 +288,7 @@ class TaskRepository:
 
             # version=None: 取该源中最高版本
             versions = self._list_versions_for_author(task_dir, name, author)
+            logging.debug(f"[resolve] {source.name}: name={name} author={author} versions={versions}")
             if not versions:
                 continue
 
@@ -295,6 +298,7 @@ class TaskRepository:
                 if task_id:
                     return task_id, config
 
+        logging.warning(f"[resolve] 未找到: name={name} version={version} author={author}")
         return None, None
 
     def get_full_config(self, name_or_id: str, version: str | None = None, author: str = "匿名作者") -> dict | None:
@@ -337,8 +341,8 @@ class TaskRepository:
             "version": version,
             "author": author,
             "description": description,
-            "start": "",
-            "steps": {},
+            "start": "开始执行",
+            "steps": {"开始执行": {"action": "", "params": {}}},
             "common": {},
             "monitors": {"loop": [], "interval": 1},
             "values": {},

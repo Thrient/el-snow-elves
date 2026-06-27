@@ -55,10 +55,11 @@ class Script(Thread):
             if task is not None:
                 task_name = task.get("taskName") or task.get("name")
                 task_version = task.get("version") or None
+                task_author = task.get("author") or "匿名作者"
                 repo = get_repo()
-                tid, work = repo.resolve(task_name, task_version)
+                tid, work = repo.resolve(task_name, task_version, task_author)
                 if work is None:
-                    logging.error(f"任务解析失败: name={task_name} version={task_version}")
+                    logging.error(f"任务解析失败: name={task_name} version={task_version} author={task_author} | task keys: {list(task.keys())} | task={task}")
                     continue
                 # values：前端已完成合并（repo 默认值 + 用户值 + CONFIG），后端直接使用
                 work["values"] = task.get("values", {})

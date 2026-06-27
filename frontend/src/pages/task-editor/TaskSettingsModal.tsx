@@ -1,5 +1,5 @@
 import { type FC } from "react";
-import { Input, InputNumber, Select } from "antd";
+import { Input, InputNumber, Tag } from "antd";
 import {
   PlayCircleOutlined,
   FieldTimeOutlined,
@@ -19,10 +19,7 @@ interface Props {
 const TaskSettingsModal: FC<Props> = ({ open, task, onClose }) => {
   if (!open) return null;
 
-  const updateStart = useEditorStore((s) => s.updateStart);
   const updateMonitors = useEditorStore((s) => s.updateMonitors);
-
-  const startOpts = [...Object.keys(task.steps), ...Object.keys(task.common)];
 
   /* ---- Row layout helper ---- */
   const Row: FC<{ icon: React.ReactNode; label: string; children: React.ReactNode }> = ({
@@ -70,20 +67,7 @@ const TaskSettingsModal: FC<Props> = ({ open, task, onClose }) => {
             icon={<PlayCircleOutlined className="text-[#16a34a]" />}
             label="起始步骤"
           >
-            <Select
-              className="w-full"
-              size="middle"
-              placeholder="选择第一个执行的步骤…"
-              allowClear
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
-              }
-              value={task.start || undefined}
-              options={startOpts.map((k) => ({ value: k, label: k }))}
-              onChange={(v) => updateStart(v ?? "")}
-              virtual={false}
-            />
+            <Tag color="green" className="text-[12px]">{task.start || "未设置"}</Tag>
           </Row>
 
           {/* Row 2: 最大时长 */}

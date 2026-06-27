@@ -1,5 +1,6 @@
 export interface TaskListItem {
   name: string;
+  author?: string;
   versions: string[];
   latest: string;
   description: string;

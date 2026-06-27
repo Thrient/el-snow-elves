@@ -25,7 +25,7 @@ const DebugExecutionPanel: FC<DebugExecutionPanelProps> = ({ hwnd, stepName }) =
           const charStore = useCharacterStore.getState();
           if (!charStore.selectedHwnd) { message.warning("请先在窗口管理中选择一个窗口"); return; }
           charStore.pushExecute(charStore.selectedHwnd, {
-            id: task.id, name: task.name, version: task.version,
+            id: task.id, name: task.name, version: task.version, author: (task as any).author ?? "匿名作者",
             values: task.values, debugStart: stepName,
           });
           message.success(`已添加到窗口 ${charStore.selectedHwnd}：从「${stepName}」开始`);
@@ -40,7 +40,7 @@ const DebugExecutionPanel: FC<DebugExecutionPanelProps> = ({ hwnd, stepName }) =
           const charStore = useCharacterStore.getState();
           if (!charStore.selectedHwnd) { message.warning("请先在窗口管理中选择一个窗口"); return; }
           charStore.pushExecute(charStore.selectedHwnd, {
-            id: task.id, name: task.name, version: task.version,
+            id: task.id, name: task.name, version: task.version, author: (task as any).author ?? "匿名作者",
             values: task.values, debugStart: stepName, debugSingle: true,
           });
           message.success(`已添加到窗口 ${charStore.selectedHwnd}：单步执行「${stepName}」`);

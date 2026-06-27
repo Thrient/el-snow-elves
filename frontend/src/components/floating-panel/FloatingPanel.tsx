@@ -11,6 +11,7 @@ import type { PlanBase } from "@/types/plan.ts"
 import { mergeValues } from "@/utils/mergeValues"
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal.tsx"
 import VersionTag from "@/components/version-tag/VersionTag"
+import AuthorTag from "@/components/author-tag/AuthorTag"
 import PlanModal from "@/pages/plans/PlanModal.tsx"
 
 const PANEL_WIDTH = 260
@@ -40,6 +41,7 @@ const FloatingPanel: FC = () => {
   const queue = useSessionStore((s) => s.queue)
   const plans = useSessionStore((s) => s.plans)
   const updateTaskVersion = useSessionStore((s) => s.updateTaskVersion)
+  const updateTaskAuthor = useSessionStore((s) => s.updateTaskAuthor)
   const taskList = useCharacterStore((s) => s.taskList)
   const selectedHwnd = useCharacterStore((s) => s.selectedHwnd)
   const characters = useCharacterStore((s) => s.characters)
@@ -110,6 +112,7 @@ const FloatingPanel: FC = () => {
                 name: task.taskName || "",
                 taskName: task.taskName || "",
                 version: task.version ?? null,
+                author: task.author ?? "匿名作者",
                 values: task.values ?? {},
               } as any)
             } else {
@@ -250,7 +253,11 @@ const FloatingPanel: FC = () => {
     const item = itemQueue.find((t) => t._uid === uid)
     if (!item) return
     const taskStore = useCharacterStore.getState()
-    const original = taskStore.taskList.find((t: any) => t.name === ((item as any).taskName || (item as any).name))
+    const itemAuthor = (item as any).author ?? "匿名作者";
+    const original = taskStore.taskList.find(
+      (t: any) => t.name === ((item as any).taskName || (item as any).name)
+        && (t.author ?? "匿名作者") === itemAuthor
+    )
     if (original) {
       setConfigTask({ ...original, version: (item as any).version ?? (original as any).latest, values: mergeValues((original as any).values ?? {}, item.values ?? {}) } as any)
       setConfigUid(uid)
@@ -281,6 +288,7 @@ const FloatingPanel: FC = () => {
       name: t.taskName,
       taskName: t.taskName,
       version: t.version || null,
+      author: t.author ?? "匿名作者",
       values: t.values,
       valueTypes: t.valueTypes,
     }))
@@ -451,26 +459,51 @@ const FloatingPanel: FC = () => {
                                   onMouseDown={(e) => handleCardMouseDown({ uid: item._uid, type: "queue" }, e)}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <span
-                                      className="flex-shrink-0 cursor-grab active:cursor-grabbing text-[#bbb] hover:text-[#1677ff] transition-colors"
-                                      onMouseDown={(e) => e.stopPropagation()}
-                                      draggable
-                                      onDragStart={handleDragStart(item._uid)}
-                                      onDragEnd={handleDragEnd}
-                                    >
-                                      <HolderOutlined className="text-[11px]" />
-                                    </span>
-                                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: taskMissing ? "#ff4d4f" : stale ? "#fa8c16" : dotColors[index % dotColors.length] }} />
-                                    <span className="text-[12px] font-medium truncate leading-normal" style={{ color: taskMissing ? "#ff4d4f" : undefined }}>{tn}</span>
-                                    <span onClick={(e) => e.stopPropagation()}>
-                                      <VersionTag
-                                        versions={versions}
-                                        latest={latest}
-                                        selectedVersion={pinned}
-                                        stale={stale}
-                                        onChange={(v) => updateTaskVersion(item._uid, v)}
-                                      />
-                                    </span>
+                                    <div className="flex items-center gap-1.5 self-center shrink-0">
+                                      <span
+                                        className="cursor-grab active:cursor-grabbing text-[#bbb] hover:text-[#1677ff] transition-colors leading-none"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        draggable
+                                        onDragStart={handleDragStart(item._uid)}
+                                        onDragEnd={handleDragEnd}
+                                      >
+                                        <HolderOutlined className="text-[11px]" />
+                                      </span>
+                                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: taskMissing ? "#ff4d4f" : stale ? "#fa8c16" : dotColors[index % dotColors.length] }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                                      <div className="min-w-0 flex flex-col gap-0.5">
+                                        <span className="text-[12px] font-medium truncate leading-tight" style={{ color: taskMissing ? "#ff4d4f" : undefined }}>{tn}</span>
+                                        <span className="leading-none" onClick={(e) => e.stopPropagation()}>
+                                          {(() => {
+                                            const itemAuthor = (item as any).author ?? "匿名作者";
+                                            const sameNameTasks = taskList.filter((t: any) => t.name === tn);
+                                            const availableAuthors = [...new Set(sameNameTasks.map((t: any) => t.author ?? "匿名作者"))];
+                                            return (
+                                              <AuthorTag
+                                                currentAuthor={itemAuthor}
+                                                availableAuthors={availableAuthors}
+                                                onChange={(newAuthor) => {
+                                                  const newTask = sameNameTasks.find((t: any) => (t.author ?? "匿名作者") === newAuthor);
+                                                  if (newTask) {
+                                                    updateTaskAuthor(item._uid, newAuthor, newTask.latest, newTask.values ?? {});
+                                                  }
+                                                }}
+                                              />
+                                            );
+                                          })()}
+                                        </span>
+                                      </div>
+                                      <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        <VersionTag
+                                          versions={versions}
+                                          latest={latest}
+                                          selectedVersion={pinned}
+                                          stale={stale}
+                                          onChange={(v) => updateTaskVersion(item._uid, v)}
+                                        />
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                                   );

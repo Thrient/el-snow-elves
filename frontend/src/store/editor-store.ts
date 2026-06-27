@@ -121,7 +121,11 @@ export const useEditorStore = create<EditorState>()(
         if (!steps[oldName] || steps[newName]) return;
         steps[newName] = steps[oldName];
         delete steps[oldName];
-        set({ currentTask: { ...currentTask, [key]: steps }, isDirty: true });
+        const updated = { ...currentTask, [key]: steps };
+        if (oldName === currentTask.start) {
+          updated.start = newName;
+        }
+        set({ currentTask: updated, isDirty: true });
       },
 
       updateStep: (name, step, isCommon) => {
@@ -152,7 +156,7 @@ export const useEditorStore = create<EditorState>()(
 
       removeStep: (name, isCommon) => {
         const { currentTask } = get();
-        if (!currentTask) return;
+        if (!currentTask || name === currentTask.start) return;
         const key = isCommon ? "common" : "steps";
         const newSteps = { ...currentTask[key] };
         delete newSteps[name];

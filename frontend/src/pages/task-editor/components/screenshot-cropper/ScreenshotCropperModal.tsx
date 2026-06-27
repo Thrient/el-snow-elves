@@ -16,7 +16,7 @@ import CaptureZoom, { useCaptureZoom } from "../CaptureZoom";
    - Selection tool: S key
    ============================================================ */
 
-interface Props { open: boolean; hwnd: string; taskName?: string; version?: string;
+interface Props { open: boolean; hwnd: string; taskName?: string; version?: string; author?: string;
   onClose: () => void; onSaved: (filename: string) => void; }
 interface CaptureResult { base64: string; width: number; height: number; }
 interface CropRect { x: number; y: number; w: number; h: number; }
@@ -277,7 +277,7 @@ const MouseHandler: FC<{
 
 // ---- Main component ----
 
-const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onClose, onSaved }) => {
+const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, author, onClose, onSaved }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [capture, setCapture] = useState<CaptureResult | null>(null);
@@ -376,7 +376,7 @@ const ScreenshotCropperModal: FC<Props> = ({ open, hwnd, taskName, version, onCl
     try {
       await window.pywebview?.api.emit("API:TEMPLATE:SAVE", hwnd,
         [Math.round(crop.x), Math.round(crop.y), Math.round(crop.x + crop.w), Math.round(crop.y + crop.h)],
-        filename.trim(), "task", taskName, version, capture?.base64);
+        filename.trim(), "task", taskName, version, author ?? "匿名作者", capture?.base64);
       message.success(`已保存: ${filename}.bmp`);
       onSaved(filename.trim());
       setConfirmOpen(false);

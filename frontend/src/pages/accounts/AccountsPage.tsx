@@ -424,9 +424,7 @@ const AccountsPage: FC = () => {
                   <ScanOutlined className="mr-1" />官服扫码
                 </Radio.Button>
                 <Radio.Button value="vivo">Vivo</Radio.Button>
-                <Radio.Button value="bilibili">B站</Radio.Button>
                 <Radio.Button value="huawei">华为</Radio.Button>
-                <Radio.Button value="qihu360">360</Radio.Button>
                 <Radio.Button value="oppo">OPPO</Radio.Button>
               </Radio.Group>
             </div>

@@ -56,7 +56,7 @@ const TaskPage: FC = () => {
 
   const handleExportSingle = async (task: Task | TaskListItem) => {
     try {
-      const result = await window.pywebview?.api.emit("API:TASK:EXPORT", task.name);
+      const result = await window.pywebview?.api.emit("API:TASK:EXPORT", task.name, null, (task as any).author ?? "匿名作者");
       if (!result) return;
       if (result.error) { message.error(result.error); return; }
       if (result.cancelled) return;
@@ -68,7 +68,11 @@ const TaskPage: FC = () => {
     const names = selectedRowKeys.length > 0 ? selectedRowKeys : taskList.map((t) => t.name);
     if (names.length === 0) { message.warning("没有可导出的任务"); return; }
     try {
-      const result = await window.pywebview?.api.emit("API:TASK:EXPORT:BATCH", names);
+      const items = names.map((name) => {
+        const t = taskList.find((x) => x.name === name);
+        return { name, author: (t as any)?.author ?? "匿名作者" };
+      });
+      const result = await window.pywebview?.api.emit("API:TASK:EXPORT:BATCH", items);
       if (!result) return;
       if (result.cancelled) return;
       if (result.saved?.length) { message.success(`已导出 ${result.saved.length} 个任务`); }
@@ -85,7 +89,7 @@ const TaskPage: FC = () => {
     if (!files || files.length === 0) return;
     setImporting(true);
     try {
-      const zipList: string[] = [];
+      const zipList: { base64: string; filename: string }[] = [];
       for (let i = 0; i < files.length; i++) {
         const b64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -93,7 +97,7 @@ const TaskPage: FC = () => {
           reader.onerror = () => reject(reader.error);
           reader.readAsDataURL(files[i]);
         });
-        zipList.push(b64);
+        zipList.push({ base64: b64, filename: files[i].name });
       }
       const results = await window.pywebview?.api.emit("API:TASK:IMPORT", zipList);
       if (Array.isArray(results)) {
@@ -119,7 +123,7 @@ const TaskPage: FC = () => {
       content: `仅删除版本 ${target}，此操作不可恢复。`,
       okText: "删除", okType: "danger", cancelText: "取消",
       onOk: async () => {
-        await window.pywebview?.api.emit("API:TASK:DELETE", task.name, target);
+        await window.pywebview?.api.emit("API:TASK:DELETE", task.name, target, (task as any).author ?? "匿名作者");
         useCharacterStore.getState().loadTasks();
         message.success(`版本 ${target} 已删除`);
       },
@@ -240,7 +244,12 @@ const TaskPage: FC = () => {
                 selectedVersion={selectedVersions[task.name] ?? null}
                 onToggle={toggleSelect}
                 onVersionChange={(_name, version) => setSelectedVersions((prev) => ({ ...prev, [task.name]: version }))}
-                onAppend={() => appendTask({ name: task.name, version: selectedVersions[task.name] ?? null, values: task.values ?? {} })}
+                onAppend={() => appendTask({
+                  name: task.name,
+                  version: selectedVersions[task.name] ?? null,
+                  values: task.values ?? {},
+                  author: (task as any).author ?? "匿名作者",
+                })}
                 onConfig={() => openConfig(task)}
                 onExport={() => handleExportSingle(task)}
                 onDelete={() => handleDeleteSingle(task, selectedVersions[task.name] ?? null)}

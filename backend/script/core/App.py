@@ -289,10 +289,10 @@ class App:
             return None
 
     @staticmethod
-    def save_template_image(hwnd, crop_region, filename, scope, task_name=None, version=None, base64_data=None):
+    def save_template_image(hwnd, crop_region, filename, scope, task_name=None, version=None, author="匿名作者", base64_data=None):
         """截图裁剪保存模板图片。base64_data 为选图时的快照，避免二次截图画面变化。"""
         try:
-            return TemplateMatcher.save_crop(hwnd, crop_region, filename, scope, task_name, version, base64_data)
+            return TemplateMatcher.save_crop(hwnd, crop_region, filename, scope, task_name, version, author, base64_data)
         except (ValueError, Exception) as e:
             logging.error(f"模板截图失败: hwnd={hwnd}, error={e}")
             raise
@@ -355,9 +355,9 @@ class App:
             Window.enable_window(hwnd)
         logging.info(f"解绑窗口: hwnd={hwnd}")
 
-    def export_task(self, name, version=None):
+    def export_task(self, name, version=None, author="匿名作者"):
         """导出单个任务为 zip"""
-        built = get_repo().build_zip(name, version)
+        built = get_repo().build_zip(name, version, author)
         if isinstance(built, dict):
             return built
         buf, default_name = built
@@ -397,13 +397,15 @@ class App:
             if isinstance(item, dict):
                 n = item.get("name", "")
                 v = item.get("version")
+                a = item.get("author", "匿名作者")
             elif isinstance(item, str):
                 n = item
                 v = None
+                a = "匿名作者"
             else:
                 errors.append({"error": f"无效的任务引用: {item}"})
                 continue
-            built = get_repo().build_zip(n, v)
+            built = get_repo().build_zip(n, v, a)
             if isinstance(built, dict):
                 errors.append(built)
                 continue
@@ -433,6 +435,7 @@ class App:
         webview.start(
             ssl=True,
             http_server=True,
+            http_port=51739,
             private_mode=False,
             storage_path=STORAGE_PATH,
             debug=debug,

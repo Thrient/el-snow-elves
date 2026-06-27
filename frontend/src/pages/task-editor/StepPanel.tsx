@@ -20,6 +20,7 @@ interface Props {
   onClose: () => void; onRename: (name: string) => void;
   onUpdate: (field: string, value: unknown) => void; onDelete: () => void;
   onCopy?: () => void;
+  isStart: boolean;
 }
 
 // ---- Card registry ----
@@ -39,9 +40,9 @@ const CARDS: { key: CardKey; label: string; color: string; light: string; desc: 
     summary: s => s.failure_extra?.length ? `${s.failure_extra.length} 个` : "" },
   { key: "success_extra", label: "成功附加", color: "#2563eb", light: "#bfdbfe", desc: "成功时额外执行",
     summary: s => s.success_extra?.length ? `${s.success_extra.length} 个` : "" },
-  { key: "preset", label: "preset", color: "#7c3aed", light: "#ede9fe", desc: "action 前设置变量",
+  { key: "preset", label: "执行前设置", color: "#7c3aed", light: "#ede9fe", desc: "action 前设置变量",
     summary: s => s.preset?.length ? `${s.preset.length} 个` : "" },
-  { key: "postset", label: "postset", color: "#9333ea", light: "#e9d5ff", desc: "action 后设置变量",
+  { key: "postset", label: "执行后设置", color: "#9333ea", light: "#e9d5ff", desc: "action 后设置变量",
     summary: s => s.postset?.length ? `${s.postset.length} 个` : "" },
   { key: "success_set", label: "成功 set", color: "#16a34a", light: "#dcfce7", desc: "成功时设置变量",
     summary: s => s.success_set?.length ? `${s.success_set.length} 个` : "" },
@@ -55,7 +56,7 @@ const CARDS: { key: CardKey; label: string; color: string; light: string; desc: 
 
 // ---- Main ----
 
-const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename, onUpdate, onDelete, onCopy }) => {
+const StepPanel: FC<Props> = ({ stepName, step, isCommon, isStart, ctx, onClose, onRename, onUpdate, onDelete, onCopy }) => {
   const [expanded, setExpanded] = useState<CardKey | null>(null);
   const [nameEdit, setNameEdit] = useState(false);
   const [nameDraft, setNameDraft] = useState(stepName);
@@ -82,7 +83,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
         {onCopy && (
           <Tooltip title="复制步骤"><Button type="text" size="small" icon={<CopyOutlined />} onClick={onCopy} /></Tooltip>
         )}
-        <Tooltip title="删除步骤"><Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={onDelete} /></Tooltip>
+        <Tooltip title={isStart ? "启动步骤不可删除" : "删除步骤"}><Button type="text" size="small" danger icon={<DeleteOutlined />} disabled={isStart} onClick={onDelete} /></Tooltip>
         <Tooltip title="关闭面板"><Button type="text" size="small" icon={<CloseOutlined />} onClick={onClose} /></Tooltip>
       </div>
 

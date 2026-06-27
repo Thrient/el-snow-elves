@@ -43,12 +43,21 @@ class TemplateMatcher:
     ]
 
     @staticmethod
-    def get_template_path(category, image):
-        # 1. 任务自有模板（内置源）
+    def get_template_path(category, image, author="匿名作者"):
+        """查找模板图片。category = <name>/<version>"""
+        # 1a. 新格式任务自有模板（内置源）：<name>/<version>/<author>/images/
+        path_new = os.path.join(PROJECT_ROOT, "resources", "config", category, author, "images", f"{image}.bmp")
+        if os.path.exists(path_new):
+            return path_new
+        # 1b. 旧格式任务自有模板（内置源）：<name>/<version>/images/
         path = os.path.join(PROJECT_ROOT, "resources", "config", category, "images", f"{image}.bmp")
         if os.path.exists(path):
             return path
-        # 2. 任务自有模板（用户源）
+        # 2a. 新格式任务自有模板（用户源）
+        user_path_new = os.path.join(APP_DATA, "tasks", category, author, "images", f"{image}.bmp")
+        if os.path.exists(user_path_new):
+            return user_path_new
+        # 2b. 旧格式任务自有模板（用户源）
         user_path = os.path.join(APP_DATA, "tasks", category, "images", f"{image}.bmp")
         if os.path.exists(user_path):
             return user_path
@@ -56,11 +65,11 @@ class TemplateMatcher:
         return os.path.join(PROJECT_ROOT, "resources", "images", f"{image}.bmp")
 
     @staticmethod
-    def match_single(img, image, category, box, threshold=THRESHOLD, preprocess=None, method="ccoeff"):
+    def match_single(img, image, category, box, threshold=THRESHOLD, preprocess=None, method="ccoeff", author="匿名作者"):
         """匹配单个模板文件（核心匹配入口）"""
         x1, y1, x2, y2 = box
         search = ScreenCapture.apply_preprocess(img[y1:y2, x1:x2], preprocess)
-        tpl_img = ScreenCapture.apply_preprocess(_imread_unicode(TemplateMatcher.get_template_path(category, image)), preprocess)
+        tpl_img = ScreenCapture.apply_preprocess(_imread_unicode(TemplateMatcher.get_template_path(category, image, author)), preprocess)
         results = TemplateMatcher._match(search, tpl_img, threshold, method)
         if not results:
             return []
@@ -105,6 +114,7 @@ class TemplateMatcher:
         method = kwargs.get("method", "ccoeff")
         name = kwargs.get("name", "default")
         version = kwargs.get("version", "1.0.0")
+        author = kwargs.get("author", "匿名作者")
 
         img, _ = ScreenCapture.capture_gray(hwnd=hwnd)
 
@@ -115,6 +125,7 @@ class TemplateMatcher:
                 TemplateMatcher.match_single,
                 img=img, image=image, category=os.path.join(name, version),
                 box=box, threshold=threshold, preprocess=preprocess, method=method,
+                author=author,
             )] = image
 
         for future in as_completed(futures):
@@ -173,7 +184,7 @@ class TemplateMatcher:
     # ── 模板保存 ──
 
     @staticmethod
-    def save_crop(hwnd, crop_region, filename, scope, task_name=None, version=None, base64_data=None):
+    def save_crop(hwnd, crop_region, filename, scope, task_name=None, version=None, author="匿名作者", base64_data=None):
         """截图 → 裁剪 → 保存为 .bmp 模板文件。
 
         若传入 base64_data（data URL），则直接解码使用，避免二次截图导致画面变化；
@@ -198,11 +209,23 @@ class TemplateMatcher:
 
         cropped = img[y1:y2, x1:x2]
         if scope == "task" and task_name and version:
-            # 任务在用户目录 → 保存到用户源；否则保存到内置源
-            if os.path.exists(os.path.join(APP_DATA, "tasks", task_name, version)):
-                target_dir = os.path.join(APP_DATA, "tasks", task_name, version, "images")
-            else:
-                target_dir = os.path.join(PROJECT_ROOT, "resources", "config", task_name, version, "images")
+            # 通过 TaskRepository 解析任务配置目录，确保新旧目录格式都写入正确路径
+            from script.task import get_repo
+            repo = get_repo()
+            __tid, config = repo.resolve(task_name, version, author)
+            resolved = False
+            if config:
+                json_dir = os.path.dirname(config.get("_config_path", ""))
+                if json_dir and os.path.isdir(json_dir):
+                    target_dir = os.path.join(json_dir, "images")
+                    resolved = True
+            if not resolved:
+                # fallback：任务尚未保存到仓库时
+                base_user = os.path.join(APP_DATA, "tasks", task_name, version)
+                if os.path.exists(base_user):
+                    target_dir = os.path.join(base_user, "images")
+                else:
+                    target_dir = os.path.join(PROJECT_ROOT, "resources", "config", task_name, version, "images")
         else:
             target_dir = os.path.join(PROJECT_ROOT, "resources", "images")
         os.makedirs(target_dir, exist_ok=True)

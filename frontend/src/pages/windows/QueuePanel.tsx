@@ -4,6 +4,7 @@ import { CloseOutlined } from "@ant-design/icons";
 import { useCharacterStore } from "@/store/character-store";
 import TaskConfigModal from "@/components/task-config-modal/TaskConfigModal";
 import VersionTag from "@/components/version-tag/VersionTag";
+import AuthorTag from "@/components/author-tag/AuthorTag";
 import type { Task } from "@/types/task";
 import { mergeValues } from "@/utils/mergeValues";
 
@@ -42,7 +43,10 @@ const QueuePanel: FC = () => {
     if (!item) return;
     const taskStore = useCharacterStore.getState();
     const taskName = (item as any).taskName || item.name;
-    const original = taskStore.taskList.find((t: any) => t.name === taskName);
+    const itemAuthor = (item as any).author ?? "匿名作者";
+    const original = taskStore.taskList.find(
+      (t: any) => t.name === taskName && (t.author ?? "匿名作者") === itemAuthor
+    );
     if (original) {
       setConfigUid(uid);
       setConfigTask({
@@ -109,25 +113,46 @@ const QueuePanel: FC = () => {
                     }}
                   >
                     <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-[12px] font-medium text-heading truncate">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="flex-1 min-w-0 text-[12px] font-medium text-heading truncate">
                           {taskName}
                         </span>
-                        {taskMissing ? (
-                          <Tag style={{ fontSize: 9, lineHeight: 1, border: "none", borderRadius: 4, padding: "1px 6px", margin: 0, color: "#ff4d4f", background: "#fff2f0", fontFamily: "ui-monospace,Consolas,monospace" }}>
-                            ⚠️ 任务不存在
-                          </Tag>
-                        ) : (
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <VersionTag
-                              versions={versions}
-                              latest={latest}
-                              selectedVersion={pinnedVersion}
-                              stale={isStale}
-                              onChange={(v) => characterStore.updateExecuteVersion(selected.hwnd, item._uid, v)}
-                            />
-                          </div>
-                        )}
+                        <span className="flex-1 min-w-0 truncate" onClick={(e) => e.stopPropagation()}>
+                          {(() => {
+                            const itemAuthor = (item as any).author ?? "匿名作者";
+                            const sameNameTasks = taskList.filter((t: any) => t.name === taskName);
+                            const availableAuthors = [...new Set(sameNameTasks.map((t: any) => t.author ?? "匿名作者"))];
+                            return (
+                              <AuthorTag
+                                currentAuthor={itemAuthor}
+                                availableAuthors={availableAuthors}
+                                onChange={(newAuthor) => {
+                                  const newTask = sameNameTasks.find((t: any) => (t.author ?? "匿名作者") === newAuthor);
+                                  if (newTask) {
+                                    characterStore.updateExecuteAuthor(selected.hwnd, item._uid, newAuthor, newTask.latest, newTask.values ?? {});
+                                  }
+                                }}
+                              />
+                            );
+                          })()}
+                        </span>
+                        <span className="flex-1 min-w-0 flex justify-end">
+                          {taskMissing ? (
+                            <Tag style={{ fontSize: 9, lineHeight: 1, border: "none", borderRadius: 4, padding: "1px 6px", margin: 0, color: "#ff4d4f", background: "#fff2f0", fontFamily: "ui-monospace,Consolas,monospace" }}>
+                              ⚠️ 任务不存在
+                            </Tag>
+                          ) : (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <VersionTag
+                                versions={versions}
+                                latest={latest}
+                                selectedVersion={pinnedVersion}
+                                stale={isStale}
+                                onChange={(v) => characterStore.updateExecuteVersion(selected.hwnd, item._uid, v)}
+                              />
+                            </div>
+                          )}
+                        </span>
                       </div>
                       <span className="flex items-center justify-center w-6 h-6 cursor-pointer opacity-0 group-hover:opacity-100 transition-all shrink-0"
                         style={{ borderRadius: 6, color: "#d1d5db" }}

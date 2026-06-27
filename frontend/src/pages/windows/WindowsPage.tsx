@@ -180,8 +180,8 @@ const WindowsPage: FC = () => {
 
       {modalOpen && (
         <HwndPreviewModal onClose={closeModal}
-          onSelect={(hwnd: string) => { window.pywebview?.api.emit("API:SCRIPT:BIND", hwnd).then(() => { characterStore.add({ character: "", hwnd, running: true, locked: true, opacity: 255, currentTask: null, executeList: userStore.queue.map(t => ({ id: "", name: t.taskName, version: t.version, values: t.values } as any)), plans: userStore.plans }); characterStore.setSelectedHwnd(hwnd); }); }}
-          onSelectAll={async (hwnds: string[]) => { const bound = new Set(characterStore.characters.map(c => c.hwnd)); for (const hwnd of hwnds) { if (bound.has(hwnd)) continue; await window.pywebview?.api.emit("API:SCRIPT:BIND", hwnd); characterStore.add({ character: "", hwnd, running: true, locked: true, opacity: 255, currentTask: null, executeList: userStore.queue.map(t => ({ id: "", name: t.taskName, version: t.version, values: t.values } as any)), plans: userStore.plans }); } }}
+          onSelect={(hwnd: string) => { window.pywebview?.api.emit("API:SCRIPT:BIND", hwnd).then(() => { characterStore.add({ character: "", hwnd, running: true, locked: true, opacity: 255, currentTask: null, executeList: userStore.queue.map(t => ({ id: "", name: t.taskName, version: t.version, author: t.author ?? "匿名作者", values: t.values } as any)), plans: userStore.plans }); characterStore.setSelectedHwnd(hwnd); }); }}
+          onSelectAll={async (hwnds: string[]) => { const bound = new Set(characterStore.characters.map(c => c.hwnd)); for (const hwnd of hwnds) { if (bound.has(hwnd)) continue; await window.pywebview?.api.emit("API:SCRIPT:BIND", hwnd); characterStore.add({ character: "", hwnd, running: true, locked: true, opacity: 255, currentTask: null, executeList: userStore.queue.map(t => ({ id: "", name: t.taskName, version: t.version, author: t.author ?? "匿名作者", values: t.values } as any)), plans: userStore.plans }); } }}
         />
       )}
 

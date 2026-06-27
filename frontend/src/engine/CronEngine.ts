@@ -67,7 +67,7 @@ export class CronEngine {
               continue;
             }
             store.pushExecute(this.hwnd, {
-              id: item.id, name: item.name, version: item.version, values: item.values ?? {},
+              id: item.id, name: item.name, version: item.version, author: (item as any).author ?? "匿名作者", values: item.values ?? {},
             });
           }
           if (missingTasks.length > 0) {
@@ -117,6 +117,7 @@ export class CronEngine {
           name: taskName,
           taskName: taskName,
           version: null,
+          author: (task as any).author ?? "匿名作者",
           values: (params.values ?? {}) as Record<string, unknown>,
         } as any);
         return;
@@ -127,6 +128,7 @@ export class CronEngine {
       name: taskName,
       taskName: taskName,
       version: version ?? null,
+      author: (task as any).author ?? "匿名作者",
       values: (params.values ?? {}) as Record<string, unknown>,
     } as any);
   }
