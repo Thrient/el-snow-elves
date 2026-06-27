@@ -49,7 +49,6 @@ class TaskRepository:
 
     def _migrate_set_to_postset(self):
         """启动时扫描所有任务 JSON，将旧字段名 set 迁移为 postset。"""
-        from script.engine.FlowEngine import clear_common_cache
         for source in self._sources:
             root = source.root
             if not root.is_dir():
@@ -72,8 +71,6 @@ class TaskRepository:
                         # 旧格式: version/name.json
                         elif entry.endswith('.json') and entry != 'positions.json':
                             self._migrate_file(entry_path)
-        clear_common_cache()
-
     @staticmethod
     def _migrate_file(path):
         try:

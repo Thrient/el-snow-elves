@@ -789,7 +789,7 @@
         }
       }
     ],
-    "set": [
+    "postset": [
       {
         "name": "_使用道具计数",
         "value": 0
@@ -840,7 +840,7 @@
         "value": false
       }
     ],
-    "set": [
+    "postset": [
       {
         "name": "_使用道具计数",
         "value": "{_使用道具计数++}"
