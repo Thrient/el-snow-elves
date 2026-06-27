@@ -15,6 +15,17 @@ from script.task.TaskSource import TaskSource
 USER_TASK_PATH = Path(APP_DATA) / "tasks"
 
 
+def _parse_version_tuple(v: str) -> tuple:
+    try:
+        return tuple(int(x) for x in v.split("."))
+    except ValueError:
+        return (0, 0, 0)
+
+
+def _make_task_id(name: str, version: str, author: str) -> str:
+    return hashlib.sha256(f"{name}_{version}_{author}".encode("utf-8")).hexdigest()
+
+
 class TaskRepository:
     def __init__(self, sources: list[TaskSource] | None = None):
         if sources is None:
@@ -34,22 +45,71 @@ class TaskRepository:
             ]
         self._sources = sorted(sources, key=lambda s: s.priority, reverse=True)
         self._cache: dict[str, dict] = {}  # task_id → config
+        self._migrate_set_to_postset()
 
-    def _find_conflict(self, name: str, version: str) -> TaskSource | None:
-        """检查所有源是否已有同名同版本任务，返回冲突的源或 None。"""
+    def _migrate_set_to_postset(self):
+        """启动时扫描所有任务 JSON，将旧字段名 set 迁移为 postset。"""
+        for source in self._sources:
+            root = source.root
+            if not root.is_dir():
+                continue
+            for task_dir in os.listdir(root):
+                task_path = root / task_dir
+                if not task_path.is_dir():
+                    continue
+                for version_dir in os.listdir(task_path):
+                    version_path = task_path / version_dir
+                    if not version_path.is_dir():
+                        continue
+                    for entry in os.listdir(version_path):
+                        entry_path = version_path / entry
+                        # 新格式: version/author/name.json
+                        if entry_path.is_dir():
+                            for fn in os.listdir(entry_path):
+                                if fn.endswith('.json') and fn != 'positions.json':
+                                    self._migrate_file(entry_path / fn)
+                        # 旧格式: version/name.json
+                        elif entry.endswith('.json') and entry != 'positions.json':
+                            self._migrate_file(entry_path)
+
+    @staticmethod
+    def _migrate_file(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            changed = False
+            for section in ('steps', 'common'):
+                for step_def in data.get(section, {}).values():
+                    if isinstance(step_def, dict) and 'set' in step_def:
+                        step_def['postset'] = step_def.pop('set')
+                        changed = True
+            if changed:
+                with open(path, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                logging.info(f"[Migration] set→postset: {path}")
+        except Exception as e:
+            logging.warning(f"[Migration] 跳过 {path}: {e}")
+
+    def _find_conflict(self, name: str, version: str, author: str = "匿名作者") -> bool:
+        """检查所有源是否已有同名同版本同作者任务，返回 True/False。"""
         for source in self._sources:
             version_dir = source.root / name / version
-            json_path = version_dir / f"{name}.json"
+            # 新格式优先：<name>/<version>/<author>/<name>.json
+            json_path = version_dir / author / f"{name}.json"
             if json_path.is_file():
-                return source
-        return None
+                return True
+            # 旧格式兼容：<name>/<version>/<name>.json（仅当 author 为匿名作者）
+            if author == "匿名作者":
+                json_path_old = version_dir / f"{name}.json"
+                if json_path_old.is_file():
+                    return True
+        return False
 
     def list_all(self) -> list[dict]:
-        """扫描所有源，按 name 合并版本列表。
-        同名同版本时高优先级覆盖低优先级。返回合并后的任务列表。"""
-        by_name: dict[str, dict] = {}
+        """扫描所有源，按 (name, author) 合并版本列表。
+        支持新旧两种目录结构，旧格式自动识别为 author="匿名作者"。"""
+        by_key: dict[tuple, dict] = {}  # (name, author) → merged
 
-        # 低优先级先处理，高优先级后覆盖
         for source in reversed(self._sources):
             if not source.root.is_dir():
                 continue
@@ -59,60 +119,160 @@ class TaskRepository:
                     continue
 
                 name = task_folder
-                versions: list[str] = []
-                latest_config = None
-                latest_version = (0, 0, 0)
+                # 收集该 name 下所有 (version, author, config, json_path)
+                entries: list[tuple[tuple, str, dict, str]] = []  # (v_tuple, version_str, config, json_path)
 
                 for version_folder in os.listdir(task_path):
                     version_path = task_path / version_folder
                     if not version_path.is_dir():
                         continue
-                    json_path = version_path / f"{name}.json"
-                    if not json_path.is_file():
-                        continue
 
-                    with open(json_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
+                    # 新格式：<name>/<version>/<author>/<name>.json
+                    for author_folder in os.listdir(version_path):
+                        author_path = version_path / author_folder
+                        if not author_path.is_dir():
+                            continue
+                        json_path = author_path / f"{name}.json"
+                        if json_path.is_file():
+                            with open(json_path, "r", encoding="utf-8") as f:
+                                data = json.load(f)
+                            if data.get("name") != name:
+                                continue
+                            if "author" not in data:
+                                data["author"] = author_folder
+                            version_str = data.get("version", version_folder)
+                            v_tuple = _parse_version_tuple(version_str)
+                            entries.append((v_tuple, version_str, data, json_path, author_folder))
 
-                    if data.get("name") != name:
-                        continue
+                    # 旧格式：<name>/<version>/<name>.json → 强制 author="匿名作者"
+                    json_path_old = version_path / f"{name}.json"
+                    if json_path_old.is_file():
+                        with open(json_path_old, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        if data.get("name") == name:
+                            version_str = data.get("version", version_folder)
+                            v_tuple = _parse_version_tuple(version_str)
+                            author = "匿名作者"
+                            data["author"] = "匿名作者"
+                            entries.append((v_tuple, version_str, data, json_path_old, author))
 
-                    version_str = data.get("version", version_folder)
-                    versions.append(version_str)
-
-                    task_id = hashlib.sha256(f"{name}_{version_str}".encode("utf-8")).hexdigest()
-                    data["id"] = task_id
-                    data["_config_path"] = str(json_path)
-                    self._cache[task_id] = dict(data)
-
-                    try:
-                        v_tuple = tuple(int(x) for x in version_str.split("."))
-                    except ValueError:
-                        v_tuple = (0, 0, 0)
-                    if v_tuple > latest_version:
-                        latest_version = v_tuple
-                        latest_config = data
-
-                if not versions:
+                if not entries:
                     continue
 
-                versions.sort(key=lambda v: [int(x) for x in v.split(".")], reverse=True)
+                # 按 (name, author) 分组
+                groups: dict[str, list] = {}
+                for v_tuple, v_str, data, jp, author in entries:
+                    groups.setdefault(author, []).append((v_tuple, v_str, data, jp))
 
-                merged = {
-                    "name": name,
-                    "versions": versions,
-                    "latest": versions[0],
-                    "description": latest_config.get("description", "") if latest_config else "",
-                    "steps": latest_config.get("steps", {}) if latest_config else {},
-                    "start": latest_config.get("start", "") if latest_config else "",
-                    "layout": latest_config.get("layout", []) if latest_config else [],
-                    "values": latest_config.get("values", {}) if latest_config else {},
-                }
-                by_name[name] = merged
+                for author, group_items in groups.items():
+                    key = (name, author)
+                    existing = by_key.get(key, {})
 
-        return list(by_name.values())
+                    versions: list[str] = existing.get("versions", [])
+                    latest_config = existing.get("_latest_config")
+                    latest_version: tuple = existing.get("_latest_version", (0, 0, 0))
 
-    def resolve(self, name: str, version: str | None = None) -> tuple[str | None, dict | None]:
+                    for v_tuple, v_str, data, jp in group_items:
+                        if v_str not in versions:
+                            versions.append(v_str)
+
+                        task_id = _make_task_id(name, v_str, author)
+                        data["id"] = task_id
+                        data["_config_path"] = str(jp)
+                        self._cache[task_id] = dict(data)
+
+                        if v_tuple > latest_version:
+                            latest_version = v_tuple
+                            latest_config = data
+
+                    if not versions:
+                        continue
+
+                    versions.sort(key=lambda v: _parse_version_tuple(v), reverse=True)
+
+                    merged = {
+                        "name": name,
+                        "author": author,
+                        "versions": versions,
+                        "latest": versions[0],
+                        "description": latest_config.get("description", "") if latest_config else "",
+                        "steps": latest_config.get("steps", {}) if latest_config else {},
+                        "start": latest_config.get("start", "") if latest_config else "",
+                        "layout": latest_config.get("layout", []) if latest_config else [],
+                        "values": latest_config.get("values", {}) if latest_config else {},
+                        "_latest_config": latest_config,
+                        "_latest_version": latest_version,
+                    }
+                    by_key[key] = merged
+
+        # 清理内部字段后返回
+        result = []
+        for v in by_key.values():
+            v.pop("_latest_config", None)
+            v.pop("_latest_version", None)
+            result.append(v)
+        return result
+
+    def _resolve_version_dir(self, task_dir: Path, name: str, version: str, author: str) -> tuple[str | None, dict | None]:
+        """在指定版本目录中按 author 查找任务配置。返回 (task_id, config) 或 (None, None)。"""
+        version_dir = task_dir / version
+        if not version_dir.is_dir():
+            return None, None
+
+        # 新格式：version_dir/author/name.json
+        json_path = version_dir / author / f"{name}.json"
+        if json_path.is_file():
+            task_id = _make_task_id(name, version, author)
+            cached = self._cache.get(task_id)
+            if cached:
+                return task_id, cached
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            data["id"] = task_id
+            data["_config_path"] = str(json_path)
+            self._cache[task_id] = data
+            return task_id, data
+
+        # 旧格式兼容：version_dir/name.json（仅当 author 为匿名作者）
+        if author == "匿名作者":
+            json_path_old = version_dir / f"{name}.json"
+            if json_path_old.is_file():
+                task_id = _make_task_id(name, version, author)
+                cached = self._cache.get(task_id)
+                if cached:
+                    return task_id, cached
+                with open(json_path_old, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                data["id"] = task_id
+                data["_config_path"] = str(json_path_old)
+                if "author" not in data:
+                    data["author"] = author
+                self._cache[task_id] = data
+                return task_id, data
+
+        return None, None
+
+    def _list_versions_for_author(self, task_dir: Path, name: str, author: str) -> list[str]:
+        """扫描目录中符合指定 author 的版本列表。"""
+        versions: list[str] = []
+        if not task_dir.is_dir():
+            return versions
+        for v_dir in os.listdir(task_dir):
+            v_path = task_dir / v_dir
+            if not v_path.is_dir():
+                continue
+            # 新格式
+            if (v_path / author / f"{name}.json").is_file():
+                if v_dir not in versions:
+                    versions.append(v_dir)
+            # 旧格式兼容
+            elif author == "匿名作者" and (v_path / f"{name}.json").is_file():
+                if v_dir not in versions:
+                    versions.append(v_dir)
+        versions.sort(key=lambda v: _parse_version_tuple(v), reverse=True)
+        return versions
+
+    def resolve(self, name: str, version: str | None = None, author: str = "匿名作者") -> tuple[str | None, dict | None]:
         """按优先级遍历源，返回 (task_id, config)。version=None 取最高版本。"""
         for source in self._sources:
             task_dir = source.root / name
@@ -120,47 +280,33 @@ class TaskRepository:
                 continue
 
             if version:
-                version_dir = task_dir / version
-                json_path = version_dir / f"{name}.json"
-                if not json_path.is_file():
-                    continue
-                task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
-                cached = self._cache.get(task_id)
-                if cached:
-                    return task_id, cached
-                with open(json_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                data["id"] = task_id
-                data["_config_path"] = str(json_path)
-                self._cache[task_id] = data
-                return task_id, data
+                task_id, config = self._resolve_version_dir(task_dir, name, version, author)
+                if task_id:
+                    return task_id, config
+                continue
 
             # version=None: 取该源中最高版本
-            versions = []
-            for v_dir in os.listdir(task_dir):
-                v_path = task_dir / v_dir
-                if not v_path.is_dir():
-                    continue
-                if (v_path / f"{name}.json").is_file():
-                    versions.append(v_dir)
-
+            versions = self._list_versions_for_author(task_dir, name, author)
             if not versions:
                 continue
 
-            versions.sort(key=lambda v: [int(x) for x in v.split(".")], reverse=True)
-            return self.resolve(name, versions[0])
+            # 从高到低尝试 resolve
+            for v in versions:
+                task_id, config = self._resolve_version_dir(task_dir, name, v, author)
+                if task_id:
+                    return task_id, config
 
         return None, None
 
-    def get_full_config(self, name_or_id: str, version: str | None = None) -> dict | None:
+    def get_full_config(self, name_or_id: str, version: str | None = None, author: str = "匿名作者") -> dict | None:
         """公开接口 — 先查缓存再 resolve，返回完整配置或 None。"""
         if version is not None:
-            task_id, config = self.resolve(name_or_id, version)
+            task_id, config = self.resolve(name_or_id, version, author)
             return config if task_id else None
         cached = self._cache.get(name_or_id)
         if cached:
             return cached
-        task_id, config = self.resolve(name_or_id, None)
+        task_id, config = self.resolve(name_or_id, None, author)
         return config if task_id else None
 
     def _get_writable_source(self, prefer: str = "user") -> TaskSource:
@@ -174,22 +320,23 @@ class TaskRepository:
                 return source
         raise RuntimeError("没有可用的可写任务源")
 
-    def create(self, name: str, version: str, description: str = "") -> str:
+    def create(self, name: str, version: str, author: str = "匿名作者", description: str = "") -> str:
         """新建任务。检查所有源无冲突后写入用户源。返回 task_id。"""
         # 冲突检查
-        conflict = self._find_conflict(name, version)
+        conflict = self._find_conflict(name, version, author)
         if conflict:
-            raise FileExistsError(f"任务「{name}」版本 {version} 已存在（{conflict.name}），无法创建")
+            raise FileExistsError(f"任务「{name}」版本 {version} 作者 {author} 已存在，无法创建")
 
         source = self._get_writable_source("user")
-        task_dir = source.root / name / version
+        task_dir = source.root / name / version / author
         os.makedirs(task_dir, exist_ok=True)
         os.makedirs(task_dir / "images", exist_ok=True)
 
-        task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
+        task_id = _make_task_id(name, version, author)
         task_json = {
             "name": name,
             "version": version,
+            "author": author,
             "description": description,
             "start": "",
             "steps": {},
@@ -205,13 +352,13 @@ class TaskRepository:
         task_json["id"] = task_id
         task_json["_config_path"] = str(filepath)
         self._cache[task_id] = task_json
-        logging.info(f"[TaskRepository] 创建任务: {name} v{version} → {source.name}")
+        logging.info(f"[TaskRepository] 创建任务: {name} v{version} author={author} → {source.name}")
         return task_id
 
-    def save(self, name_or_id: str, data: dict, version: str | None = None) -> None:
+    def save(self, name_or_id: str, data: dict, version: str | None = None, author: str = "匿名作者") -> None:
         """保存任务配置。匹配旧 save_full_task_config(name_or_id, data, version) 签名。"""
         if version is not None:
-            task_id = hashlib.sha256(f"{name_or_id}_{version}".encode("utf-8")).hexdigest()
+            task_id = _make_task_id(name_or_id, version, author)
         else:
             task_id = name_or_id
 
@@ -234,19 +381,28 @@ class TaskRepository:
         merged["_config_path"] = filepath
         self._cache[task_id] = merged
 
-    def delete(self, name: str, version: str | None = None) -> dict:
+    def delete(self, name: str, version: str | None = None, author: str = "匿名作者") -> dict:
         """删除任务。从任务所在源删除。"""
         if version:
-            task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
-            task_id, config = self.resolve(name, version)  # resolve 填充缓存
+            task_id, config = self.resolve(name, version, author)  # resolve 填充缓存
             if not config:
-                return {"error": f"任务不存在: {name} v{version}"}
-            version_dir = os.path.dirname(config.get("_config_path", ""))
-            if os.path.isdir(version_dir):
-                shutil.rmtree(version_dir, ignore_errors=True)
+                return {"error": f"任务不存在: {name} v{version} author={author}"}
+            config_path = config.get("_config_path", "")
+            # 删除 author 子目录
+            author_dir = os.path.dirname(config_path) if config_path else ""
+            if os.path.isdir(author_dir):
+                shutil.rmtree(author_dir, ignore_errors=True)
+            # 如果 version 目录变为空，也删除 version 目录
+            if author_dir:
+                version_dir = os.path.dirname(author_dir)
+                if os.path.isdir(version_dir):
+                    try:
+                        os.rmdir(version_dir)
+                    except OSError:
+                        pass  # 非空则保留
             self._cache.pop(task_id, None)
-            logging.info(f"[TaskRepository] 已删除: {name} v{version}")
-            return {"success": True, "name": name, "version": version}
+            logging.info(f"[TaskRepository] 已删除: {name} v{version} author={author}")
+            return {"success": True, "name": name, "version": version, "author": author}
         else:
             # 删除整个任务（所有版本），从找到的第一个源删
             for source in self._sources:
@@ -260,10 +416,10 @@ class TaskRepository:
                     return {"success": True, "name": name}
             return {"error": f"任务不存在: {name}"}
 
-    def save_as_new_version(self, name_or_id: str, new_version: str, old_version: str | None = None) -> dict:
-        """将当前任务保存为新版本（在原源中复制版本目录 + 更新 version 字段）。"""
+    def save_as_new_version(self, name_or_id: str, new_version: str, old_version: str | None = None, author: str = "匿名作者") -> dict:
+        """将当前任务保存为新版本（在原源中复制 author 子目录 + 更新 version 字段）。"""
         if old_version is not None:
-            task_id = hashlib.sha256(f"{name_or_id}_{old_version}".encode("utf-8")).hexdigest()
+            task_id = _make_task_id(name_or_id, old_version, author)
         else:
             task_id = name_or_id
 
@@ -282,19 +438,32 @@ class TaskRepository:
         if new_version == old_ver:
             return {"error": f"新版本号与当前版本相同: {new_version}"}
 
+        # src_dir 是 json 所在目录。旧格式：<root>/<name>/<version>/
+        # 新格式：<root>/<name>/<version>/<author>/
         src_dir = os.path.dirname(config.get("_config_path", ""))
         if not src_dir or not os.path.isdir(src_dir):
             return {"error": "任务目录不存在"}
 
-        # 新版本放在同一源的 name/new_version 下
-        parent_dir = os.path.dirname(src_dir)  # .../<name>/
-        dest_dir = os.path.join(parent_dir, new_version)
-        if os.path.exists(dest_dir):
-            return {"error": f"版本 {new_version} 已存在"}
+        # 统一往上走到 name 目录：<root>/<name>/
+        src_path = Path(config.get("_config_path", ""))
+        p = src_path.parent
+        while p.name != name:
+            p = p.parent
+        dest_dir = p / new_version / author
+        if dest_dir.exists():
+            return {"error": f"版本 {new_version} 作者 {author} 已存在"}
 
-        shutil.copytree(src_dir, dest_dir)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        # 复制 src_dir 内容到 dest_dir
+        for item in os.listdir(src_dir):
+            s = os.path.join(src_dir, item)
+            d = str(dest_dir / item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, dirs_exist_ok=True)
+            else:
+                shutil.copy2(s, d)
 
-        new_json_path = os.path.join(dest_dir, f"{name}.json")
+        new_json_path = str(dest_dir / f"{name}.json")
         with open(new_json_path, "r", encoding="utf-8") as f:
             new_data = json.load(f)
         new_data["version"] = new_version
@@ -302,30 +471,31 @@ class TaskRepository:
         with open(new_json_path, "w", encoding="utf-8") as f:
             json.dump(new_data, f, ensure_ascii=False, indent=2)
 
-        new_task_id = hashlib.sha256(f"{name}_{new_version}".encode("utf-8")).hexdigest()
+        new_task_id = _make_task_id(name, new_version, author)
         new_data["id"] = new_task_id
         new_data["_config_path"] = new_json_path
         self._cache[new_task_id] = new_data
 
-        logging.info(f"[TaskRepository] 保存为新版本: {name} v{old_ver} → v{new_version}")
+        logging.info(f"[TaskRepository] 保存为新版本: {name} v{old_ver} → v{new_version} author={author}")
         return {"success": True, "taskId": new_task_id, "name": name, "version": new_version}
 
-    def build_zip(self, name: str, version: str | None = None) -> tuple | dict:
+    def build_zip(self, name: str, version: str | None = None, author: str = "匿名作者") -> tuple | dict:
         """导出任务为 zip。返回 (BytesIO, filename) 或 error dict。"""
         if version:
-            task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
+            task_id = _make_task_id(name, version, author)
+            task_id, config = self.resolve(name, version, author)
         else:
-            task_id, _ = self.resolve(name, None)
+            task_id, config = self.resolve(name, None, author)
         if not task_id:
             return {"error": f"任务不存在: {name}"}
 
-        config = self._cache.get(task_id)
         if not config:
-            return {"error": f"任务不存在: {task_id}"}
+            return {"error": f"任务不存在: {task_id or name}"}
 
-        name = config.get("name", "")
-        version = config.get("version", "")
-        if not name or not version:
+        task_name = config.get("name", name)
+        task_version = config.get("version", version or "")
+        task_author = config.get("author", author)
+        if not task_name or not task_version:
             return {"error": "任务缺少 name 或 version"}
 
         task_dir = os.path.dirname(config.get("_config_path", ""))
@@ -335,7 +505,7 @@ class TaskRepository:
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
             clean = {k: v for k, v in config.items() if k not in ("id", "_config_path")}
-            zf.writestr(f"{name}.json", json.dumps(clean, ensure_ascii=False, indent=2))
+            zf.writestr(f"{task_name}.json", json.dumps(clean, ensure_ascii=False, indent=2))
 
             pos_path = os.path.join(task_dir, "positions.json")
             if os.path.isfile(pos_path):
@@ -349,10 +519,11 @@ class TaskRepository:
 
         import re as _re
         safe = lambda s: _re.sub(r'[\/\\:*?"<>|]', "_", s or "unknown")
-        return buf, f"{safe(name)}_{safe(version)}.zip"
+        # 导出不加 author，文件名保持 <name>_<version>.zip
+        return buf, f"{safe(task_name)}_{safe(task_version)}.zip"
 
     def import_task(self, zip_base64) -> dict:
-        """导入任务。全局冲突检查 → 写入 user 源。"""
+        """导入任务。接受 {base64, filename} 或纯 base64 字符串。全局冲突检查 → 写入 user 源。"""
         if isinstance(zip_base64, list):
             results = []
             for item in zip_base64:
@@ -360,8 +531,26 @@ class TaskRepository:
             return results
         return self._import_single(zip_base64)
 
-    def _import_single(self, zip_base64) -> dict:
+    def _import_single(self, zip_input) -> dict:
+        """导入单个任务。zip_input 可以是 {base64, filename} dict 或纯 base64 字符串。"""
         import base64
+
+        if isinstance(zip_input, dict):
+            zip_base64 = zip_input.get("base64", "")
+            filename = zip_input.get("filename", "")
+        else:
+            zip_base64 = zip_input
+            filename = ""
+
+        # 从文件名解析 author：<name>_<version>_<author>.zip
+        # author 是第二个下划线之后的内容（去掉 .zip）
+        parsed_author = "匿名作者"
+        if filename:
+            stem = filename.rsplit(".", 1)[0]  # 去掉扩展名
+            parts = stem.split("_", 2)  # 最多分3段：name, version, author
+            if len(parts) >= 3:
+                parsed_author = parts[2]
+
         try:
             zip_data = base64.b64decode(zip_base64)
         except Exception:
@@ -389,22 +578,25 @@ class TaskRepository:
 
             name = (task_data.get("name") or "").strip()
             version = (task_data.get("version") or "").strip()
+            # JSON 中的 author 优先于文件名解析
+            author = (task_data.get("author") or "").strip() or parsed_author
             if not name:
                 return {"error": "任务配置缺少 name 字段"}
             if not version:
                 return {"error": "任务配置缺少 version 字段"}
 
             # 全局冲突检查
-            conflict = self._find_conflict(name, version)
+            conflict = self._find_conflict(name, version, author)
             if conflict:
-                return {"error": f"任务「{name}」版本 {version} 已存在（{conflict.name}），无法覆盖导入"}
+                return {"error": f"任务「{name}」版本 {version} 作者 {author} 已存在，无法覆盖导入"}
 
             source = self._get_writable_source("user")
-            dest_dir = source.root / name / version
+            dest_dir = source.root / name / version / author
             images_dir = dest_dir / "images"
             os.makedirs(images_dir, exist_ok=True)
 
             target_json = dest_dir / f"{name}.json"
+            task_data["author"] = author
             with open(target_json, "w", encoding="utf-8") as f:
                 json.dump(task_data, f, ensure_ascii=False, indent=2)
 
@@ -418,13 +610,13 @@ class TaskRepository:
                     if fname.endswith(".bmp"):
                         shutil.copy2(os.path.join(src_images, fname), str(images_dir / fname))
 
-            task_id = hashlib.sha256(f"{name}_{version}".encode("utf-8")).hexdigest()
+            task_id = _make_task_id(name, version, author)
             task_data["id"] = task_id
             task_data["_config_path"] = str(target_json)
             self._cache[task_id] = task_data
 
-            logging.info(f"[TaskRepository] 导入任务: {name} v{version} → user")
-            return {"name": name, "version": version}
+            logging.info(f"[TaskRepository] 导入任务: {name} v{version} author={author} → user")
+            return {"name": name, "version": version, "author": author}
 
         except zipfile.BadZipFile:
             return {"error": "文件不是有效的 ZIP 压缩包"}

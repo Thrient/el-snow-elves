@@ -133,8 +133,8 @@ export function extractAllParams(
     }
   }
 
-  // 1b. From preset/postset/success_set/failure_set values (set for compat)
-  for (const key of ["preset", "postset", "set", "success_set", "failure_set"] as const) {
+  // 1b. From preset/postset/success_set/failure_set values
+  for (const key of ["preset", "postset", "success_set", "failure_set"] as const) {
     const items = (stepData as Record<string, unknown>)[key] as { name: string; value: unknown }[] | undefined;
     if (!items) continue;
     for (const item of items) {
