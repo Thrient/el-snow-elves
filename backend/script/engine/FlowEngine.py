@@ -96,7 +96,7 @@ class FlowEngine(Thread):
             errors.append("'steps' 必须为字典")
 
         allowed_keys = {"action", "params", "prefix", "postfix", "success", "failure", "next",
-                        "set", "success_set", "failure_set", "retry", "extends", "failure_extra", "success_extra"}
+                        "set", "preset", "success_set", "failure_set", "retry", "extends", "failure_extra", "success_extra"}
         valid_names = {*self._all_steps, "任务结束"}
 
         for name, step in self._all_steps.items():
@@ -108,7 +108,8 @@ class FlowEngine(Thread):
 
             for key, expected in [("prefix", list), ("postfix", list),
                                   ("failure_extra", list), ("success_extra", list),
-                                  ("set", list), ("success_set", list), ("failure_set", list),
+                                  ("set", list), ("preset", list),
+                                  ("success_set", list), ("failure_set", list),
                                   ("params", dict), ("retry", dict)]:
                 val = step.get(key)
                 if val is not None and not isinstance(val, expected):
@@ -317,6 +318,7 @@ class FlowEngine(Thread):
                 return []
 
             # ── 完整步骤作为一次尝试 ──
+            self.vp.apply_set(step_def.get("preset", []), [])
             self._run_extra(step_def, "prefix")
             Window.ensure_window_size(self._hwnd)
             result = self.action(self._hwnd, step_def)

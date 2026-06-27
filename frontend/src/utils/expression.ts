@@ -68,6 +68,10 @@ interface StepDef {
   postfix?: (string | { step: string; args?: Record<string, unknown>; when?: string })[];
   failure_extra?: (string | { step: string; args?: Record<string, unknown>; when?: string })[];
   success_extra?: (string | { step: string; args?: Record<string, unknown>; when?: string })[];
+  preset?: { name: string; value: unknown }[];
+  set?: { name: string; value: unknown }[];
+  success_set?: { name: string; value: unknown }[];
+  failure_set?: { name: string; value: unknown }[];
   next?: string;
   success?: string;
   failure?: string;
@@ -126,6 +130,16 @@ export function extractAllParams(
           if (!(k in result)) result[k] = v;
         }
       }
+    }
+  }
+
+  // 1b. From preset/set/success_set/failure_set values
+  for (const key of ["preset", "set", "success_set", "failure_set"] as const) {
+    const items = (stepData as Record<string, unknown>)[key] as { name: string; value: unknown }[] | undefined;
+    if (!items) continue;
+    for (const item of items) {
+      if (typeof item.value === "string") scanStr(item.value);
+      if (item.name && !(item.name in result)) result[item.name] = "";
     }
   }
 

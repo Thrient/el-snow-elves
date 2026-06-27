@@ -24,7 +24,7 @@ interface Props {
 
 // ---- Card registry ----
 
-type CardKey = "flow" | "params" | "prefix" | "postfix" | "failure_extra" | "success_extra" | "set" | "success_set" | "failure_set" | "retry" | "extends";
+type CardKey = "flow" | "params" | "prefix" | "postfix" | "failure_extra" | "success_extra" | "preset" | "set" | "success_set" | "failure_set" | "retry" | "extends";
 
 const CARDS: { key: CardKey; label: string; color: string; light: string; desc: string; summary(s: Step): string }[] = [
   { key: "flow",   label: "流程跳转", color: "#16a34a", light: "#dcfce7", desc: "成功 / 失败 / 无条件",
@@ -39,6 +39,8 @@ const CARDS: { key: CardKey; label: string; color: string; light: string; desc: 
     summary: s => s.failure_extra?.length ? `${s.failure_extra.length} 个` : "" },
   { key: "success_extra", label: "成功附加", color: "#2563eb", light: "#bfdbfe", desc: "成功时额外执行",
     summary: s => s.success_extra?.length ? `${s.success_extra.length} 个` : "" },
+  { key: "preset", label: "preset", color: "#7c3aed", light: "#ede9fe", desc: "action 前设置变量",
+    summary: s => s.preset?.length ? `${s.preset.length} 个` : "" },
   { key: "set",    label: "set 变量", color: "#9333ea", light: "#e9d5ff", desc: "设置运行时变量",
     summary: s => s.set?.length ? `${s.set.length} 个` : "" },
   { key: "success_set", label: "成功 set", color: "#16a34a", light: "#dcfce7", desc: "成功时设置变量",
@@ -228,7 +230,7 @@ const StepPanel: FC<Props> = ({ stepName, step, isCommon, ctx, onClose, onRename
                     color={CARDS.find(c => c.key === expanded)!.color}
                     onChange={(v) => onUpdate(expanded, v)} />
                 )}
-                {(expanded === "set" || expanded === "success_set" || expanded === "failure_set") && (
+                {(expanded === "preset" || expanded === "set" || expanded === "success_set" || expanded === "failure_set") && (
                   <SubListEditor list={(step as any)[expanded] ?? []} ctx={ctx} isKeyValue
                     color={CARDS.find(c => c.key === expanded)!.color}
                     onChange={(v) => onUpdate(expanded, v)} />

@@ -79,6 +79,7 @@ export interface TaskBase {
   id: string;
   name: string;
   version: string;
+  author?: string;
   versions?: string[];
   values: Record<string, unknown>;
   valueTypes?: Record<string, VarType>;
@@ -116,6 +117,7 @@ export interface Step {
   next?: string;
   extends?: string;
   retry?: StepRetry;
+  preset?: { name: string; value: unknown }[];
   set?: { name: string; value: unknown }[];
   success_set?: { name: string; value: unknown }[];
   failure_set?: { name: string; value: unknown }[];
