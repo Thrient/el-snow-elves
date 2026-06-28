@@ -350,12 +350,14 @@ class FlowEngine(Thread):
                     lambda: self._paused.is_set()
                 )
 
+        # postfix 无论成败都执行（与 postset 语义一致），
+        # 成功/失败的区分交给 success_extra / failure_extra
+        self._run_extra(step_def, "postfix")
+
         # 全部重试耗尽
         if not result:
             return []
 
-        # postfix 只执行一次，在 action 最终成功之后
-        self._run_extra(step_def, "postfix")
         return result
 
     @staticmethod
