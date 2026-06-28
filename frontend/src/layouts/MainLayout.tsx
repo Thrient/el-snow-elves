@@ -29,8 +29,8 @@ const MainLayout: FC = () => {
 
     const init = async () => {
       await waitForPywebview()
-      useSettingsStore.getState().loadSettings()
-      useCharacterStore.getState().loadTasks()
+      void useSettingsStore.getState().loadSettings()
+      void useCharacterStore.getState().loadTasks()
 
       // Check for updates on startup
       try {

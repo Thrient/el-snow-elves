@@ -17,6 +17,8 @@ const TaskPage: FC = () => {
   const loading = useCharacterStore((s) => s.taskLoading);
   const loadTasks = useCharacterStore((s) => s.loadTasks);
   const updateTaskValues = useCharacterStore((s) => s.updateTaskValues);
+  const taskUpdates = useCharacterStore((s) => s.taskUpdates);
+  const dismissTaskUpdate = useCharacterStore((s) => s.dismissTaskUpdate);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
@@ -27,6 +29,7 @@ const TaskPage: FC = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [search, setSearch] = useState("");
   const [selectedVersions, setSelectedVersions] = useState<Record<string, string | null>>({});
+  const [updatingKey, setUpdatingKey] = useState<string | null>(null);  // "name|author" of task being updated
 
   const filtered = useMemo(() => {
     if (!search.trim()) return taskList;
@@ -159,6 +162,27 @@ const TaskPage: FC = () => {
     setConfigOpen(false);
   };
 
+  const handleUpdate = async (name: string, author: string) => {
+    const key = `${name}|${author}`
+    setUpdatingKey(key)
+    try {
+      const result = await (window as any).pywebview.api.emit(
+        "API:TASK:UPDATE_FROM_HUB", name, author
+      )
+      if (result?.error) {
+        message.error(result.error)
+      } else {
+        message.success(`「${name}」已更新到最新版本`)
+        loadTasks()
+        dismissTaskUpdate(name, author)
+      }
+    } catch {
+      message.error("更新失败，请检查网络连接")
+    } finally {
+      setUpdatingKey(null)
+    }
+  }
+
   const handleConfigSave = (values: Record<string, unknown>) => {
     if (configTask) {
       updateTaskValues(configTask.name, values);
@@ -253,6 +277,12 @@ const TaskPage: FC = () => {
                 onConfig={() => openConfig(task)}
                 onExport={() => handleExportSingle(task)}
                 onDelete={() => handleDeleteSingle(task, selectedVersions[task.name] ?? null)}
+                updateInfo={taskUpdates.find(
+                  u => u.name === task.name && u.author === task.author
+                )}
+                updating={updatingKey === `${task.name}|${task.author}`}
+                onUpdate={() => handleUpdate(task.name, task.author ?? "匿名作者")}
+                onDismissUpdate={() => dismissTaskUpdate(task.name, task.author ?? "匿名作者")}
               />
             ))}
           </div>

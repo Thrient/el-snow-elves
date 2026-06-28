@@ -121,6 +121,7 @@ export interface Step {
   postset?: { name: string; value: unknown }[];
   success_set?: { name: string; value: unknown }[];
   failure_set?: { name: string; value: unknown }[];
+  accepts?: Record<string, unknown>;
 }
 
 export interface MonitorConfig {

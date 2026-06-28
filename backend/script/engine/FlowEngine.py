@@ -350,10 +350,6 @@ class FlowEngine(Thread):
                     lambda: self._paused.is_set()
                 )
 
-        # postfix 无论成败都执行（与 postset 语义一致），
-        # 成功/失败的区分交给 success_extra / failure_extra
-        self._run_extra(step_def, "postfix")
-
         # 全部重试耗尽
         if not result:
             return []
@@ -425,6 +421,7 @@ class FlowEngine(Thread):
 
                 result = self._run_step_with_retry(step_def)
                 self.vp.apply_set(step_def.get('postset', []), result)
+                self._run_extra(step_def, "postfix")
 
                 prev = self.step_name
                 self.step_name = self.process_result(result, step_def)

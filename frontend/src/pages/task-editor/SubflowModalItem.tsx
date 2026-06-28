@@ -19,8 +19,6 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
   const baseName = repeatMatch ? repeatMatch[1] : stepName;
   const repeatCount = repeatMatch ? parseInt(repeatMatch[2]) : 1;
 
-  const SUB_LISTS = ["prefix", "postfix", "failure_extra", "success_extra"] as const;
-
   /** Collect declared params by walking the step chain (next/success/failure) and merging
    *  accepts + call-site dict args. First-wins: earlier keys in the chain take priority.
    *  Does NOT recurse into prefix/postfix sub-steps (they are independent calls). */

@@ -7,3 +7,4 @@ mitmproxy
 cryptography
 pythonnet
 requests
+httpx

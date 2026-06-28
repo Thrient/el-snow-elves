@@ -17,6 +17,13 @@ interface Props {
   onConfig: () => void;
   onExport: () => void;
   onDelete: () => void;
+  updateInfo?: {
+    hubVersion: string
+    localVersion: string
+  } | null
+  updating?: boolean
+  onUpdate?: () => void
+  onDismissUpdate?: () => void
 }
 
 function renderPills(task: TaskListItem) {
@@ -45,7 +52,7 @@ function renderPills(task: TaskListItem) {
   );
 }
 
-const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle, onVersionChange, onAppend, onConfig, onExport, onDelete }) => {
+const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle, onVersionChange, onAppend, onConfig, onExport, onDelete, updateInfo, updating, onUpdate, onDismissUpdate }) => {
   const accent = TAG_COLORS[index % TAG_COLORS.length];
 
   return (
@@ -64,6 +71,7 @@ const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle,
         } : {}),
       }}
     >
+      {/* ── top row: checkbox + version ── */}
       <div className="flex items-center justify-between mb-2">
         <Checkbox checked={selected} onChange={() => onToggle(task.name)} className="scale-90 origin-left" />
         <VersionTag
@@ -74,6 +82,7 @@ const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle,
         />
       </div>
 
+      {/* ── title ── */}
       <div className="text-[15px] font-semibold text-heading mb-1 leading-tight tracking-tight">
         {(task as any).author && (task as any).author !== "匿名作者" && (
           <span className="text-[#1677ff]/70 font-medium mr-1 select-none">
@@ -83,10 +92,44 @@ const TaskCard: FC<Props> = ({ task, index, selected, selectedVersion, onToggle,
         {task.name}
       </div>
 
-      <div className="mb-3 min-h-[22px]">
+      {/* ── pills ── */}
+      <div className="min-h-[22px]">
         {renderPills(task)}
       </div>
 
+      {/* ── update notification (only shown when update available, fills the gap between pills and action bar) ── */}
+      {updateInfo && (
+        <div className="flex items-center justify-between mt-2 mb-1 px-2.5 py-1.5 rounded text-[12px]"
+          style={{ backgroundColor: '#fffbe6', border: '1px solid #ffe58f' }}>
+          <span className="flex items-center gap-1.5 text-[#ad6800]">
+            <span className="w-1.5 h-1.5 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: '#fa8c16' }} />
+            有新版本 v{updateInfo.hubVersion}（当前 v{updateInfo.localVersion}）
+          </span>
+          <span className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              size="small"
+              type="link"
+              className="text-[12px] h-auto p-0"
+              style={{ color: '#d48806' }}
+              loading={updating}
+              onClick={(e) => { e.stopPropagation(); onUpdate?.() }}
+            >
+              {updating ? '更新中…' : '更新'}
+            </Button>
+            <span className="text-[#d9d9d9]">|</span>
+            <Button
+              size="small"
+              type="link"
+              className="text-[12px] h-auto p-0 text-muted"
+              onClick={(e) => { e.stopPropagation(); onDismissUpdate?.() }}
+            >
+              忽略
+            </Button>
+          </span>
+        </div>
+      )}
+
+      {/* ── bottom action bar ── */}
       <div className="flex items-center gap-1 pt-2.5 border-t border-[#f5f5f7] mt-auto">
         <Tooltip title="添加到执行队列">
           <Button type="primary" size="small" icon={<PlusOutlined />} className="text-[12px]" onClick={() => onAppend(task.name, selectedVersion)}>

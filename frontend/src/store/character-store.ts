@@ -7,6 +7,13 @@ import { mergeValues } from '@/utils/mergeValues'
 
 export type ExecuteItem = TaskBase
 
+export interface TaskUpdateInfo {
+  name: string
+  author: string
+  localVersion: string
+  hubVersion: string
+}
+
 type ExecuteEntry = ExecuteItem & { _uid: number }
 
 let _executeUidCounter = 0
@@ -27,6 +34,7 @@ type State = {
   selectedHwnd: string | null
   taskList: TaskListItem[]
   taskLoading: boolean
+  taskUpdates: TaskUpdateInfo[]
   add: (data: Omit<Character, 'executeList' | 'plans'> & { executeList: ExecuteItem[]; plans?: PlanBase[] }) => void
   remove: (hwnd: string) => void
   update: (data: Partial<Character> & { hwnd: string }) => void
@@ -45,6 +53,8 @@ type State = {
   syncPlansToAllWindows: (plans: PlanBase[]) => void
   loadTasks: () => Promise<void>
   updateTaskValues: (name: string, values: Record<string, unknown>) => void
+  setTaskUpdates: (updates: TaskUpdateInfo[]) => void
+  dismissTaskUpdate: (name: string, author: string) => void
 }
 
 export const useCharacterStore = create<State>((set, get) => ({
@@ -52,6 +62,7 @@ export const useCharacterStore = create<State>((set, get) => ({
   selectedHwnd: null,
   taskList: [],
   taskLoading: true,
+  taskUpdates: [],
   add: (data) => {
     const plans = data.plans ?? [];
     const executeList = data.executeList;
@@ -293,6 +304,18 @@ export const useCharacterStore = create<State>((set, get) => ({
       set({ taskList: (result ?? []) as TaskListItem[], taskLoading: false });
     } catch { set({ taskLoading: false }); }
   },
+  setTaskUpdates: (updates: TaskUpdateInfo[]) => {
+    set({ taskUpdates: updates })
+  },
+
+  dismissTaskUpdate: (name: string, author: string) => {
+    set(state => ({
+      taskUpdates: state.taskUpdates.filter(
+        u => !(u.name === name && u.author === author)
+      ),
+    }))
+  },
+
   updateTaskValues: (name, values) =>
     set((state) => ({
       taskList: state.taskList.map((t) =>

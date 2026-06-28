@@ -221,6 +221,7 @@ class App:
         from script.settings import register as reg_settings
         from script.log import register as reg_log
         from script.infrastructure import register as reg_infra
+        from script.hub import register as reg_hub
 
         reg_task_editor(api, self)
         reg_task(api, self)
@@ -230,6 +231,33 @@ class App:
         reg_settings(api)
         reg_log(api)
         reg_infra(api, self)
+        reg_hub(api, self)
+
+        # ── 后台检查任务更新 ──
+        from threading import Thread
+        from script.hub.HubSync import HubSync
+        from script.task import get_repo
+
+        def _check_task_updates():
+            import time
+            import json
+            time.sleep(3)  # 等待 React 前端加载完成
+            try:
+                sync = HubSync()
+                tasks = get_repo().list_all()
+                updates = sync.check_updates(tasks)
+                if updates:
+                    code = (
+                        "var store = window.useCharacterStore;"
+                        "if (store && store.getState) {"
+                        f"  store.getState().setTaskUpdates({json.dumps(updates, ensure_ascii=False)});"
+                        "}"
+                    )
+                    self.window.run_js(code)
+            except Exception:
+                pass  # 静默跳过，不阻塞启动
+
+        Thread(target=_check_task_updates, daemon=True).start()
 
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 
