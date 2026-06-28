@@ -125,41 +125,6 @@ def _read_scan(filepath, page, page_size, level, search):
     }
 
 
-def _read_tail_lines(filepath, n):
-    """从文件末尾读取最后 n 行，返回列表（最新在前）。"""
-    with open(filepath, "rb") as f:
-        f.seek(0, 2)
-        file_size = f.tell()
-        if file_size == 0:
-            return []
-
-        lines = []
-        chunk = b""
-        pos = file_size
-
-        while pos > 0 and len(lines) < n:
-            read_size = min(8192, pos)
-            pos -= read_size
-            f.seek(pos)
-            chunk = f.read(read_size) + chunk
-            parts = chunk.split(b"\n")
-            chunk = parts[0]
-            for raw in reversed(parts[1:]):
-                decoded = raw.decode("utf-8", errors="replace").strip()
-                if not decoded:
-                    continue
-                lines.append(decoded)
-                if len(lines) >= n:
-                    break
-
-        if chunk and len(lines) < n:
-            decoded = chunk.decode("utf-8", errors="replace").strip()
-            if decoded:
-                lines.append(decoded)
-
-        return lines
-
-
 def get_log_files():
     """返回日志文件列表"""
     if not os.path.isdir(LOG_DIR):
