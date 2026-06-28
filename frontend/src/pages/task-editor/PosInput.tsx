@@ -23,7 +23,7 @@ const PosInput: FC<Props> = ({ params, onUpdate, hwnd, onCoordOpen, paramKey = "
 
   const varItems = (category: "system" | "config" | "task") =>
     varOptions.filter(o => {
-      if (category === "system") return o.value === "{result}" || o.value === "{hwnd}" || o.value === "{ChildHwnd}";
+      if (category === "system") return o.value === "{result}" || o.value === "{time}" || o.value === "{hwnd}" || o.value === "{ChildHwnd}";
       if (category === "config") return o.value.startsWith("{CONFIG.");
       return !o.value.startsWith("{CONFIG.") && o.value !== "{result}" && o.value !== "{hwnd}" && o.value !== "{ChildHwnd}";
     }).map(v => ({ syntax: v.value, label: v.label, category }));

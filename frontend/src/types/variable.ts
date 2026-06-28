@@ -16,4 +16,5 @@ export const VARIABLE_CATEGORY_LABELS: Record<VariableCategory, string> = {
 
 export const SYSTEM_VARIABLES: VariableItem[] = [
   { syntax: "{result}", label: "{result} — 当前步骤返回值", category: "system" },
+  { syntax: "{time}", label: "{time} — 当前 Unix 时间戳（秒）", category: "system" },
 ];

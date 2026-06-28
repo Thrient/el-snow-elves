@@ -156,6 +156,7 @@ export const ACTIONS_WITH_TEMPLATES = new Set(["touch", "exits", "wait", "wait_d
 
 export const BUILTIN_VARS: { value: string; label: string }[] = [
   { value: "{result}",    label: "{result}" },
+  { value: "{time}",      label: "{time}" },
   { value: "{hwnd}",      label: "{hwnd}" },
   { value: "{ChildHwnd}", label: "{ChildHwnd}" },
 ];
