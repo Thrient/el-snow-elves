@@ -45,6 +45,7 @@ class FlowEngine(Thread):
         )
         if "vp" not in kwargs:
             self.vp.register_computed("ChildHwnd", lambda title="MPAY_USER_CENTER": find_window_by_title_and_owner_hwnd(title, self._hwnd) or "")
+        self.vp.register_computed("time", lambda: time.time())
 
         monitors = self.work.get("monitors", {})
         self._monitor_loop = monitors.get("loop", [])
@@ -96,7 +97,7 @@ class FlowEngine(Thread):
             errors.append("'steps' 必须为字典")
 
         allowed_keys = {"action", "params", "prefix", "postfix", "success", "failure", "next",
-                        "postset", "preset", "success_set", "failure_set", "retry", "extends", "failure_extra", "success_extra"}
+                        "postset", "preset", "success_set", "failure_set", "retry", "extends", "failure_extra", "success_extra", "accepts"}
         valid_names = {*self._all_steps, "任务结束"}
 
         for name, step in self._all_steps.items():
@@ -167,12 +168,19 @@ class FlowEngine(Thread):
         return step
 
     def run_subflow(self, subflow_start_name, args={}):
-        # Save old values before bulk_update, restore in finally
+        step = self._all_steps.get(subflow_start_name, {})
+        accepts = step.get("accepts")
+
+        if accepts is not None:
+            # Only write keys declared in accepts
+            filtered = {k: args[k] for k in accepts if k in args}
+        else:
+            filtered = dict(args)  # Old tasks without accepts: full pass-through
+
         _MISSING = object()
-        old_values = {}
-        for key in args:
-            old_values[key] = self.vp.variables.get(key, _MISSING)
-        self.vp.bulk_update(args)
+        old = {k: self.vp.variables.get(k, _MISSING) for k in filtered}
+
+        self.vp.bulk_update(filtered)
         sub_engine = FlowEngine(
             start=subflow_start_name,
             hwnd=self._hwnd,
@@ -181,19 +189,19 @@ class FlowEngine(Thread):
             vp=self.vp,
             is_subflow=True,
         )
-        sub_engine._task = self._task  # 共享 BaseTask，确保 monitor_start/stop 操作同一 CombatEngine
+        sub_engine._task = self._task  # Share BaseTask for monitor_start/stop
         try:
             sub_engine.run()
         finally:
-            for key, old_value in old_values.items():
-                current = self.vp.variables.get(key, _MISSING)
-                if current is args[key]:
-                    # Subflow did not modify this key via set, restore old value
-                    if old_value is _MISSING:
-                        self.vp.variables.pop(key, None)
+            for k, old_val in old.items():
+                cur = self.vp.variables.get(k, _MISSING)
+                if cur is filtered.get(k, _MISSING):
+                    # Subflow did not modify this key, restore old value
+                    if old_val is _MISSING:
+                        self.vp.variables.pop(k, None)
                     else:
-                        self.vp.variables[key] = old_value
-                # else: subflow modified it via set, keep the current value
+                        self.vp.variables[k] = old_val
+                # Else: subflow modified it via set, keep the current value
 
     def _resolve_params(self, params):
         if isinstance(params, str):
