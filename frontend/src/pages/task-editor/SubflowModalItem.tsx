@@ -3,7 +3,6 @@ import { Button, Input, InputNumber, Popover, Select } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import type { EditorCtx } from "@/types/task-editor/actions";
 import VarOpBuilder from "@/pages/task-editor/components/var-op-builder/VarOpBuilder";
-import { extractAllParams } from "@/utils/expression";
 
 interface Props {
   index: number; item: any; ctx: EditorCtx; arr: any[]; color?: string; onChange: (v: any[]) => void;
@@ -20,9 +19,33 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
   const baseName = repeatMatch ? repeatMatch[1] : stepName;
   const repeatCount = repeatMatch ? parseInt(repeatMatch[2]) : 1;
 
-  /** Get default params for a step — stepParamsMap cache or recursive transitive scan */
-  const getStepDefaults = (name: string): Record<string, unknown> =>
-    ctx.stepParamsMap[name] ?? extractAllParams(name, ctx.allStepsData);
+  const SUB_LISTS = ["prefix", "postfix", "failure_extra", "success_extra"] as const;
+
+  /** Collect declared params by walking the step chain (next/success/failure) and merging
+   *  accepts + call-site dict args. First-wins: earlier keys in the chain take priority.
+   *  Does NOT recurse into prefix/postfix sub-steps (they are independent calls). */
+  const getStepDefaults = (name: string): Record<string, unknown> => {
+    const seen = new Set<string>();
+    const result: Record<string, unknown> = {};
+    const merge = (src: Record<string, unknown>) => {
+      for (const [k, v] of Object.entries(src)) { if (!(k in result)) result[k] = v; }
+    };
+    const collect = (stepName: string) => {
+      if (!stepName || stepName === "任务结束" || seen.has(stepName)) return;
+      seen.add(stepName);
+      const step = ctx.allStepsData[stepName] as Record<string, unknown> | undefined;
+      if (!step) return;
+      // 1. accepts — only declared interface, don't leak internal sub-step call-site args
+      if ((step as any).accepts) merge((step as any).accepts);
+      // 2. walk chain: next, success, failure
+      for (const key of ["next", "success", "failure"]) {
+        const t = (step as any)[key];
+        if (t) collect(t as string);
+      }
+    };
+    collect(name);
+    return result;
+  };
 
   const updateItem = (updater: (o: any) => any) => {
     const u = [...arr];
@@ -97,7 +120,7 @@ const SubflowModalItem: FC<Props> = ({ index: i, item, ctx, arr, color = "#9ca3a
                 <div className="mx-5 h-px" style={{ background: "linear-gradient(to right, #e5e7eb, #f5f5f5, transparent)" }} />
 
                 {/* ── Parameter rows ── */}
-                <div className="px-5 py-4">
+                <div className="px-5 py-4 overflow-y-auto floating-scrollbar" style={{ maxHeight: 360 }}>
                   <div className="flex flex-col gap-2">
                     {argsEntries.map(([key, val], ei) => {
                       const defaults = getStepDefaults(baseName);
