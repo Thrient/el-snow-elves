@@ -3,7 +3,6 @@ import { useSettingsStore } from "@/store/settings-store";
 import { useCharacterStore } from "@/store/character-store";
 import { useUpdateStore } from "@/store/update-store";
 import { waitForPywebview } from "@/utils/pywebview.ts";
-import { compareVersion } from "@/utils/version";
 import { Layout, message } from "antd";
 import AppHeader from "@/components/app-header/AppHeader.tsx";
 import DisclaimerModal from "@/components/disclaimer-modal/DisclaimerModal.tsx";
@@ -40,17 +39,10 @@ const MainLayout: FC = () => {
         }
 
         const latest = await window.pywebview?.api.emit("API:UPDATE:CHECK") as any
-        if (latest && latest.version && currentVersion) {
-          const cur = String(currentVersion).replace(/^v/, "")
-          const lat = String(latest.version).replace(/^v/, "")
-          if (compareVersion(lat, cur) > 0) {
-            useUpdateStore.getState().setUpdate({
-              version: latest.version,
-              changelog: latest.changelog,
-              is_mandatory: latest.is_mandatory ?? false,
-            })
-          } else {
-            message.success("已是最新版本", 3)
+        if (latest?.version && currentVersion) {
+          const hasUpdate = useUpdateStore.getState().checkUpdate(latest);
+          if (!hasUpdate) {
+            message.success("已是最新版本", 3);
           }
         }
       } catch {
@@ -67,16 +59,11 @@ const MainLayout: FC = () => {
       try {
         const d = JSON.parse(e.data);
         if (d.type === "update") {
-          const current = useUpdateStore.getState().currentVersion;
-          const dVer = String(d.version).replace(/^v/, "");
-          const cVer = String(current).replace(/^v/, "");
-          if (current && compareVersion(dVer, cVer) > 0) {
-            useUpdateStore.getState().setUpdate({
-              version: d.version,
-              changelog: d.changelog,
-              is_mandatory: d.is_mandatory ?? false,
-            });
-          }
+          useUpdateStore.getState().checkUpdate({
+            version: d.version,
+            changelog: d.changelog,
+            is_mandatory: d.is_mandatory ?? false,
+          });
         }
       } catch {
         // malformed SSE payload, ignore

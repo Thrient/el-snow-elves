@@ -17,6 +17,7 @@ interface Props {
     version?: string;
     taskId?: string;
     variables?: string[];
+    author?: string;
   };
   placeholder?: string;
   disabled?: boolean;
@@ -55,7 +56,8 @@ const AutocompleteInput: FC<Props> = ({
           const names: string[] = (await window.pywebview?.api.emit(
             "API:AUTOCOMPLETE:TEMPLATES",
             context.taskName ?? null,
-            context.version ?? null
+            context.version ?? null,
+            context.author ?? "匿名作者",
           )) ?? [];
           result = names.map((name) => ({ value: name, label: name }));
           break;
@@ -119,11 +121,11 @@ const AutocompleteInput: FC<Props> = ({
     } catch {
       setOptions([]);
     }
-  }, [type, context.taskName, context.version, context.taskId]);
+  }, [type, context.taskName, context.version, context.taskId, context.author]);
 
   useEffect(() => {
     cache.delete(type);
-  }, [type, context.taskName, context.version, context.taskId]);
+  }, [type, context.taskName, context.version, context.taskId, context.author]);
 
   return (
     <AutoComplete

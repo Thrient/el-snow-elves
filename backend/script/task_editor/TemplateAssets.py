@@ -25,14 +25,14 @@ def list_actions():
     ]
 
 
-def list_template_images(task_name=None, version=None):
+def list_template_images(task_name=None, version=None, author="匿名作者"):
     images = set()
     global_dir = os.path.join(PROJECT_ROOT, "resources", "images")
     if os.path.isdir(global_dir):
         images.update(f[:-4] for f in os.listdir(global_dir) if f.endswith('.bmp'))
     if task_name and version:
         repo = get_repo()
-        tid, config = repo.resolve(task_name, version)
+        tid, config = repo.resolve(task_name, version, author)
         if config:
             task_dir = os.path.dirname(config.get("_config_path", ""))
             if task_dir:
@@ -60,10 +60,10 @@ def list_global_common_steps():
         return {}
 
 
-def load_positions(name, version=None):
+def load_positions(name, version=None, author="匿名作者"):
     try:
         repo = get_repo()
-        task_id, config = repo.resolve(name, version)
+        task_id, config = repo.resolve(name, version, author)
         if not config:
             return {}
         task_dir = os.path.dirname(config.get("_config_path", ""))
@@ -79,10 +79,10 @@ def load_positions(name, version=None):
         return {}
 
 
-def save_positions(name, version, positions):
+def save_positions(name, version, positions, author="匿名作者"):
     try:
         repo = get_repo()
-        task_id, config = repo.resolve(name, version)
+        task_id, config = repo.resolve(name, version, author)
         if not config:
             return False
         task_dir = os.path.dirname(config.get("_config_path", ""))

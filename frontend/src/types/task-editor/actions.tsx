@@ -182,6 +182,7 @@ export interface EditorCtx {
   hwnd: string;
   taskName?: string;
   version?: string;
+  author?: string;
   values?: Record<string, unknown>;
   valueTypes?: Record<string, VarType>;
   layout?: { model?: string; store?: string }[][];

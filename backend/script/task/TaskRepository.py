@@ -192,6 +192,7 @@ class TaskRepository:
                     merged = {
                         "name": name,
                         "author": author,
+                        "hub_task_id": latest_config.get("hub_task_id") if latest_config else None,
                         "versions": versions,
                         "latest": versions[0],
                         "description": latest_config.get("description", "") if latest_config else "",
@@ -507,7 +508,8 @@ class TaskRepository:
 
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            clean = {k: v for k, v in config.items() if k not in ("id", "_config_path")}
+            # author 是本地标签，导入时重新分配，不导出
+            clean = {k: v for k, v in config.items() if k not in ("id", "_config_path", "author", "hub_task_id")}
             zf.writestr(f"{task_name}.json", json.dumps(clean, ensure_ascii=False, indent=2))
 
             pos_path = os.path.join(task_dir, "positions.json")
@@ -545,14 +547,19 @@ class TaskRepository:
             zip_base64 = zip_input
             filename = ""
 
-        # 从文件名解析 author：<name>_<version>_<author>.zip
-        # author 是第二个下划线之后的内容（去掉 .zip）
+        # 从文件名解析 author + task_id：<name>_<version>_<author>[_<task_id>].zip
         parsed_author = "匿名作者"
+        parsed_task_id = None
         if filename:
             stem = filename.rsplit(".", 1)[0]  # 去掉扩展名
-            parts = stem.split("_", 2)  # 最多分3段：name, version, author
+            parts = stem.split("_", 3)  # 最多分4段：name, version, author, task_id
             if len(parts) >= 3:
                 parsed_author = parts[2]
+            if len(parts) >= 4:
+                try:
+                    parsed_task_id = int(parts[3])
+                except ValueError:
+                    pass
 
         try:
             zip_data = base64.b64decode(zip_base64)
@@ -581,8 +588,21 @@ class TaskRepository:
 
             name = (task_data.get("name") or "").strip()
             version = (task_data.get("version") or "").strip()
-            # JSON 中的 author 优先于文件名解析
-            author = (task_data.get("author") or "").strip() or parsed_author
+            # 文件名解析的作者优先（Hub 下载场景），JSON 中的 author 仅作 fallback
+            json_author = (task_data.get("author") or "").strip()
+            if parsed_author != "匿名作者":
+                author = parsed_author
+            elif json_author and json_author != "匿名作者":
+                author = json_author
+            else:
+                author = "匿名作者"
+            # hub_task_id: dict 字段优先（程序化传入），文件名解析兜底（手动导入）
+            hub_task_id = None
+            if isinstance(zip_input, dict):
+                hub_task_id = zip_input.get("hub_task_id")
+            if not hub_task_id:
+                hub_task_id = parsed_task_id
+
             if not name:
                 return {"error": "任务配置缺少 name 字段"}
             if not version:
@@ -600,6 +620,8 @@ class TaskRepository:
 
             target_json = dest_dir / f"{name}.json"
             task_data["author"] = author
+            if hub_task_id:
+                task_data["hub_task_id"] = hub_task_id
             with open(target_json, "w", encoding="utf-8") as f:
                 json.dump(task_data, f, ensure_ascii=False, indent=2)
 

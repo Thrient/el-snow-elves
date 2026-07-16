@@ -219,6 +219,28 @@
     ],
     "next": "任务结束"
   },
+  "关闭交易": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面交易"
+      ]
+    },
+    "success_extra": [
+      "关闭窗口"
+    ]
+  },
+    "关闭仓库": {
+    "action": "exits",
+    "params": {
+      "args": [
+        "界面仓库"
+      ]
+    },
+    "success_extra": [
+      "关闭窗口"
+    ]
+  },
   "普通世界喊话": {
     "action": "touch",
     "params": {
@@ -616,6 +638,7 @@
         "按钮取消",
         "按钮聊天退出",
         "标志记录刷新",
+        "界面物品",
         "标志江湖日历奖励"
       ],
       "seconds": null
@@ -635,7 +658,7 @@
         "按钮关闭_V7"
       ],
       "threshold": 0.85,
-      "seconds": null,
+      "seconds": 100,
       "click_mode": "{点击模式:random}"
     },
     "accepts": {
@@ -724,7 +747,7 @@
       {
         "step": "等待时间",
         "args": {
-          "等待时间": 20
+          "等待时间": 20000
         }
       }
     ],
@@ -925,5 +948,26 @@
       }
     ],
     "success": "使用背包道具_判断"
+  },
+  "脱离卡死": {
+    "action": "touch",
+    "params": {
+      "args": [
+        "按钮设置脱离卡死"
+      ],
+      "seconds": null
+    },
+    "prefix": [
+      "唤出设置"
+    ],
+    "postfix": [
+      {
+        "step": "点击模板",
+        "args": {
+          "模板": "按钮设置确定"
+        }
+      },
+      "关闭窗口"
+    ]
   }
 }

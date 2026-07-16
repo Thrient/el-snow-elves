@@ -64,7 +64,7 @@ const PlanModal: FC<Props> = ({ open, plan, onClose, onSave }) => {
       setTaskValues({});
       return;
     }
-    callApi<FullTask>("API:TASK:LOAD:FULL", match.name, watchedVersion || undefined).then((full) => {
+    callApi<FullTask>("API:TASK:LOAD:FULL", match.name, watchedVersion || undefined, (match as any).author ?? "匿名作者").then((full) => {
       if (full) {
         setTaskLayout(full.layout ?? null);
         // 编辑模式优先使用已保存的值

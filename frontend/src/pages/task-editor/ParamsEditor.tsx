@@ -56,7 +56,8 @@ const ParamsEditor: FC<ParamsEditorProps> = ({ step, ctx, onUpdate }) => {
         const names: string[] = await window.pywebview?.api.emit(
           "API:AUTOCOMPLETE:TEMPLATES",
           ctx.taskName ?? null,
-          ctx.version ?? null
+          ctx.version ?? null,
+          ctx.author ?? "匿名作者",
         );
         setTemplateOptions((names ?? []).map((name) => ({ value: name, label: name })));
       } catch {

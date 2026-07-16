@@ -11,12 +11,15 @@ class HubSync:
     def __init__(self):
         self.client = httpx.Client(timeout=10.0, verify=True)
 
-    def lookup(self, author: str, title: str) -> dict | None:
-        """按作者名+任务名精确查询 Hub 上的任务。返回 {id, title, version, author_name} 或 None。"""
+    def lookup(self, task_id: int, title: str = "") -> dict | None:
+        """按 task_id 查询 Hub 上的任务。返回 {id, title, version, author_name} 或 None。"""
         try:
+            params = {"task_id": task_id}
+            if title:
+                params["title"] = title
             r = self.client.get(
                 f"{HUB_URL}/api/v1/tasks/lookup",
-                params={"author": author, "title": title},
+                params=params,
             )
             if r.status_code != 200:
                 return None
@@ -29,35 +32,30 @@ class HubSync:
             return None
 
     def check_updates(self, local_tasks: list[dict]) -> list[dict]:
-        """对比本地任务与 Hub 版本。返回可更新列表 [{name, author, localVersion, hubVersion}]。"""
+        """对比本地任务与 Hub 版本。返回可更新列表 [{name, hubTaskId, localVersion, hubVersion}]。"""
         updates = []
         for task in local_tasks:
-            author = task.get("author", "")
-            if not author or author == "匿名作者":
+            task_id = task.get("hub_task_id")
+            if not task_id:
                 continue
             name = task.get("name", "")
             local_version = task.get("latest", "")
-            info = self.lookup(author, name)
+            info = self.lookup(task_id, title=name)
             if info and info.get("version") and info["version"] != local_version:
                 updates.append({
                     "name": name,
-                    "author": author,
+                    "hubTaskId": task_id,
                     "localVersion": local_version,
                     "hubVersion": info["version"],
                 })
         return updates
 
-    def download_and_import(self, author: str, title: str) -> dict:
-        """查找 → 下载 → 导入。返回 import_task 的结果。"""
-        # 1. 查找
-        info = self.lookup(author, title)
-        if not info:
-            return {"error": f"Hub 上未找到任务: {title} @{author}"}
-
-        # 2. 下载
+    def download_and_import(self, task_id: int, title: str) -> dict:
+        """下载 → 导入。从 Content-Disposition 提取文件名（含 author）。
+        task_id 通过 dict 字段传入 import_task。"""
         try:
             r = self.client.get(
-                f"{HUB_URL}/api/v1/tasks/{info['id']}/download",
+                f"{HUB_URL}/api/v1/tasks/{task_id}/download",
             )
             if r.status_code != 200:
                 return {"error": f"下载失败 (HTTP {r.status_code})"}
@@ -65,13 +63,22 @@ class HubSync:
         except Exception as e:
             return {"error": f"下载失败: {e}"}
 
-        # 3. 导入（复用现有管线）
-        # filename 格式: name_version_author.zip — _import_single 会从中解析 author
+        # 从 Content-Disposition 提取文件名（格式: {title}_{version}_{author}_{task_id}.zip）
+        filename = f"{title}.zip"
+        cd = r.headers.get("Content-Disposition", "")
+        if cd:
+            import re as _re
+            m = _re.search(r"filename\*?=(?:UTF-8''|['\"])([^'\";]+)", cd)
+            if m:
+                from urllib.parse import unquote
+                filename = unquote(m.group(1))
+
         zip_b64 = base64.b64encode(zip_bytes).decode("utf-8")
         from script.task import get_repo
         repo = get_repo()
         result = repo.import_task({
             "base64": zip_b64,
-            "filename": f"{title}_{info['version']}_{author}.zip",
+            "filename": filename,
+            "hub_task_id": task_id,
         })
         return result

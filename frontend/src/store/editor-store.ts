@@ -11,7 +11,7 @@ type EditorState = {
   loading: boolean;
   viewMode: ViewMode;
 
-  loadTask: (name: string, version: string) => Promise<void>;
+  loadTask: (name: string, version: string, author?: string) => Promise<void>;
   saveTask: () => Promise<void>;
   createTask: (
     name: string,
@@ -41,13 +41,14 @@ export const useEditorStore = create<EditorState>()(
       loading: false,
       viewMode: "json",
 
-      loadTask: async (name, version) => {
+      loadTask: async (name, version, author) => {
         set({ loading: true, isDirty: false });
         try {
           const task = await window.pywebview?.api.emit(
             "API:TASK:LOAD:FULL",
             name,
-            version
+            version,
+            author ?? "匿名作者",
           );
           set({ currentTask: task ?? null, isDirty: false, loading: false });
           useEditorStore.temporal.getState().clear();

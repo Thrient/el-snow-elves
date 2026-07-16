@@ -25,6 +25,7 @@ from script.window.WindowUtils import Window, calc_window_size, get_hwnd_by_titl
 from script.util.TrayIcon import TrayIcon
 from script.util.CloseDialog import load_close_preference, save_close_preference
 
+
 from script.util.StartupManager import get_autostart, set_autostart
 
 
@@ -258,6 +259,19 @@ class App:
                 pass  # 静默跳过，不阻塞启动
 
         Thread(target=_check_task_updates, daemon=True).start()
+
+        # ── WebView2 心跳保活 ──
+        def _heartbeat():
+            import time
+            time.sleep(30)  # 先等前端加载完
+            while True:
+                time.sleep(30)
+                try:
+                    self.window.evaluate_js("1")
+                except Exception:
+                    pass  # 窗口关闭时会抛异常，忽略
+
+        Thread(target=_heartbeat, daemon=True).start()
 
         logging.info(f"应用启动: {APP_TITLE} {VERSION}")
 

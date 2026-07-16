@@ -9,7 +9,7 @@ export type ExecuteItem = TaskBase
 
 export interface TaskUpdateInfo {
   name: string
-  author: string
+  hubTaskId: number
   localVersion: string
   hubVersion: string
 }
@@ -54,7 +54,7 @@ type State = {
   loadTasks: () => Promise<void>
   updateTaskValues: (name: string, values: Record<string, unknown>) => void
   setTaskUpdates: (updates: TaskUpdateInfo[]) => void
-  dismissTaskUpdate: (name: string, author: string) => void
+  dismissTaskUpdate: (name: string, hubTaskId: number) => void
 }
 
 export const useCharacterStore = create<State>((set, get) => ({
@@ -308,10 +308,10 @@ export const useCharacterStore = create<State>((set, get) => ({
     set({ taskUpdates: updates })
   },
 
-  dismissTaskUpdate: (name: string, author: string) => {
+  dismissTaskUpdate: (name: string, hubTaskId: number) => {
     set(state => ({
       taskUpdates: state.taskUpdates.filter(
-        u => !(u.name === name && u.author === author)
+        u => !(u.name === name && u.hubTaskId === hubTaskId)
       ),
     }))
   },

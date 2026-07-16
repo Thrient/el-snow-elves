@@ -25,14 +25,14 @@ export async function saveAsNewVersion(
   return callApi("API:TASK:SAVE:AS:NEW", id, newVersion);
 }
 
-export async function loadPositions(name: string, version: string): Promise<Record<string, { x: number; y: number }>> {
-  return callApi("API:TASK:LOAD:POSITIONS", name, version) ?? {};
+export async function loadPositions(name: string, version: string, author?: string): Promise<Record<string, { x: number; y: number }>> {
+  return callApi("API:TASK:LOAD:POSITIONS", name, version, author ?? "匿名作者") ?? {};
 }
 
 export async function savePositions(
-  name: string, version: string, positions: Record<string, { x: number; y: number }>,
+  name: string, version: string, positions: Record<string, { x: number; y: number }>, author?: string,
 ): Promise<void> {
-  return callApi("API:TASK:SAVE:POSITIONS", name, version, positions);
+  return callApi("API:TASK:SAVE:POSITIONS", name, version, positions, author ?? "匿名作者");
 }
 
 export async function clearCommonCache(): Promise<void> {

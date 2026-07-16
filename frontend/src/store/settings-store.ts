@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { Cell } from '@/types/task'
 
 export type Layout = Cell[][]
@@ -9,7 +8,6 @@ export type ThemeMode = 'auto' | 'light' | 'dark'
 type State = {
   values: Record<string, unknown>
   layout: Layout
-  loaded: boolean
   theme: ThemeMode
 }
 
@@ -20,80 +18,69 @@ type Actions = {
 }
 
 export const useSettingsStore = create<State & Actions>()(
-  persist(
-    (set, get) => ({
-      values: {},
-      layout: [],
-      loaded: false,
-      theme: (localStorage.getItem('app-theme') as ThemeMode) || 'auto',
+  (set, get) => ({
+    values: {},
+    layout: [],
+    theme: 'auto',
 
-      loadSettings: async () => {
-        try {
-          const result = await window.pywebview?.api.emit("API:SETTINGS:LOAD")
-          if (result) {
-            const remote = result as { values?: Record<string, unknown>; layout?: Layout }
-            const current = get().values
+    loadSettings: async () => {
+      const result = await window.pywebview?.api.emit("API:SETTINGS:LOAD")
+      if (result) {
+        const remote = result as { values?: Record<string, unknown>; layout?: Layout }
+        const vals = remote.values ?? {}
+        const savedTheme = vals['app-theme'] as ThemeMode | undefined
+        const theme = savedTheme && ['auto', 'light', 'dark'].includes(savedTheme) ? savedTheme : 'auto'
+        set({
+          values: vals,
+          layout: remote.layout ?? [],
+          theme,
+        })
+        get().setTheme(theme)
+      }
+    },
 
-            // remote 作为默认值, local 的覆盖仅对 remote 中仍存在的 key 生效
-            const base = { ...(remote.values ?? {}) }
-            for (const key of Object.keys(current)) {
-              if (key in base) {
-                base[key] = current[key]
-              }
-            }
+    updateValue: (key, value) =>
+      set((state) => ({
+        values: { ...state.values, [key]: value },
+      })),
 
-            set({
-              values: base,
-              layout: remote.layout ?? [],
-              loaded: true,
-            })
-          } else {
-            set({ loaded: true })
-          }
-        } catch {
-          set({ loaded: true })
+    setTheme: (t) => {
+      const html = document.documentElement
+      window.pywebview?.api.emit("API:APP:SET_THEME", { theme: t })
+      const updateColorScheme = (dark: boolean) => {
+        html.style.colorScheme = dark ? 'dark' : 'light'
+      }
+      if (t === 'auto') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        html.dataset.theme = prefersDark ? 'dark' : 'light'
+        updateColorScheme(prefersDark)
+        const mq = window.matchMedia('(prefers-color-scheme: dark)')
+        const handler = (e: MediaQueryListEvent) => {
+          html.dataset.theme = e.matches ? 'dark' : 'light'
+          updateColorScheme(e.matches)
         }
-      },
-
-      updateValue: (key, value) =>
-        set((state) => ({
-          values: { ...state.values, [key]: value },
-        })),
-
-      setTheme: (t) => {
-        const html = document.documentElement
-        window.pywebview?.api.emit("API:APP:SET_THEME", { theme: t })
-        const updateColorScheme = (dark: boolean) => {
-          html.style.colorScheme = dark ? 'dark' : 'light'
-        }
-        if (t === 'auto') {
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-          html.dataset.theme = prefersDark ? 'dark' : 'light'
-          updateColorScheme(prefersDark)
-          const mq = window.matchMedia('(prefers-color-scheme: dark)')
-          const handler = (e: MediaQueryListEvent) => {
-            html.dataset.theme = e.matches ? 'dark' : 'light'
-            updateColorScheme(e.matches)
-          }
-          mq.addEventListener('change', handler)
-          // Store listener ref for cleanup
-          ;(html as any).__themeListener = { mq, handler }
-        } else {
-          // Remove auto listener if exists
-          const prev = (html as any).__themeListener
-          if (prev) { prev.mq.removeEventListener('change', prev.handler) }
-          html.dataset.theme = t
-          updateColorScheme(t === 'dark')
-        }
-        localStorage.setItem('app-theme', t)
-        set({ theme: t })
-      },
-    }),
-    {
-      name: "settings-store",
-      partialize: (state) => ({ values: state.values }),
-      version: 3,
-      migrate: () => ({ values: {}, layout: [], loaded: false }),
-    }
-  )
+        mq.addEventListener('change', handler)
+        ;(html as HTMLElement & { __themeListener?: { mq: MediaQueryList; handler: (e: MediaQueryListEvent) => void } }).__themeListener = { mq, handler }
+      } else {
+        const prev = (html as HTMLElement & { __themeListener?: { mq: MediaQueryList; handler: (e: MediaQueryListEvent) => void } }).__themeListener
+        if (prev) { prev.mq.removeEventListener('change', prev.handler) }
+        html.dataset.theme = t
+        updateColorScheme(t === 'dark')
+      }
+      set((state) => ({ theme: t, values: { ...state.values, 'app-theme': t } }))
+    },
+  })
 )
+
+// 订阅 values 变化，debounce 2s 自动保存到 Python 端
+let _saveTimer: ReturnType<typeof setTimeout> | null = null
+
+useSettingsStore.subscribe((state: State) => {
+  const { values } = state
+  if (Object.keys(values).length === 0) return
+  if (_saveTimer) clearTimeout(_saveTimer)
+  _saveTimer = setTimeout(() => {
+    window.pywebview?.api.emit("API:SETTINGS:SAVE", values)
+    _saveTimer = null
+  }, 2000)
+})

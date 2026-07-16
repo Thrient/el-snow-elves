@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { compareVersion } from "@/utils/version";
 
 export interface UpdateInfo {
   version: string;
@@ -23,6 +24,7 @@ interface UpdateState {
   lastSpeed: number;
   downloadDone: boolean;
   setCurrentVersion: (v: string) => void;
+  checkUpdate: (latest: UpdateInfo) => boolean;
   setUpdate: (info: UpdateInfo) => void;
   clearUpdate: () => void;
   openCheckModal: () => void;
@@ -37,7 +39,7 @@ interface UpdateState {
 let _speedTime = 0;
 let _speedLast = 0;
 
-export const useUpdateStore = create<UpdateState>((set) => ({
+export const useUpdateStore = create<UpdateState>((set, get) => ({
   hasUpdate: false,
   latestVersion: null,
   currentVersion: "?.?.?",
@@ -55,6 +57,22 @@ export const useUpdateStore = create<UpdateState>((set) => ({
   downloadDone: false,
 
   setCurrentVersion: (v) => set({ currentVersion: v }),
+
+  checkUpdate: (latest) => {
+    const cur = String(get().currentVersion).replace(/^v/, "");
+    const lat = String(latest.version).replace(/^v/, "");
+    if (compareVersion(lat, cur) > 0) {
+      set({
+        hasUpdate: true,
+        latestVersion: latest.version,
+        changelog: latest.changelog,
+        isMandatory: latest.is_mandatory ?? false,
+        checkModalOpen: true,
+      });
+      return true;
+    }
+    return false;
+  },
 
   setUpdate: (info) => set({
     hasUpdate: true,

@@ -52,7 +52,7 @@ const TaskEditorPage: FC = () => {
       if (!raw) return;
       const fulls: FullTask[] = [];
       for (const t of raw) {
-        const full = await window.pywebview?.api.emit("API:TASK:LOAD:FULL", t.name, t.latest);
+        const full = await window.pywebview?.api.emit("API:TASK:LOAD:FULL", t.name, t.latest, (t as any).author ?? "匿名作者");
         if (full) fulls.push(full);
       }
       setTaskList(fulls);
@@ -160,7 +160,7 @@ const TaskEditorPage: FC = () => {
     allStepsData,
     refreshKey,
     hwnd: characterStore.selectedHwnd ?? '',
-    taskName: editor.currentTask?.name, version: editor.currentTask?.version,
+    taskName: editor.currentTask?.name, version: editor.currentTask?.version, author: (editor.currentTask as any)?.author,
     values: editor.currentTask?.values ?? {},
     valueTypes: editor.currentTask?.valueTypes ?? {},
     layout: editor.currentTask?.layout ?? [],
@@ -182,7 +182,7 @@ const TaskEditorPage: FC = () => {
       (async () => {
         if (!editor.currentTask) return;
         initRef.current = true;
-        const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", editor.currentTask.name, editor.currentTask.version).catch(() => ({})) ?? {};
+        const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", editor.currentTask.name, editor.currentTask.version, (editor.currentTask as any).author).catch(() => ({})) ?? {};
         setSavedPositions(positions);
         requestAnimationFrame(() => {
           const task = editor.currentTask!;
@@ -207,12 +207,12 @@ const TaskEditorPage: FC = () => {
   }, [editor.isDirty]);
 
   // handlers
-  const openTask = async (name: string, version: string) => {
+  const openTask = async (name: string, version: string, author?: string) => {
     initRef.current = true;
-    await editor.loadTask(name, version);
+    await editor.loadTask(name, version, author);
     const task = useEditorStore.getState().currentTask;
     if (!task) return;
-    const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", task.name, task.version).catch(() => ({})) ?? {};
+    const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", task.name, task.version, (task as any).author).catch(() => ({})) ?? {};
     setSavedPositions(positions);
     requestAnimationFrame(() => {
       const current = useEditorStore.getState().currentTask;
@@ -308,7 +308,7 @@ const TaskEditorPage: FC = () => {
       const positions: Record<string, { x: number; y: number }> = {};
       for (const n of flowNodes) positions[n.id] = n.position;
       setSavedPositions(positions);
-      window.pywebview?.api.emit("API:TASK:SAVE:POSITIONS", editor.currentTask.name, editor.currentTask.version, positions).catch(() => {});
+      window.pywebview?.api.emit("API:TASK:SAVE:POSITIONS", editor.currentTask.name, editor.currentTask.version, positions, (editor.currentTask as any).author).catch(() => {});
     }
     loadTaskList();
     message.success("保存成功");
@@ -330,7 +330,7 @@ const TaskEditorPage: FC = () => {
       // 同步 flow
       const task = useEditorStore.getState().currentTask;
       if (task) {
-        const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", task.name, task.version).catch(() => ({})) ?? {};
+        const positions = await window.pywebview?.api.emit("API:TASK:LOAD:POSITIONS", task.name, task.version, (task as any).author).catch(() => ({})) ?? {};
         setSavedPositions(positions);
         requestAnimationFrame(() => {
           const { nodes, edges } = taskToFlow(task, positions, task.monitors.loop);

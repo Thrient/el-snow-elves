@@ -5,9 +5,9 @@ export async function getActions(): Promise<{ value: string; label: string }[]> 
 }
 
 export async function getTemplates(
-  taskName: string | null, version: string | null,
+  taskName: string | null, version: string | null, author?: string,
 ): Promise<string[]> {
-  return callApi<string[]>("API:AUTOCOMPLETE:TEMPLATES", taskName, version) ?? [];
+  return callApi<string[]>("API:AUTOCOMPLETE:TEMPLATES", taskName, version, author ?? "匿名作者") ?? [];
 }
 
 export async function getCommonSteps(): Promise<Record<string, {

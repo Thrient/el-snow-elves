@@ -28,6 +28,7 @@ export interface CellOption {
 export interface AutocompleteContext {
   taskName?: string;
   version?: string;
+  author?: string;
   taskId?: string;
   steps?: string[];
   common?: string[];

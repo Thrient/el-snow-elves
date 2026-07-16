@@ -25,6 +25,15 @@ class InputSimulator:
     }
 
     @staticmethod
+    def _resolve_vk(key):
+        if isinstance(key, str):
+            key_upper = key.upper()
+            if key_upper in InputSimulator.VK_CODE:
+                return InputSimulator.VK_CODE[key_upper]
+            return ord(key_upper)
+        return key
+
+    @staticmethod
     def key_click(*args, **kwargs):
         """按下并抬起键盘按键。press > 0 时变为长按"""
         hwnd = kwargs.get("hwnd")
@@ -35,14 +44,7 @@ class InputSimulator:
         @delay(post_delay=DELAY)
         def _inner(**inner_kwargs):
             key = inner_kwargs.get("key", "")
-            if isinstance(key, str):
-                key_upper = key.upper()
-                if key_upper in InputSimulator.VK_CODE:
-                    vk_code = InputSimulator.VK_CODE[key_upper]
-                else:
-                    vk_code = ord(key_upper)
-            else:
-                vk_code = key
+            vk_code = InputSimulator._resolve_vk(key)
             scan_code = win32api.MapVirtualKey(vk_code, 0)
             win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk_code, (scan_code << 16) | 1)
             safe_sleep(press / 1000, lambda: not predicate())
@@ -61,14 +63,7 @@ class InputSimulator:
         @delay(post_delay=DELAY)
         def _inner(**inner_kwargs):
             key = inner_kwargs.get("key", "")
-            if isinstance(key, str):
-                key_upper = key.upper()
-                if key_upper in InputSimulator.VK_CODE:
-                    vk_code = InputSimulator.VK_CODE[key_upper]
-                else:
-                    vk_code = ord(key_upper)
-            else:
-                vk_code = key
+            vk_code = InputSimulator._resolve_vk(key)
             scan_code = win32api.MapVirtualKey(vk_code, 0)
             win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk_code, (scan_code << 16) | 1)
             logging.info(f"按下按键: {key} | hwnd={hwnd}")
@@ -84,14 +79,7 @@ class InputSimulator:
         @delay(post_delay=DELAY)
         def _inner(**inner_kwargs):
             key = inner_kwargs.get("key", "")
-            if isinstance(key, str):
-                key_upper = key.upper()
-                if key_upper in InputSimulator.VK_CODE:
-                    vk_code = InputSimulator.VK_CODE[key_upper]
-                else:
-                    vk_code = ord(key_upper)
-            else:
-                vk_code = key
+            vk_code = InputSimulator._resolve_vk(key)
             scan_code = win32api.MapVirtualKey(vk_code, 0)
             win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk_code, (scan_code << 16) | 0xC0000001)
             logging.info(f"抬起按键: {key} | hwnd={hwnd}")

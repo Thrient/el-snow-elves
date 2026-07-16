@@ -1,9 +1,9 @@
-"""OPPO Open Account — encrypted API client (AES+RSA, MD5 signing, authorize/refresh)"""
+"""OPPO Open Account -- encrypted API client (AES+RSA, MD5 signing, authorize/refresh)
 
 Exports: SecurityKey, OppoSecureSession, OppoOpenAccountClient, sign_request
 """
 # ============================================================================
-# SECTION 1: crypto — AES-CTR + RSA encryption
+# SECTION 1: crypto -- AES-CTR + RSA encryption
 # ============================================================================
 import base64
 import hashlib
@@ -166,7 +166,7 @@ def build_security_headers(
 
 
 # ============================================================================
-# SECTION 2: sign — MD5-based request signing
+# SECTION 2: sign -- MD5-based request signing
 # ============================================================================
 
 BIZK_SECRET_KEY = "6CyfIPKEDKF0RIR3fdtFsQ=="
@@ -238,7 +238,7 @@ def sign_request(obj: Any, exclude_field: Optional[str] = None) -> str:
 
 
 # ============================================================================
-# SECTION 3: envinfo — environment info builders
+# SECTION 3: envinfo -- environment info builders
 # ============================================================================
 
 # Device defaults for envParam construction
@@ -283,7 +283,7 @@ DEVICE_SECURITY_HEADER_OBJ: Dict[str, Any] = {
 
 
 def build_device_security_header_plain() -> str:
-    """DeviceSecurityHeader.getDeviceSecurityHeader plaintext (mockNative.js — all empty)."""
+    """DeviceSecurityHeader.getDeviceSecurityHeader plaintext (mockNative.js -- all empty)."""
     return json.dumps(DEVICE_SECURITY_HEADER_OBJ, ensure_ascii=False, separators=(",", ":"))
 
 
@@ -366,7 +366,7 @@ def build_env_info_pkg(
 
 
 # ============================================================================
-# SECTION 4: models — inlined AuthorizeRequest / RefreshRequest helpers
+# SECTION 4: models -- inlined AuthorizeRequest / RefreshRequest helpers
 # ============================================================================
 
 ACCOUNT_BIZK = "3cd48b0c781835478b0a1783a9eff0c9"

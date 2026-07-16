@@ -18,9 +18,11 @@ interface Props {
   onExport: () => void;
   onDelete: () => void;
   updateInfo?: {
-    hubVersion: string
+    name: string
+    hubTaskId: number
     localVersion: string
-  } | null
+    hubVersion: string
+  }
   updating?: boolean
   onUpdate?: () => void
   onDismissUpdate?: () => void

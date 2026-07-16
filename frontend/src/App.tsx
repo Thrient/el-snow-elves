@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { ConfigProvider, theme } from 'antd'
 import { RouterProvider } from 'react-router-dom'
 import zhCN from 'antd/locale/zh_CN'
@@ -8,12 +7,6 @@ import { useSettingsStore } from '@/store/settings-store'
 
 function App() {
   const currentTheme = useSettingsStore(s => s.theme)
-  const setTheme = useSettingsStore(s => s.setTheme)
-
-  // Initialize theme on mount
-  useEffect(() => {
-    setTheme(currentTheme)
-  }, [])
 
   const resolvedTheme: 'light' | 'dark' =
     currentTheme === 'auto'

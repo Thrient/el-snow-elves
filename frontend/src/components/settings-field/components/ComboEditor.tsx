@@ -1,47 +1,29 @@
-import type { FC } from "react";
-import { Button, InputNumber, Select } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useState, useCallback, type FC } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { useSettingsStore } from "@/store/settings-store";
+import ComboCard from "./ComboCard";
+import type { ComboStep } from "./ComboCard";
+import ComboConnector from "./ComboConnector";
+
+// ── helpers ──
 
 type ComboMode = "click" | "down" | "up";
 
-interface ComboStep {
-  s: string;
-  m: ComboMode;
-  p: number;
-  d: number;
-}
-
-const MODE_OPTS: { label: string; value: ComboMode }[] = [
-  { label: "点击", value: "click" },
-  { label: "按下", value: "down" },
-  { label: "抬起", value: "up" },
-];
-
 function isSkillKey(key: string): boolean {
-  // cfg: 前缀 = 全局配置，连招: 前缀 = 连招数据，都不是技能
   if (key.startsWith("cfg_") || key.startsWith("连招_")) return false;
   return true;
-}
-
-interface Props {
-  value?: ComboStep[];
-  onChange: (value: ComboStep[]) => void;
-}
-
-function toSteps(raw: unknown): ComboStep[] {
-  if (Array.isArray(raw)) {
-    return raw.map((item: Record<string, unknown>) => ({
-      s: String(item.s ?? ""),
-      m: (item.m as ComboMode) || "click",
-      p: Number(item.p ?? 100),
-      d: Number(item.d ?? 800),
-    }));
-  }
-  if (typeof raw === "string") {
-    try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return toSteps(parsed); } catch { /* */ }
-  }
-  return [];
 }
 
 const CONFIG_PREFIX = "{CONFIG.";
@@ -50,132 +32,130 @@ function configRef(name: string): string {
   return `${CONFIG_PREFIX}${name}}`;
 }
 
+type RawStep = { s?: string; m?: string; p?: unknown; d?: unknown };
+
+function toSteps(raw: unknown): ComboStep[] {
+  const arr: RawStep[] = Array.isArray(raw)
+    ? raw
+    : typeof raw === "string"
+      ? (() => {
+          try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; }
+          catch { return []; }
+        })()
+      : [];
+  return arr.map((item: RawStep) => ({
+    id: crypto.randomUUID(),
+    s: String(item.s ?? ""),
+    m: (item.m as ComboMode) || "click",
+    p: Number(item.p ?? 100),
+    d: Number(item.d ?? 800),
+  }));
+}
+
+function serializeSteps(steps: ComboStep[]): { s: string; m: string; p: number; d: number }[] {
+  return steps.map(({ s, m, p, d }) => ({ s, m, p, d }));
+}
+
+// ── Component ──
+
+interface Props {
+  value?: ComboStep[] | string;
+  onChange: (value: unknown) => void;
+}
+
 const ComboEditor: FC<Props> = ({ value, onChange }) => {
   const settingsValues = useSettingsStore((s) => s.values);
   const skills = Object.keys(settingsValues).filter(isSkillKey).sort();
   const defaultRef = skills[0] ? configRef(skills[0]) : "";
 
-  const steps = toSteps(value);
-  const emit = (s: ComboStep[]) => onChange(s);
-  const updateStep = (idx: number, patch: Partial<ComboStep>) => {
-    const next = steps.map((step, i) => (i === idx ? { ...step, ...patch } : step));
-    emit(next);
-  };
-  const removeStep = (idx: number) => emit(steps.filter((_, i) => i !== idx));
-  const addStep = () => emit([...steps, { s: defaultRef, m: "click", p: 100, d: 800 }]);
+  const [steps, setSteps] = useState<ComboStep[]>(() => toSteps(value));
+  const skillOptions = skills.map((n) => ({ label: n, value: configRef(n) }));
+
+  const emit = useCallback(
+    (s: ComboStep[]) => { setSteps(s); onChange(serializeSteps(s)); },
+    [onChange],
+  );
+
+  const addStep = useCallback(() => {
+    emit([...steps, { id: crypto.randomUUID(), s: defaultRef, m: "click", p: 100, d: 800 }]);
+  }, [defaultRef, steps, emit]);
+
+  const deleteStep = useCallback(
+    (id: string) => emit(steps.filter((s) => s.id !== id)),
+    [steps, emit],
+  );
+
+  const updateStep = useCallback(
+    (id: string, patch: Partial<ComboStep>) =>
+      emit(steps.map((s) => (s.id === id ? { ...s, ...patch } : s))),
+    [steps, emit],
+  );
+
+  const cycleMode = useCallback(
+    (id: string) => {
+      const step = steps.find((s) => s.id === id);
+      if (!step) return;
+      const CYCLE: ComboMode[] = ["click", "down", "up"];
+      updateStep(id, { m: CYCLE[(CYCLE.indexOf(step.m) + 1) % CYCLE.length] });
+    },
+    [steps, updateStep],
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIdx = steps.findIndex((s) => s.id === active.id);
+      const newIdx = steps.findIndex((s) => s.id === over.id);
+      if (oldIdx === -1 || newIdx === -1) return;
+      emit(arrayMove(steps, oldIdx, newIdx));
+    },
+    [steps, emit],
+  );
 
   return (
-    <div className="flex flex-col gap-1 w-full">
-      {steps.map((step, i) => {
-        const isHoldMode = step.m === "down" || step.m === "up";
-        return (
-          <div
-            key={i}
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={steps.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
+        <div className="flex items-center flex-wrap w-full">
+          {steps.flatMap((step, i) => [
+            <ComboCard
+              key={step.id}
+              step={step}
+              skillOptions={skillOptions}
+              onDelete={deleteStep}
+              onModeCycle={cycleMode}
+              onChangeSkill={(id, s) => updateStep(id, { s })}
+              onChangePress={(id, p) => updateStep(id, { p })}
+            />,
+            <ComboConnector
+              key={`conn-${step.id}`}
+              delay={step.d}
+              onChange={(d) => updateStep(step.id, { d })}
+              isLast={i === steps.length - 1}
+            />,
+          ])}
+          <button
+            key="add-btn"
             className="
-              group flex items-center gap-3 px-3 py-1
-              rounded-[var(--radius-md)]
-              border border-[var(--color-border)]
-              bg-[var(--color-bg-container)]
-              hover:border-[var(--color-primary-border)]
-              hover:shadow-[var(--shadow-sm)]
-              transition-all duration-200
+              flex items-center justify-center
+              w-104px h-72px shrink-0
+              border-2 border-dashed border-[#e0e0e0] rounded-[var(--radius-md)]
+              cursor-pointer text-24px color-[#bbb] bg-transparent
+              hover:border-[var(--color-primary-border)] hover:text-[var(--color-primary)]
+              transition-colors duration-150
             "
+            onClick={addStep}
+            title="添加步骤"
           >
-            {/* 序号 */}
-            <span className="
-              w-5.5 h-5.5 flex items-center justify-center
-              rounded-full text-2xs font-bold flex-shrink-0
-              bg-[var(--color-primary-bg)] text-[var(--color-primary)]
-            ">
-              {i + 1}
-            </span>
-
-            {/* 技能 — 弹性占位 */}
-            <Select
-              className="flex-1 min-w-0"
-              size="small"
-              variant="borderless"
-              value={step.s || undefined}
-              options={skills.map((n) => ({ label: n, value: configRef(n) }))}
-              showSearch
-              onChange={(v) => updateStep(i, { s: v })}
-            />
-
-            {/* 模式 */}
-            <Select
-              className="!w-24 flex-shrink-0"
-              size="small"
-              variant="borderless"
-              value={step.m}
-              options={MODE_OPTS}
-              onChange={(v) => updateStep(i, { m: v })}
-              popupMatchSelectWidth={false}
-            />
-
-            {/* 按下时长 */}
-            {isHoldMode ? (
-              <span className="w-24 text-center text-xs text-[var(--color-text-muted)] flex-shrink-0">—</span>
-            ) : (
-              <InputNumber
-                className="!w-24 flex-shrink-0"
-                size="small"
-                variant="borderless"
-                min={0}
-                max={10000}
-                step={10}
-                precision={0}
-                value={step.p}
-                onChange={(v) => updateStep(i, { p: v ?? 100 })}
-                suffix={<span className="text-2xs text-[var(--color-text-muted)]">ms</span>}
-              />
-            )}
-
-            {/* 间隔 */}
-            <InputNumber
-              className="!w-24 flex-shrink-0"
-              size="small"
-              variant="borderless"
-              min={0}
-              max={60000}
-              step={10}
-              precision={0}
-              value={step.d}
-              onChange={(v) => updateStep(i, { d: v ?? 800 })}
-              suffix={<span className="text-2xs text-[var(--color-text-muted)]">ms</span>}
-            />
-
-            {/* 删除 */}
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              className="!w-6 !h-6 !p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0"
-              onClick={() => removeStep(i)}
-            />
-          </div>
-        );
-      })}
-
-      <div className="flex items-center justify-between mt-1 px-1">
-        <Button
-          type="dashed"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={addStep}
-          className="
-            !border-dashed !border-[var(--color-border)]
-            hover:!border-[var(--color-primary-border)] hover:!text-[var(--color-primary)]
-            transition-colors duration-200
-          "
-        >
-          添加
-        </Button>
-        <span className="text-2xs text-[var(--color-text-muted)]">
-          共 {steps.length} 步
-        </span>
-      </div>
-    </div>
+            +
+          </button>
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 };
 

@@ -5,7 +5,7 @@ import type { TaskListItem } from "@/types/task";
 
 interface TaskListProps {
   taskList: TaskListItem[];
-  onOpenTask: (name: string, version: string) => void;
+  onOpenTask: (name: string, version: string, author?: string) => void;
   onCreateTask: (name: string, version: string, description: string) => Promise<void>;
 }
 
@@ -49,7 +49,7 @@ const TaskList: FC<TaskListProps> = ({ taskList, onOpenTask, onCreateTask }) => 
             onChange={(e) => setSearch(e.target.value)} className="mb-4" />
           <div className="flex flex-col gap-1 pb-4">
             {filtered.map((t) => (
-              <div key={t.name} onClick={() => onOpenTask(t.name, (t as any).version || t.latest)}
+              <div key={t.name} onClick={() => onOpenTask(t.name, (t as any).version || t.latest, (t as any).author)}
                 className="flex items-center gap-4 px-5 py-4 rounded-xl cursor-pointer
                   transition-all hover:scale-[1.01] hover:shadow-card-hover">
                 <div className="w-10 h-10 rounded-xl bg-[#f0f2f5] flex items-center justify-center shrink-0">
