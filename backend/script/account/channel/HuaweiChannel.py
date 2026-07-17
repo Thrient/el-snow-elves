@@ -295,7 +295,7 @@ def _auto_relogin(client_id: str, account: str, password: str, cache_dir: str = 
             try:
                 from webview.platforms.winforms import BrowserView
                 form = BrowserView.instances.get(window.uid) if window else None
-                if form:
+                if form and form.webview is not None and form.webview.CoreWebView2 is not None:
                     result = form.webview.CoreWebView2.ExecuteScriptAsync(_autofill_js(account, password))
                     result_str = str(result.Result) if result.Result else ""
                     if "filled" in result_str:
@@ -354,8 +354,10 @@ def _auto_relogin(client_id: str, account: str, password: str, cache_dir: str = 
     return result
 
 
-def _add_navigation_handler(window, code_container: dict) -> bool:
-    """给窗口的 WebView2 追加 NavigationStarting 事件处理器"""
+def _add_navigation_handler(window, code_container: dict, inject_capture_js: bool = False) -> bool:
+    """给窗口的 WebView2 追加 NavigationStarting 事件处理器。
+    如果 inject_capture_js=True，同时在 CoreWebView2 就绪后注入凭证捕获 JS。
+    """
     try:
         from webview.platforms.winforms import BrowserView
 
@@ -380,6 +382,18 @@ def _add_navigation_handler(window, code_container: dict) -> bool:
 
         event_type = EventHandler[CoreWebView2NavigationStartingEventArgs]
         wv2.NavigationStarting += event_type(handler)
+
+        # 注入凭证捕获 JS（CoreWebView2 就绪后执行）
+        if inject_capture_js:
+            def _on_core_ready(sender, args):
+                try:
+                    sender.ExecuteScriptAsync(_CAPTURE_CREDS_JS)
+                    logging.debug("[HuaweiChannel] 凭证捕获 JS 已注入")
+                except Exception as e:
+                    logging.debug("[HuaweiChannel] 注入捕获 JS 失败: %s", e)
+            from Microsoft.Web.WebView2.Core import CoreWebView2InitializationCompletedEventArgs
+            wv2.CoreWebView2InitializationCompleted += EventHandler[CoreWebView2InitializationCompletedEventArgs](_on_core_ready)
+
         logging.debug("[HuaweiChannel] NavigationStarting 处理器已追加")
         return True
     except Exception as e:
@@ -429,24 +443,11 @@ class HuaweiLogin:
 
         def _run():
             time.sleep(1.5)  # 等 WebView2 初始化
-            _add_navigation_handler(self._window, code_container)
-
-            # 注入凭证捕获 JS，监听登录表单提交
-            capture_injected = False
+            _add_navigation_handler(self._window, code_container, inject_capture_js=True)
 
             for _ in range(300):
                 if self._done.is_set():
                     return
-
-                if not capture_injected:
-                    try:
-                        from webview.platforms.winforms import BrowserView
-                        form = BrowserView.instances.get(self._window.uid) if self._window else None
-                        if form:
-                            form.webview.CoreWebView2.ExecuteScriptAsync(_CAPTURE_CREDS_JS)
-                            capture_injected = True
-                    except Exception:
-                        pass
 
                 if code_container.get("code"):
                     # 尝试读取捕获的华为账号密码
@@ -455,7 +456,7 @@ class HuaweiLogin:
                     try:
                         from webview.platforms.winforms import BrowserView
                         form = BrowserView.instances.get(self._window.uid) if self._window else None
-                        if form:
+                        if form and form.webview is not None and form.webview.CoreWebView2 is not None:
                             task = form.webview.CoreWebView2.ExecuteScriptAsync(_READ_CREDS_JS)
                             creds_json = str(task.Result) if task.Result else ""
                             if creds_json and creds_json.strip():
